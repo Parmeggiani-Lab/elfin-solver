@@ -8,11 +8,15 @@ matrix:
       install:
         - sudo apt-get install -qq g++-6 --allow-unauthenticated
         - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
+        - curl 'https://raw.githubusercontent.com/joy13975/elfin-library/master/xdb.json' > xdb.json
       compiler: 
         - gcc
         # - clang
       env: 
         - OMP_NUM_THREADS=4
+      script:
+        - make
+        - ./bin/elfin -x xdb.json -i input/test_input_1696.json
 
 branches:
   only:

@@ -1,6 +1,7 @@
 bin/*
 output/*
 .obj
+xdb.json
 
 # Prerequisites
 *.d
