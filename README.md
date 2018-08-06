@@ -3,7 +3,7 @@
 
 This is an old version of the elfin-solver and will not be applicable to v2 file formats.
 
-### Before Compiling
+### To Download
 ```
 git clone --depth 1 git@github.com:joy13975/elfin-solver.git
 cd elfin-solver
@@ -17,14 +17,14 @@ git submodule update
 ./fetch_db
 ```
 
-### To compile:
+### To Compile:
 ```make```
 
 To compile with your choice of compiler e.g. clang++:
 
 ```make CXX='clang++'```
 
-### To run:
+### To Run:
 ```./bin/elfin [arguments to override config.json]```
 
 
