@@ -18,10 +18,6 @@ matrix:
         - make
         - ./bin/elfin -x xdb.json -i input/test_input_1696.json
 
-branches:
-  only:
-  - master
-
 notifications:
   email:
   - joyyeh.tw@gmail.com
