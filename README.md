@@ -1,5 +1,5 @@
 # Elfin Solver V1
-[![Build Status](https://travis-ci.com/joy13975/elfin-solver.svg?branch=master)](https://travis-ci.com/joy13975/elfin-solver)
+[![Build Status](https://travis-ci.com/joy13975/elfin-solver.svg?branch=v1)](https://travis-ci.com/joy13975/elfin-solver)
 
 This is an old version of the elfin-solver and will not be applicable to v2 file formats.
 
