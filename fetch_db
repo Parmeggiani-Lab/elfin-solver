@@ -1,0 +1,3 @@
+#!/bin/bash
+
+curl 'https://raw.githubusercontent.com/joy13975/elfin-library/master/xdb.json' > xdb.json
