@@ -1,26 +1,35 @@
-# Elfin Solver
+# Elfin Solver V1
 [![Build Status](https://travis-ci.com/joy13975/elfin-solver.svg?branch=master)](https://travis-ci.com/joy13975/elfin-solver)
 
-¡ This solver is currently outdated !
+This is an old version of the elfin-solver and will not be applicable to v2 file formats.
 
-Its new requirements are not yet set because [elfin-ui](https://github.com/joy13975/elfin-ui) and [elfin-data](https://github.com/joy13975/elfin-data) are still undergoing significant changes, which affect not only the internal data representation but also the problem scope that this solver is supposed to solve.
+### Before Compiling
+```
+git clone --depth 1 git@github.com:joy13975/elfin-solver.git
+cd elfin-solver
+git submodule init
+```
 
-Once those two stages are more or less complete, development will resume for the solver.
-
-### Before compiling
-```git submodule init; git submodule update```
+### To Update
+```
+git pull
+git submodule update
+./fetch_db
+```
 
 ### To compile:
 ```make```
 
-### To compile with your choice of compiler e.g. clang++:
-```make CXX='clang++'```
+To compile with your choice of compiler e.g. clang++:
 
-### To get help:
-```./bin/elfin -h```
+```make CXX='clang++'```
 
 ### To run:
 ```./bin/elfin [arguments to override config.json]```
+
+
+To get help:
+```./bin/elfin -h```
 
 ### Notes:
 1. The default configuration file is ```config.json```.
