@@ -9,7 +9,7 @@ working on elfin-solver.
 ```
 git clone --depth 1 git@github.com:joy13975/elfin-solver.git
 cd elfin-solver
-git submodule init
+git submodule update --init --recursive
 ```
 
 ### To Update
