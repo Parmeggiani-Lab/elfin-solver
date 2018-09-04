@@ -6,7 +6,7 @@
 #include <fstream>
 
 #include "data/TypeDefs.hpp"
-#include "util.h"
+#include "jutil.h"
 #include "input/SpecParser.hpp"
 #include "input/CSVParser.hpp"
 #include "input/JSONParser.hpp"
@@ -69,7 +69,6 @@ const argument_bundle argb[] = {
     {"dv", "device", "Run on accelerator device ID", true, setDevice},
     {"n", "nBestSols", "Set number of best solutions to output", true, setNBestSols}
 };
-const size_t ARG_BUND_SIZE = (sizeof(argb) / sizeof(argb[0]));
 
 DECL_ARG_CALLBACK(helpAndExit)
 {
@@ -77,9 +76,7 @@ DECL_ARG_CALLBACK(helpAndExit)
     raw("Usage: ./elfin [OPTIONS]\n");
     raw("Note: Setting an option will override the same setting in the json file\n");
 
-    const argument_bundle * ptr = argb;
-    print_arg_bundles(&ptr, 1);
-    print_arg_bundles(&ptr, ARG_BUND_SIZE - 1);
+    print_arg_bundles(argb);
 
     exit(1);
 }
@@ -110,7 +107,8 @@ void parseSettings()
         return tmpStr.c_str();
     };
 
-    for (int i = 0; i < ARG_BUND_SIZE; i++)
+    const size_t arg_bund_size = (sizeof(argb) / sizeof(argb[0]));
+    for (int i = 0; i < arg_bund_size; i++)
     {
         const argument_bundle * ab = &argb[i];
         if (!j[ab->long_form].is_null())
@@ -411,13 +409,13 @@ int main(int argc, const char ** argv)
     set_log_level(LOG_WARN);
 
     // Parse user arguments first to potentially get a settings file path
-    parse_args(argc, argv, ARG_BUND_SIZE, argb, argParseFail);
+    parse_args(argc, argv, argb, argParseFail);
 
     // Get values from settings json first
     parseSettings();
 
     // Parse user arguments a second time to override settings file
-    parse_args(argc, argv, ARG_BUND_SIZE, argb, argParseFail);
+    parse_args(argc, argv, argb, argParseFail);
 
     checkOptions();
 

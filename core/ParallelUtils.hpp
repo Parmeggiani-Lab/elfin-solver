@@ -36,7 +36,7 @@ inline int omp_get_initial_device() { return 0; }
 
 #ifdef _DO_TIMING
 
-#include "util.h"
+#include "jutil.h"
 #define TIMING_START(varName) \
 	const double varName = get_timestamp_us();
 

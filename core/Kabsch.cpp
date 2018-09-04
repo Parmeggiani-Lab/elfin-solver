@@ -4,7 +4,7 @@
 #include <cmath>
 
 #include "Kabsch.hpp"
-#include "util.h"
+#include "jutil.h"
 #include "MathUtils.hpp"
 #include "../input/JSONParser.hpp"
 

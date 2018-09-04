@@ -1,5 +1,4 @@
-# elfin-solver
-[![Build Status](https://travis-ci.com/joy13975/elfin-solver.svg?branch=master)](https://travis-ci.com/joy13975/elfin-solver)
+# elfin-solver [![Build Status](https://travis-ci.com/joy13975/elfin-solver.svg?branch=master)](https://travis-ci.com/joy13975/elfin-solver)
 
 The `master` branch is currently under development and is not currently functional. The old v1 version code and documentation can be found in branch `v1`.
 

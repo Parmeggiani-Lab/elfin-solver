@@ -4,7 +4,7 @@
 
 #include "PrimitiveShorthands.hpp"
 #include "Geometry.hpp"
-#include "util.h"
+#include "jutil.h"
 
 namespace elfin
 {

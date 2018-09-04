@@ -1,7 +1,7 @@
 #include <cmath>
 
 #include "MathUtils.hpp"
-#include "util.h"
+#include "jutil.h"
 #include "../data/TypeDefs.hpp"
 
 namespace elfin

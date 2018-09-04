@@ -1,22 +1,21 @@
-matrix:
-  include:
-    - language: cpp
-      dist: trusty
-      before_install:
-        - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-        - sudo apt-get update -qq 
-      install:
-        - sudo apt-get install -qq g++-6 --allow-unauthenticated
-        - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
-        - ./fetch_db
-      compiler: 
-        - gcc
-        # - clang
-      env: 
-        - OMP_NUM_THREADS=4
-      script:
-        - make
-        - ./bin/elfin -x xdb.json -i input/test_input_1696.json
+language: cpp
+dist: trusty
+before_install:
+  - git submodule init
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq 
+install:
+  - sudo apt-get install -qq g++-6 --allow-unauthenticated
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
+  - ./fetch_db
+compiler: 
+  - gcc
+  # - clang
+env: 
+  - OMP_NUM_THREADS=4
+script:
+  - make
+  - ./bin/elfin -x xdb.json -i input/test_input_1696.json -msg  3 -gps 1000
 
 notifications:
   email:
