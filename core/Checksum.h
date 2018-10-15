@@ -1,5 +1,5 @@
-#ifndef _CHECKSUM_HPP_
-#define _CHECKSUM_HPP_
+#ifndef CHECKSUM_H
+#define CHECKSUM_H
 
 #include <stdint.h>
 #include <stddef.h>

@@ -1,12 +1,12 @@
-#ifndef _CHROMOSOME_HPP_
-#define _CHROMOSOME_HPP_
+#ifndef CHROMOSOME_H
+#define CHROMOSOME_H
 
 #include <cmath>
 #include <string>
 
-#include "TypeDefs.hpp"
-#include "Gene.hpp"
-#include "../core/Checksum.hpp"
+#include "TypeDefs.h"
+#include "Gene.h"
+#include "../core/Checksum.h"
 
 namespace elfin
 {

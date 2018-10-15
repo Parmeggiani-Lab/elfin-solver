@@ -1,5 +1,5 @@
-#ifndef _GEOMETRY_HPP_
-#define _GEOMETRY_HPP_
+#ifndef GEOMETRY_H
+#define GEOMETRY_H
 
 #include <string>
 #include <vector>

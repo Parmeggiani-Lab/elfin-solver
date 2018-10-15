@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "ParallelUtils.hpp"
+#include "ParallelUtils.h"
 #include "jutil.h"
 
 namespace elfin

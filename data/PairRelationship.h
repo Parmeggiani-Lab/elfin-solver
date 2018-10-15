@@ -1,10 +1,10 @@
-#ifndef _PAIRRELATIONSHIP_HPP_
-#define _PAIRRELATIONSHIP_HPP_
+#ifndef PAIRRELATIONSHIP_H
+#define PAIRRELATIONSHIP_H
 
 #include <vector>
 #include <sstream>
 
-#include "TypeDefs.hpp"
+#include "TypeDefs.h"
 
 namespace elfin
 {

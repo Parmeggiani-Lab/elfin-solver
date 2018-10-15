@@ -1,5 +1,5 @@
-#ifndef _TYPEDEFS_H_
-#define _TYPEDEFS_H_
+#ifndef TYPEDEFS_H_
+#define TYPEDEFS_H_
 
 #include <vector>
 #include <map>
@@ -8,8 +8,8 @@
 #include <tuple>
 
 #include "jutil.h"
-#include "PrimitiveShorthands.hpp"
-#include "Geometry.hpp"
+#include "PrimitiveShorthands.h"
+#include "Geometry.h"
 
 #define toCString toString().c_str
 
@@ -57,7 +57,7 @@ typedef std::vector<Radii> RadiiList;
 struct OptionPack
 {
 	// Input settings
-	std::string xDBFile = "xDB.json";
+	std::string xdb = "xDB.json";
 	std::string inputFile = "";
 
 	enum InputType { Unknown, CSV, JSON };
@@ -91,6 +91,8 @@ struct OptionPack
 	int device = 0;
 	int nBestSols = 3;
 };
+
+extern OptionPack options;
 
 } // namespace elfin
 

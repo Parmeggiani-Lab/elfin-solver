@@ -3,10 +3,10 @@
 
 #include <cmath>
 
-#include "Kabsch.hpp"
+#include "Kabsch.h"
 #include "jutil.h"
-#include "MathUtils.hpp"
-#include "../input/JSONParser.hpp"
+#include "MathUtils.h"
+#include "../input/JSONParser.h"
 
 namespace elfin
 {
@@ -629,7 +629,7 @@ int _testKabsch()
 	NameIdMap nameIdMap;
 	IdNameMap idNameMap;
 	RadiiList radiiList;
-	JSONParser().parseDB("../../resources/xDB.json", nameIdMap, idNameMap, relaMat, radiiList);
+	JSONParser().parseDB(elfin::options.xdb, nameIdMap, idNameMap, relaMat, radiiList);
 
 	Gene::setup(&idNameMap);
 

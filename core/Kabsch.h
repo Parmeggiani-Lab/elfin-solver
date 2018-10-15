@@ -1,10 +1,10 @@
-#ifndef _KABSCH_HPP_
-#define _KABSCH_HPP_
+#ifndef KABSCH_H
+#define KABSCH_H
 
 #include <vector>
 
-#include "../data/TypeDefs.hpp"
-#include "../data/Gene.hpp"
+#include "../data/TypeDefs.h"
+#include "../data/Gene.h"
 
 namespace elfin
 {

@@ -1,5 +1,5 @@
-#ifndef _CSVPARSER_HPP_
-#define _CSVPARSER_HPP_
+#ifndef CSVPARSER_H
+#define CSVPARSER_H
 
 #include <iostream>
 #include <sstream>
@@ -8,7 +8,7 @@
 #include <fstream>
 #include <string>
 
-#include "SpecParser.hpp"
+#include "SpecParser.h"
 
 /*
  * A Nice CSV Parser Iterator by Loki Astari from Stack Overflow

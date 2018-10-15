@@ -1,6 +1,6 @@
 {
 	"inputFile": "../benchmarks/l10/1696.json",
-	"xDBFile": "../resources/xdb.json",
+	"xdb": "../resources/xdb.json",
 	"outputDir": "./output/",
 
 	"randSeed": "0x600d1337",

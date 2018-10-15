@@ -1,11 +1,11 @@
-#ifndef _JSONPARSER_HPP_
-#define _JSONPARSER_HPP_
+#ifndef JSONPARSER_H
+#define JSONPARSER_H
 
-#include "json.hpp"
+#include "json.h"
 
-#include "SpecParser.hpp"
-#include "DBParser.hpp"
-#include "../data/PairRelationship.hpp"
+#include "SpecParser.h"
+#include "DBParser.h"
+#include "../data/PairRelationship.h"
 
 namespace elfin
 {

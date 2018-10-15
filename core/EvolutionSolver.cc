@@ -5,9 +5,9 @@
 #include <unordered_map>
 #include <limits>
 
-#include "EvolutionSolver.hpp"
+#include "EvolutionSolver.h"
 #include "jutil.h"
-#include "ParallelUtils.hpp"
+#include "ParallelUtils.h"
 
 namespace elfin
 {

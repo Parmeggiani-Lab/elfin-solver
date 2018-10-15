@@ -2,8 +2,8 @@
 #include <cmath>
 #include <iomanip>
 
-#include "PrimitiveShorthands.hpp"
-#include "Geometry.hpp"
+#include "PrimitiveShorthands.h"
+#include "Geometry.h"
 #include "jutil.h"
 
 namespace elfin

@@ -1,15 +1,15 @@
-#include "Chromosome.hpp"
+#include "Chromosome.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <tuple>
 
-#include "../core/MathUtils.hpp"
-#include "../core/Kabsch.hpp"
-#include "../data/PairRelationship.hpp"
-#include "../input/JSONParser.hpp"
-#include "../core/ParallelUtils.hpp"
+#include "../core/MathUtils.h"
+#include "../core/Kabsch.h"
+#include "../data/PairRelationship.h"
+#include "../input/JSONParser.h"
+#include "../core/ParallelUtils.h"
 
 namespace elfin
 {
@@ -851,7 +851,7 @@ int _testChromosome()
 	NameIdMap nameIdMap;
 	IdNameMap idNameMap;
 	RadiiList radiiList;
-	JSONParser().parseDB("../../resources/xDB.json", nameIdMap, idNameMap, relaMat, radiiList);
+	JSONParser().parseDB(elfin::options.xdb, nameIdMap, idNameMap, relaMat, radiiList);
 
 	Gene::setup(&idNameMap);
 	Chromosome::setup(0, 100, relaMat, radiiList);

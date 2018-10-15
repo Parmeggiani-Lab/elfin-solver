@@ -1,10 +1,10 @@
-#ifndef _DBPARSER_H_
-#define _DBPARSER_H_
+#ifndef DBPARSER_H_
+#define DBPARSER_H_
 
 #include <string>
 
-#include "../data/TypeDefs.hpp"
-#include "../data/PairRelationship.hpp"
+#include "../data/TypeDefs.h"
+#include "../data/PairRelationship.h"
 
 namespace elfin
 {

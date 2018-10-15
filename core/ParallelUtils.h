@@ -1,5 +1,5 @@
-#ifndef _PARALLELUTILS_HPP_
-#define _PARALLELUTILS_HPP_
+#ifndef PARALLELUTILS_H
+#define PARALLELUTILS_H
 
 #include <vector>
 #include <cmath>
@@ -8,7 +8,7 @@
 #include <omp.h>
 #endif
 
-#include "../data/PrimitiveShorthands.hpp"
+#include "../data/PrimitiveShorthands.h"
 
 #ifdef _NO_OMP
 

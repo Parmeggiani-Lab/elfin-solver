@@ -10,13 +10,13 @@ BIN_DIR 		:= ./bin/
 $(shell mkdir -p $(OBJ_TREE) $(BIN_DIR))
 
 C_SRC 			:= $(shell find . -name '*.c')
-CPP_SRC 		:= $(shell find . -name '*.cpp')
+CC_SRC 			:= $(shell find . -name '*.cc')
 
-OBJS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.o) $(CPP_SRC:%.cpp=$(OBJ_DIR)/%.o)
-DEPS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.d) $(CPP_SRC:%.cpp=$(OBJ_DIR)/%.d)
+OBJS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.o) $(CC_SRC:%.cc=$(OBJ_DIR)/%.o)
+DEPS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.d) $(CC_SRC:%.cc=$(OBJ_DIR)/%.d)
 
-# $(info Sources to be compiled: [${C_SRC}] [${CPP_SRC}])
-# $(info Objects to be compiled: [${OBJS}])
+$(info Sources to be compiled: [${C_SRC}] [${CC_SRC}])
+$(info Objects to be compiled: [${OBJS}])
 
 DEBUG=no
 OMP=yes
@@ -78,22 +78,22 @@ ifeq ($(CXX), clang++)
 	endif
 
 	ERR_FLAGS 	:=
-	CPP_FLAGS 	+= -stdlib=libstdc++ 
+	CC_FLAGS 	+= -stdlib=libstdc++ 
 else ifeq ($(CXX), g++)
 	ERR_FLAGS	:= -fdiagnostics-color=always -fmax-errors=1
 endif
 
 OPT_FLAGS 		+= -O3
-CPP_FLAGS 		+= -MMD -std=c++11 \
+CC_FLAGS 		+= -MMD -std=c++11 \
 					$(OPT_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) $(TIMING_FLAGS) $(DEFS) $(INCS) $(EXTRA_FLAGS)
 
-COMPILE 		:= $(CXX) $(CPP_FLAGS) $(ERR_FLAGS)
+COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS)
 
 #
 # start of rules
 #
 
-EXTS=c cpp
+EXTS=c cc
 define make_rule
 $(OBJ_DIR)/%.o: %.$1
 	$$(COMPILE) -o $$@ -c $$< $(EXTRA_FLAGS)

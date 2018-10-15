@@ -1,8 +1,8 @@
 #include <cmath>
 
-#include "MathUtils.hpp"
+#include "MathUtils.h"
 #include "jutil.h"
-#include "../data/TypeDefs.hpp"
+#include "../data/TypeDefs.h"
 
 namespace elfin
 {

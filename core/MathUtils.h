@@ -1,11 +1,11 @@
-#ifndef _MATHUTILS_HPP_
-#define _MATHUTILS_HPP_
+#ifndef MATHUTILS_H
+#define MATHUTILS_H
 
 #include <cmath>
 #include <cstdlib>
 
-#include "../data/TypeDefs.hpp"
-#include "../data/Gene.hpp"
+#include "../data/TypeDefs.h"
+#include "../data/Gene.h"
 
 // COLLISION_MEASURE is one of {avgAll, maxHeavy, maxCA}
 #define COLLISION_MEASURE maxHeavy

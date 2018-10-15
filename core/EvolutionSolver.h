@@ -1,8 +1,8 @@
-#ifndef _EVOLUTIONSOLVER_HPP_
-#define _EVOLUTIONSOLVER_HPP_
+#ifndef EVOLUTIONSOLVER_H
+#define EVOLUTIONSOLVER_H
 
-#include "../data/TypeDefs.hpp"
-#include "../data/Chromosome.hpp"
+#include "../data/TypeDefs.h"
+#include "../data/Chromosome.h"
 
 namespace elfin
 {

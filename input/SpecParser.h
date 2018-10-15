@@ -1,10 +1,10 @@
-#ifndef _SPECPARSER_H_
-#define _SPECPARSER_H_
+#ifndef SPECPARSER_H_
+#define SPECPARSER_H_
 
 #include <vector>
 #include <string>
 
-#include "../data/TypeDefs.hpp"
+#include "../data/TypeDefs.h"
 
 namespace elfin
 {

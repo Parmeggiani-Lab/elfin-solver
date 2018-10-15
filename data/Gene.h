@@ -1,9 +1,9 @@
-#ifndef _GENE_HPP_
-#define _GENE_HPP_
+#ifndef GENE_H
+#define GENE_H
 
 #include <vector>
 
-#include "TypeDefs.hpp"
+#include "TypeDefs.h"
 
 namespace elfin
 {
