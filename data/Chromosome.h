@@ -4,7 +4,7 @@
 #include <cmath>
 #include <string>
 
-#include "TypeDefs.h"
+#include "../src/elfin_types.h"
 #include "Gene.h"
 #include "../core/Checksum.h"
 
@@ -90,7 +90,7 @@ private:
 	static IdRoulette myGlobalRoulette;
 };
 
-int _testChromosome();
+int _testChromosome(const Options &options);
 } // namespace elfin
 
 #endif /* include guard */

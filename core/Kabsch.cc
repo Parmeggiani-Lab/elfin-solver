@@ -530,7 +530,7 @@ kabschScore(
 	return rms;
 }
 
-int _testKabsch()
+int _testKabsch(const Options &options)
 {
 	using namespace elfin;
 
@@ -629,7 +629,7 @@ int _testKabsch()
 	NameIdMap nameIdMap;
 	IdNameMap idNameMap;
 	RadiiList radiiList;
-	JSONParser().parseDB(elfin::options.xdb, nameIdMap, idNameMap, relaMat, radiiList);
+	JSONParser().parseDB(options.xdb, nameIdMap, idNameMap, relaMat, radiiList);
 
 	Gene::setup(&idNameMap);
 

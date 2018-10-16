@@ -17,7 +17,7 @@ namespace elfin
 EvolutionSolver::EvolutionSolver(const RelaMat & relaMat,
                                  const Points3f & spec,
                                  const RadiiList & radiiList,
-                                 const OptionPack & options) :
+                                 const Options & options) :
 	myRelaMat(relaMat),
 	mySpec(spec),
 	myRadiiList(radiiList),

@@ -842,7 +842,7 @@ Chromosome::genRandomGenes(
 }
 
 
-int _testChromosome()
+int _testChromosome(const Options &options)
 {
 	using namespace elfin;
 
@@ -851,7 +851,7 @@ int _testChromosome()
 	NameIdMap nameIdMap;
 	IdNameMap idNameMap;
 	RadiiList radiiList;
-	JSONParser().parseDB(elfin::options.xdb, nameIdMap, idNameMap, relaMat, radiiList);
+	JSONParser().parseDB(options.xdb, nameIdMap, idNameMap, relaMat, radiiList);
 
 	Gene::setup(&idNameMap);
 	Chromosome::setup(0, 100, relaMat, radiiList);

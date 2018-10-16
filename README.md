@@ -30,5 +30,5 @@ git submodule update
 
 - [ ] Create handlers stubs for each work type.
 
-- [ ] Started working on the main core solver - if there's time.
+- [ ] Started working on the main core solver.
 ​

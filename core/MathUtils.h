@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "../data/TypeDefs.h"
+#include "../src/elfin_types.h"
 #include "../data/Gene.h"
 
 // COLLISION_MEASURE is one of {avgAll, maxHeavy, maxCA}

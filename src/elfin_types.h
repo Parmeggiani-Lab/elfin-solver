@@ -1,5 +1,5 @@
-#ifndef TYPEDEFS_H_
-#define TYPEDEFS_H_
+#ifndef TYPE_DEFS_H
+#define TYPE_DEFS_H
 
 #include <vector>
 #include <map>
@@ -8,13 +8,12 @@
 #include <tuple>
 
 #include "jutil.h"
-#include "PrimitiveShorthands.h"
-#include "Geometry.h"
+#include "../data/PrimitiveShorthands.h"
+#include "../data/Geometry.h"
 
 #define toCString toString().c_str
 
-namespace elfin
-{
+namespace elfin {
 
 class PairRelationship;
 
@@ -29,8 +28,7 @@ typedef std::vector<long> IdRoulette;
 typedef std::vector<long> Ids;
 
 
-struct Vec2d
-{
+struct Vec2d {
 	long x, y;
 	Vec2d() : x(0), y(0) {};
 	Vec2d(long _x, long _y) : x(_x), y(_y) {};
@@ -43,8 +41,7 @@ typedef std::vector<std::tuple<IdPair, IdPairs>> CrossingVector;
 template <typename T>
 using Matrix = std::vector<std::vector<T>>;
 
-struct Radii
-{
+struct Radii {
 	float avgAll;
 	float maxCA;
 	float maxHeavy;
@@ -54,14 +51,15 @@ struct Radii
 };
 typedef std::vector<Radii> RadiiList;
 
-struct OptionPack
-{
+typedef struct {
+	bool valid = true;
+
 	// Input settings
 	std::string xdb = "xDB.json";
 	std::string inputFile = "";
 
-	enum InputType { Unknown, CSV, JSON };
-	InputType inputType = Unknown;
+	enum InputType { NONE, CSV, JSON };
+	InputType inputType = NONE;
 	std::string configFile = "config.json";
 	std::string outputDir = "output";
 
@@ -90,9 +88,7 @@ struct OptionPack
 
 	int device = 0;
 	int nBestSols = 3;
-};
-
-extern OptionPack options;
+} Options;
 
 } // namespace elfin
 

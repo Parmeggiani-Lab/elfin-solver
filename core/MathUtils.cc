@@ -2,7 +2,6 @@
 
 #include "MathUtils.h"
 #include "jutil.h"
-#include "../data/TypeDefs.h"
 
 namespace elfin
 {

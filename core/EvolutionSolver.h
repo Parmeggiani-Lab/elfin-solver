@@ -1,7 +1,7 @@
 #ifndef EVOLUTIONSOLVER_H
 #define EVOLUTIONSOLVER_H
 
-#include "../data/TypeDefs.h"
+#include "../src/elfin_types.h"
 #include "../data/Chromosome.h"
 
 namespace elfin
@@ -15,7 +15,7 @@ public:
 	EvolutionSolver(const RelaMat & relaMat,
 	                const Points3f & spec,
 	                const RadiiList & radiiList,
-	                const OptionPack & options);
+	                const Options & options);
 	virtual ~EvolutionSolver() {};
 
 	const Population * population() const;
@@ -26,7 +26,7 @@ private:
 	const RelaMat & myRelaMat;
 	const Points3f & mySpec;
 	const RadiiList & myRadiiList;
-	const OptionPack & myOptions;
+	const Options & myOptions;
 
 	uint myExpectedTargetLen;
 	uint myMinTargetLen;

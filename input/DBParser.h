@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "../data/TypeDefs.h"
+#include "../src/elfin_types.h"
 #include "../data/PairRelationship.h"
 
 namespace elfin

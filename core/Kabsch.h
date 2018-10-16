@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "../data/TypeDefs.h"
+#include "../src/elfin_types.h"
 #include "../data/Gene.h"
 
 namespace elfin
@@ -19,7 +19,7 @@ kabschScore(
     Points3f mobile,
     Points3f ref);
 
-int _testKabsch();
+int _testKabsch(const Options &options);
 } // namespace elfin
 
 #endif /* include guard */
