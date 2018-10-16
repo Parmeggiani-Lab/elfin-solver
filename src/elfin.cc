@@ -1,14 +1,16 @@
+/* Copyright 2018 Joy Yeh <joyyeh@gmail.com> */
+
+#include "../src/elfin.h"
+
 #include <string>
-#include <regex>
 #include <sstream>
 #include <csignal>
 #include <iostream>
 #include <fstream>
 
-#include "elfin.h"
-#include "elfin_types.h"
-#include "arg_parser.h"
-#include "jutil.h"
+#include "../src/elfin_types.h"
+#include "../src/arg_parser.h"
+#include "../src/jutil.h"
 #include "../input/SpecParser.h"
 #include "../input/CSVParser.h"
 #include "../input/JSONParser.h"
@@ -21,13 +23,11 @@
 #include <omp.h>
 #endif
 
-namespace elfin
-{
+namespace elfin {
 
 std::vector<ElfinRunner *> ElfinRunner::instances_;
 
-void ElfinRunner::interrupt_handler(const int signal)
-{
+void ElfinRunner::interrupt_handler(const int signal) {
     raw("\n\n");
     wrn("Caught interrupt signal\n");
 
@@ -41,17 +41,14 @@ void ElfinRunner::interrupt_handler(const int signal)
 }
 
 void ElfinRunner::crash_dump() {
-    if (es_started_)
-    {
+    if (es_started_) {
         wrn("Saving latest best solutions and exiting!\n");
-        using namespace elfin;
 
         const Population & p = es_->bestSoFar();
 
-        for (int i = 0; i < p.size(); i++)
-        {
-            std::vector<std::string> nodeNames = p.at(i).getNodeNames();
-            JSON nn = nodeNames;
+        for (int i = 0; i < p.size(); i++) {
+            std::vector<std::string> node_names = p.at(i).getNodeNames();
+            JSON nn = node_names;
             JSON j;
             j["nodes"] = nn;
             j["score"] = p.at(i).getScore();
@@ -67,9 +64,7 @@ void ElfinRunner::crash_dump() {
         }
 
         delete es_;
-    }
-    else
-    {
+    } else {
         wrn("GA did not get to start\n");
     }
 }
@@ -89,7 +84,11 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
 
     msg("Using master seed: %d\n", options_.randSeed);
 
-    JSONParser().parseDB(options_.xdb, name_id_map_, id_name_map_, rela_mat_, radii_list_);
+    JSONParser().parseDB(options_.xdb,
+        name_id_map_,
+        id_name_map_,
+        rela_mat_,
+        radii_list_);
 
     Gene::setup(&id_name_map_);
     setupParaUtils(options_.randSeed);
@@ -98,23 +97,17 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
 }
 
 void ElfinRunner::run() {
-    if (options_.runUnitTests)
-    {
-        int failCount = 0;
-        failCount += run_unit_tests();
-        failCount += run_meta_tests();
+    if (options_.runUnitTests) {
+        int fail_count = 0;
+        fail_count += run_unit_tests();
+        fail_count += run_meta_tests();
 
-        if (failCount > 0)
-        {
+        if (fail_count > 0) {
             die("Some unit tests failed\n");
-        }
-        else
-        {
+        } else {
             msg("Passed!\n");
         }
-    }
-    else
-    {
+    } else {
         es_ = new EvolutionSolver(rela_mat_,
                                  spec_,
                                  radii_list_,
@@ -125,61 +118,59 @@ void ElfinRunner::run() {
 
         const Population * p = es_->population();
 
-        for (int i = 0; i < options_.nBestSols; i++)
-        {
-            std::vector<std::string> nodeNames = p->at(i).getNodeNames();
-            JSON nn = nodeNames;
+        for (int i = 0; i < options_.nBestSols; i++) {
+            std::vector<std::string> node_names = p->at(i).getNodeNames();
+            JSON nn = node_names;
             JSON j;
             j["nodes"] = nn;
             j["score"] = p->at(i).getScore();
 
 
             // write json solution data (no coordinates)
-            std::ostringstream jsonOutputPath;
-            jsonOutputPath << options_.outputDir << "/" << &p->at(i) << ".json";
+            std::ostringstream json_output_path;
+            json_output_path << options_.outputDir
+                << "/" << &p->at(i) << ".json";
 
-            std::string dump = j.dump();
-            write_binary(jsonOutputPath.str().c_str(),
-                         dump.c_str(),
-                         dump.size());
+            std::string json_data = j.dump();
+            write_binary(json_output_path.str().c_str(),
+                         json_data.c_str(),
+                         json_data.size());
 
             // write csv (coorindates only)
-            std::ostringstream csvOutputPath;
-            csvOutputPath << options_.outputDir << "/" << &p->at(i) << ".csv";
+            std::ostringstream csv_output_path;
+            csv_output_path << options_.outputDir << "/" << &p->at(i) << ".csv";
 
-            std::string csvData = p->at(i).toCSVString();
-            write_binary(csvOutputPath.str().c_str(),
-                         csvData.c_str(),
-                         csvData.size());
+            std::string csv_data = p->at(i).toCSVString();
+            write_binary(csv_output_path.str().c_str(),
+                         csv_data.c_str(),
+                         csv_data.size());
         }
 
         delete es_;
     }
 }
 
-int ElfinRunner::run_unit_tests()
-{
+int ElfinRunner::run_unit_tests() {
     msg("Running unit tests...\n");
-    int failCount = 0;
-    failCount += _testMathUtils();
-    failCount += _testKabsch(options_);
-    failCount += _testChromosome(options_);
-    return failCount;
+    int fail_count = 0;
+    fail_count += _testMathUtils();
+    fail_count += _testKabsch(options_);
+    fail_count += _testChromosome(options_);
+    return fail_count;
 }
 
-int ElfinRunner::run_meta_tests()
-{
+int ElfinRunner::run_meta_tests() {
     msg("Running meta tests...\n");
-    int failCount = 0;
+    int fail_count = 0;
 
-    Points3f movedSpec = spec_;
+    Points3f moved_spec = spec_;
 
-    Vector3f rotArr[3] = {
+    Vector3f rot_arr[3] = {
         Vector3f(1.0f, 0.0f, 0.0f),
         Vector3f(0.0f, -0.5177697998f, 0.855519979f),
         Vector3f(0.0f, -0.855519979f, -0.5177697998f)
     };
-    Mat3x3 rotAroundX = Mat3x3(rotArr);
+    Mat3x3 rot_around_x = Mat3x3(rot_arr);
 
     // It seems that Kabsch cannot handle very large
     // translations, but in the scale we're working
@@ -187,85 +178,77 @@ int ElfinRunner::run_meta_tests()
     // one thousand Angstroms
     Vector3f tran(-39.0f, 999.3413f, -400.11f);
 
-    for (Point3f &p : movedSpec)
-    {
-        p = p.dot(rotAroundX);
+    for (Point3f &p : moved_spec) {
+        p = p.dot(rot_around_x);
         p += tran;
     }
 
     // Test scoring a transformed version of spec
-    const float trxScore = kabschScore(movedSpec, spec_);
-    if (!float_approximates(trxScore, 0))
-    {
-        failCount ++;
+    const float trx_score = kabschScore(moved_spec, spec_);
+    if (!float_approximates(trx_score, 0)) {
+        fail_count++;
         wrn("Self score test failed: self score should be 0\n");
     }
 
     // Test randomiser
     const int N = 10;
-    const int randTrials = 50000000;
-    const int expectAvg = randTrials / N;
-    const float randDevTolerance = 0.05f * expectAvg; //5% deviation
+    const int rand_trials = 50000000;
+    const int expect_avg = rand_trials / N;
+    const float rand_dev_tolerance = 0.05f * expect_avg;  // 5% deviation
 
-    int randCount[N] = {0};
-    for (int i = 0; i < randTrials; i++)
-    {
+    int rand_count[N] = {0};
+    for (int i = 0; i < rand_trials; i++) {
         const int dice = getDice(N);
-        if (dice >= N)
-        {
-            failCount++;
-            err("Failed to produce correct dice: getDice() produced %d for [0-%d)",
+        if (dice >= N) {
+            fail_count++;
+            err("Failed to produce correct dice: getDice() "
+                "produced %d for [0-%d)",
                 dice, N);
             break;
         }
-        randCount[dice]++;
+        rand_count[dice]++;
     }
 
-    for (int i = 0; i < N; i++)
-    {
-        const float randDev = (float) abs(randCount[i] - expectAvg) / (expectAvg);
-        if (randDev > randDevTolerance)
-        {
-            failCount++;
+    for (int i = 0; i < N; i++) {
+        const float rand_dev = static_cast<float>(
+            abs(rand_count[i] - expect_avg) / (expect_avg));
+        if (rand_dev > rand_dev_tolerance) {
+            fail_count++;
             err("Too much random deviation: %.3f%% (expecting %d)\n",
-                randDev, expectAvg);
+                rand_dev, expect_avg);
         }
     }
 
     // Test parallel randomiser
 #ifndef _NO_OMP
-    std::vector<uint> paraRandSeeds = getParaRandSeeds();
-    const int nThreads = paraRandSeeds.size();
-    const int paraRandN = 8096;
-    const long diceLim = 13377331;
+    std::vector<uint> para_rand_seeds = getParaRandSeeds();
+    const int n_threads = para_rand_seeds.size();
+    const int para_rand_n = 8096;
+    const int64_t dice_lim = 13377331;
 
-    std::vector<uint> rands1(paraRandN);
+    std::vector<uint> rands1(para_rand_n);
     #pragma omp parallel for
-    for (int i = 0; i < paraRandN; i++)
-        rands1.at(i) = getDice(diceLim);
+    for (int i = 0; i < para_rand_n; i++)
+        rands1.at(i) = getDice(dice_lim);
 
-    getParaRandSeeds() = paraRandSeeds;
-    std::vector<uint> rands2(paraRandN);
+    getParaRandSeeds() = para_rand_seeds;
+    std::vector<uint> rands2(para_rand_n);
     #pragma omp parallel for
-    for (int i = 0; i < paraRandN; i++)
-        rands2.at(i) = getDice(diceLim);
+    for (int i = 0; i < para_rand_n; i++)
+        rands2.at(i) = getDice(dice_lim);
 
-    for (int i = 0; i < paraRandN; i++)
-    {
-        if (rands1.at(i) != rands2.at(i))
-        {
-            failCount++;
+    for (int i = 0; i < para_rand_n; i++) {
+        if (rands1.at(i) != rands2.at(i)) {
+            fail_count++;
             err("Parallel randomiser failed: %d vs %d\n",
                 rands1.at(i), rands2.at(i));
         }
     }
 #endif
 
-    return failCount;
+    return fail_count;
 }
-} // namespace elfin
-
-using namespace elfin;
+}  // namespace elfin
 
 /*
  * The elfin design process:
@@ -279,8 +262,7 @@ using namespace elfin;
  *      use by Synth.py to produce full PDB
  */
 
-int main(const int argc, const char ** argv)
-{
-    ElfinRunner(argc, argv).run();
+int main(const int argc, const char ** argv) {
+    elfin::ElfinRunner(argc, argv).run();
     return 0;
 }

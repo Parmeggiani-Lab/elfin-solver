@@ -4,9 +4,6 @@
 namespace elfin
 {
 
-typedef unsigned long ulong;
-typedef unsigned long long ullong;
-typedef long long llong;
 typedef unsigned int uint;
 typedef unsigned char uchar;
 
