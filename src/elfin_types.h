@@ -7,8 +7,6 @@
 #include <string>
 #include <tuple>
 
-#include "jutil.h"
-#include "../data/PrimitiveShorthands.h"
 #include "../data/Geometry.h"
 
 #define toCString toString().c_str
@@ -27,6 +25,8 @@ typedef std::vector<RelaRow> RelaMat;
 typedef std::vector<long> IdRoulette;
 typedef std::vector<long> Ids;
 
+typedef uint32_t uint;
+typedef uint64_t ulong;
 
 struct Vec2d {
 	long x, y;
@@ -58,9 +58,7 @@ typedef struct {
 	std::string xdb = "xDB.json";
 	std::string inputFile = "";
 
-	enum InputType { NONE, CSV, JSON };
-	InputType inputType = NONE;
-	std::string configFile = "config.json";
+	std::string configFile = "";
 	std::string outputDir = "output";
 
 	ulong lenDevAlw = 3;

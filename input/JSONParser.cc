@@ -1,7 +1,8 @@
 #include <fstream>
 
 #include "JSONParser.h"
-#include "jutil.h"
+
+#include "../jutil/src/jutil.h"
 
 namespace elfin
 {

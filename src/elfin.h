@@ -4,13 +4,15 @@
 #include <vector>
 #include "../core/EvolutionSolver.h"
 
+#include "input/spec.h"
+
 namespace elfin {
 
 class ElfinRunner
 {
 private:
     Options options_;
-    Points3f spec_;
+    Spec spec_;
     EvolutionSolver * es_;
 
     RelaMat rela_mat_;

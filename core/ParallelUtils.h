@@ -8,7 +8,7 @@
 #include <omp.h>
 #endif
 
-#include "../data/PrimitiveShorthands.h"
+#include "../jutil/src/jutil.h"
 
 #ifdef _NO_OMP
 
@@ -35,8 +35,6 @@ inline int omp_get_initial_device() { return 0; }
 #endif
 
 #ifdef _DO_TIMING
-
-#include "jutil.h"
 #define TIMING_START(varName) \
 	const double varName = get_timestamp_us();
 

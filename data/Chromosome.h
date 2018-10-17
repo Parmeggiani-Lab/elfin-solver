@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../src/elfin_types.h"
+#include "../jutil/src/jutil.h"
 #include "Gene.h"
 #include "../core/Checksum.h"
 

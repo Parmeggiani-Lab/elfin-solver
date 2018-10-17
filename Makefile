@@ -55,7 +55,7 @@ else
 	TIMING_FLAGS=
 endif
 
-INCS 			:= -I./jutil/src/ -I.
+INCS 			:= -I.
 
 ifeq ($(CXX), clang++)
 	ifeq ($(OS),Windows_NT)
@@ -108,7 +108,7 @@ deleteTestObjs:
 
 
 test: $(EXE)
-	./$(BIN_DIR)/$(EXE) -git 1
+	./$(BIN_DIR)/$(EXE) -c config/test.json
 
 FORCE:
 .PHONY: all clean

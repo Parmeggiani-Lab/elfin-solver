@@ -1,0 +1,20 @@
+{
+	"input_file": "examples/spec_H_all.json",
+	"xdb": "xdb.json",
+	"output_dir": "./output/",
+
+	"rand_seed": "0xbeef1337",
+
+	"len_dev_alw": 3,
+
+	"ga_pop_size": 10000,
+	"ga_iters": 1000,
+
+	"ga_survive_rate": 0.02,
+	
+	"ga_cross_rate": 0.2,
+	"ga_point_mutate_rate": 0.4,
+	"ga_limb_mutate_rate": 0.4,
+
+	"max_stagnant_gens": 5
+}

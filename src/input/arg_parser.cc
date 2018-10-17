@@ -3,8 +3,7 @@
 #include <regex>
 #include <sstream>
 
-#include "../input/CSVParser.h"
-#include "../input/JSONParser.h"
+#include "spec_parser.h"
 
 namespace elfin {
 
@@ -32,34 +31,40 @@ ARG_PARSER_CALLBACK(parse_config) {
              "Settings file does not exist: \"%s\"\n",
              options_.configFile.c_str());
 
-    const JSON j = JSONParser().parse(options_.configFile);
+    const JSON j = parse_json(options_.configFile);
 
-    for (const auto & ab : argb_) {
-        if (!j[ab.long_form].is_null()) {
-            (this->*ab.callback)(json_to_str(j[ab.long_form]));
+    /* 
+    The following commented block ignores unrecognized options, which is an
+    undesirably behaviour - we want to error out if user writes something
+    unexpected.
+
+    Maybe we could make argb_ some sort of dictionary with
+    two keys, but this is not critical to overall performance.
+    */
+    // for (const auto & ab : argb_) {
+    //     if (!j[ab.long_form].is_null()) {
+    //         (this->*ab.callback)(json_to_str(j[ab.long_form]));
+    //     }
+    // }
+
+    for (auto it = j.begin(); it != j.end(); ++it) {
+        const std::string opt_name = "--" + it.key();
+        auto ab = match_arg_bundle(opt_name.c_str());
+        if (ab) {
+            (this->*ab->callback)(json_to_str(j[ab->long_form]));
+        } else {
+            die("Unrecognized option: %s\n", opt_name.c_str());
         }
     }
 }
 
 ARG_PARSER_CALLBACK(set_input_file) { 
     options_.inputFile = arg_in; 
-    // Extensions
-    if (std::regex_match(
-                options_.inputFile,
-                std::regex("(.*)(\\.csv)", std::regex::icase)))
-    {
-        msg("Using CSV input\n");
-        options_.inputType = Options::InputType::CSV;
-    }
-    else if (std::regex_match(
-                 options_.inputFile,
-                 std::regex("(.*)(\\.json)", std::regex::icase)))
-    {
-        msg("Using JSON input\n");
-        options_.inputType = Options::InputType::JSON;
-    }
-    else {
-        die("Unrecognized input file type\n");
+    // Assume the input is a JSON file
+    try {
+        spec_ = SpecParser().parse(options_.inputFile);
+    } catch (const std::exception & e) {
+        die("Unable to parse input file as JSON. Reason: %s", e.what());
     }
 }
 
@@ -75,14 +80,14 @@ void ArgParser::print_args() const {
 
 const ArgBundle * ArgParser::match_arg_bundle(const char *arg_in) {
     // anything shorter than 2 chars cannot match
-    if (arg_in[0] == '-' and arg_in[1] != '\0') {
+    if (arg_in[0] == '-')
         arg_in++; // to skip "-"
-        for (const auto & ab : argb_) {
-            if (!ab.short_form.compare(arg_in) or
-                (arg_in[0] == '-' and !ab.long_form.compare((char *) (arg_in + 1)))
-                ) { 
-                return &ab;
-            }
+
+    for (const auto & ab : argb_) {
+        if (!ab.short_form.compare(arg_in) or
+            (arg_in[0] == '-' and !ab.long_form.compare((char *) (arg_in + 1)))
+            ) { 
+            return &ab;
         }
     }
 
@@ -90,26 +95,21 @@ const ArgBundle * ArgParser::match_arg_bundle(const char *arg_in) {
 }
 
 void ArgParser::parse_options(const int argc, char const *argv[]) {
-    for (int i = 1; i < argc; i++)
-    {
+    for (int i = 1; i < argc; i++) {
         // iterate through argument bundle to match argument
         auto arg = argv[i];
         auto ab = match_arg_bundle(arg);
         if (ab) {
-            if (ab->exp_val)
-            {
-                if (i + 1 > argc - 1)
-                {
+            if (ab->exp_val) {
+                if (i + 1 > argc - 1) {
                     err("Argument %s expects to be followed by a value\n", arg);
                     failure_callback(arg);
                 }
-                else
-                {
+                else {
                     (this->*ab->callback)(argv[++i]); // passes next arg string
                 }
             }
-            else
-            {
+            else {
                 (this->*ab->callback)(arg); // passes current arg name
             }
         }
@@ -118,17 +118,6 @@ void ArgParser::parse_options(const int argc, char const *argv[]) {
             failure_callback(arg);
         }
     }
-}
-
-std::string ArgParser::json_to_str(const JSON & j) const {
-    std::ostringstream ss;
-    if (j.is_string()) {
-        ss << j.get<std::string>();
-    }
-    else {
-        ss << j;
-    }
-    return ss.str();
 }
 
 void ArgParser::check_options() const {
@@ -157,8 +146,7 @@ void ArgParser::check_options() const {
     panic_if(options_.outputDir == "",
              "No output directory given. Check help using -h\n");
 
-    if (!file_exists(options_.outputDir.c_str()))
-    {
+    if (!file_exists(options_.outputDir.c_str())) {
         wrn("Output directory does not exist; creating...\n");
         mkdir_ifn_exists(options_.outputDir.c_str());
     }
@@ -198,8 +186,7 @@ void ArgParser::correct_rates() {
     float sumRates = options_.gaCrossRate +
                      options_.gaPointMutateRate +
                      options_.gaLimbMutateRate;
-    if ((rateCorrected = (sumRates > 1.0)))
-    {
+    if ((rateCorrected = (sumRates > 1.0))) {
         options_.gaCrossRate         /= sumRates;
         options_.gaPointMutateRate   /= sumRates;
         options_.gaLimbMutateRate    /= sumRates;
@@ -208,8 +195,7 @@ void ArgParser::correct_rates() {
                    options_.gaLimbMutateRate;
     }
 
-    if (rateCorrected)
-    {
+    if (rateCorrected) {
         wrn("Sum of GA cross + point mutate + limb mutate rates must be <= 1\n");
         wrn("Rates corrected to: %.2f, %.2f, %.2f\n",
             options_.gaCrossRate,
@@ -232,19 +218,8 @@ Options ArgParser::get_options() const {
     return options_;
 }
 
-Points3f ArgParser::get_spec() const {
-    switch (options_.inputType)
-    {
-    case Options::InputType::CSV:
-        return CSVParser().parseSpec(options_.inputFile);
-    case Options::InputType::JSON:
-        return JSONParser().parseSpec(options_.inputFile);
-    default:
-        die("Unknown input format\n");
-    }
-
-    // just to stop compiler from complaining...
-    return Points3f();
+Spec ArgParser::get_spec() const {
+    return spec_;
 }
 
 } // namespace elfin

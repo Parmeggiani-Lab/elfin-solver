@@ -6,7 +6,7 @@
 #include <limits>
 
 #include "EvolutionSolver.h"
-#include "jutil.h"
+#include "../jutil/src/jutil.h"
 #include "ParallelUtils.h"
 
 namespace elfin
@@ -15,7 +15,7 @@ namespace elfin
 // Constructors
 
 EvolutionSolver::EvolutionSolver(const RelaMat & relaMat,
-                                 const Points3f & spec,
+                                 const Spec & spec,
                                  const RadiiList & radiiList,
                                  const Options & options) :
 	myRelaMat(relaMat),

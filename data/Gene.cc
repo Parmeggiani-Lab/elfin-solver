@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include "Gene.h"
+#include "../jutil/src/jutil.h"
 
 namespace elfin
 {

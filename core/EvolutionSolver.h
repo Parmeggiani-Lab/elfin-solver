@@ -3,6 +3,7 @@
 
 #include "../src/elfin_types.h"
 #include "../data/Chromosome.h"
+#include "../src/input/spec.h"
 
 namespace elfin
 {
@@ -13,7 +14,7 @@ class EvolutionSolver
 {
 public:
 	EvolutionSolver(const RelaMat & relaMat,
-	                const Points3f & spec,
+	                const Spec & spec,
 	                const RadiiList & radiiList,
 	                const Options & options);
 	virtual ~EvolutionSolver() {};
@@ -24,7 +25,7 @@ public:
 	void run();
 private:
 	const RelaMat & myRelaMat;
-	const Points3f & mySpec;
+	const Spec & mySpec;
 	const RadiiList & myRadiiList;
 	const Options & myOptions;
 

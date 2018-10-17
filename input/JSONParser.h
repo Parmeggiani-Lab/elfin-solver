@@ -1,7 +1,7 @@
 #ifndef JSONPARSER_H
 #define JSONPARSER_H
 
-#include "json.h"
+#include "../src/input/json.h"
 
 #include "SpecParser.h"
 #include "DBParser.h"

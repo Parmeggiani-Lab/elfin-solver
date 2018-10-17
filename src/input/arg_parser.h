@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include "jutil.h"
-#include "elfin_types.h"
-#include "../input/JSONParser.h"
+#include "../../jutil/src/jutil.h"
+#include "../elfin_types.h"
+#include "spec.h"
 
 #define ARG_PARSER_CALLBACK_PARAMETERS \
     const std::string && arg_in
@@ -61,26 +61,26 @@ private:
     ARG_PARSER_CALLBACK_IN_HEADER(set_n_best_sols) { options_.nBestSols = parse_long(arg_in.c_str()); }
 
     void print_args() const;
-    std::string json_to_str(const JSON & j) const;
 
     Options options_;
+    Spec spec_;
     std::vector<ArgBundle> argb_ = {
         {"h", "help", "Print this help text and exit", false, &ArgParser::help_and_exit},
-        {"c", "set_config_file", "Set config file (default ./config.json)", true, &ArgParser::parse_config},
-        {"i", "input_file", "Set input file", true, &ArgParser::set_input_file},
-        {"x", "xdb", "Set xDB file (default ./xDB.json)", true, &ArgParser::set_xdb},
-        {"o", "output_dir", "Set output directory (default ./out/)", true, &ArgParser::set_output_dir},
-        {"d", "len_dev_alw", "Set length deviation allowance (default 3)", true, &ArgParser::set_len_dev_alw},
-        {"a", "avg_pair_dist", "Overwrite default average distance between doubles of CoMs (default 38.0)", true, &ArgParser::set_avg_pair_dist},
-        {"rs", "rand_seed", "Set RNG seed (default 0x1337cafe; setting to 0 uses time as seed)", true, &ArgParser::set_rand_seed},
-        {"gps", "ga_pop_size", "Set GA population size (default 10000)", true, &ArgParser::set_ga_pop_size},
-        {"git", "ga_iters", "Set GA iterations (default 1000)", true, &ArgParser::set_ga_iters},
-        {"gsr", "ga_survive_rate", "Set GA survival rate (default 0.1)", true, &ArgParser::set_ga_survive_rate},
-        {"gcr", "ga_cross_rate", "Set GA surviver cross rate (default 0.60)", true, &ArgParser::set_ga_cross_rate},
-        {"gmr", "ga_point_mutate_rate", "Set GA surviver point mutation rate (default 0.3)", true, &ArgParser::set_ga_point_mutate_rate},
-        {"gmr", "ga_limb_mutate_rate", "Set GA surviver limb mutation rate (default 0.3)", true, &ArgParser::set_ga_limb_mutate_rate},
-        {"stt", "score_stop_threshold", "Set GA exit score threshold (default 0.0)", true, &ArgParser::set_score_stop_threshold},
-        {"msg", "max_stagnant_gens", "Set number of stagnant generations before GA exits (default 50)", true, &ArgParser::set_max_stagnant_gens},
+        {"c", "set_config_file", "Set config file path", true, &ArgParser::parse_config},
+        {"i", "input_file", "Set input file path", true, &ArgParser::set_input_file},
+        {"x", "xdb", "Set xdb database file path (default=./xdb.json)", true, &ArgParser::set_xdb},
+        {"o", "output_dir", "Set output directory (default=./output/)", true, &ArgParser::set_output_dir},
+        {"d", "len_dev_alw", "Set length deviation allowance (default=3)", true, &ArgParser::set_len_dev_alw},
+        {"a", "avg_pair_dist", "Overwrite default=average distance between doubles of CoMs (default=38.0)", true, &ArgParser::set_avg_pair_dist},
+        {"rs", "rand_seed", "Set RNG seed (default=0x1337cafe; setting to 0 uses time as seed)", true, &ArgParser::set_rand_seed},
+        {"gps", "ga_pop_size", "Set GA population size (default=10000)", true, &ArgParser::set_ga_pop_size},
+        {"git", "ga_iters", "Set GA iterations (default=1000)", true, &ArgParser::set_ga_iters},
+        {"gsr", "ga_survive_rate", "Set GA survival rate (default=0.1)", true, &ArgParser::set_ga_survive_rate},
+        {"gcr", "ga_cross_rate", "Set GA surviver cross rate (default=0.60)", true, &ArgParser::set_ga_cross_rate},
+        {"gmr", "ga_point_mutate_rate", "Set GA surviver point mutation rate (default=0.3)", true, &ArgParser::set_ga_point_mutate_rate},
+        {"gmr", "ga_limb_mutate_rate", "Set GA surviver limb mutation rate (default=0.3)", true, &ArgParser::set_ga_limb_mutate_rate},
+        {"stt", "score_stop_threshold", "Set GA exit score threshold (default=0.0)", true, &ArgParser::set_score_stop_threshold},
+        {"msg", "max_stagnant_gens", "Set number of stagnant generations before GA exits (default=50)", true, &ArgParser::set_max_stagnant_gens},
         {"lg", "log_level", "Set log level", true, &ArgParser::set_log_level},
         {"t", "test", "Run unit tests", false, &ArgParser::set_run_unit_tests},
         {"dv", "device", "Run on accelerator device ID", true, &ArgParser::set_device},
@@ -94,7 +94,7 @@ public:
     ArgParser(const int argc, char const *argv[]);
     ~ArgParser();
     Options get_options() const;
-    Points3f get_spec() const;
+    Spec get_spec() const;
 };
 
 }

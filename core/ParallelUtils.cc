@@ -1,7 +1,6 @@
 #include <stdlib.h>
 
 #include "ParallelUtils.h"
-#include "jutil.h"
 
 namespace elfin
 {

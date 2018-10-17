@@ -17,8 +17,7 @@ compiler:
 env: 
   - OMP_NUM_THREADS=4
 script:
-  - make
-  - ./bin/elfin -x xdb.json -i input/test_input_1696.json -msg  3 -gps 1000
+  - make -j2 test
 
 notifications:
   email:

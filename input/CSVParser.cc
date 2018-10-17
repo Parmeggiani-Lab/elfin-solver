@@ -1,6 +1,6 @@
 #include "CSVParser.h"
 
-#include "jutil.h"
+#include "../jutil/src/jutil.h"
 
 namespace LokiAstari
 {

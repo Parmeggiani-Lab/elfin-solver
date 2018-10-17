@@ -2,12 +2,13 @@
 #include <cmath>
 #include <iomanip>
 
-#include "PrimitiveShorthands.h"
 #include "Geometry.h"
-#include "jutil.h"
+#include "../jutil/src/jutil.h"
 
 namespace elfin
 {
+
+typedef uint32_t uint;
 
 Vector3f::Vector3f(const Vector3f & rhs) :
 	x(rhs.x), y(rhs.y), z(rhs.z)
@@ -237,8 +238,8 @@ Mat3x3::dot(const Mat3x3 & mat) const
 	std::vector<float> v(9);
 	for (int i = 0; i < 9; i++)
 	{
-		const uint colId = i % 3;
-		const uint rowId = i / 3;
+		const uint32_t colId = i % 3;
+		const uint32_t rowId = i / 3;
 		v.at(i) = rows[rowId].x * (*((float *) & (mat.rows[0].x) + colId)) +
 		          rows[rowId].y * (*((float *) & (mat.rows[1].x) + colId)) +
 		          rows[rowId].z * (*((float *) & (mat.rows[2].x) + colId));
@@ -254,8 +255,8 @@ Mat3x3::transpose() const
 	std::vector<float> v(9);
 	for (int i = 0; i < 9; i++)
 	{
-		const uint colId = i % 3;
-		const uint rowId = i / 3;
+		const uint32_t colId = i % 3;
+		const uint32_t rowId = i / 3;
 		v.at(i) = *((float*) & (rows[colId].x) + rowId);
 	}
 

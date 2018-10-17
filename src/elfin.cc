@@ -8,9 +8,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "../src/elfin_types.h"
-#include "../src/arg_parser.h"
-#include "../src/jutil.h"
+#include "elfin_types.h"
+#include "input/arg_parser.h"
+#include "../jutil/src/jutil.h"
 #include "../input/SpecParser.h"
 #include "../input/CSVParser.h"
 #include "../input/JSONParser.h"
@@ -249,18 +249,6 @@ int ElfinRunner::run_meta_tests() {
     return fail_count;
 }
 }  // namespace elfin
-
-/*
- * The elfin design process:
- *   Input:
- *      A vector of Centre of Mass shape specification
- *   Algorithm:
- *      GA with a variety of inheritance and also a desturctive
- *      gene (shape candidate) operator
- *   Output:
- *      A vector of module (node) names suitable for
- *      use by Synth.py to produce full PDB
- */
 
 int main(const int argc, const char ** argv) {
     elfin::ElfinRunner(argc, argv).run();
