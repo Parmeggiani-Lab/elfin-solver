@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "../../jutil/src/jutil.h"
 #include "../elfin_types.h"
@@ -63,7 +64,9 @@ private:
     void print_args() const;
 
     Options options_;
-    Spec spec_;
+    std::shared_ptr<Spec> spec_;
+
+    /* Matching ArgBundle is an ugly O(n^2). Would be nice to do a map instead. */
     std::vector<ArgBundle> argb_ = {
         {"h", "help", "Print this help text and exit", false, &ArgParser::help_and_exit},
         {"c", "set_config_file", "Set config file path", true, &ArgParser::parse_config},
@@ -92,9 +95,9 @@ private:
 
 public:
     ArgParser(const int argc, char const *argv[]);
-    ~ArgParser();
+    virtual ~ArgParser();
     Options get_options() const;
-    Spec get_spec() const;
+    std::shared_ptr<Spec> get_spec() const;
 };
 
 }

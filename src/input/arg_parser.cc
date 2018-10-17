@@ -33,20 +33,6 @@ ARG_PARSER_CALLBACK(parse_config) {
 
     const JSON j = parse_json(options_.configFile);
 
-    /* 
-    The following commented block ignores unrecognized options, which is an
-    undesirably behaviour - we want to error out if user writes something
-    unexpected.
-
-    Maybe we could make argb_ some sort of dictionary with
-    two keys, but this is not critical to overall performance.
-    */
-    // for (const auto & ab : argb_) {
-    //     if (!j[ab.long_form].is_null()) {
-    //         (this->*ab.callback)(json_to_str(j[ab.long_form]));
-    //     }
-    // }
-
     for (auto it = j.begin(); it != j.end(); ++it) {
         const std::string opt_name = "--" + it.key();
         auto ab = match_arg_bundle(opt_name.c_str());
@@ -58,13 +44,11 @@ ARG_PARSER_CALLBACK(parse_config) {
     }
 }
 
-ARG_PARSER_CALLBACK(set_input_file) { 
-    options_.inputFile = arg_in; 
+ARG_PARSER_CALLBACK(set_input_file) {
+    options_.inputFile = arg_in;
     // Assume the input is a JSON file
-    try {
-        spec_ = SpecParser().parse(options_.inputFile);
-    } catch (const std::exception & e) {
-        die("Unable to parse input file as JSON. Reason: %s", e.what());
+    if (!(spec_ = SpecParser().parse(options_.inputFile))) {
+        die("Failed to parse input spec.\n");
     }
 }
 
@@ -85,8 +69,8 @@ const ArgBundle * ArgParser::match_arg_bundle(const char *arg_in) {
 
     for (const auto & ab : argb_) {
         if (!ab.short_form.compare(arg_in) or
-            (arg_in[0] == '-' and !ab.long_form.compare((char *) (arg_in + 1)))
-            ) { 
+                (arg_in[0] == '-' and !ab.long_form.compare((char *) (arg_in + 1)))
+           ) {
             return &ab;
         }
     }
@@ -218,7 +202,7 @@ Options ArgParser::get_options() const {
     return options_;
 }
 
-Spec ArgParser::get_spec() const {
+std::shared_ptr<Spec> ArgParser::get_spec() const {
     return spec_;
 }
 

@@ -165,7 +165,7 @@ JSON JSONParser::parse(const std::string & filename)
 
 void JSONParser::inspect(const std::string & filename)
 {
-	std::cout << this->parse(filename).dump() << std::endl;
+	raw("%s\n", this->parse(filename).dump());
 }
 
 } // namespace elfin

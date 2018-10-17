@@ -1,17 +1,32 @@
 #ifndef SPEC_H_
 #define SPEC_H_
 
-#include "json.h"
-#include "../../data/Geometry.h"
+#include <vector>
+
+#include "work_area.h"
 
 namespace elfin {
 
-// TODO: Remove inheritance
-class Spec : public Points3f
+class SpecParser;
+
+class Spec
 {
+    friend class SpecParser;
+
+protected:
+    std::vector<const WorkArea *> work_areas_;
+
 public:
     Spec() {};
-    Spec(const JSON & j);
+    virtual ~Spec() {
+        while(work_areas_.size() > 0) {
+            const WorkArea * wa = work_areas_.back();
+            work_areas_.pop_back();
+            delete wa;
+        }
+    }
+
+    const std::vector<const WorkArea *> & get_work_areas() const { return work_areas_; };
 };
 
 }  /* elfin */

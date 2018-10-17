@@ -8,153 +8,13 @@
 #include "EvolutionSolver.h"
 #include "../jutil/src/jutil.h"
 #include "ParallelUtils.h"
+#include "../src/input/work_area.h"
 
 namespace elfin
 {
 
-// Constructors
+/* Private Methods */
 
-EvolutionSolver::EvolutionSolver(const RelaMat & relaMat,
-                                 const Spec & spec,
-                                 const RadiiList & radiiList,
-                                 const Options & options) :
-	myRelaMat(relaMat),
-	mySpec(spec),
-	myRadiiList(radiiList),
-	myOptions(options)
-{
-	mySurviverCutoff = std::round(options.gaSurviveRate * options.gaPopSize);
-
-	myNonSurviverCount = (options.gaPopSize - mySurviverCutoff);
-	myCrossCutoff = mySurviverCutoff + std::round(options.gaCrossRate * myNonSurviverCount);
-	myPointMutateCutoff = myCrossCutoff + std::round(options.gaPointMutateRate * myNonSurviverCount);
-	myLimbMutateCutoff = std::min(
-	                         (ulong) (myPointMutateCutoff + std::round(options.gaLimbMutateRate * myNonSurviverCount)),
-	                         (ulong) options.gaPopSize);
-
-	myExpectedTargetLen = Chromosome::calcExpectedLength(spec, options.avgPairDist);
-	myMinTargetLen = myExpectedTargetLen - myOptions.lenDevAlw;
-	myMaxTargetLen = myExpectedTargetLen + myOptions.lenDevAlw;
-
-	Chromosome::setup(myMinTargetLen, myMaxTargetLen, myRelaMat, myRadiiList);
-}
-
-const Population *
-EvolutionSolver::population() const
-{
-	return myCurrPop;
-}
-
-const Population &
-EvolutionSolver::bestSoFar() const
-{
-	return myBestSoFar;
-}
-
-// Public methods
-
-Chromosome * myBuffPopData;
-const Chromosome * myCurrPopData;
-size_t myPopSize;
-
-void
-EvolutionSolver::run()
-{
-	this->printStartMsg();
-
-	this->startTimer();
-
-	initPopulation();
-
-	myBestSoFar.resize(myOptions.nBestSols);
-
-	float lastGenBestScore = std::numeric_limits<double>::infinity();
-	int stagnantCount = 0;
-
-	const int genDispDigits = std::ceil(std::log(myOptions.gaIters) / std::log(10));
-	char * genMsgFmt;
-	int asprintf_ret = -1;
-	asprintf_ret = asprintf(&genMsgFmt,
-	         "Generation #%%%dd: best=%%.2f (%%.2f/module), worst=%%.2f, time taken=%%.0fms\n", genDispDigits);
-	char * avgTimeMsgFmt;
-	asprintf_ret = asprintf(&avgTimeMsgFmt,
-	         "Avg Times: Evolve=%%.0f,Score=%%.0f,Rank=%%.0f,Select=%%.0f,Gen=%%.0f\n");
-
-	MAP_DATA()
-	{
-		for (int i = 0; i < myOptions.gaIters; i++)
-		{
-			const double genStartTime = get_timestamp_us();
-			{
-				evolvePopulation();
-
-				scorePopulation();
-
-				rankPopulation();
-
-				selectParents();
-
-				swapPopBuffers();
-			}
-
-			const float genBestScore = myCurrPop->front().getScore();
-			const ulong genBestChromoLen = myCurrPop->front().genes().size();
-			const float genWorstScore = myCurrPop->back().getScore();
-			const double genTime = ((get_timestamp_us() - genStartTime) / 1e3);
-			msg(genMsgFmt, i,
-			    genBestScore,
-			    genBestScore / genBestChromoLen,
-			    genWorstScore,
-			    genTime);
-
-			myTotGenTime += genTime;
-
-			msg(avgTimeMsgFmt,
-			    (float) myTotEvolveTime / (i + 1),
-			    (float) myTotScoreTime / (i + 1),
-			    (float) myTotRankTime / (i + 1),
-			    (float) myTotSelectTime / (i + 1),
-			    (float) myTotGenTime / (i + 1));
-
-			// Can stop loop if best score is low enough
-			if (genBestScore < myOptions.scoreStopThreshold)
-			{
-				msg("Score stop threshold %.2f reached\n", myOptions.scoreStopThreshold);
-				break;
-			}
-			else
-			{
-				for (int i = 0; i < myOptions.nBestSols; i++)
-					myBestSoFar.at(i) = myCurrPop->at(i);
-
-				if (float_approximates(genBestScore, lastGenBestScore))
-				{
-					stagnantCount++;
-				}
-				else
-				{
-					stagnantCount = 0;
-				}
-
-				lastGenBestScore = genBestScore;
-
-				if (stagnantCount >= myOptions.maxStagnantGens)
-				{
-					wrn("Solver stopped because max stagnancy is reached (%d)\n", myOptions.maxStagnantGens);
-					break;
-				}
-				else
-				{
-					msg("Current stagnancy: %d, max: %d\n", stagnantCount, myOptions.maxStagnantGens);
-				}
-			}
-		}
-	}
-
-	this->printEndMsg();
-}
-
-// Private methods
 #ifdef _VTUNE
 #include <ittnotify.h>
 #endif
@@ -169,7 +29,16 @@ bool (Chromosome::*pointMutateChromoFunct)() = &Chromosome::pointMutate;
 bool (Chromosome::*limbMutateChromoFunct)() = &Chromosome::limbMutate;
 
 void
-EvolutionSolver::evolvePopulation()
+EvolutionSolver::set_length_guesses(const WorkArea & wa) {
+	myExpectedTargetLen = Chromosome::calcExpectedLength(wa, myOptions.avgPairDist);
+	myMinTargetLen = myExpectedTargetLen - myOptions.lenDevAlw;
+	myMaxTargetLen = myExpectedTargetLen + myOptions.lenDevAlw;
+
+	Chromosome::setup(myMinTargetLen, myMaxTargetLen, myRelaMat, myRadiiList);
+}
+
+void
+EvolutionSolver::evolvePopulation(const WorkArea & wa)
 {
 #ifdef _VTUNE
 	__itt_resume();  // start VTune, again use 2 underscores
@@ -180,7 +49,7 @@ EvolutionSolver::evolvePopulation()
 	TIMING_START(startTimeEvolving);
 	{
 		// Probabilistic evolution
-		msg("Evolution: %.2f%% Done", (float) 0.0f);
+		msg("Evolution: %.2f%%", (float) 0.0f);
 
 		ulong crossCount = 0, pmCount = 0, lmCount = 0, randCount = 0;
 		const ulong gaPopBlock = myOptions.gaPopSize / 10;
@@ -251,7 +120,7 @@ EvolutionSolver::evolvePopulation()
 			if (i % gaPopBlock == 0)
 			{
 				ERASE_LINE();
-				msg("Evolution: %.2f%% Done", (float) i / myOptions.gaPopSize);
+				msg("Evolution: %.2f%%", (float) i / myOptions.gaPopSize);
 			}
 #endif
 		}
@@ -279,22 +148,22 @@ EvolutionSolver::evolvePopulation()
 void (Chromosome::*scoreChromoFunct)(const Points3f &) = &Chromosome::score;
 
 void
-EvolutionSolver::scorePopulation()
+EvolutionSolver::scorePopulation(const WorkArea & wa)
 {
 	TIMING_START(startTimeScoring);
 	{
-		msg("Scoring: 0%% Done");
+		msg("Scoring: 0%%");
 		const ulong scoreBlock = myOptions.gaPopSize / 10;
 
 		OMP_PAR_FOR
 		for (int i = 0; i < myOptions.gaPopSize; i++)
 		{
-			(myBuffPopData[i].*scoreChromoFunct)(mySpec);
+			(myBuffPopData[i].*scoreChromoFunct)(wa);
 #ifndef _TARGET_GPU
 			if (i % scoreBlock == 0)
 			{
 				ERASE_LINE();
-				msg("Scoring: %.2f%% Done",
+				msg("Scoring: %.2f%%",
 				    (float) i / myOptions.gaPopSize);
 			}
 #endif
@@ -371,7 +240,7 @@ EvolutionSolver::swapPopBuffers()
 }
 
 void
-EvolutionSolver::initPopulation()
+EvolutionSolver::initPopulation(const WorkArea & wa)
 {
 	TIMING_START(startTimeInit);
 	{
@@ -393,7 +262,7 @@ EvolutionSolver::initPopulation()
 
 		const ulong block = myOptions.gaPopSize / 10;
 
-		msg("Initialising population: %.2f%% Done", 0.0f);
+		msg("Initialising population: %.2f%%", 0.0f);
 
 		Chromosome * mpb0 = myPopulationBuffers[0].data();
 		Chromosome * mpb1 = myPopulationBuffers[1].data();
@@ -407,17 +276,17 @@ EvolutionSolver::initPopulation()
 			if (i % block == 0)
 			{
 				ERASE_LINE();
-				msg("Initialising population: %.2f%% Done", (float) i / myOptions.gaPopSize);
+				msg("Initialising population: %.2f%%", (float) i / myOptions.gaPopSize);
 			}
 #endif
 		}
 
 		// Hard test - ensure scoring last element is OK
-		myPopulationBuffers[0].at(myOptions.gaPopSize - 1).score(mySpec);
-		myPopulationBuffers[1].at(myOptions.gaPopSize - 1).score(mySpec);
+		myPopulationBuffers[0].at(myOptions.gaPopSize - 1).score(wa);
+		myPopulationBuffers[1].at(myOptions.gaPopSize - 1).score(wa);
 
 		ERASE_LINE();
-		msg("Initialising population: 100%% done\n");
+		msg("Initialising population: 100%%\n");
 
 	}
 	TIMING_END("init", startTimeInit);
@@ -427,16 +296,16 @@ EvolutionSolver::initPopulation()
 }
 
 void
-EvolutionSolver::printStartMsg()
+EvolutionSolver::printStartMsg(const WorkArea & wa)
 {
-	for (auto & p : mySpec)
-		dbg("Spec Point: %s\n", p.toString().c_str());
+	for (auto & p : wa)
+		dbg("Work Area Point: %s\n", p.toString().c_str());
 
 	msg("Expecting length: %u (%u~%u), spec has %d points\n",
 	    myExpectedTargetLen,
 	    myMinTargetLen,
 	    myMaxTargetLen,
-	    mySpec.size());
+	    wa.size());
 	msg("Using deviation allowance: %d nodes\n", myOptions.lenDevAlw);
 
 	// Want auto significant figure detection with streams
@@ -507,11 +376,149 @@ void
 EvolutionSolver::printTiming()
 {
 	const double timeElapsedInUs = get_timestamp_us() - myStartTimeInUs;
-	const ulong minutes = std::floor(timeElapsedInUs / 1e6 / 60.0f);
-	const ulong seconds = std::floor(fmod(timeElapsedInUs / 1e6, 60.0f));
-	const ulong milliseconds = std::floor(fmod(timeElapsedInUs / 1e3, 1000.0f));
+	const uint64_t minutes = std::floor(timeElapsedInUs / 1e6 / 60.0f);
+	const uint64_t seconds = std::floor(fmod(timeElapsedInUs / 1e6, 60.0f));
+	const uint64_t milliseconds = std::floor(fmod(timeElapsedInUs / 1e3, 1000.0f));
 	raw("%um %us %ums\n",
 	    minutes, seconds, milliseconds);
+}
+
+/* Public Methods */
+
+EvolutionSolver::EvolutionSolver(const RelaMat & relaMat,
+                                 const Spec & spec,
+                                 const RadiiList & radiiList,
+                                 const Options & options) :
+	myRelaMat(relaMat),
+	mySpec(spec),
+	myRadiiList(radiiList),
+	myOptions(options)
+{
+	mySurviverCutoff = std::round(options.gaSurviveRate * options.gaPopSize);
+
+	myNonSurviverCount = (options.gaPopSize - mySurviverCutoff);
+	myCrossCutoff = mySurviverCutoff + std::round(options.gaCrossRate * myNonSurviverCount);
+	myPointMutateCutoff = myCrossCutoff + std::round(options.gaPointMutateRate * myNonSurviverCount);
+	myLimbMutateCutoff = std::min(
+	                         (ulong) (myPointMutateCutoff + std::round(options.gaLimbMutateRate * myNonSurviverCount)),
+	                         (ulong) options.gaPopSize);
+}
+
+const Population *
+EvolutionSolver::population() const
+{
+	return myCurrPop;
+}
+
+const Population &
+EvolutionSolver::bestSoFar() const
+{
+	return myBestSoFar;
+}
+
+void
+EvolutionSolver::run()
+{
+	this->startTimer();
+	for (auto & wap : mySpec.get_work_areas()) {
+		const WorkArea & wa = *wap;
+
+		set_length_guesses(wa);
+
+		this->printStartMsg(wa);
+
+		initPopulation(wa);
+
+		myBestSoFar.resize(myOptions.nBestSols);
+
+		float lastGenBestScore = std::numeric_limits<double>::infinity();
+		int stagnantCount = 0;
+
+		const int genDispDigits = std::ceil(std::log(myOptions.gaIters) / std::log(10));
+		char * genMsgFmt;
+		int asprintf_ret = -1;
+		asprintf_ret = asprintf(&genMsgFmt,
+		                        "Generation #%%%dd: best=%%.2f (%%.2f/module), worst=%%.2f, time taken=%%.0fms\n", genDispDigits);
+		char * avgTimeMsgFmt;
+		asprintf_ret = asprintf(&avgTimeMsgFmt,
+		                        "Avg Times: Evolve=%%.0f,Score=%%.0f,Rank=%%.0f,Select=%%.0f,Gen=%%.0f\n");
+
+		MAP_DATA()
+		{
+			for (int i = 0; i < myOptions.gaIters; i++)
+			{
+				const double genStartTime = get_timestamp_us();
+				{
+					evolvePopulation(wa);
+
+					scorePopulation(wa);
+
+					rankPopulation();
+
+					selectParents();
+
+					swapPopBuffers();
+				}
+
+				const float genBestScore = myCurrPop->front().getScore();
+				const ulong genBestChromoLen = myCurrPop->front().genes().size();
+				const float genWorstScore = myCurrPop->back().getScore();
+				const double genTime = ((get_timestamp_us() - genStartTime) / 1e3);
+				msg(genMsgFmt, i,
+				    genBestScore,
+				    genBestScore / genBestChromoLen,
+				    genWorstScore,
+				    genTime);
+
+				myTotGenTime += genTime;
+
+				msg(avgTimeMsgFmt,
+				    (float) myTotEvolveTime / (i + 1),
+				    (float) myTotScoreTime / (i + 1),
+				    (float) myTotRankTime / (i + 1),
+				    (float) myTotSelectTime / (i + 1),
+				    (float) myTotGenTime / (i + 1));
+
+				// Can stop loop if best score is low enough
+				if (genBestScore < myOptions.scoreStopThreshold)
+				{
+					msg("Score stop threshold %.2f reached\n", myOptions.scoreStopThreshold);
+					break;
+				}
+				else
+				{
+					for (int i = 0; i < myOptions.nBestSols; i++)
+						myBestSoFar.at(i) = myCurrPop->at(i);
+
+					if (float_approximates(genBestScore, lastGenBestScore))
+					{
+						stagnantCount++;
+					}
+					else
+					{
+						stagnantCount = 0;
+					}
+
+					lastGenBestScore = genBestScore;
+
+					if (stagnantCount >= myOptions.maxStagnantGens)
+					{
+						wrn("Solver stopped because max stagnancy is reached (%d)\n", myOptions.maxStagnantGens);
+						break;
+					}
+					else
+					{
+						msg("Current stagnancy: %d, max: %d\n", stagnantCount, myOptions.maxStagnantGens);
+					}
+				}
+			}
+		}
+
+		free(genMsgFmt);
+		free(avgTimeMsgFmt);
+	}
+
+	this->printEndMsg();
 }
 
 } // namespace elfin

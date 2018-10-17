@@ -519,8 +519,8 @@ Chromosome::setup(const uint minLen,
                   const RelaMat & relaMat,
                   const RadiiList & radiiList)
 {
-	if (setupDone)
-		die("Chromosome::setup() called second time!\n");
+	// if (setupDone)
+		// die("Chromosome::setup() called second time!\n");
 
 	myMinLen = minLen;
 	myMaxLen = maxLen;
@@ -567,12 +567,17 @@ Chromosome::calcExpectedLength(const Points3f & lenRef,
 {
 	float sumDist = 0.0f;
 
-	for (std::vector<Point3f>::const_iterator i = lenRef.begin() + 1; // !!
-	        i != lenRef.end();
-	        ++i)
-		sumDist += (i - 1)->distTo(*i);
+	uint32_t exp_len = 1;
 
-	return (uint) round(sumDist / avgPairDist) + 1; // Add one because start and end
+	if(lenRef.size() > 1) {
+		for (std::vector<Point3f>::const_iterator i = lenRef.begin() + 1; // !!
+		        i != lenRef.end();
+		        ++i)
+			sumDist += (i - 1)->distTo(*i);
+		exp_len = (uint32_t) round(sumDist / avgPairDist);
+	}
+
+	return exp_len + 1; // Add one because start and end
 }
 
 bool

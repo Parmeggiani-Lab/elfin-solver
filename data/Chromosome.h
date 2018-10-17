@@ -62,11 +62,11 @@ public:
 	Chromosome copy() const;
 
 	static Genes genRandomGenesReverse(
-	    const uint genMaxLen = myMaxLen,
-	    Genes genes = Genes());
+	    const uint genMaxLen=myMaxLen,
+	    Genes genes=Genes());
 	static Genes genRandomGenes(
-	    const uint genMaxLen = myMaxLen,
-	    Genes genes = Genes());
+	    const uint genMaxLen=myMaxLen,
+	    Genes genes=Genes());
 
 	static void setup(const uint minLen,
 	                  const uint maxLen,

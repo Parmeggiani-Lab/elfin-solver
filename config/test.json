@@ -5,10 +5,10 @@
 
     "rand_seed": "0xbeef1337",
 
-    "len_dev_alw": 3,
+    "len_dev_alw": 2,
 
-    "ga_pop_size": 10000,
-    "ga_iters": 1000,
+    "ga_pop_size": 128,
+    "ga_iters": 10,
 
     "ga_survive_rate": 0.02,
     
@@ -16,5 +16,5 @@
     "ga_point_mutate_rate": 0.4,
     "ga_limb_mutate_rate": 0.4,
 
-    "max_stagnant_gens": 5
+    "max_stagnant_gens": 3
 }

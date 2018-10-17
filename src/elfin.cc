@@ -10,6 +10,7 @@
 
 #include "elfin_types.h"
 #include "input/arg_parser.h"
+#include "input/work_area.h"
 #include "../jutil/src/jutil.h"
 #include "../input/SpecParser.h"
 #include "../input/CSVParser.h"
@@ -42,7 +43,7 @@ void ElfinRunner::interrupt_handler(const int signal) {
 
 void ElfinRunner::crash_dump() {
     if (es_started_) {
-        wrn("Saving latest best solutions and exiting!\n");
+        wrn("Dumping latest results...\n");
 
         const Population & p = es_->bestSoFar();
 
@@ -85,10 +86,10 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
     msg("Using master seed: %d\n", options_.randSeed);
 
     JSONParser().parseDB(options_.xdb,
-        name_id_map_,
-        id_name_map_,
-        rela_mat_,
-        radii_list_);
+                         name_id_map_,
+                         id_name_map_,
+                         rela_mat_,
+                         radii_list_);
 
     Gene::setup(&id_name_map_);
     setupParaUtils(options_.randSeed);
@@ -109,9 +110,9 @@ void ElfinRunner::run() {
         }
     } else {
         es_ = new EvolutionSolver(rela_mat_,
-                                 spec_,
-                                 radii_list_,
-                                 options_);
+                                  *spec_,
+                                  radii_list_,
+                                  options_);
         es_started_ = true;
 
         es_->run();
@@ -129,7 +130,7 @@ void ElfinRunner::run() {
             // write json solution data (no coordinates)
             std::ostringstream json_output_path;
             json_output_path << options_.outputDir
-                << "/" << &p->at(i) << ".json";
+                             << "/" << &p->at(i) << ".json";
 
             std::string json_data = j.dump();
             write_binary(json_output_path.str().c_str(),
@@ -163,88 +164,94 @@ int ElfinRunner::run_meta_tests() {
     msg("Running meta tests...\n");
     int fail_count = 0;
 
-    Points3f moved_spec = spec_;
+    for (auto & wap : spec_->get_work_areas()) {
+        const WorkArea & wa = *wap;
+        Points3f moved_spec = wa;
 
-    Vector3f rot_arr[3] = {
-        Vector3f(1.0f, 0.0f, 0.0f),
-        Vector3f(0.0f, -0.5177697998f, 0.855519979f),
-        Vector3f(0.0f, -0.855519979f, -0.5177697998f)
-    };
-    Mat3x3 rot_around_x = Mat3x3(rot_arr);
+        Vector3f rot_arr[3] = {
+            Vector3f(1.0f, 0.0f, 0.0f),
+            Vector3f(0.0f, -0.5177697998f, 0.855519979f),
+            Vector3f(0.0f, -0.855519979f, -0.5177697998f)
+        };
+        Mat3x3 rot_around_x = Mat3x3(rot_arr);
 
-    // It seems that Kabsch cannot handle very large
-    // translations, but in the scale we're working
-    // at it should rarely, if ever, go beyond
-    // one thousand Angstroms
-    Vector3f tran(-39.0f, 999.3413f, -400.11f);
+        // It seems that Kabsch cannot handle very large
+        // translations, but in the scale we're working
+        // at it should rarely, if ever, go beyond
+        // one thousand Angstroms
+        Vector3f tran(-39.0f, 999.3413f, -400.11f);
 
-    for (Point3f &p : moved_spec) {
-        p = p.dot(rot_around_x);
-        p += tran;
-    }
-
-    // Test scoring a transformed version of spec
-    const float trx_score = kabschScore(moved_spec, spec_);
-    if (!float_approximates(trx_score, 0)) {
-        fail_count++;
-        wrn("Self score test failed: self score should be 0\n");
-    }
-
-    // Test randomiser
-    const int N = 10;
-    const int rand_trials = 50000000;
-    const int expect_avg = rand_trials / N;
-    const float rand_dev_tolerance = 0.05f * expect_avg;  // 5% deviation
-
-    int rand_count[N] = {0};
-    for (int i = 0; i < rand_trials; i++) {
-        const int dice = getDice(N);
-        if (dice >= N) {
-            fail_count++;
-            err("Failed to produce correct dice: getDice() "
-                "produced %d for [0-%d)",
-                dice, N);
-            break;
+        for (Point3f &p : moved_spec) {
+            p = p.dot(rot_around_x);
+            p += tran;
         }
-        rand_count[dice]++;
-    }
 
-    for (int i = 0; i < N; i++) {
-        const float rand_dev = static_cast<float>(
-            abs(rand_count[i] - expect_avg) / (expect_avg));
-        if (rand_dev > rand_dev_tolerance) {
+        // Test scoring a transformed version of spec
+        const float trx_score = kabschScore(moved_spec, wa);
+        if (!float_approximates(trx_score, 0)) {
             fail_count++;
-            err("Too much random deviation: %.3f%% (expecting %d)\n",
-                rand_dev, expect_avg);
+            wrn("Self score test failed: self score should be 0\n");
         }
-    }
 
-    // Test parallel randomiser
+        // Test randomiser
+        const int N = 10;
+        const int rand_trials = 50000000;
+        const int expect_avg = rand_trials / N;
+        const float rand_dev_tolerance = 0.05f * expect_avg;  // 5% deviation
+
+        int rand_count[N] = {0};
+        for (int i = 0; i < rand_trials; i++) {
+            const int dice = getDice(N);
+            if (dice >= N) {
+                fail_count++;
+                err("Failed to produce correct dice: getDice() "
+                    "produced %d for [0-%d)",
+                    dice, N);
+                break;
+            }
+            rand_count[dice]++;
+        }
+
+        for (int i = 0; i < N; i++) {
+            const float rand_dev = static_cast<float>(
+                                       abs(rand_count[i] - expect_avg) / (expect_avg));
+            if (rand_dev > rand_dev_tolerance) {
+                fail_count++;
+                err("Too much random deviation: %.3f%% (expecting %d)\n",
+                    rand_dev, expect_avg);
+            }
+        }
+
+        // Test parallel randomiser
 #ifndef _NO_OMP
-    std::vector<uint> para_rand_seeds = getParaRandSeeds();
-    const int n_threads = para_rand_seeds.size();
-    const int para_rand_n = 8096;
-    const int64_t dice_lim = 13377331;
+        std::vector<uint> para_rand_seeds = getParaRandSeeds();
+        const int n_threads = para_rand_seeds.size();
+        const int para_rand_n = 8096;
+        const int64_t dice_lim = 13377331;
 
-    std::vector<uint> rands1(para_rand_n);
-    #pragma omp parallel for
-    for (int i = 0; i < para_rand_n; i++)
-        rands1.at(i) = getDice(dice_lim);
+        std::vector<uint> rands1(para_rand_n);
+        #pragma omp parallel for
+        for (int i = 0; i < para_rand_n; i++)
+            rands1.at(i) = getDice(dice_lim);
 
-    getParaRandSeeds() = para_rand_seeds;
-    std::vector<uint> rands2(para_rand_n);
-    #pragma omp parallel for
-    for (int i = 0; i < para_rand_n; i++)
-        rands2.at(i) = getDice(dice_lim);
+        getParaRandSeeds() = para_rand_seeds;
+        std::vector<uint> rands2(para_rand_n);
+        #pragma omp parallel for
+        for (int i = 0; i < para_rand_n; i++)
+            rands2.at(i) = getDice(dice_lim);
 
-    for (int i = 0; i < para_rand_n; i++) {
-        if (rands1.at(i) != rands2.at(i)) {
-            fail_count++;
-            err("Parallel randomiser failed: %d vs %d\n",
-                rands1.at(i), rands2.at(i));
+        for (int i = 0; i < para_rand_n; i++) {
+            if (rands1.at(i) != rands2.at(i)) {
+                fail_count++;
+                err("Parallel randomiser failed: %d vs %d\n",
+                    rands1.at(i), rands2.at(i));
+            }
         }
-    }
 #endif
+
+        if (fail_count > 0)
+            break;
+    }
 
     return fail_count;
 }

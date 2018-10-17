@@ -2,8 +2,9 @@
 #define ELFIN_H_
 
 #include <vector>
-#include "../core/EvolutionSolver.h"
+#include <memory>
 
+#include "../core/EvolutionSolver.h"
 #include "input/spec.h"
 
 namespace elfin {
@@ -12,7 +13,7 @@ class ElfinRunner
 {
 private:
     Options options_;
-    Spec spec_;
+    std::shared_ptr<Spec> spec_;
     EvolutionSolver * es_;
 
     RelaMat rela_mat_;

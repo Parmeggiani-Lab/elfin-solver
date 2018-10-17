@@ -1,6 +1,8 @@
 #ifndef SPEC_PARSER_H_
 #define SPEC_PARSER_H_
 
+#include <memory>
+
 #include "json.h"
 #include "spec.h"
 
@@ -9,8 +11,11 @@ namespace elfin {
 class SpecParser
 {
 public:
+    static const char * const pg_networks_name;
+    static const char * const networks_name;
+
     SpecParser() {};
-    Spec parse(const std::string & filepath);
+    std::shared_ptr<Spec> parse(const std::string & filepath);
 };
 
 }
