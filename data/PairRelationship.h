@@ -44,6 +44,21 @@ public:
 	}
 };
 
+typedef std::vector<PairRelationship *> RelaRow;
+class RelaMat : public std::vector<RelaRow>
+{
+public:
+	~RelaMat() {
+		for(auto & row : *this) {
+			while(row.size()) {
+				auto pr = row.back();
+				row.pop_back();
+				delete pr;
+			}
+		}
+	};
+};
+
 } // namespace elfin
 
 #endif /* include guard */

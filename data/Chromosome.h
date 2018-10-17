@@ -8,6 +8,7 @@
 #include "../jutil/src/jutil.h"
 #include "Gene.h"
 #include "../core/Checksum.h"
+#include "PairRelationship.h"
 
 namespace elfin
 {
