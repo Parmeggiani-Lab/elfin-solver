@@ -5,6 +5,7 @@
 
 #include "../../data/Geometry.h"
 #include "json.h"
+#include "../../jutil/src/jutil.h"
 
 namespace elfin {
 
@@ -16,19 +17,28 @@ namespace elfin {
    2 bridges. Will need to be broken down into the previous three types after
    hub assignment.
 */
-enum WorkType { FREE, ONE_HINGE, TWO_HINGE, COMPLEX };
 
-// TODO: Remove inheritance
+#define FOREACH_WORKTYPE(MACRO) \
+    MACRO(FREE) \
+    MACRO(ONE_HINGE) \
+    MACRO(TWO_HINGE) \
+    MACRO(COMPLEX) \
+
+GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
+
+// TODO: Remove inheritance - or not?
 class WorkArea : public Points3f
 {
 protected:
     WorkType type_ = FREE;
 
 public:
-    WorkArea() {};
-    virtual ~WorkArea() {};
+    const std::string name_;
 
-    static std::shared_ptr<WorkArea> from_json(const JSON & pgn, const JSON & networks);
+    WorkArea(const std::string & name) : name_(name) {}
+    virtual ~WorkArea() {}
+
+    static std::shared_ptr<WorkArea> from_json(const JSON & pgn, const JSON & networks, const std::string & name);
     WorkType get_type() const { return type_; };
 };
 
