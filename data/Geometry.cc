@@ -165,6 +165,16 @@ Vector3f::approximates(const Vector3f & ref, double tolerance)
 	return true;
 }
 
+std::shared_ptr<Vector3f> Vector3f::from_json(const JSON & j) {
+	try {
+		std::shared_ptr<Vector3f> vec = std::make_shared<Vector3f>(j.at(0), j.at(1), j.at(2));
+		return vec;
+	} catch (const std::exception & e) {
+		err("Could not parse Vector3f from JSON.\nReason: %s\n", e.what());
+		return nullptr;
+	}
+}
+
 
 std::string
 pointsToString(const Points3f & points)
@@ -178,6 +188,9 @@ pointsToString(const Points3f & points)
 
 	return ss.str();
 }
+
+
+/* Mat3x3 */
 
 Mat3x3::Mat3x3(Vector3f _rows[3])
 {

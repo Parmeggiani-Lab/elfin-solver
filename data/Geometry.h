@@ -3,6 +3,9 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+
+#include "../src/input/json.h"
 
 namespace elfin
 {
@@ -40,6 +43,8 @@ public:
 
 	// We use 1e-6 because PDBs have only 4 decimals of precision
 	bool approximates(const Vector3f & ref, double tolerance = 1e-4);
+
+	static std::shared_ptr<Vector3f> from_json(const JSON & j);
 };
 typedef Vector3f Point3f;
 typedef std::vector<Point3f> Points3f;

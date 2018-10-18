@@ -1,7 +1,10 @@
 #ifndef WORK_AREA_H_
 #define WORK_AREA_H_
 
+#include <memory>
+
 #include "../../data/Geometry.h"
+#include "json.h"
 
 namespace elfin {
 
@@ -22,15 +25,14 @@ protected:
     WorkType type_ = FREE;
 
 public:
-    WorkArea() {
-        // place holder
-        for (int i = 0; i < 5; i++)
-            this->emplace_back(10 * i, 15 * i, 20 * i);
-    };
+    WorkArea() {};
     virtual ~WorkArea() {};
 
+    static std::shared_ptr<WorkArea> from_json(const JSON & pgn, const JSON & networks);
     WorkType get_type() const { return type_; };
 };
+
+typedef std::vector<std::shared_ptr<const WorkArea>> WorkAreas;
 
 }  /* elfin */
 

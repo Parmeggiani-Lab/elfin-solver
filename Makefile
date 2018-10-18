@@ -110,6 +110,9 @@ deleteTestObjs:
 test: $(EXE)
 	$(BIN_DIR)/$(EXE) -c config/test.json
 
+dry: $(EXE)
+	$(BIN_DIR)/$(EXE) -c config/test.json -dry
+
 FORCE:
 .PHONY: all clean
 

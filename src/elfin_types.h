@@ -13,6 +13,18 @@
 
 namespace elfin {
 
+// Exception wrapper
+
+
+class ElfinException : public std::exception
+{
+	const std::string msg_;
+public:
+	ElfinException(const std::string & msg) : msg_(msg) {}
+	~ElfinException() throw () {}
+	virtual const char* what() const throw() { return msg_.c_str(); }
+};
+
 // Shorthands
 typedef std::map<std::string, long> NameIdMap;
 typedef std::map<long, std::string> IdNameMap;
@@ -58,7 +70,7 @@ typedef struct {
 
 	ulong lenDevAlw = 3;
 
-	// Average CoM distance found by xDBStat.py as 
+	// Average CoM distance found by xDBStat.py as
 	// of 23/April/2017 is 37.9
 	float avgPairDist = 38.0f;
 
@@ -81,6 +93,8 @@ typedef struct {
 
 	int device = 0;
 	int nBestSols = 3;
+
+	bool dry_run = false;
 } Options;
 
 } // namespace elfin

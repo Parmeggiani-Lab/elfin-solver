@@ -2,6 +2,7 @@
 #define SPEC_H_
 
 #include <vector>
+#include <memory>
 
 #include "work_area.h"
 
@@ -11,22 +12,16 @@ class SpecParser;
 
 class Spec
 {
-    friend class SpecParser;
+    friend SpecParser;
 
 protected:
-    std::vector<const WorkArea *> work_areas_;
-
+    WorkAreas work_areas_;
+    
 public:
     Spec() {};
-    virtual ~Spec() {
-        while(work_areas_.size() > 0) {
-            const WorkArea * wa = work_areas_.back();
-            work_areas_.pop_back();
-            delete wa;
-        }
-    }
+    virtual ~Spec() {};
 
-    const std::vector<const WorkArea *> & get_work_areas() const { return work_areas_; };
+    const WorkAreas & get_work_areas() const { return work_areas_; };
 };
 
 }  /* elfin */

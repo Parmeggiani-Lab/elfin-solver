@@ -443,72 +443,75 @@ EvolutionSolver::run()
 		asprintf_ret = asprintf(&avgTimeMsgFmt,
 		                        "Avg Times: Evolve=%%.0f,Score=%%.0f,Rank=%%.0f,Select=%%.0f,Gen=%%.0f\n");
 
-		MAP_DATA()
-		{
-			for (int i = 0; i < myOptions.gaIters; i++)
+
+		if (!myOptions.dry_run) {
+			MAP_DATA()
 			{
-				const double genStartTime = get_timestamp_us();
+				for (int i = 0; i < myOptions.gaIters; i++)
 				{
-					evolvePopulation(wa);
-
-					scorePopulation(wa);
-
-					rankPopulation();
-
-					selectParents();
-
-					swapPopBuffers();
-				}
-
-				const float genBestScore = myCurrPop->front().getScore();
-				const ulong genBestChromoLen = myCurrPop->front().genes().size();
-				const float genWorstScore = myCurrPop->back().getScore();
-				const double genTime = ((get_timestamp_us() - genStartTime) / 1e3);
-				msg(genMsgFmt, i,
-				    genBestScore,
-				    genBestScore / genBestChromoLen,
-				    genWorstScore,
-				    genTime);
-
-				myTotGenTime += genTime;
-
-				msg(avgTimeMsgFmt,
-				    (float) myTotEvolveTime / (i + 1),
-				    (float) myTotScoreTime / (i + 1),
-				    (float) myTotRankTime / (i + 1),
-				    (float) myTotSelectTime / (i + 1),
-				    (float) myTotGenTime / (i + 1));
-
-				// Can stop loop if best score is low enough
-				if (genBestScore < myOptions.scoreStopThreshold)
-				{
-					msg("Score stop threshold %.2f reached\n", myOptions.scoreStopThreshold);
-					break;
-				}
-				else
-				{
-					for (int i = 0; i < myOptions.nBestSols; i++)
-						myBestSoFar.at(i) = myCurrPop->at(i);
-
-					if (float_approximates(genBestScore, lastGenBestScore))
+					const double genStartTime = get_timestamp_us();
 					{
-						stagnantCount++;
-					}
-					else
-					{
-						stagnantCount = 0;
+						evolvePopulation(wa);
+
+						scorePopulation(wa);
+
+						rankPopulation();
+
+						selectParents();
+
+						swapPopBuffers();
 					}
 
-					lastGenBestScore = genBestScore;
+					const float genBestScore = myCurrPop->front().getScore();
+					const ulong genBestChromoLen = myCurrPop->front().genes().size();
+					const float genWorstScore = myCurrPop->back().getScore();
+					const double genTime = ((get_timestamp_us() - genStartTime) / 1e3);
+					msg(genMsgFmt, i,
+					    genBestScore,
+					    genBestScore / genBestChromoLen,
+					    genWorstScore,
+					    genTime);
 
-					if (stagnantCount >= myOptions.maxStagnantGens)
+					myTotGenTime += genTime;
+
+					msg(avgTimeMsgFmt,
+					    (float) myTotEvolveTime / (i + 1),
+					    (float) myTotScoreTime / (i + 1),
+					    (float) myTotRankTime / (i + 1),
+					    (float) myTotSelectTime / (i + 1),
+					    (float) myTotGenTime / (i + 1));
+
+					// Can stop loop if best score is low enough
+					if (genBestScore < myOptions.scoreStopThreshold)
 					{
-						wrn("Solver stopped because max stagnancy is reached (%d)\n", myOptions.maxStagnantGens);
+						msg("Score stop threshold %.2f reached\n", myOptions.scoreStopThreshold);
 						break;
 					}
 					else
 					{
-						msg("Current stagnancy: %d, max: %d\n", stagnantCount, myOptions.maxStagnantGens);
+						for (int i = 0; i < myOptions.nBestSols; i++)
+							myBestSoFar.at(i) = myCurrPop->at(i);
+
+						if (float_approximates(genBestScore, lastGenBestScore))
+						{
+							stagnantCount++;
+						}
+						else
+						{
+							stagnantCount = 0;
+						}
+
+						lastGenBestScore = genBestScore;
+
+						if (stagnantCount >= myOptions.maxStagnantGens)
+						{
+							wrn("Solver stopped because max stagnancy is reached (%d)\n", myOptions.maxStagnantGens);
+							break;
+						}
+						else
+						{
+							msg("Current stagnancy: %d, max: %d\n", stagnantCount, myOptions.maxStagnantGens);
+						}
 					}
 				}
 			}

@@ -60,6 +60,7 @@ private:
     ARG_PARSER_CALLBACK_IN_HEADER(set_run_unit_tests) { options_.runUnitTests = true; }
     ARG_PARSER_CALLBACK_IN_HEADER(set_device) { options_.device = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_n_best_sols) { options_.nBestSols = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_dry_run) { options_.dry_run = true; }
 
     void print_args() const;
 
@@ -87,7 +88,8 @@ private:
         {"lg", "log_level", "Set log level", true, &ArgParser::set_log_level},
         {"t", "test", "Run unit tests", false, &ArgParser::set_run_unit_tests},
         {"dv", "device", "Run on accelerator device ID", true, &ArgParser::set_device},
-        {"n", "n_best_sols", "Set number of best solutions to output", true, &ArgParser::set_n_best_sols}
+        {"n", "n_best_sols", "Set number of best solutions to output", true, &ArgParser::set_n_best_sols},
+        {"dry", "dry_run", "Enable dry run - exit just after initializing first population", false, &ArgParser::set_dry_run}
     };
 
     void check_options() const;
