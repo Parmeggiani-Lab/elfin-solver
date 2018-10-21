@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include "work_area.h"
+#include "fixed_area.h"
 
 namespace elfin {
 
@@ -15,6 +16,7 @@ class Spec
 
 protected:
     WorkAreas work_areas_;
+    FixedAreas fixed_areas_;
     
 public:
     Spec() {};

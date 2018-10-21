@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "json.h"
+#include "elfin_exception.h"
 
 namespace elfin
 {
@@ -18,16 +19,29 @@ class Vector3f
 public:
 	float x, y, z;
 
-	Vector3f(const Vector3f & rhs);
+	Vector3f() : Vector3f(0, 0, 0) {}
 
-	Vector3f();
+	Vector3f(const Vector3f & rhs) :
+		x(rhs.x), y(rhs.y), z(rhs.z) {}
 
-	Vector3f(float _x, float _y, float _z);
+	Vector3f(float _x, float _y, float _z) :
+		x(_x), y(_y), z(_z) {}
 
-	Vector3f(const std::vector<float> & v);
+	template <typename Itb>
+	Vector3f(Itb itb) : 
+		Vector3f(itb.begin(), itb.begin() + 3) {}
 
-	Vector3f(FloatConstIterator begin,
-	         FloatConstIterator end);
+	template <typename ItrBegin, typename ItrEnd>
+	Vector3f(ItrBegin begin, ItrEnd end)
+	{
+		if ((end - begin) != 3)
+			throw InvalidArgumentSize;
+
+		auto itr = begin;
+		x = *itr++;
+		y = *itr++;
+		z = *itr++;
+	}
 
 	std::string to_string() const;
 	std::string to_csv_string() const;
@@ -44,8 +58,6 @@ public:
 
 	// We use 1e-6 because PDBs have only 4 decimals of precision
 	bool approximates(const Vector3f & ref, double tolerance = 1e-4);
-
-	static std::shared_ptr<Vector3f> from_json(const JSON & j);
 };
 typedef Vector3f Point3f;
 typedef std::vector<Point3f> Points3f;
@@ -57,14 +69,39 @@ class Mat3x3
 public:
 	Vector3f rows[3];
 
+	Mat3x3() : rows( { {0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}}) {};
+
 	Mat3x3(Vector3f _rows[3]);
 
 	Mat3x3(const std::vector<float> & v) :
-		Mat3x3(v.begin(), v.end())
-	{}
+		Mat3x3(v.begin(), v.begin() + 9) {}
 
-	Mat3x3(FloatConstIterator begin,
-	       FloatConstIterator end);
+	template <typename ItrBegin, typename ItrEnd>
+	Mat3x3(ItrBegin begin, ItrEnd end)
+	{
+		if ((end - begin) != 9)
+			throw "InvalidArgumentSize";
+
+		ItrBegin itr = begin;
+		for (int i = 0; i < 3; i++)
+		{
+			rows[i] = Vector3f(itr, itr + 3);
+			itr += 3;
+		}
+	}
+
+	template <typename Itrable3x3>
+	Mat3x3(Itrable3x3 itb)
+	{
+		if ((itb.end() - itb.begin()) != 3)
+			throw InvalidArgumentSize;
+		auto itr = itb.begin();
+		for (int i = 0; i < 3; i++)
+		{
+			rows[i] = Vector3f((*itr).begin(), (*itr).end());
+			itr++;
+		}
+	}
 
 	Vector3f dot(const Vector3f & rotMat) const;
 	Mat3x3 dot(const Mat3x3 & rotMat) const;

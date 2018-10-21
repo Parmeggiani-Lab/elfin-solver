@@ -3,25 +3,29 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "json.h"
+#include "geometry.h"
 
 namespace elfin {
 
-template<typename DT>
 class UIObject
 {
 public:
     const std::string name_;
+    const Mat3x3 rot_;
+    const Vector3f tran_;
 
-    UIObject() = delete;
-    UIObject(const std::string & name) : name_(name) {}
+    UIObject(const JSON & j, const std::string & name);
     virtual ~UIObject() {}
 
-    static std::shared_ptr<DT> from_json(const JSON & j, const std::string & name) {
-        return DT::from_json();
-    }
+    // getters
+    const Mat3x3 & get_rot() { return rot_; }
+    const Vector3f & get_tran() { return tran_; }
 };
+
+typedef std::vector<UIObject> UIObjects;
 
 }
 

@@ -20,13 +20,15 @@ std::shared_ptr<Spec> SpecParser::parse(const std::string & filepath) {
 
         msg("Input spec has %d work areas\n", pg_networks.size());
         for (auto it = pg_networks.begin(); it != pg_networks.end(); ++it) {
-            std::shared_ptr<WorkArea> wap = WorkArea::from_json(*it, it.key());
+            spec->work_areas_.emplace_back(*it, it.key());
 
-            if (wap->size() == 0) {
+            if (spec->work_areas_.back().joints().size() == 0) {
                 throw ElfinException("Work area \"" + it.key() + "\" has no joints associated.");
             }
+        }
 
-            spec->work_areas_.push_back(wap);
+        for (auto it = networks.begin(); it != networks.end(); ++it) {
+            spec->fixed_areas_.emplace_back(*it, it.key());
         }
 
         return spec;

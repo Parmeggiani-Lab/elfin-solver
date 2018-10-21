@@ -13,6 +13,8 @@ public:
     virtual const char* what() const throw() { return msg_.c_str(); }
 };
 
+const static ElfinException InvalidArgumentSize("Invalid Argument Size");
+
 }  /* elfin */
 
 #endif  /* end of include guard: ELFIN_EXCEPTION_H_ */

@@ -163,9 +163,8 @@ int ElfinRunner::run_meta_tests() {
     msg("Running meta tests...\n");
     int fail_count = 0;
 
-    for (auto & wap : spec_->get_work_areas()) {
-        const WorkArea & wa = *wap;
-        Points3f moved_spec = wa;
+    for (auto & wa : spec_->get_work_areas()) {
+        Points3f moved_spec = wa.to_points3f();
 
         Vector3f rot_arr[3] = {
             Vector3f(1.0f, 0.0f, 0.0f),
@@ -186,7 +185,7 @@ int ElfinRunner::run_meta_tests() {
         }
 
         // Test scoring a transformed version of spec
-        const float trx_score = kabschScore(moved_spec, wa);
+        const float trx_score = kabschScore(moved_spec, wa.to_points3f());
         if (!float_approximates(trx_score, 0)) {
             fail_count++;
             wrn("Self score test failed: self score should be 0\n");

@@ -10,35 +10,6 @@ namespace elfin
 
 typedef uint32_t uint;
 
-Vector3f::Vector3f(const Vector3f & rhs) :
-	x(rhs.x), y(rhs.y), z(rhs.z)
-{}
-
-Vector3f::Vector3f() :
-	x(0), y(0), z(0)
-{}
-
-Vector3f::Vector3f(float _x, float _y, float _z) :
-	x(_x), y(_y), z(_z)
-{}
-
-Vector3f::Vector3f(const std::vector<float> & v) :
-	Vector3f(v.begin(), v.end())
-{}
-
-
-Vector3f::Vector3f(FloatConstIterator begin,
-                   FloatConstIterator end)
-{
-	if ((end - begin) != 3)
-		die("Vector3f() not called with vector range of length 3\n");
-
-	FloatConstIterator itr = begin;
-	x = *itr++;
-	y = *itr++;
-	z = *itr++;
-}
-
 std::string
 Vector3f::to_string() const
 {
@@ -171,17 +142,6 @@ Vector3f::approximates(const Vector3f & ref, double tolerance)
 	return true;
 }
 
-std::shared_ptr<Vector3f> Vector3f::from_json(const JSON & j) {
-	try {
-		std::shared_ptr<Vector3f> vec = std::make_shared<Vector3f>(j.at(0), j.at(1), j.at(2));
-		return vec;
-	} catch (const std::exception & e) {
-		err("Could not parse Vector3f from JSON.\nReason: %s\n", e.what());
-		return nullptr;
-	}
-}
-
-
 std::string
 points_to_string(const Points3f & points)
 {
@@ -203,21 +163,6 @@ Mat3x3::Mat3x3(Vector3f _rows[3])
 	rows[0] = _rows[0];
 	rows[1] = _rows[1];
 	rows[2] = _rows[2];
-}
-
-Mat3x3::Mat3x3(FloatConstIterator begin,
-               FloatConstIterator end)
-{
-	if ((end - begin) != 9)
-		die("Mat3x3() not called with vector range of length 9\n");
-
-	FloatConstIterator itr = begin;
-	for (int i = 0; i < 3; i++)
-	{
-		const FloatConstIterator endItrTmp = itr + 3;
-		rows[i] = Vector3f(itr, endItrTmp);
-		itr += 3;
-	}
 }
 
 std::string
@@ -281,5 +226,4 @@ Mat3x3::transpose() const
 
 	return Mat3x3(v);
 }
-
 } // namespace elfin

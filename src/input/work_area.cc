@@ -2,15 +2,14 @@
 
 namespace elfin {
 
-std::shared_ptr<WorkArea> WorkArea::from_json(const JSON & j, const std::string & name) {
-    std::shared_ptr<WorkArea> wa = std::make_shared<WorkArea>(name);
+WorkArea::WorkArea(const JSON & j, const std::string & name) :
+    name_(name) {
 
     size_t n_hinges = 0, n_branches = 0;
     for (auto it = j.begin(); it != j.end(); ++it) {
         const JSON & joint = *it;
-        std::shared_ptr<Point3f> p = Point3f::from_json(joint["trans"]);
-        wa->push_back(*p);
 
+        joints_.emplace_back(joint, it.key());
         n_hinges += joint["occupant"] != "";
         n_branches += joint["neighbours"].size() > 2;
     }
@@ -19,29 +18,34 @@ std::shared_ptr<WorkArea> WorkArea::from_json(const JSON & j, const std::string 
     {
         switch (n_hinges) {
         case 0: {
-            wa->type_ = FREE;
+            type_ = FREE;
             break;
         }
         case 1: {
-            wa->type_ = ONE_HINGE;
+            type_ = ONE_HINGE;
             break;
         }
         case 2: {
-            wa->type_ = TWO_HINGE;
+            type_ = TWO_HINGE;
             break;
         }
         default:
         {
-            wa->type_ = COMPLEX;
+            type_ = COMPLEX;
         }
         }
     } else {
-        wa->type_ = COMPLEX;
+        type_ = COMPLEX;
     }
+}
 
-    // TODO: should we keep the n_hinges/n_branches or the joints themselves in wa?
 
-    return wa;
+Points3f WorkArea::to_points3f() const {
+    Points3f res;
+    for(auto & j : joints_) {
+        res.emplace_back(j.tran_);
+    }
+    return res;
 }
 
 }  /* elfin */

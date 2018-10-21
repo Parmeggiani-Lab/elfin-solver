@@ -3,8 +3,9 @@
 
 #include "shorthands.h"
 #include "options.h"
-#include "Chromosome.h"
 #include "spec.h"
+
+#include "Chromosome.h"
 
 namespace elfin
 {
@@ -44,13 +45,13 @@ protected:
 	double myTotSelectTime = 0.0f;
 	double myTotGenTime = 0.0f;
 	
-	void printStartMsg(const WorkArea & wa);
+	void printStartMsg(const Points3f & shape);
 	void startTimer();
-	void set_length_guesses(const WorkArea & wa);
+	void set_length_guesses(const Points3f & shape);
 
-	void initPopulation(const WorkArea & wa);
-	void evolvePopulation(const WorkArea & wa);
-	void scorePopulation(const WorkArea & wa);
+	void initPopulation(const Points3f & shape);
+	void evolvePopulation();
+	void scorePopulation(const Points3f & shape);
 	void rankPopulation();
 	void selectParents();
 	void swapPopBuffers();

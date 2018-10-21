@@ -1,3 +1,5 @@
+#include "EvolutionSolver.h"
+
 #include <cmath>
 #include <sstream>
 #include <algorithm>
@@ -5,10 +7,8 @@
 #include <unordered_map>
 #include <limits>
 
-#include "EvolutionSolver.h"
 #include "jutil.h"
 #include "ParallelUtils.h"
-#include "work_area.h"
 
 namespace elfin
 {
@@ -29,8 +29,8 @@ bool (Chromosome::*pointMutateChromoFunct)() = &Chromosome::pointMutate;
 bool (Chromosome::*limbMutateChromoFunct)() = &Chromosome::limbMutate;
 
 void
-EvolutionSolver::set_length_guesses(const WorkArea & wa) {
-	myExpectedTargetLen = Chromosome::calcExpectedLength(wa, myOptions.avgPairDist);
+EvolutionSolver::set_length_guesses(const Points3f & shape) {
+	myExpectedTargetLen = Chromosome::calcExpectedLength(shape, myOptions.avgPairDist);
 	myMinTargetLen = myExpectedTargetLen - myOptions.lenDevAlw;
 	myMaxTargetLen = myExpectedTargetLen + myOptions.lenDevAlw;
 
@@ -38,7 +38,7 @@ EvolutionSolver::set_length_guesses(const WorkArea & wa) {
 }
 
 void
-EvolutionSolver::evolvePopulation(const WorkArea & wa)
+EvolutionSolver::evolvePopulation()
 {
 #ifdef _VTUNE
 	__itt_resume();  // start VTune, again use 2 underscores
@@ -148,7 +148,7 @@ EvolutionSolver::evolvePopulation(const WorkArea & wa)
 void (Chromosome::*scoreChromoFunct)(const Points3f &) = &Chromosome::score;
 
 void
-EvolutionSolver::scorePopulation(const WorkArea & wa)
+EvolutionSolver::scorePopulation(const Points3f & shape)
 {
 	TIMING_START(startTimeScoring);
 	{
@@ -158,7 +158,7 @@ EvolutionSolver::scorePopulation(const WorkArea & wa)
 		OMP_PAR_FOR
 		for (int i = 0; i < myOptions.gaPopSize; i++)
 		{
-			(myBuffPopData[i].*scoreChromoFunct)(wa);
+			(myBuffPopData[i].*scoreChromoFunct)(shape);
 #ifndef _TARGET_GPU
 			if (i % scoreBlock == 0)
 			{
@@ -240,7 +240,7 @@ EvolutionSolver::swapPopBuffers()
 }
 
 void
-EvolutionSolver::initPopulation(const WorkArea & wa)
+EvolutionSolver::initPopulation(const Points3f & shape)
 {
 	TIMING_START(startTimeInit);
 	{
@@ -282,8 +282,8 @@ EvolutionSolver::initPopulation(const WorkArea & wa)
 		}
 
 		// Hard test - ensure scoring last element is OK
-		myPopulationBuffers[0].at(myOptions.gaPopSize - 1).score(wa);
-		myPopulationBuffers[1].at(myOptions.gaPopSize - 1).score(wa);
+		myPopulationBuffers[0].at(myOptions.gaPopSize - 1).score(shape);
+		myPopulationBuffers[1].at(myOptions.gaPopSize - 1).score(shape);
 
 		ERASE_LINE();
 		msg("Initialising population: 100%%\n");
@@ -296,16 +296,16 @@ EvolutionSolver::initPopulation(const WorkArea & wa)
 }
 
 void
-EvolutionSolver::printStartMsg(const WorkArea & wa)
+EvolutionSolver::printStartMsg(const Points3f & shape)
 {
-	for (auto & p : wa)
+	for (auto & p : shape)
 		dbg("Work Area Point: %s\n", p.to_string().c_str());
 
 	msg("Expecting length: %u (%u~%u), spec has %d points\n",
 	    myExpectedTargetLen,
 	    myMinTargetLen,
 	    myMaxTargetLen,
-	    wa.size());
+	    shape.size());
 	msg("Using deviation allowance: %d nodes\n", myOptions.lenDevAlw);
 
 	// Want auto significant figure detection with streams
@@ -420,14 +420,14 @@ void
 EvolutionSolver::run()
 {
 	this->startTimer();
-	for (auto & wap : mySpec.get_work_areas()) {
-		const WorkArea & wa = *wap;
+	for (auto & wa : mySpec.get_work_areas()) {
+		const Points3f shape = wa.to_points3f();
 
-		set_length_guesses(wa);
+		set_length_guesses(shape);
 
-		this->printStartMsg(wa);
+		this->printStartMsg(shape);
 
-		initPopulation(wa);
+		initPopulation(shape);
 
 		myBestSoFar.resize(myOptions.nBestSols);
 
@@ -451,9 +451,9 @@ EvolutionSolver::run()
 				{
 					const double genStartTime = get_timestamp_us();
 					{
-						evolvePopulation(wa);
+						evolvePopulation();
 
-						scorePopulation(wa);
+						scorePopulation(shape);
 
 						rankPopulation();
 

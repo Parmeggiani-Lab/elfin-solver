@@ -25,19 +25,22 @@ namespace elfin {
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 
 // TODO: Remove inheritance - or not?
-class WorkArea : public Points3f, public UIObject<WorkArea>
+class WorkArea
 {
 protected:
     WorkType type_ = FREE;
+    UIObjects joints_;
 
 public:
-    using UIObject::UIObject;
+    const std::string name_;
 
-    static std::shared_ptr<WorkArea> from_json(const JSON & j, const std::string & name);
-    WorkType get_type() const { return type_; };
+    WorkArea(const JSON & j, const std::string & name);
+    WorkType type() const { return type_; }
+    Points3f to_points3f() const;
+    const UIObjects & joints() const { return joints_; }
 };
 
-typedef std::vector<std::shared_ptr<const WorkArea>> WorkAreas;
+typedef std::vector<WorkArea> WorkAreas;
 
 }  /* elfin */
 
