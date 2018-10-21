@@ -1,7 +1,7 @@
 #include "spec_parser.h"
 
-#include "../elfin_types.h"
-#include "../../jutil/src/jutil.h"
+#include "elfin_exception.h"
+#include "jutil.h"
 
 namespace elfin {
 

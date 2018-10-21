@@ -4,7 +4,7 @@
 #include <vector>
 #include <sstream>
 
-#include "../src/elfin_types.h"
+#include "elfin_types.h"
 
 namespace elfin
 {

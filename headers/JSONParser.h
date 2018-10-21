@@ -1,11 +1,11 @@
 #ifndef JSONPARSER_H
 #define JSONPARSER_H
 
-#include "../src/input/json.h"
+#include "json.h"
 
 #include "SpecParser.h"
 #include "DBParser.h"
-#include "../data/PairRelationship.h"
+#include "PairRelationship.h"
 
 namespace elfin
 {

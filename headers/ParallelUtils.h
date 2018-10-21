@@ -8,7 +8,7 @@
 #include <omp.h>
 #endif
 
-#include "../jutil/src/jutil.h"
+#include "jutil.h"
 
 #ifdef _NO_OMP
 

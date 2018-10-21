@@ -4,8 +4,8 @@
 #include <vector>
 #include <memory>
 
-#include "../core/EvolutionSolver.h"
-#include "input/spec.h"
+#include "EvolutionSolver.h"
+#include "spec.h"
 
 namespace elfin {
 

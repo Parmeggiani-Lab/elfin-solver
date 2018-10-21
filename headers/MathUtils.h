@@ -3,9 +3,11 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <vector>
 
-#include "../src/elfin_types.h"
-#include "../data/Gene.h"
+#include "shorthands.h"
+#include "radii.h"
+#include "Gene.h"
 
 // COLLISION_MEASURE is one of {avgAll, maxHeavy, maxCA}
 #define COLLISION_MEASURE maxHeavy

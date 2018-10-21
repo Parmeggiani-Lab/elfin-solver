@@ -3,7 +3,8 @@
 
 #include <vector>
 
-#include "../src/elfin_types.h"
+#include "shorthands.h"
+#include "Geometry.h"
 
 namespace elfin
 {

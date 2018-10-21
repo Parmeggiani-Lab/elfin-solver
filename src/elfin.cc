@@ -1,6 +1,6 @@
 /* Copyright 2018 Joy Yeh <joyyeh@gmail.com> */
 
-#include "../src/elfin.h"
+#include "elfin.h"
 
 #include <string>
 #include <sstream>
@@ -9,16 +9,16 @@
 #include <fstream>
 
 #include "elfin_types.h"
-#include "input/arg_parser.h"
-#include "input/work_area.h"
-#include "../jutil/src/jutil.h"
-#include "../input/SpecParser.h"
-#include "../input/CSVParser.h"
-#include "../input/JSONParser.h"
-#include "../core/EvolutionSolver.h"
-#include "../core/ParallelUtils.h"
-#include "../core/MathUtils.h"
-#include "../core/Kabsch.h"
+#include "arg_parser.h"
+#include "work_area.h"
+#include "jutil.h"
+#include "SpecParser.h"
+#include "CSVParser.h"
+#include "JSONParser.h"
+#include "EvolutionSolver.h"
+#include "ParallelUtils.h"
+#include "MathUtils.h"
+#include "Kabsch.h"
 
 #ifndef _NO_OMP
 #include <omp.h>

@@ -3,8 +3,9 @@
 
 #include <string>
 
-#include "../src/elfin_types.h"
-#include "../data/PairRelationship.h"
+#include "shorthands.h"
+#include "radii.h"
+#include "PairRelationship.h"
 
 namespace elfin
 {

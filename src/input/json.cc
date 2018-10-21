@@ -1,6 +1,6 @@
 #include "json.h"
 
-#include "../../jutil/src/jutil.h"
+#include "jutil.h"
 
 #include <sstream>
 #include <fstream>

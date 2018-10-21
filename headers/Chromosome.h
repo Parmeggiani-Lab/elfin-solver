@@ -4,10 +4,12 @@
 #include <cmath>
 #include <string>
 
-#include "../src/elfin_types.h"
-#include "../jutil/src/jutil.h"
+#include "options.h"
+#include "id_pair.h"
+#include "radii.h"
+#include "jutil.h"
 #include "Gene.h"
-#include "../core/Checksum.h"
+#include "Checksum.h"
 #include "PairRelationship.h"
 
 namespace elfin

@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-#include "../src/input/json.h"
+#include "json.h"
 
 namespace elfin
 {

@@ -5,11 +5,11 @@
 #include <cstdlib>
 #include <tuple>
 
-#include "../core/MathUtils.h"
-#include "../core/Kabsch.h"
-#include "../data/PairRelationship.h"
-#include "../input/JSONParser.h"
-#include "../core/ParallelUtils.h"
+#include "MathUtils.h"
+#include "Kabsch.h"
+#include "PairRelationship.h"
+#include "JSONParser.h"
+#include "ParallelUtils.h"
 
 namespace elfin
 {

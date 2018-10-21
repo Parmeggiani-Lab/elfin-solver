@@ -2,8 +2,8 @@
 #define WORK_AREA_H_
 
 #include "ui_object.h"
-#include "../../data/Geometry.h"
-#include "../../jutil/src/jutil.h"
+#include "Geometry.h"
+#include "jutil.h"
 
 namespace elfin {
 

@@ -1,9 +1,10 @@
 #ifndef EVOLUTIONSOLVER_H
 #define EVOLUTIONSOLVER_H
 
-#include "../src/elfin_types.h"
-#include "../data/Chromosome.h"
-#include "../src/input/spec.h"
+#include "shorthands.h"
+#include "options.h"
+#include "Chromosome.h"
+#include "spec.h"
 
 namespace elfin
 {

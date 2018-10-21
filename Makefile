@@ -55,7 +55,7 @@ else
 	TIMING_FLAGS=
 endif
 
-INCS 			:= -I.
+INCS 			:= -I./headers -I./jutil/src/ -I.
 
 ifeq ($(CXX), clang++)
 	ifeq ($(OS),Windows_NT)

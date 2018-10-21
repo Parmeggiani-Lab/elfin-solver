@@ -4,12 +4,15 @@
 #include <cmath>
 
 #include "Kabsch.h"
-#include "../jutil/src/jutil.h"
+#include "jutil.h"
 #include "MathUtils.h"
-#include "../input/JSONParser.h"
+#include "JSONParser.h"
 
 namespace elfin
 {
+
+template <typename T>
+using Matrix = std::vector<std::vector<T>>;
 
 std::vector<double>
 point3fToVector(Point3f const & pt)

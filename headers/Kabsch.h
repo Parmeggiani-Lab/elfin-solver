@@ -3,8 +3,8 @@
 
 #include <vector>
 
-#include "../src/elfin_types.h"
-#include "../data/Gene.h"
+#include "options.h"
+#include "Gene.h"
 
 namespace elfin
 {

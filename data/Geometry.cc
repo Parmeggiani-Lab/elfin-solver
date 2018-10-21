@@ -3,7 +3,7 @@
 #include <iomanip>
 
 #include "Geometry.h"
-#include "../jutil/src/jutil.h"
+#include "jutil.h"
 
 namespace elfin
 {

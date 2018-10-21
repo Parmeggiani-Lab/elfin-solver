@@ -6,9 +6,9 @@
 #include <limits>
 
 #include "EvolutionSolver.h"
-#include "../jutil/src/jutil.h"
+#include "jutil.h"
 #include "ParallelUtils.h"
-#include "../src/input/work_area.h"
+#include "work_area.h"
 
 namespace elfin
 {
