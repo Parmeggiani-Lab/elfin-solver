@@ -8,8 +8,6 @@ namespace elfin {
 const char * const SpecParser::pg_networks_name = "pg_networks";
 const char * const SpecParser::networks_name = "networks";
 
-
-
 /* Public Methods */
 std::shared_ptr<Spec> SpecParser::parse(const std::string & filepath) {
 
@@ -22,7 +20,7 @@ std::shared_ptr<Spec> SpecParser::parse(const std::string & filepath) {
 
         msg("Input spec has %d work areas\n", pg_networks.size());
         for (auto it = pg_networks.begin(); it != pg_networks.end(); ++it) {
-            std::shared_ptr<WorkArea> wap = WorkArea::from_json(*it, networks, it.key());
+            std::shared_ptr<WorkArea> wap = WorkArea::from_json(*it, it.key());
 
             if (wap->size() == 0) {
                 throw ElfinException("Work area \"" + it.key() + "\" has no joints associated.");

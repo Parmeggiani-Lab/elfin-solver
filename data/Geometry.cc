@@ -129,10 +129,16 @@ Vector3f::dot(const Mat3x3 & mat) const
 float
 Vector3f::distTo(const Point3f & rhs) const
 {
+	return sqrt(sqDistTo(rhs));
+}
+
+float
+Vector3f::sqDistTo(const Point3f & rhs) const
+{
 	const float dx = (this->x - rhs.x);
 	const float dy = (this->y - rhs.y);
 	const float dz = (this->z - rhs.z);
-	return sqrt(dx * dx + dy * dy + dz * dz);
+	return dx * dx + dy * dy + dz * dz;
 }
 
 bool

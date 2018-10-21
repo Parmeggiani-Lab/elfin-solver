@@ -1,10 +1,8 @@
 #ifndef WORK_AREA_H_
 #define WORK_AREA_H_
 
-#include <memory>
-
+#include "ui_object.h"
 #include "../../data/Geometry.h"
-#include "json.h"
 #include "../../jutil/src/jutil.h"
 
 namespace elfin {
@@ -27,18 +25,15 @@ namespace elfin {
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 
 // TODO: Remove inheritance - or not?
-class WorkArea : public Points3f
+class WorkArea : public Points3f, public UIObject<WorkArea>
 {
 protected:
     WorkType type_ = FREE;
 
 public:
-    const std::string name_;
+    using UIObject::UIObject;
 
-    WorkArea(const std::string & name) : name_(name) {}
-    virtual ~WorkArea() {}
-
-    static std::shared_ptr<WorkArea> from_json(const JSON & pgn, const JSON & networks, const std::string & name);
+    static std::shared_ptr<WorkArea> from_json(const JSON & j, const std::string & name);
     WorkType get_type() const { return type_; };
 };
 

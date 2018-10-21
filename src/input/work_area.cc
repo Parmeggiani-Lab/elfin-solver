@@ -2,11 +2,11 @@
 
 namespace elfin {
 
-std::shared_ptr<WorkArea> WorkArea::from_json(const JSON & pgn, const JSON & networks, const std::string & name) {
+std::shared_ptr<WorkArea> WorkArea::from_json(const JSON & j, const std::string & name) {
     std::shared_ptr<WorkArea> wa = std::make_shared<WorkArea>(name);
 
     size_t n_hinges = 0, n_branches = 0;
-    for (auto it = pgn.begin(); it != pgn.end(); ++it) {
+    for (auto it = j.begin(); it != j.end(); ++it) {
         const JSON & joint = *it;
         std::shared_ptr<Point3f> p = Point3f::from_json(joint["trans"]);
         wa->push_back(*p);

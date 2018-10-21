@@ -23,10 +23,10 @@ collides(const uint newId,
 	// Check collision with all nodes up to previous PAIR
 	for (ConstGeneIterator itr = beginGene; itr < endGene; itr++)
 	{
-		const float comDist = itr->com().distTo(newCOM);
+		const float comDist = itr->com().sqDistTo(newCOM);
 		const float requiredComDist = radiiList.at(itr->nodeId()).COLLISION_MEASURE +
 		                              radiiList.at(newId).COLLISION_MEASURE;
-		if (comDist < requiredComDist)
+		if (comDist < (requiredComDist * requiredComDist))
 			return true;
 	}
 

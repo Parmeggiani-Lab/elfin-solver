@@ -40,6 +40,7 @@ public:
 	float dot(const Vector3f & rhs) const;
 	Vector3f dot(const Mat3x3 & rotMat) const;
 	float distTo(const Vector3f & rhs) const;
+	float sqDistTo(const Vector3f & rhs) const;
 
 	// We use 1e-6 because PDBs have only 4 decimals of precision
 	bool approximates(const Vector3f & ref, double tolerance = 1e-4);
