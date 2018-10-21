@@ -4,7 +4,7 @@
 #include <vector>
 #include <sstream>
 
-#include "elfin_types.h"
+#include "geometry.h"
 
 namespace elfin
 {
@@ -13,31 +13,31 @@ class PairRelationship
 {
 public:
 	PairRelationship(
-	    const std::vector<float> & comBv,
-	    const std::vector<float> & rotv,
-	    const std::vector<float> & tranv) :
-		comB(Point3f(comBv)),
-		rot(Mat3x3(rotv)),
-		rotInv(rot.transpose()),
-		tran(Vector3f(tranv))
+	    const std::vector<float> & com_b,
+	    const std::vector<float> & rot,
+	    const std::vector<float> & tran) :
+		com_b(com_b),
+		rot_(rot),
+		rot_inv_(rot_.transpose()),
+		tran_(tran)
 	{};
 
 	virtual ~PairRelationship() {};
 
-	const Point3f comB;
-	const Mat3x3 rot;
-	const Mat3x3 rotInv;
-	const Vector3f tran;
+	const Point3f com_b;
+	const Mat3x3 rot_;
+	const Mat3x3 rot_inv_;
+	const Vector3f tran_;
 
-	std::string toString()
+	std::string to_string()
 	{
 		std::ostringstream ss;
 
 		ss << "pr[" << std::endl;
-		ss << "    comB:" << comB.toString() << std::endl;
-		ss << "    rot:" << rot.toString() << std::endl;
-		ss << "    rotInv:" << rotInv.toString() << std::endl;
-		ss << "    tran:" << tran.toString() << std::endl;
+		ss << "    com_b_:" << com_b.to_string() << std::endl;
+		ss << "    rot_:" << rot_.to_string() << std::endl;
+		ss << "    rot_inv_:" << rot_inv_.to_string() << std::endl;
+		ss << "    tran_:" << tran_.to_string() << std::endl;
 		ss << "]" << std::endl;
 
 		return ss.str();

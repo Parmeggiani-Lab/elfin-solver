@@ -64,24 +64,20 @@ Gene::com() const
 }
 
 std::string
-Gene::toString() const
+Gene::to_string() const
 {
     std::stringstream ss;
     ss << "ID: " << myNodeId << " ";
     ss << "Name: " << inm->at(myNodeId) << " ";
-    ss << "CoM: " << myCom.toString();
+    ss << "CoM: " << myCom.to_string();
 
     return ss.str();
 }
 
 std::string
-Gene::toCSVString() const
+Gene::to_csv_string() const
 {
-    std::stringstream ss;
-    
-    ss << myCom.toCSVString();
-
-    return ss.str();
+    return myCom.to_csv_string();
 }
 
 void
@@ -92,7 +88,7 @@ Gene::setup(const IdNameMap * _inm)
 }
 
 std::string
-genesToString(const Genes & genes)
+genes_to_string(const Genes & genes)
 {
     std::stringstream ss;
 
@@ -100,20 +96,20 @@ genesToString(const Genes & genes)
     for (int i = 0; i < N; i++)
     {
         ss << "Node #" << i << " / " << N << ": "
-           << genes.at(i).toString() << std::endl;
+           << genes.at(i).to_string() << std::endl;
     }
 
     return ss.str();
 }
 
 std::string
-genesToCSVString(const Genes & genes)
+genes_to_csv_string(const Genes & genes)
 {
     std::stringstream ss;
 
     const int N = genes.size();
     for (int i = 0; i < N; i++)
-        ss << genes.at(i).toCSVString() << std::endl;
+        ss << genes.at(i).to_csv_string() << std::endl;
 
     return ss.str();
 }

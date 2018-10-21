@@ -2,7 +2,7 @@
 #include <cmath>
 #include <iomanip>
 
-#include "Geometry.h"
+#include "geometry.h"
 #include "jutil.h"
 
 namespace elfin
@@ -40,7 +40,7 @@ Vector3f::Vector3f(FloatConstIterator begin,
 }
 
 std::string
-Vector3f::toString() const
+Vector3f::to_string() const
 {
 	std::ostringstream ss;
 	ss << "v3f[" << std::setprecision(10) << x << ", " << y << ", " << z << ']';
@@ -48,7 +48,7 @@ Vector3f::toString() const
 }
 
 std::string
-Vector3f::toCSVString() const
+Vector3f::to_csv_string() const
 {
 	std::ostringstream ss;
 	ss << std::setprecision(10) << x << ", " << y << ", " << z;
@@ -127,13 +127,13 @@ Vector3f::dot(const Mat3x3 & mat) const
 }
 
 float
-Vector3f::distTo(const Point3f & rhs) const
+Vector3f::dist_to(const Point3f & rhs) const
 {
-	return sqrt(sqDistTo(rhs));
+	return sqrt(sq_dist_to(rhs));
 }
 
 float
-Vector3f::sqDistTo(const Point3f & rhs) const
+Vector3f::sq_dist_to(const Point3f & rhs) const
 {
 	const float dx = (this->x - rhs.x);
 	const float dy = (this->y - rhs.y);
@@ -153,8 +153,8 @@ Vector3f::approximates(const Vector3f & ref, double tolerance)
 		const float dz = this->z - ref.z;
 
 		wrn("Point3f ref: %s\ntest: %s\ndiffs: %.8f, %.8f, %.8f\n",
-		    ref.toString().c_str(),
-		    toString().c_str(),
+		    ref.to_string().c_str(),
+		    to_string().c_str(),
 		    dx, dy, dz);
 
 		if (!float_approximates_err(
@@ -183,14 +183,14 @@ std::shared_ptr<Vector3f> Vector3f::from_json(const JSON & j) {
 
 
 std::string
-pointsToString(const Points3f & points)
+points_to_string(const Points3f & points)
 {
 	std::ostringstream ss;
 
 	ss << "Points3f: " << &points << std::endl;
 
 	for (int i = 0; i < points.size(); i++)
-		ss << "[" << i << "]: " << points.at(i).toString() << std::endl;
+		ss << "[" << i << "]: " << points.at(i).to_string() << std::endl;
 
 	return ss.str();
 }
@@ -221,13 +221,13 @@ Mat3x3::Mat3x3(FloatConstIterator begin,
 }
 
 std::string
-Mat3x3::toString() const
+Mat3x3::to_string() const
 {
 	std::ostringstream ss;
 
 	ss << "m3x3[" << std::endl;
 	for (int i = 0; i < 3; i++)
-		ss << "      row" << (i + 1) << ":" << rows[i].toString() << std::endl;
+		ss << "      row" << (i + 1) << ":" << rows[i].to_string() << std::endl;
 	ss << " ]";
 
 	return ss.str();

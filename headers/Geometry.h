@@ -29,8 +29,8 @@ public:
 	Vector3f(FloatConstIterator begin,
 	         FloatConstIterator end);
 
-	std::string toString() const;
-	std::string toCSVString() const;
+	std::string to_string() const;
+	std::string to_csv_string() const;
 
 	Vector3f operator+(const Vector3f & rhs) const;
 	Vector3f operator-(const Vector3f & rhs) const;
@@ -39,8 +39,8 @@ public:
 	Vector3f & operator-=(const Vector3f & rhs);
 	float dot(const Vector3f & rhs) const;
 	Vector3f dot(const Mat3x3 & rotMat) const;
-	float distTo(const Vector3f & rhs) const;
-	float sqDistTo(const Vector3f & rhs) const;
+	float dist_to(const Vector3f & rhs) const;
+	float sq_dist_to(const Vector3f & rhs) const;
 
 	// We use 1e-6 because PDBs have only 4 decimals of precision
 	bool approximates(const Vector3f & ref, double tolerance = 1e-4);
@@ -50,7 +50,7 @@ public:
 typedef Vector3f Point3f;
 typedef std::vector<Point3f> Points3f;
 
-std::string pointsToString(const Points3f & points);
+std::string points_to_string(const Points3f & points);
 
 class Mat3x3
 {
@@ -70,7 +70,7 @@ public:
 	Mat3x3 dot(const Mat3x3 & rotMat) const;
 	Mat3x3 transpose() const;
 
-	std::string toString() const;
+	std::string to_string() const;
 };
 
 

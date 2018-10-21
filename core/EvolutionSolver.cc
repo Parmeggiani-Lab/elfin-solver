@@ -299,7 +299,7 @@ void
 EvolutionSolver::printStartMsg(const WorkArea & wa)
 {
 	for (auto & p : wa)
-		dbg("Work Area Point: %s\n", p.toString().c_str());
+		dbg("Work Area Point: %s\n", p.to_string().c_str());
 
 	msg("Expecting length: %u (%u~%u), spec has %d points\n",
 	    myExpectedTargetLen,
@@ -362,7 +362,7 @@ EvolutionSolver::printEndMsg()
 		msg("Solution #%d score %.2f: \n%s\n",
 		    p.getScore(),
 		    i,
-		    p.toString().c_str());
+		    p.to_string().c_str());
 	}
 }
 

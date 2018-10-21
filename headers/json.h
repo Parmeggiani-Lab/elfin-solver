@@ -1,13 +1,15 @@
 #ifndef JSON_H_
 #define JSON_H_
 
-#include "nlohmann_json.h"
-
 #include <string>
+
+#include "nlohmann_json.h"
 
 namespace elfin {
 
 typedef nlohmann::json JSON;
+
+class RelaMat;
 
 std::string json_to_str(const JSON & j);
 

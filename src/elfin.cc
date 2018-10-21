@@ -8,16 +8,15 @@
 #include <iostream>
 #include <fstream>
 
-#include "elfin_types.h"
 #include "arg_parser.h"
 #include "work_area.h"
+#include "json.h"
+#include "db_parser.h"
+#include "math_utils.h"
 #include "jutil.h"
-#include "SpecParser.h"
-#include "CSVParser.h"
-#include "JSONParser.h"
+
 #include "EvolutionSolver.h"
 #include "ParallelUtils.h"
-#include "MathUtils.h"
 #include "Kabsch.h"
 
 #ifndef _NO_OMP
@@ -85,7 +84,7 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
 
     msg("Using master seed: %d\n", options_.randSeed);
 
-    JSONParser().parseDB(options_.xdb,
+    DBParser::parse(parse_json(options_.xdb),
                          name_id_map_,
                          id_name_map_,
                          rela_mat_,
@@ -141,7 +140,7 @@ void ElfinRunner::run() {
             std::ostringstream csv_output_path;
             csv_output_path << options_.outputDir << "/" << &p->at(i) << ".csv";
 
-            std::string csv_data = p->at(i).toCSVString();
+            std::string csv_data = p->at(i).to_csv_string();
             write_binary(csv_output_path.str().c_str(),
                          csv_data.c_str(),
                          csv_data.size());
@@ -154,7 +153,7 @@ void ElfinRunner::run() {
 int ElfinRunner::run_unit_tests() {
     msg("Running unit tests...\n");
     int fail_count = 0;
-    fail_count += _testMathUtils();
+    fail_count += _test_math_utils();
     fail_count += _testKabsch(options_);
     fail_count += _testChromosome(options_);
     return fail_count;

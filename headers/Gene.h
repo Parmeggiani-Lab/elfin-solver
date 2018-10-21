@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "shorthands.h"
-#include "Geometry.h"
+#include "geometry.h"
 
 namespace elfin
 {
@@ -22,8 +22,8 @@ public:
 	     const float y,
 	     const float z);
 
-	std::string toString() const;
-	std::string toCSVString() const;
+	std::string to_string() const;
+	std::string to_csv_string() const;
 	uint & nodeId();
 	const uint & nodeId() const;
 	Point3f & com();
@@ -42,8 +42,8 @@ private:
 typedef std::vector<Gene> Genes;
 typedef std::vector<Gene>::const_iterator ConstGeneIterator;
 
-std::string genesToString(const Genes & genes);
-std::string genesToCSVString(const Genes & genes);
+std::string genes_to_string(const Genes & genes);
+std::string genes_to_csv_string(const Genes & genes);
 
 } // namespace elfin
 

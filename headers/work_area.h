@@ -2,7 +2,7 @@
 #define WORK_AREA_H_
 
 #include "ui_object.h"
-#include "Geometry.h"
+#include "geometry.h"
 #include "jutil.h"
 
 namespace elfin {

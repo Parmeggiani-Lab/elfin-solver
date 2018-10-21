@@ -4,8 +4,10 @@
 #include <vector>
 #include <memory>
 
-#include "EvolutionSolver.h"
 #include "spec.h"
+#include "pair_relationship.h"
+
+#include "EvolutionSolver.h"
 
 namespace elfin {
 

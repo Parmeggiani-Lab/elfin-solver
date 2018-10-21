@@ -4,9 +4,11 @@
 #include <cmath>
 
 #include "Kabsch.h"
+
+#include "db_parser.h"
+#include "json.h"
+#include "math_utils.h"
 #include "jutil.h"
-#include "MathUtils.h"
-#include "JSONParser.h"
 
 namespace elfin
 {
@@ -49,11 +51,11 @@ resample(
 	// Compute  shape total lengths
 	float refTotLen = 0.0f;
 	for (int i = 1; i < N; i++)
-		refTotLen += ref.at(i).distTo(ref.at(i - 1));
+		refTotLen += ref.at(i).dist_to(ref.at(i - 1));
 
 	float ptsTotLen = 0.0f;
 	for (int i = 1; i < pts.size(); i++)
-		ptsTotLen += pts.at(i).distTo(pts.at(i - 1));
+		ptsTotLen += pts.at(i).dist_to(pts.at(i - 1));
 
 	// Upsample pts
 	Points3f resampled;
@@ -68,7 +70,7 @@ resample(
 		const Point3f & baseFpPoint = pts.at(i - 1);
 		const Point3f & nextFpPoint = pts.at(i);
 		const float baseFpProportion = ptsProp;
-		const float fpSegment = nextFpPoint.distTo(baseFpPoint)
+		const float fpSegment = nextFpPoint.dist_to(baseFpPoint)
 		                        / ptsTotLen;
 		const Vector3f vec = nextFpPoint - baseFpPoint;
 
@@ -76,7 +78,7 @@ resample(
 		while (refProp <= ptsProp && mpi < N)
 		{
 			const float mpSegment =
-			    ref.at(mpi).distTo(ref.at(mpi - 1))
+			    ref.at(mpi).dist_to(ref.at(mpi - 1))
 			    / refTotLen;
 
 			if (refProp + mpSegment > ptsProp)
@@ -603,7 +605,7 @@ int _testKabsch(const Options &options)
 		}
 	}
 
-	msg("Tran: %s\n", tran.toString().c_str());
+	msg("Tran: %s\n", tran.to_string().c_str());
 	if (!tran.approximates(actualTran))
 	{
 		failCount++;
@@ -632,7 +634,7 @@ int _testKabsch(const Options &options)
 	NameIdMap nameIdMap;
 	IdNameMap idNameMap;
 	RadiiList radiiList;
-	JSONParser().parseDB(options.xdb, nameIdMap, idNameMap, relaMat, radiiList);
+	DBParser::parse(parse_json(options.xdb), nameIdMap, idNameMap, relaMat, radiiList);
 
 	Gene::setup(&idNameMap);
 

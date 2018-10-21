@@ -1,6 +1,7 @@
 #ifndef SHORTHANDS_H_
 #define SHORTHANDS_H_
 
+#include <vector>
 #include <unordered_map>
 
 namespace elfin {

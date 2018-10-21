@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "options.h"
+
 #include "Gene.h"
 
 namespace elfin

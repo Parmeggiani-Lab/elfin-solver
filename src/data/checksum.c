@@ -1,4 +1,4 @@
-#include "Checksum.h"
+#include "checksum.h"
 
 namespace elfin
 {
@@ -49,7 +49,7 @@ const static Crc32 crc32_table[256] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x2d02ef8d
 };
 
-Crc32 checksumNew(void const *__restrict__ pData, size_t size)
+Crc32 checksum_new(void const *__restrict__ pData, size_t size)
 {
 	Crc32 crc = 0;
 	char *pCur = (char *) pData;
@@ -59,7 +59,7 @@ Crc32 checksumNew(void const *__restrict__ pData, size_t size)
 	return crc;
 }
 
-void checksumCascade(Crc32 *__restrict__ crc, void const *__restrict__ pData, size_t size)
+void checksum_cascade(Crc32 *__restrict__ crc, void const *__restrict__ pData, size_t size)
 {
 	char *pCur = (char *) pData;
 	for (; size--; ++pCur)

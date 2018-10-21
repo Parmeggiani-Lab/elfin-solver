@@ -5,10 +5,12 @@
 #include <cstdlib>
 #include <tuple>
 
-#include "MathUtils.h"
+#include "json.h"
+#include "db_parser.h"
+#include "pair_relationship.h"
+#include "math_utils.h"
+
 #include "Kabsch.h"
-#include "PairRelationship.h"
-#include "JSONParser.h"
 #include "ParallelUtils.h"
 
 namespace elfin
@@ -89,7 +91,7 @@ Chromosome::checksum() const
 	for (int i = 0; i < myGenes.size(); i++)
 	{
 		const Point3f & pt = myGenes.at(i).com();
-		checksumCascade(&crc, &pt, sizeof(pt));
+		checksum_cascade(&crc, &pt, sizeof(pt));
 	}
 
 	return crc;
@@ -107,24 +109,20 @@ Chromosome::getNodeNames() const
 }
 
 std::string
-Chromosome::toString() const
+Chromosome::to_string() const
 {
 	std::stringstream ss;
 
 	ss << "Chromosome " << this << ":\n";
-	ss << genesToString(myGenes);
+	ss << genes_to_string(myGenes);
 
 	return ss.str();
 }
 
 std::string
-Chromosome::toCSVString() const
+Chromosome::to_csv_string() const
 {
-	std::stringstream ss;
-
-	ss << genesToCSVString(myGenes);
-
-	return ss.str();
+	return genes_to_csv_string(myGenes);
 }
 
 bool
@@ -194,9 +192,9 @@ Chromosome::cross(const Chromosome & father, Chromosome & out) const
 			newGenes.insert(newGenes.end(), fatherG.begin() + fatherGeneId, fatherG.end());
 
 			// dbg("Crossing at mother[%d] and father[%d]\n", motherGeneId, fatherGeneId);
-			// dbg("Mother: \n%s\n", mother.toCString());
-			// dbg("Father: \n%s\n", father.toCString());
-			// dbg("New Genes: \n%s\n", genesToString(newGenes).c_str());
+			// dbg("Mother: \n%s\n", mother.to_string().c_str());
+			// dbg("Father: \n%s\n", father.to_string().c_str());
+			// dbg("New Genes: \n%s\n", genes_to_string(newGenes).c_str());
 
 			if (synthesise(newGenes))
 			{
@@ -319,7 +317,7 @@ Chromosome::pointMutate()
 							testGenes.at(i).nodeId() = j;
 
 							// dbg("checking swap at %d/%d of %s\n",
-							//     i, myGeneSize, toString().c_str());
+							//     i, myGeneSize, to_string().c_str());
 							if (synthesise(testGenes))
 								swappableIds.push_back(IdPair(i, j));
 						}
@@ -363,7 +361,7 @@ Chromosome::pointMutate()
 							                 Gene(j));
 
 							// dbg("checking insertion at %d/%d of %s\n",
-							//     i, myGeneSize, toString().c_str());
+							//     i, myGeneSize, to_string().c_str());
 							if (synthesise(testGenes))
 								insertableIds.push_back(IdPair(i, j));
 						}
@@ -403,7 +401,7 @@ Chromosome::pointMutate()
 						testGenes.erase(testGenes.begin() + i);
 
 						// dbg("checking deletion at %d/%d of %s\n",
-						//     i, myGeneSize, toString().c_str());
+						//     i, myGeneSize, to_string().c_str());
 						if (synthesise(testGenes)) deletableIds.push_back(i);
 					}
 				}
@@ -573,7 +571,7 @@ Chromosome::calcExpectedLength(const Points3f & lenRef,
 		for (std::vector<Point3f>::const_iterator i = lenRef.begin() + 1; // !!
 		        i != lenRef.end();
 		        ++i)
-			sumDist += (i - 1)->distTo(*i);
+			sumDist += (i - 1)->dist_to(*i);
 		exp_len = (uint32_t) round(sumDist / avgPairDist);
 	}
 
@@ -610,13 +608,13 @@ Chromosome::synthesiseReverse(Genes & genes)
 			    rhsGene.nodeId(),
 			    Gene::inm->at(rhsGene.nodeId()).c_str());
 
-			err("Erroneous genes:\n%s\n", genesToString(genes).c_str());
+			err("Erroneous genes:\n%s\n", genes_to_string(genes).c_str());
 
 
 			die("Fatal error in synthesiseReverse(): should never use impossible pair\n");
 		}
 
-		const Point3f checkpoint = newNodePr->tran;
+		const Point3f checkpoint = newNodePr->tran_;
 
 		if (collides(lhsGene.nodeId(),
 		             checkpoint,
@@ -629,8 +627,8 @@ Chromosome::synthesiseReverse(Genes & genes)
 		for (int j = N - 1; j > i - 1; j--)
 		{
 			auto & g = genes.at(j);
-			g.com() -= newNodePr->tran;
-			g.com() = g.com().dot(newNodePr->rotInv);
+			g.com() -= newNodePr->tran_;
+			g.com() = g.com().dot(newNodePr->rot_inv_);
 		}
 	}
 
@@ -666,13 +664,13 @@ Chromosome::synthesise(Genes & genes)
 			    rhsGene.nodeId(),
 			    Gene::inm->at(rhsGene.nodeId()).c_str());
 
-			err("Erroneous genes:\n%s\n", genesToString(genes).c_str());
+			err("Erroneous genes:\n%s\n", genes_to_string(genes).c_str());
 
 			die("Fatal error in synthesise(): should never use impossible pair\n");
 		}
 
 		if (collides(rhsGene.nodeId(),
-		             newNodePr->comB,
+		             newNodePr->com_b,
 		             genes.begin(),
 		             genes.begin() + i - 2,
 		             *myRadiiList))
@@ -682,8 +680,8 @@ Chromosome::synthesise(Genes & genes)
 		for (int j = 0; j < i; j++)
 		{
 			auto & g = genes.at(j);
-			g.com() = g.com().dot(newNodePr->rot);
-			g.com() += newNodePr->tran;
+			g.com() = g.com().dot(newNodePr->rot_);
+			g.com() += newNodePr->tran_;
 		}
 	}
 
@@ -725,7 +723,7 @@ Chromosome::genRandomGenesReverse(
 			if (prPtr == NULL)
 				continue;
 
-			const Point3f checkpoint = prPtr->tran;
+			const Point3f checkpoint = prPtr->tran_;
 
 			// Create roulette based on number of LHS neighbours
 			// of the current neighbour being considered
@@ -751,8 +749,8 @@ Chromosome::genRandomGenesReverse(
 		// Grow shape
 		for (auto & g : genes)
 		{
-			g.com() -= nextNodePR->tran;
-			g.com() = g.com().dot(nextNodePR->rotInv);
+			g.com() -= nextNodePR->tran_;
+			g.com() = g.com().dot(nextNodePR->rot_inv_);
 		}
 
 		genes.emplace_back(nextNodeId, 0, 0, 0);
@@ -815,7 +813,7 @@ Chromosome::genRandomGenes(
 			// Create roulette based on number of RHS neighbours
 			// of the current neighbour being considered
 			if (prPtr && !collides(i,
-			                       prPtr->comB,
+			                       prPtr->com_b,
 			                       genes.begin(),
 			                       genes.end() - 2,
 			                       *myRadiiList))
@@ -836,8 +834,8 @@ Chromosome::genRandomGenes(
 		// Grow shape
 		for (auto & g : genes)
 		{
-			g.com() = g.com().dot(nextNodePR->rot);
-			g.com() += nextNodePR->tran;
+			g.com() = g.com().dot(nextNodePR->rot_);
+			g.com() += nextNodePR->tran_;
 		}
 
 		genes.emplace_back(nextNodeId, 0, 0, 0);
@@ -856,7 +854,7 @@ int _testChromosome(const Options &options)
 	NameIdMap nameIdMap;
 	IdNameMap idNameMap;
 	RadiiList radiiList;
-	JSONParser().parseDB(options.xdb, nameIdMap, idNameMap, relaMat, radiiList);
+	DBParser::parse(parse_json(options.xdb), nameIdMap, idNameMap, relaMat, radiiList);
 
 	Gene::setup(&idNameMap);
 	Chromosome::setup(0, 100, relaMat, radiiList);
@@ -937,7 +935,7 @@ int _testChromosome(const Options &options)
 		err("Failed to synthesiseReverse() known spec!\n");
 	}
 
-	msg("%s\n", chromo.toString().c_str());
+	msg("%s\n", chromo.to_string().c_str());
 
 	// Test scoring
 	chromo.score(l10Solution1);

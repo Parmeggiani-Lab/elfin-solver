@@ -7,10 +7,10 @@
 #include "options.h"
 #include "id_pair.h"
 #include "radii.h"
+#include "checksum.h"
 #include "jutil.h"
+
 #include "Gene.h"
-#include "Checksum.h"
-#include "PairRelationship.h"
 
 namespace elfin
 {
@@ -52,8 +52,8 @@ public:
 	Crc32 checksum() const;
 	std::vector<std::string> getNodeNames() const;
 
-	std::string toString() const;
-	std::string toCSVString() const;
+	std::string to_string() const;
+	std::string to_csv_string() const;
 	bool cross(const Chromosome & father, Chromosome & out) const;
 	Chromosome mutateChild() const;
 	void autoMutate();
