@@ -30,9 +30,20 @@ bool (Chromosome::*limbMutateChromoFunct)() = &Chromosome::limbMutate;
 
 void
 EvolutionSolver::set_length_guesses(const Points3f & shape) {
-	myExpectedTargetLen = Chromosome::calcExpectedLength(shape, myOptions.avgPairDist);
-	myMinTargetLen = myExpectedTargetLen - myOptions.lenDevAlw;
-	myMaxTargetLen = myExpectedTargetLen + myOptions.lenDevAlw;
+	/*
+	 * Calculate expected length as sum of point
+	 * displacements over avg pair module distance
+	 */
+	float sum_dist = 0.0f;
+	for (auto i = shape.begin() + 1; i != shape.end(); ++i)
+		sum_dist += (i - 1)->dist_to(*i);
+
+	// Add one because division counts segments. We want number of points.
+	uint exp_len = 1 + round(sum_dist / myOptions.avgPairDist);
+
+	myExpectedTargetLen = exp_len;
+	myMinTargetLen = exp_len - myOptions.lenDevAlw;
+	myMaxTargetLen = exp_len + myOptions.lenDevAlw;
 
 	Chromosome::setup(myMinTargetLen, myMaxTargetLen, myRelaMat, myRadiiList);
 }

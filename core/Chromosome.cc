@@ -551,33 +551,6 @@ Chromosome::setup(const uint minLen,
 	setupDone = true;
 }
 
-/*
- * Calculate expected length as sum of point
- * displacements over avg pair module distance
- *
- * Note: another possible heuristic is to insert
- * 	an extra point count only between pairs of
- * 	points that are too far apart, i.e. 2x avg dist
- */
-uint
-Chromosome::calcExpectedLength(const Points3f & len_ref,
-                               const float avg_pair_dist)
-{
-	float sum_dist = 0.0f;
-
-	uint exp_len = 1;
-
-	if (len_ref.size() > 1) {
-		for (auto i = len_ref.begin() + 1; i != len_ref.end(); ++i)
-			sum_dist += (i - 1)->dist_to(*i);
-		exp_len = (uint) round(sum_dist / avg_pair_dist);
-	}
-
-	// Add one because division counts segments. We want points
-	exp_len ++;
-	return exp_len;
-}
-
 bool
 Chromosome::synthesiseReverse(Genes & genes)
 {

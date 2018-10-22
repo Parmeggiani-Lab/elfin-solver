@@ -75,8 +75,8 @@ public:
 	                  const uint maxLen,
 	                  const RelaMat & relaMat,
 	                  const RadiiList & radiiList);
-	static uint calcExpectedLength(const Points3f & lenRef,
-	                               const float avgPairDist);
+	static uint calcExpectedLength(const Points3f & len_ref,
+	                               const float avg_pair_dist);
 	static bool synthesiseReverse(Genes & genes);
 	static bool synthesise(Genes & genes);
 
