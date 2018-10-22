@@ -208,16 +208,6 @@ Chromosome::cross(const Chromosome & father, Chromosome & out) const
 	return false;
 }
 
-Chromosome
-Chromosome::mutateChild() const
-{
-	Chromosome out = *this;
-	out.autoMutate();
-	out.setOrigin(Origin::AutoMutate);
-
-	return out;
-}
-
 void
 Chromosome::autoMutate()
 {

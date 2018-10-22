@@ -19,14 +19,13 @@ namespace elfin
 #include <ittnotify.h>
 #endif
 
-Chromosome & (Chromosome::*assignChromoFunct)(Chromosome const&) = &Chromosome::operator=;
-ulong (*getDiceFunct)(ulong) = getDice;
-bool (Chromosome::*crossChromosomeFunct)(Chromosome const&, Chromosome&) const = &Chromosome::cross;
-// Chromosome (Chromosome::*mutateChildChromoFunct)() const = &Chromosome::mutateChild;
-void (Chromosome::*autoMutateChromoFunct)() = &Chromosome::autoMutate;
-void (Chromosome::*randomiseChromoFunct)() = &Chromosome::randomise;
-bool (Chromosome::*pointMutateChromoFunct)() = &Chromosome::pointMutate;
-bool (Chromosome::*limbMutateChromoFunct)() = &Chromosome::limbMutate;
+Chromosome & (Chromosome::*assign_chromo_funct)(Chromosome const&) = &Chromosome::operator=;
+ulong (*get_dice_funct)(ulong) = getDice;
+bool (Chromosome::*cross_chromosome_funct)(Chromosome const&, Chromosome&) const = &Chromosome::cross;
+void (Chromosome::*auto_mutate_chromo_funct)() = &Chromosome::autoMutate;
+void (Chromosome::*randomise_chromo_funct)() = &Chromosome::randomise;
+bool (Chromosome::*point_mutate_chromo_funct)() = &Chromosome::pointMutate;
+bool (Chromosome::*limb_mutate_chromo_funct)() = &Chromosome::limbMutate;
 
 void
 EvolutionSolver::set_length_guesses(const Points3f & shape) {
@@ -67,32 +66,31 @@ EvolutionSolver::evolve_population()
 		{
 			Chromosome & chromoToEvolve = buff_pop_data_[i];
 			const ulong evolutionDice = surviver_cutoff_ +
-			                            getDiceFunct(non_surviver_count_);
+			                            get_dice_funct(non_surviver_count_);
 
 			if (evolutionDice < cross_cutoff_)
 			{
 				long motherId, fatherId;
-				if (getDiceFunct(2))
+				if (get_dice_funct(2))
 				{
-					motherId = getDiceFunct(surviver_cutoff_);
-					fatherId = getDiceFunct(options_.ga_pop_size);
+					motherId = get_dice_funct(surviver_cutoff_);
+					fatherId = get_dice_funct(options_.ga_pop_size);
 				}
 				else
 				{
-					motherId = getDiceFunct(options_.ga_pop_size);
-					fatherId = getDiceFunct(surviver_cutoff_);
+					motherId = get_dice_funct(options_.ga_pop_size);
+					fatherId = get_dice_funct(surviver_cutoff_);
 				}
 
 				const Chromosome & mother = curr_pop_data_[motherId];
 				const Chromosome & father = curr_pop_data_[fatherId];
 
 				// Check compatibility
-				if (!(mother.*crossChromosomeFunct)(father, chromoToEvolve))
+				if (!(mother.*cross_chromosome_funct)(father, chromoToEvolve))
 				{
 					// Pick a random parent to inherit from and then mutate
-					// (chromoToEvolve.*assignChromoFunct)((mother.*mutateChildChromoFunct)());
-					(chromoToEvolve.*assignChromoFunct)(mother);
-					(chromoToEvolve.*autoMutateChromoFunct)();
+					(chromoToEvolve.*assign_chromo_funct)(mother);
+					(chromoToEvolve.*auto_mutate_chromo_funct)();
 					cross_fail_count++;
 				}
 				cross_count++;
@@ -100,26 +98,26 @@ EvolutionSolver::evolve_population()
 			else
 			{
 				// Replicate a high ranking parent
-				const ulong parentId = getDiceFunct(surviver_cutoff_);
-				(chromoToEvolve.*assignChromoFunct)(curr_pop_data_[parentId]);
+				const ulong parentId = get_dice_funct(surviver_cutoff_);
+				(chromoToEvolve.*assign_chromo_funct)(curr_pop_data_[parentId]);
 
 				if (evolutionDice < point_mutate_cutoff_)
 				{
-					if (!(chromoToEvolve.*pointMutateChromoFunct)())
-						(chromoToEvolve.*randomiseChromoFunct)();
+					if (!(chromoToEvolve.*point_mutate_chromo_funct)())
+						(chromoToEvolve.*randomise_chromo_funct)();
 					pm_count++;
 				}
 				else if (evolutionDice < limb_mutate_cutoff_)
 				{
-					if (!(chromoToEvolve.*limbMutateChromoFunct)())
-						(chromoToEvolve.*randomiseChromoFunct)();
+					if (!(chromoToEvolve.*limb_mutate_chromo_funct)())
+						(chromoToEvolve.*randomise_chromo_funct)();
 					lm_count++;
 				}
 				else
 				{
 					// Individuals not covered by specified mutation
 					// rates undergo random destructive mutation
-					(chromoToEvolve.*randomiseChromoFunct)();
+					(chromoToEvolve.*randomise_chromo_funct)();
 					rand_count++;
 				}
 			}
@@ -277,8 +275,8 @@ EvolutionSolver::init_population(const Points3f & shape)
 		OMP_PAR_FOR
 		for (int i = 0; i < options_.ga_pop_size; i++)
 		{
-			(mpb0[i].*randomiseChromoFunct)();
-			(mpb1[i].*assignChromoFunct)(mpb0[i]);
+			(mpb0[i].*randomise_chromo_funct)();
+			(mpb1[i].*assign_chromo_funct)(mpb0[i]);
 #ifndef _TARGET_GPU
 			if (i % block == 0)
 			{
@@ -442,6 +440,12 @@ EvolutionSolver::run()
 		asprintf_ret = asprintf(&avgTimeMsgFmt,
 		                        "Avg Times: Evolve=%%.0f,Score=%%.0f,Rank=%%.0f,Select=%%.0f,Gen=%%.0f\n");
 
+
+        // if this was a complex work area, we need to break it down to
+        // multiple simple ones by first choosing hubs and their orientations.
+        /*
+        TODO: Break complex work area
+        */
 
 		if (!options_.dry_run) {
 			MAP_DATA()

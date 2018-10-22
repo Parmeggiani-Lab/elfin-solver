@@ -56,7 +56,6 @@ public:
 
 	void score(const Points3f & ref);
 	bool cross(const Chromosome & father, Chromosome & out) const;
-	Chromosome mutateChild() const;
 	void autoMutate();
 	void randomise();
 	bool pointMutate();

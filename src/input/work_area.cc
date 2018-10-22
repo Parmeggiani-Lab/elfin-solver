@@ -30,8 +30,7 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
         }
     }
 
-    if (n_branches == 0)
-    {
+    if (n_branches == 0) {
         switch (occupied_joints_.size()) {
         case 0: {
             type_ = FREE;
