@@ -14,9 +14,9 @@ class UIJoint : public UIObject
 public:
     using UIObject::UIObject; // inherit ctors
 
-    std::tuple<std::string, std::string, UIObject const *> occupant_ =
+    std::tuple<std::string, std::string, UIObject const *> occupant_triple_ =
         std::make_tuple("", "", nullptr);
-    std::tuple<std::string, UIJoint const *> hinge_ =
+    std::tuple<std::string, UIJoint const *> hinge_tuple_ =
         std::make_tuple("", nullptr);
     std::vector<UIJoint const *> neighbours_;
 };

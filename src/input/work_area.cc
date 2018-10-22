@@ -16,7 +16,7 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
         auto & key_val = *j_itr.first;
         UIJoint * ptr = &(key_val.second);
         if (jt_json["occupant"] != "") {
-            ptr->occupant_ =
+            ptr->occupant_triple_ =
                 std::make_tuple(
                     jt_json["occupant_parent"],
                     jt_json["occupant"],
@@ -25,7 +25,7 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
         }
 
         if (jt_json["hinge"] != "") {
-            ptr->hinge_ = std::make_tuple(jt_json["hinge"], nullptr);
+            ptr->hinge_tuple_ = std::make_tuple(jt_json["hinge"], nullptr);
             hinged_joints_.push_back(ptr);
         }
     }

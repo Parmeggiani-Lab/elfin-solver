@@ -19,7 +19,7 @@ public:
 
     /* getters */
     std::string name() const { return name_; }
-    const UIObjects & modules() const { return modules_; }
+    UIObjects const & modules() const { return modules_; }
 };
 
 typedef std::unordered_map<std::string, FixedArea> FixedAreas;

@@ -15,7 +15,7 @@ protected:
     WorkAreas work_areas_;
     FixedAreas fixed_areas_;
 
-    void map_occupied_joints();
+    void map_joints();
 
 public:
     static const char * const pg_networks_name;

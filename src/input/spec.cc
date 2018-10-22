@@ -37,15 +37,33 @@ void Spec::parse_from_json(const JSON & j) {
         throw e;
     }
 
-    map_occupied_joints();
+    map_joints();
 }
 
-void Spec::map_occupied_joints() {
+void Spec::map_joints() {
     for (auto & itr : work_areas_) {
         WorkArea & wa = itr.second;
-        auto & oj = wa.occupied_joints();
-        if (oj.size()) {
+        for (UIJoint * oj : wa.occupied_joints()) {
+            auto & occ_triple = oj->occupant_triple_;
+            const std::string & occ_prnt_name = std::get<0>(occ_triple);
+            const std::string & occ_name = std::get<1>(occ_triple);
+            UIObjects const & modules = fixed_areas_.at(occ_prnt_name).modules();
+            UIObject const * occupant = &(modules.at(occ_name));
+            occ_triple = std::make_tuple(
+                occ_prnt_name,
+                occ_name,
+                occupant
+                );
+        }
 
+        for (UIJoint * oj : wa.hinged_joints()) {
+            auto & hinge_tuple = oj->hinge_tuple_;
+            const std::string & hinge_name = std::get<0>(hinge_tuple);
+            UIJoint const * hinge = &(wa.joints().at(hinge_name));
+            hinge_tuple = std::make_tuple(
+                hinge_name,
+                hinge
+                );
         }
     }
 }
