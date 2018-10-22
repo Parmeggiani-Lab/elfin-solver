@@ -22,11 +22,6 @@ git submodule update
 ### Weekly Goals
 
 - [ ] Restructure source tree into ```./src``` folder. 
-    - There is going to be quite a bit of redesign/rewriting of logic due to new reference frames calculation method.
-    - Many parts of the v1 code can use improvement in both style and design.
-    - Some old code likely won't make it to v2.
-
-- [ ] Parse JSON output file exported from elfin-ui.
 
 - [ ] Create handlers stubs for each work type.
 

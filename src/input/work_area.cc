@@ -5,18 +5,24 @@ namespace elfin {
 WorkArea::WorkArea(const JSON & j, const std::string & name) :
     name_(name) {
 
-    size_t n_hinges = 0, n_branches = 0;
+    size_t n_branches = 0;
     for (auto it = j.begin(); it != j.end(); ++it) {
         const JSON & joint = *it;
 
         joints_.emplace_back(joint, it.key());
-        n_hinges += joint["occupant"] != "";
         n_branches += joint["neighbours"].size() > 2;
+
+        if (joint["occupant"] != "") {
+            // occupied_joints_.push_back(&joints_.back());
+            /*
+            Use map!!!
+            */
+        }
     }
 
     if (n_branches == 0)
     {
-        switch (n_hinges) {
+        switch (occupied_joints_.size()) {
         case 0: {
             type_ = FREE;
             break;
@@ -39,11 +45,10 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
     }
 }
 
-
 Points3f WorkArea::to_points3f() const {
     Points3f res;
-    for(auto & j : joints_) {
-        res.emplace_back(j.tran_);
+    for (auto & j : joints_) {
+        res.emplace_back(j.tran());
     }
     return res;
 }

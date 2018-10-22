@@ -15,7 +15,7 @@ class ElfinRunner
 {
 private:
     Options options_;
-    std::shared_ptr<Spec> spec_;
+    Spec spec_;
     EvolutionSolver * es_;
 
     RelaMat rela_mat_;

@@ -7,7 +7,6 @@
 
 #include "jutil.h"
 #include "options.h"
-#include "spec.h"
 
 #define ARG_PARSER_CALLBACK_PARAMETERS \
     const std::string && arg_in
@@ -65,7 +64,6 @@ private:
     void print_args() const;
 
     Options options_;
-    std::shared_ptr<Spec> spec_;
 
     /* Matching ArgBundle is an ugly O(n^2). Would be nice to do a map instead. */
     std::vector<ArgBundle> argb_ = {
@@ -99,7 +97,6 @@ public:
     ArgParser(const int argc, char const *argv[]);
     virtual ~ArgParser();
     Options get_options() const;
-    std::shared_ptr<Spec> get_spec() const;
 };
 
 }

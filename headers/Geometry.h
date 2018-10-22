@@ -28,7 +28,7 @@ public:
 		x(_x), y(_y), z(_z) {}
 
 	template <typename Itb>
-	Vector3f(Itb itb) : 
+	Vector3f(Itb itb) :
 		Vector3f(itb.begin(), itb.begin() + 3) {}
 
 	template <typename ItrBegin, typename ItrEnd>
@@ -70,9 +70,7 @@ public:
 	Vector3f rows[3];
 
 	Mat3x3() : rows( { {0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}}) {};
-
 	Mat3x3(Vector3f _rows[3]);
-
 	Mat3x3(const std::vector<float> & v) :
 		Mat3x3(v.begin(), v.begin() + 9) {}
 

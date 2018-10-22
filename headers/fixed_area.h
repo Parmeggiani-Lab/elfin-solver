@@ -12,12 +12,15 @@ namespace elfin {
 class FixedArea
 {
 protected:
+    std::string name_;
     UIObjects modules_;
 
 public:
-    const std::string name_;
-
     FixedArea(const JSON & j, const std::string & name);
+
+    /* getters */
+    std::string name() const { return name_; }
+    const UIObjects & modules() const { return modules_; }
 };
 
 typedef std::vector<FixedArea> FixedAreas;

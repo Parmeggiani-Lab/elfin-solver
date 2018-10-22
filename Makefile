@@ -18,7 +18,7 @@ DEPS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.d) $(CC_SRC:%.cc=$(OBJ_DIR)/%.d)
 $(info Sources to be compiled: [${C_SRC}] [${CC_SRC}])
 $(info Objects to be compiled: [${OBJS}])
 
-DEBUG=no
+DEBUG=yes # no for release
 OMP=yes
 TARGET=cpu
 TIMING=yes

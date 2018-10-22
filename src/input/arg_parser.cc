@@ -1,9 +1,9 @@
 #include "arg_parser.h"
 
+#include "json.h"
+
 #include <regex>
 #include <sstream>
-
-#include "spec_parser.h"
 
 namespace elfin {
 
@@ -46,10 +46,6 @@ ARG_PARSER_CALLBACK(parse_config) {
 
 ARG_PARSER_CALLBACK(set_input_file) {
     options_.inputFile = arg_in;
-    // Assume the input is a JSON file
-    if (!(spec_ = SpecParser().parse(options_.inputFile))) {
-        die("Failed to parse input spec.\n");
-    }
 }
 
 void ArgParser::print_args() const {
@@ -105,30 +101,28 @@ void ArgParser::parse_options(const int argc, char const *argv[]) {
 }
 
 void ArgParser::check_options() const {
-    // Do basic checks for each option
-
     // Files
     panic_if(options_.xdb == "",
-             "No xDB file given. Check your settings.json\n");
+             "No xdb file given. Check your settings.json\n");
 
     panic_if(!file_exists(options_.xdb.c_str()),
-             "xDB file could not be found\n");
+             "xdb file could not be found\n");
 
     panic_if(options_.inputFile == "",
-             "No input spec file given. Check help using -h\n");
+             "No input spec file given.\n");
 
     panic_if(!file_exists(options_.inputFile.c_str()),
              "Input file could not be found\n");
 
     panic_if(options_.configFile == "",
-             "No settings file file given. Check help using -h\n");
+             "No settings file file given.\n");
 
     panic_if(!file_exists(options_.configFile.c_str()),
              "Settings file \"%s\" could not be found\n",
              options_.configFile.c_str());
 
     panic_if(options_.outputDir == "",
-             "No output directory given. Check help using -h\n");
+             "No output directory given.\n");
 
     if (!file_exists(options_.outputDir.c_str())) {
         wrn("Output directory does not exist; creating...\n");
@@ -200,10 +194,6 @@ ArgParser::~ArgParser() {
 
 Options ArgParser::get_options() const {
     return options_;
-}
-
-std::shared_ptr<Spec> ArgParser::get_spec() const {
-    return spec_;
 }
 
 } // namespace elfin

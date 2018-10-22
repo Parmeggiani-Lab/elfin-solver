@@ -93,7 +93,7 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
     Gene::setup(&id_name_map_);
     setupParaUtils(options_.randSeed);
 
-    spec_ = ap.get_spec();
+    spec_.parse_from_json(parse_json(options_.inputFile));
 }
 
 void ElfinRunner::run() {
@@ -109,7 +109,7 @@ void ElfinRunner::run() {
         }
     } else {
         es_ = new EvolutionSolver(rela_mat_,
-                                  *spec_,
+                                  spec_,
                                   radii_list_,
                                   options_);
         es_started_ = true;
@@ -163,7 +163,7 @@ int ElfinRunner::run_meta_tests() {
     msg("Running meta tests...\n");
     int fail_count = 0;
 
-    for (auto & wa : spec_->get_work_areas()) {
+    for (auto & wa : spec_.get_work_areas()) {
         Points3f moved_spec = wa.to_points3f();
 
         Vector3f rot_arr[3] = {

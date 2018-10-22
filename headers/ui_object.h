@@ -12,17 +12,20 @@ namespace elfin {
 
 class UIObject
 {
-public:
-    const std::string name_;
-    const Mat3x3 rot_;
-    const Vector3f tran_;
+    std::string name_;
+    Mat3x3 rot_;
+    Vector3f tran_;
 
+public:
     UIObject(const JSON & j, const std::string & name);
+    UIObject(const Mat3x3 & rot, const Vector3f & tran,
+             const std::string & name);
     virtual ~UIObject() {}
 
     // getters
-    const Mat3x3 & get_rot() { return rot_; }
-    const Vector3f & get_tran() { return tran_; }
+    const std::string & name() const { return name_; }
+    const Mat3x3 & rot() const { return rot_; }
+    const Vector3f & tran() const { return tran_; }
 };
 
 typedef std::vector<UIObject> UIObjects;

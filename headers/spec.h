@@ -5,23 +5,27 @@
 
 #include "work_area.h"
 #include "fixed_area.h"
+#include "json.h"
 
 namespace elfin {
 
-class SpecParser;
-
 class Spec
 {
-    friend SpecParser;
-
 protected:
     WorkAreas work_areas_;
     FixedAreas fixed_areas_;
-    
+
+    void map_occupied_joints();
+
 public:
+    static const char * const pg_networks_name;
+    static const char * const networks_name;
+
     Spec() {};
+    Spec(const JSON & j);
     virtual ~Spec() {};
 
+    void parse_from_json(const JSON & j);
     const WorkAreas & get_work_areas() const { return work_areas_; };
 };
 

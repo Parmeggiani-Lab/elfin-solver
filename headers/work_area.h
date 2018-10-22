@@ -1,7 +1,9 @@
 #ifndef WORK_AREA_H_
 #define WORK_AREA_H_
 
-#include "ui_object.h"
+#include <vector>
+
+#include "ui_joint.h"
 #include "geometry.h"
 #include "jutil.h"
 
@@ -28,16 +30,20 @@ GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 class WorkArea
 {
 protected:
+    std::string name_;
     WorkType type_ = FREE;
-    UIObjects joints_;
+    UIJoints joints_;
+    std::vector<UIJoint *> occupied_joints_;
 
 public:
-    const std::string name_;
-
     WorkArea(const JSON & j, const std::string & name);
-    WorkType type() const { return type_; }
     Points3f to_points3f() const;
-    const UIObjects & joints() const { return joints_; }
+
+    /* getters */
+    std::string name() const { return name_; }
+    WorkType type() const { return type_; }
+    const UIJoints & joints() const { return joints_; }
+    const std::vector<UIJoint *> occupied_joints() const { return occupied_joints_; }
 };
 
 typedef std::vector<WorkArea> WorkAreas;
