@@ -1,7 +1,8 @@
 #ifndef WORK_AREA_H_
 #define WORK_AREA_H_
 
-#include <vector>
+#include <unordered_map>
+#include <string>
 
 #include "ui_joint.h"
 #include "geometry.h"
@@ -26,7 +27,6 @@ namespace elfin {
 
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 
-// TODO: Remove inheritance - or not?
 class WorkArea
 {
 protected:
@@ -34,6 +34,7 @@ protected:
     WorkType type_ = FREE;
     UIJoints joints_;
     std::vector<UIJoint *> occupied_joints_;
+    std::vector<UIJoint *> hinged_joints_;
 
 public:
     WorkArea(const JSON & j, const std::string & name);
@@ -46,7 +47,7 @@ public:
     const std::vector<UIJoint *> occupied_joints() const { return occupied_joints_; }
 };
 
-typedef std::vector<WorkArea> WorkAreas;
+typedef std::unordered_map<std::string, WorkArea> WorkAreas;
 
 }  /* elfin */
 

@@ -1,9 +1,8 @@
 #ifndef FIXED_AREA_H_
 #define FIXED_AREA_H_
 
-#include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 #include "ui_object.h"
 
@@ -23,7 +22,7 @@ public:
     const UIObjects & modules() const { return modules_; }
 };
 
-typedef std::vector<FixedArea> FixedAreas;
+typedef std::unordered_map<std::string, FixedArea> FixedAreas;
 
 }  /* elfin */
 

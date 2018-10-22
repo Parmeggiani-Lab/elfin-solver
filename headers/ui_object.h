@@ -2,8 +2,7 @@
 #define UI_OBJECT_H_
 
 #include <string>
-#include <memory>
-#include <vector>
+#include <unordered_map>
 
 #include "json.h"
 #include "geometry.h"
@@ -28,7 +27,7 @@ public:
     const Vector3f & tran() const { return tran_; }
 };
 
-typedef std::vector<UIObject> UIObjects;
+typedef std::unordered_map<std::string, UIObject> UIObjects;
 
 }
 

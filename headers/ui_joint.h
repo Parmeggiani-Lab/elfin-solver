@@ -1,7 +1,9 @@
 #ifndef UI_JOINT_H_
 #define UI_JOINT_H_
 
-#include <vector>
+#include <unordered_map>
+#include <string>
+#include <tuple>
 
 #include "ui_object.h"
 
@@ -12,12 +14,14 @@ class UIJoint : public UIObject
 public:
     using UIObject::UIObject; // inherit ctors
 
-    UIObject const * occupant_;
-    UIJoint const * hinge_;
+    std::tuple<std::string, std::string, UIObject const *> occupant_ =
+        std::make_tuple("", "", nullptr);
+    std::tuple<std::string, UIJoint const *> hinge_ =
+        std::make_tuple("", nullptr);
     std::vector<UIJoint const *> neighbours_;
 };
 
-typedef std::vector<UIJoint> UIJoints;
+typedef std::unordered_map<std::string, UIJoint> UIJoints;
 
 }  /* elfin */
 

@@ -420,8 +420,8 @@ void
 EvolutionSolver::run()
 {
 	this->startTimer();
-	for (auto & wa : mySpec.get_work_areas()) {
-		const Points3f shape = wa.to_points3f();
+	for (auto & itr : mySpec.get_work_areas()) {
+		const Points3f shape = itr.second.to_points3f();
 
 		set_length_guesses(shape);
 

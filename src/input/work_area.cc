@@ -1,22 +1,32 @@
 #include "work_area.h"
 
+#include <tuple>
+
 namespace elfin {
 
 WorkArea::WorkArea(const JSON & j, const std::string & name) :
     name_(name) {
-
     size_t n_branches = 0;
     for (auto it = j.begin(); it != j.end(); ++it) {
-        const JSON & joint = *it;
+        const JSON & jt_json = *it;
 
-        joints_.emplace_back(joint, it.key());
-        n_branches += joint["neighbours"].size() > 2;
+        auto j_itr = joints_.emplace(it.key(), UIJoint(jt_json, it.key()));
+        n_branches += jt_json["neighbours"].size() > 2;
 
-        if (joint["occupant"] != "") {
-            // occupied_joints_.push_back(&joints_.back());
-            /*
-            Use map!!!
-            */
+        auto & key_val = *j_itr.first;
+        UIJoint * ptr = &(key_val.second);
+        if (jt_json["occupant"] != "") {
+            ptr->occupant_ =
+                std::make_tuple(
+                    jt_json["occupant_parent"],
+                    jt_json["occupant"],
+                    nullptr);
+            occupied_joints_.push_back(ptr);
+        }
+
+        if (jt_json["hinge"] != "") {
+            ptr->hinge_ = std::make_tuple(jt_json["hinge"], nullptr);
+            hinged_joints_.push_back(ptr);
         }
     }
 
@@ -47,8 +57,8 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
 
 Points3f WorkArea::to_points3f() const {
     Points3f res;
-    for (auto & j : joints_) {
-        res.emplace_back(j.tran());
+    for (auto & itr : joints_) {
+        res.emplace_back(itr.second.tran());
     }
     return res;
 }

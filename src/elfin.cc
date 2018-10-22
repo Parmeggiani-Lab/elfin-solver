@@ -163,7 +163,8 @@ int ElfinRunner::run_meta_tests() {
     msg("Running meta tests...\n");
     int fail_count = 0;
 
-    for (auto & wa : spec_.get_work_areas()) {
+    for (auto & itr : spec_.get_work_areas()) {
+        const WorkArea & wa = itr.second;
         Points3f moved_spec = wa.to_points3f();
 
         Vector3f rot_arr[3] = {

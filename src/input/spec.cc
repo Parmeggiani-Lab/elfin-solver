@@ -18,15 +18,19 @@ void Spec::parse_from_json(const JSON & j) {
 
         dbg("Input spec has %d work areas\n", pg_networks.size());
         for (auto it = pg_networks.begin(); it != pg_networks.end(); ++it) {
-            work_areas_.emplace_back(*it, it.key());
+            std::string jt_name = it.key();
+            auto wa_itr = work_areas_.emplace(jt_name, WorkArea(*it, jt_name));
+            auto & key_val = *wa_itr.first;
+            const WorkArea & wa = key_val.second;
 
-            if (work_areas_.back().joints().size() == 0) {
+            if (wa.joints().size() == 0) {
                 throw ElfinException("Work area \"" + it.key() + "\" has no joints associated.");
             }
         }
 
         for (auto it = networks.begin(); it != networks.end(); ++it) {
-            fixed_areas_.emplace_back(*it, it.key());
+            std::string fa_name = it.key();
+            fixed_areas_.emplace(fa_name, FixedArea(*it, fa_name));
         }
     } catch (const std::exception & e) {
         err("Failed to parse spec from JSON.\nReason: %s\n", e.what());
@@ -37,10 +41,11 @@ void Spec::parse_from_json(const JSON & j) {
 }
 
 void Spec::map_occupied_joints() {
-    for(auto & wa : work_areas_) {
+    for (auto & itr : work_areas_) {
+        WorkArea & wa = itr.second;
         auto & oj = wa.occupied_joints();
-        if(oj.size()) {
-            
+        if (oj.size()) {
+
         }
     }
 }
