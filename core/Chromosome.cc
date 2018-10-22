@@ -518,7 +518,7 @@ Chromosome::setup(const uint minLen,
                   const RadiiList & radiiList)
 {
 	// if (setupDone)
-		// die("Chromosome::setup() called second time!\n");
+	// die("Chromosome::setup() called second time!\n");
 
 	myMinLen = minLen;
 	myMaxLen = maxLen;
@@ -552,7 +552,7 @@ Chromosome::setup(const uint minLen,
 }
 
 /*
- * Calculate expected length as total point
+ * Calculate expected length as sum of point
  * displacements over avg pair module distance
  *
  * Note: another possible heuristic is to insert
@@ -560,22 +560,22 @@ Chromosome::setup(const uint minLen,
  * 	points that are too far apart, i.e. 2x avg dist
  */
 uint
-Chromosome::calcExpectedLength(const Points3f & lenRef,
-                               const float avgPairDist)
+Chromosome::calcExpectedLength(const Points3f & len_ref,
+                               const float avg_pair_dist)
 {
-	float sumDist = 0.0f;
+	float sum_dist = 0.0f;
 
-	uint32_t exp_len = 1;
+	uint exp_len = 1;
 
-	if(lenRef.size() > 1) {
-		for (std::vector<Point3f>::const_iterator i = lenRef.begin() + 1; // !!
-		        i != lenRef.end();
-		        ++i)
-			sumDist += (i - 1)->dist_to(*i);
-		exp_len = (uint32_t) round(sumDist / avgPairDist);
+	if (len_ref.size() > 1) {
+		for (auto i = len_ref.begin() + 1; i != len_ref.end(); ++i)
+			sum_dist += (i - 1)->dist_to(*i);
+		exp_len = (uint) round(sum_dist / avg_pair_dist);
 	}
 
-	return exp_len + 1; // Add one because start and end
+	// Add one because division counts segments. We want points
+	exp_len ++;
+	return exp_len;
 }
 
 bool

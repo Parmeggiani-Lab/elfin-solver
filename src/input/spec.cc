@@ -49,21 +49,16 @@ void Spec::map_joints() {
             const std::string & occ_name = std::get<1>(occ_triple);
             UIObjects const & modules = fixed_areas_.at(occ_prnt_name).modules();
             UIObject const * occupant = &(modules.at(occ_name));
-            occ_triple = std::make_tuple(
-                occ_prnt_name,
-                occ_name,
-                occupant
-                );
+
+            std::get<2>(occ_triple) = occupant;
         }
 
         for (UIJoint * oj : wa.hinged_joints()) {
             auto & hinge_tuple = oj->hinge_tuple_;
             const std::string & hinge_name = std::get<0>(hinge_tuple);
             UIJoint const * hinge = &(wa.joints().at(hinge_name));
-            hinge_tuple = std::make_tuple(
-                hinge_name,
-                hinge
-                );
+
+            std::get<1>(hinge_tuple) = hinge;
         }
     }
 }

@@ -33,6 +33,8 @@ protected:
     std::string name_;
     WorkType type_ = FREE;
     UIJoints joints_;
+    std::vector<UIJoint *> occupied_joints_;
+    std::vector<UIJoint *> hinged_joints_;
 
 public:
     WorkArea(const JSON & j, const std::string & name);

@@ -15,10 +15,10 @@ public:
 
     static void parse(
         const JSON & j,
-        NameIdMap & nameMapOut,
-        IdNameMap & inmOut,
-        RelaMat & relMatOut,
-        RadiiList & radiiListOut);
+        NameIdMap & name_map_out,
+        IdNameMap & inm_out,
+        RelaMat & rel_mat_out,
+        RadiiList & radii_list_out);
 
 };
 }  /* elfin */
