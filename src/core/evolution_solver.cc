@@ -315,17 +315,17 @@ EvolutionSolver::print_start_msg(const Points3f & shape)
 	msg("Using deviation allowance: %d nodes\n", options_.len_dev_alw);
 
 	// Want auto significant figure detection with streams
-	std::ostringstream psStr;
+	std::ostringstream popsize_ss;
 	if (options_.ga_pop_size > 1000)
-		psStr << (float) (options_.ga_pop_size / 1000.0f) << "k";
+		popsize_ss << (float) (options_.ga_pop_size / 1000.0f) << "k";
 	else
-		psStr << options_.ga_pop_size;
+		popsize_ss << options_.ga_pop_size;
 
-	std::ostringstream niStr;
+	std::ostringstream nitr_ss;
 	if (options_.ga_iters > 1000)
-		niStr << (float) (options_.ga_iters / 1000.0f) << "k";
+		nitr_ss << (float) (options_.ga_iters / 1000.0f) << "k";
 	else
-		niStr << options_.ga_iters;
+		nitr_ss << options_.ga_iters;
 
 
 	msg("EvolutionSolver starting with following settings:\n"
@@ -336,17 +336,17 @@ EvolutionSolver::print_start_msg(const Points3f & shape)
 	    "Point Mutate cutoff:        %u\n"
 	    "Limb Mutate cutoff:         %u\n"
 	    "New species:                %u\n",
-	    psStr.str().c_str(),
-	    niStr.str().c_str(),
+	    popsize_ss.str().c_str(),
+	    nitr_ss.str().c_str(),
 	    surviver_cutoff_,
 	    cross_cutoff_,
 	    point_mutate_cutoff_,
 	    limb_mutate_cutoff_,
 	    options_.ga_pop_size - limb_mutate_cutoff_);
 
-	const int nOmpDevices = omp_get_num_devices();
-	const int hostDeviceId = omp_get_initial_device();
-	msg("There are %d devices. Host is #%d; currently using #%d\n", nOmpDevices, hostDeviceId, options_.device);
+	const int n_omp_devices = omp_get_num_devices();
+	const int host_device_id = omp_get_initial_device();
+	msg("There are %d devices. Host is #%d; currently using #%d\n", n_omp_devices, host_device_id, options_.device);
 	omp_set_default_device(options_.device);
 
 	#pragma omp parallel
@@ -381,45 +381,38 @@ EvolutionSolver::start_timer()
 void
 EvolutionSolver::print_timing()
 {
-	const double timeElapsedInUs = get_timestamp_us() - start_time_in_us_;
-	const uint64_t minutes = std::floor(timeElapsedInUs / 1e6 / 60.0f);
-	const uint64_t seconds = std::floor(fmod(timeElapsedInUs / 1e6, 60.0f));
-	const uint64_t milliseconds = std::floor(fmod(timeElapsedInUs / 1e3, 1000.0f));
+	const double time_elapsed_in_us = get_timestamp_us() - start_time_in_us_;
+	const uint64_t minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
+	const uint64_t seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
+	const uint64_t milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
 	raw("%um %us %ums\n",
 	    minutes, seconds, milliseconds);
 }
 
 /* Public Methods */
 
-EvolutionSolver::EvolutionSolver(const RelaMat & relaMat,
+EvolutionSolver::EvolutionSolver(const RelaMat & relamat,
                                  const Spec & spec,
-                                 const RadiiList & radiiList,
+                                 const RadiiList & radii_list,
                                  const Options & options) :
-	relamat_(relaMat),
+	relamat_(relamat),
 	spec_(spec),
-	radii_list_(radiiList),
+	radii_list_(radii_list),
 	options_(options)
 {
 	surviver_cutoff_ = std::round(options_.ga_survive_rate * options_.ga_pop_size);
 
 	non_surviver_count_ = (options_.ga_pop_size - surviver_cutoff_);
-	cross_cutoff_ = surviver_cutoff_ + std::round(options_.ga_cross_rate * non_surviver_count_);
-	point_mutate_cutoff_ = cross_cutoff_ + std::round(options_.ga_point_mutate_rate * non_surviver_count_);
+
+	cross_cutoff_ = surviver_cutoff_ +
+	                std::round(options_.ga_cross_rate * non_surviver_count_);
+
+	point_mutate_cutoff_ = cross_cutoff_ +
+	                       std::round(options_.ga_point_mutate_rate * non_surviver_count_);
+
 	limb_mutate_cutoff_ = std::min(
-	                         (ulong) (point_mutate_cutoff_ + std::round(options_.ga_limb_mutate_rate * non_surviver_count_)),
-	                         (ulong) options_.ga_pop_size);
-}
-
-const Population *
-EvolutionSolver::population() const
-{
-	return curr_pop_;
-}
-
-const Population &
-EvolutionSolver::best_so_far() const
-{
-	return best_so_far_;
+	                          (ulong) (point_mutate_cutoff_ + std::round(options_.ga_limb_mutate_rate * non_surviver_count_)),
+	                          (ulong) options_.ga_pop_size);
 }
 
 void

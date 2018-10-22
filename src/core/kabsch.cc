@@ -1,9 +1,9 @@
-// These Kabsch(mostly just SVD) functions taken from the Hybridization
+// These kabsch(mostly just SVD) functions taken from the Hybridization
 // protocol of the Rosetta software suite, TMalign.cc
 
 #include <cmath>
 
-#include "Kabsch.h"
+#include "kabsch.h"
 
 #include "db_parser.h"
 #include "json.h"
@@ -17,7 +17,7 @@ template <typename T>
 using Matrix = std::vector<std::vector<T>>;
 
 std::vector<double>
-point3fToVector(Point3f const & pt)
+point3f_to_vector(Point3f const & pt)
 {
 	std::vector<double> v;
 
@@ -30,13 +30,13 @@ point3fToVector(Point3f const & pt)
 }
 
 Matrix<double>
-points3fToVectors(Points3f const & pts)
+points3f_to_vectors(Points3f const & pts)
 {
 	Matrix<double> out;
 
 	out.resize(pts.size());
 	for (int i = 0; i < out.size(); i++)
-		out.at(i) = point3fToVector(pts.at(i));
+		out.at(i) = point3f_to_vector(pts.at(i));
 
 	return out;
 }
@@ -100,75 +100,6 @@ resample(
 	pts = resampled;
 }
 
-// void
-// upsample(
-//     Points3f & ref,
-//     Points3f & pts)
-// {
-// 	// Upsample the shape with fewer points
-// 	const bool refIsLonger = ref.size() > pts.size();
-// 	const size_t N = refIsLonger ? ref.size() : pts.size();
-
-// 	// Use a proportion based algorithm because
-// 	// we want to assume both shapes are roughly
-// 	// the same length, but not exactly
-// 	const Points3f & morePoints = refIsLonger ? ref : pts;
-// 	const Points3f & fewerPoints = refIsLonger ? pts : ref;
-
-// 	// N === ref.size()
-
-// 	// Compute longer shape total length
-// 	float mpTotalLength = 0.0f;
-// 	for (int i = 1; i < N; i++)
-// 		mpTotalLength += morePoints.at(i).distTo(morePoints.at(i - 1));
-
-// 	float fpTotalLength = 0.0f;
-// 	for (int i = 1; i < fewerPoints.size(); i++)
-// 		fpTotalLength += fewerPoints.at(i).distTo(fewerPoints.at(i - 1));
-
-// 	// Upsample fewerPoints
-// 	Points3f upsampled;
-
-// 	// First and last points are the same
-// 	upsampled.push_back(fewerPoints.at(0));
-
-// 	float mpProportion = 0.0f, fpProportion = 0.0f;
-// 	int mpi = 1;
-// 	for (int i = 1; i < fewerPoints.size(); i++)
-// 	{
-// 		const Point3f & baseFpPoint = fewerPoints.at(i - 1);
-// 		const Point3f & nextFpPoint = fewerPoints.at(i);
-// 		const float baseFpProportion = fpProportion;
-// 		const float fpSegment = nextFpPoint.distTo(baseFpPoint)
-// 		                        / fpTotalLength;
-// 		const Vector3f vec = nextFpPoint - baseFpPoint;
-
-// 		fpProportion += fpSegment;
-// 		while (mpProportion <= fpProportion && mpi < N)
-// 		{
-// 			const float mpSegment =
-// 			    morePoints.at(mpi).distTo(morePoints.at(mpi - 1))
-// 			    / mpTotalLength;
-
-// 			if (mpProportion + mpSegment > fpProportion)
-// 				break;
-// 			mpProportion += mpSegment;
-
-// 			const float s = (mpProportion - baseFpProportion)
-// 			                / fpSegment;
-// 			upsampled.push_back(baseFpPoint + (vec * s));
-
-// 			mpi++;
-// 		}
-// 	}
-
-// 	// Sometimes the last node is automatically added
-// 	if (upsampled.size() < N)
-// 		upsampled.push_back(fewerPoints.back());
-
-// 	refIsLonger ? (pts = upsampled) : (ref = upsampled);
-// }
-
 // Implemetation of Kabsch algoritm for finding the best rotation matrix
 // ---------------------------------------------------------------------------
 // x    - x(i,m) are coordinates of atom m in set x            (input)
@@ -179,7 +110,7 @@ resample(
 // rms   - sum of w*(ux+t-y)**2 over all atom pairs            (output)
 // u    - u(i,j) is   rotation  matrix for best superposition  (output)
 // t    - t(i)   is translation vector for best superposition  (output)
-bool RosettaKabsch(
+bool rosetta_kabsch(
     std::vector<std::vector<double>> const & x,
     std::vector<std::vector<double>> const & y,
     int const n,
@@ -470,7 +401,7 @@ bool RosettaKabsch(
 }
 
 // A Wrapper to call the a bit more complicated Rosetta version
-bool Kabsch(
+bool kabsch(
     const Points3f & mobile,
     const Points3f & ref,
     Matrix<double> & rot,
@@ -478,10 +409,10 @@ bool Kabsch(
     double & rms,
     int mode = 1)
 {
-	Matrix<double> xx = points3fToVectors(mobile);
-	Matrix<double> yy = points3fToVectors(ref);
+	Matrix<double> xx = points3f_to_vectors(mobile);
+	Matrix<double> yy = points3f_to_vectors(ref);
 
-	std::vector<double> tt = point3fToVector(tran);
+	std::vector<double> tt = point3f_to_vector(tran);
 
 	if (rot.size() < 3)
 		rot.resize(3);
@@ -491,14 +422,14 @@ bool Kabsch(
 
 	const size_t n = mobile.size();
 
-	const bool retVal = RosettaKabsch(xx, yy, n, mode, &rms, tt, rot);
+	const bool retVal = rosetta_kabsch(xx, yy, n, mode, &rms, tt, rot);
 	tran = Vector3f(std::vector<float>(tt.begin(), tt.end()));
 
 	return retVal;
 }
 
 float
-kabschScore(
+kabsch_score(
     const Genes & genes,
     Points3f ref)
 {
@@ -512,11 +443,11 @@ kabschScore(
 		mobile.at(i) = pt;
 	}
 
-	return kabschScore(mobile, ref);
+	return kabsch_score(mobile, ref);
 }
 
 float
-kabschScore(
+kabsch_score(
     Points3f mobile,
     Points3f ref)
 {
@@ -528,14 +459,14 @@ kabschScore(
 	Vector3f tran;
 	double rms;
 
-	const bool retVal = Kabsch(mobile, ref, rot, tran, rms, 0);
+	const bool retVal = kabsch(mobile, ref, rot, tran, rms, 0);
 
 	panic_if(!retVal, "Kabsch failed!\n");
 
 	return rms;
 }
 
-int _testKabsch(const Options &options)
+int _test_kabsch(const Options &options)
 {
 	using namespace elfin;
 
@@ -588,7 +519,7 @@ int _testKabsch(const Options &options)
 	unsigned int failCount = 0;
 
 	// Test Kabsch rotation and translation
-	const bool retVal = Kabsch(A, B, rot, tran, rms);
+	const bool retVal = kabsch(A, B, rot, tran, rms);
 	msg("Kabsch call retVal: %s\n", retVal ? "ok" : "failed");
 
 	msg("Rot:\n");
@@ -645,7 +576,7 @@ int _testKabsch(const Options &options)
 
 	Point3f B0Copy = B.at(0);
 
-	float score = kabschScore(G, B);
+	float score = kabsch_score(G, B);
 	msg("A-B Score: %.10f\n", score);
 	if (!float_approximates(score, 7796.9331054688))
 	{
@@ -665,7 +596,7 @@ int _testKabsch(const Options &options)
 	for (int i = 0; i < B.size(); i++)
 		G.push_back(Gene(i, B.at(i)));
 
-	score = kabschScore(G, B);
+	score = kabsch_score(G, B);
 
 	msg("B-B Score: %.10f\n", score);
 	if (!float_approximates(score, 0.0))
@@ -678,7 +609,7 @@ int _testKabsch(const Options &options)
 	for (Gene & g : G)
 		g.com() += Vector3f(-10, 20, 30);
 
-	score = kabschScore(G, B);
+	score = kabsch_score(G, B);
 
 	msg("B-B Shifted Score: %.10f\n", score);
 	if (!float_approximates(score, 0.0))
@@ -696,7 +627,7 @@ int _testKabsch(const Options &options)
 		G.push_back(Gene(i, B.at(i)));
 	}
 
-	score = kabschScore(G, B);
+	score = kabsch_score(G, B);
 
 	msg("B[1:]-B score: %.10f\n", score);
 	

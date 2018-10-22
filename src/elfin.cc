@@ -11,10 +11,10 @@
 #include "arg_parser.h"
 #include "db_parser.h"
 #include "math_utils.h"
+#include "kabsch.h"
 #include "jutil.h"
 
 #include "ParallelUtils.h"
-#include "Kabsch.h"
 
 #ifndef _NO_OMP
 #include <omp.h>
@@ -151,7 +151,7 @@ int ElfinRunner::run_unit_tests() {
     msg("Running unit tests...\n");
     int fail_count = 0;
     fail_count += _test_math_utils();
-    fail_count += _testKabsch(options_);
+    fail_count += _test_kabsch(options_);
     fail_count += _testChromosome(options_);
     return fail_count;
 }
@@ -183,7 +183,7 @@ int ElfinRunner::run_meta_tests() {
         }
 
         // Test scoring a transformed version of spec
-        const float trx_score = kabschScore(moved_spec, wa.to_points3f());
+        const float trx_score = kabsch_score(moved_spec, wa.to_points3f());
         if (!float_approximates(trx_score, 0)) {
             fail_count++;
             wrn("Self score test failed: self score should be 0\n");

@@ -41,7 +41,7 @@ protected:
 	double tot_rank_time_ = 0.0f;
 	double tot_select_time_ = 0.0f;
 	double tot_gen_time_ = 0.0f;
-	
+
 	void set_length_guesses(const Points3f & shape);
 
 	void init_population(const Points3f & shape);
@@ -50,7 +50,7 @@ protected:
 	void rank_population();
 	void select_parents();
 	void swap_pop_buffers();
-	
+
 	void print_start_msg(const Points3f & shape);
 	void print_end_msg();
 	void print_timing();
@@ -63,8 +63,8 @@ public:
 	                const Options & options);
 	virtual ~EvolutionSolver() {};
 
-	const Population * population() const;
-	const Population & best_so_far() const;
+	const Population * population() const { return curr_pop_; }
+	const Population & best_so_far() const { return best_so_far_; }
 
 	void run();
 };

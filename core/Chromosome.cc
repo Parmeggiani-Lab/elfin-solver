@@ -10,7 +10,7 @@
 #include "pair_relationship.h"
 #include "math_utils.h"
 
-#include "Kabsch.h"
+#include "kabsch.h"
 #include "ParallelUtils.h"
 
 namespace elfin
@@ -61,7 +61,7 @@ Chromosome::operator<(const Chromosome & rhs) const
 void
 Chromosome::score(const Points3f & ref)
 {
-	myScore = kabschScore(myGenes, ref);
+	myScore = kabsch_score(myGenes, ref);
 }
 
 float
