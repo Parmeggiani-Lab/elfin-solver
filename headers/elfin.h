@@ -6,8 +6,7 @@
 
 #include "spec.h"
 #include "pair_relationship.h"
-
-#include "EvolutionSolver.h"
+#include "evolution_solver.h"
 
 namespace elfin {
 

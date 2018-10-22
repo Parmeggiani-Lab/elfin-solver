@@ -1,4 +1,4 @@
-#include "EvolutionSolver.h"
+#include "evolution_solver.h"
 
 #include <cmath>
 #include <sstream>
@@ -39,17 +39,13 @@ EvolutionSolver::set_length_guesses(const Points3f & shape) {
 		sum_dist += (i - 1)->dist_to(*i);
 
 	// Add one because division counts segments. We want number of points.
-	uint exp_len = 1 + round(sum_dist / myOptions.avgPairDist);
+	int exp_len = 1 + round(sum_dist / options_.avg_pair_dist);
 
-	myExpectedTargetLen = exp_len;
-	myMinTargetLen = exp_len - myOptions.lenDevAlw;
-	myMaxTargetLen = exp_len + myOptions.lenDevAlw;
-
-	Chromosome::setup(myMinTargetLen, myMaxTargetLen, myRelaMat, myRadiiList);
+	Chromosome::setup(exp_len, options_.len_dev_alw, relamat_, radii_list_);
 }
 
 void
-EvolutionSolver::evolvePopulation()
+EvolutionSolver::evolve_population()
 {
 #ifdef _VTUNE
 	__itt_resume();  // start VTune, again use 2 underscores
@@ -62,33 +58,33 @@ EvolutionSolver::evolvePopulation()
 		// Probabilistic evolution
 		msg("Evolution: %.2f%%", (float) 0.0f);
 
-		ulong crossCount = 0, pmCount = 0, lmCount = 0, randCount = 0;
-		const ulong gaPopBlock = myOptions.gaPopSize / 10;
-		ulong crossFailCount = 0;
+		ulong cross_count = 0, pm_count = 0, lm_count = 0, rand_count = 0;
+		const ulong gaPopBlock = options_.ga_pop_size / 10;
+		ulong cross_fail_count = 0;
 
 		OMP_PAR_FOR
-		for (int i = mySurviverCutoff; i < myOptions.gaPopSize; i++)
+		for (int i = surviver_cutoff_; i < options_.ga_pop_size; i++)
 		{
-			Chromosome & chromoToEvolve = myBuffPopData[i];
-			const ulong evolutionDice = mySurviverCutoff +
-			                            getDiceFunct(myNonSurviverCount);
+			Chromosome & chromoToEvolve = buff_pop_data_[i];
+			const ulong evolutionDice = surviver_cutoff_ +
+			                            getDiceFunct(non_surviver_count_);
 
-			if (evolutionDice < myCrossCutoff)
+			if (evolutionDice < cross_cutoff_)
 			{
 				long motherId, fatherId;
 				if (getDiceFunct(2))
 				{
-					motherId = getDiceFunct(mySurviverCutoff);
-					fatherId = getDiceFunct(myOptions.gaPopSize);
+					motherId = getDiceFunct(surviver_cutoff_);
+					fatherId = getDiceFunct(options_.ga_pop_size);
 				}
 				else
 				{
-					motherId = getDiceFunct(myOptions.gaPopSize);
-					fatherId = getDiceFunct(mySurviverCutoff);
+					motherId = getDiceFunct(options_.ga_pop_size);
+					fatherId = getDiceFunct(surviver_cutoff_);
 				}
 
-				const Chromosome & mother = myCurrPopData[motherId];
-				const Chromosome & father = myCurrPopData[fatherId];
+				const Chromosome & mother = curr_pop_data_[motherId];
+				const Chromosome & father = curr_pop_data_[fatherId];
 
 				// Check compatibility
 				if (!(mother.*crossChromosomeFunct)(father, chromoToEvolve))
@@ -97,41 +93,41 @@ EvolutionSolver::evolvePopulation()
 					// (chromoToEvolve.*assignChromoFunct)((mother.*mutateChildChromoFunct)());
 					(chromoToEvolve.*assignChromoFunct)(mother);
 					(chromoToEvolve.*autoMutateChromoFunct)();
-					crossFailCount++;
+					cross_fail_count++;
 				}
-				crossCount++;
+				cross_count++;
 			}
 			else
 			{
 				// Replicate a high ranking parent
-				const ulong parentId = getDiceFunct(mySurviverCutoff);
-				(chromoToEvolve.*assignChromoFunct)(myCurrPopData[parentId]);
+				const ulong parentId = getDiceFunct(surviver_cutoff_);
+				(chromoToEvolve.*assignChromoFunct)(curr_pop_data_[parentId]);
 
-				if (evolutionDice < myPointMutateCutoff)
+				if (evolutionDice < point_mutate_cutoff_)
 				{
 					if (!(chromoToEvolve.*pointMutateChromoFunct)())
 						(chromoToEvolve.*randomiseChromoFunct)();
-					pmCount++;
+					pm_count++;
 				}
-				else if (evolutionDice < myLimbMutateCutoff)
+				else if (evolutionDice < limb_mutate_cutoff_)
 				{
 					if (!(chromoToEvolve.*limbMutateChromoFunct)())
 						(chromoToEvolve.*randomiseChromoFunct)();
-					lmCount++;
+					lm_count++;
 				}
 				else
 				{
 					// Individuals not covered by specified mutation
 					// rates undergo random destructive mutation
 					(chromoToEvolve.*randomiseChromoFunct)();
-					randCount++;
+					rand_count++;
 				}
 			}
 #ifndef _TARGET_GPU
 			if (i % gaPopBlock == 0)
 			{
 				ERASE_LINE();
-				msg("Evolution: %.2f%%", (float) i / myOptions.gaPopSize);
+				msg("Evolution: %.2f%%", (float) i / options_.ga_pop_size);
 			}
 #endif
 		}
@@ -142,14 +138,14 @@ EvolutionSolver::evolvePopulation()
 		// Keep some actual counts to make sure the RNG is working
 		// correctly
 		dbg("Mutation rates: cross %.2f (fail=%d), pm %.2f, lm %.2f, rand %.2f, survivalCount: %d\n",
-		    (float) crossCount / myNonSurviverCount,
-		    crossFailCount,
-		    (float) pmCount / myNonSurviverCount,
-		    (float) lmCount / myNonSurviverCount,
-		    (float) randCount / myNonSurviverCount,
-		    mySurviverCutoff);
+		    (float) cross_count / non_surviver_count_,
+		    cross_fail_count,
+		    (float) pm_count / non_surviver_count_,
+		    (float) lm_count / non_surviver_count_,
+		    (float) rand_count / non_surviver_count_,
+		    surviver_cutoff_);
 	}
-	myTotEvolveTime += TIMING_END("evolving", startTimeEvolving);
+	tot_evolve_time_ += TIMING_END("evolving", startTimeEvolving);
 
 #ifdef _VTUNE
 	__itt_pause(); // stop VTune
@@ -159,49 +155,49 @@ EvolutionSolver::evolvePopulation()
 void (Chromosome::*scoreChromoFunct)(const Points3f &) = &Chromosome::score;
 
 void
-EvolutionSolver::scorePopulation(const Points3f & shape)
+EvolutionSolver::score_population(const Points3f & shape)
 {
 	TIMING_START(startTimeScoring);
 	{
 		msg("Scoring: 0%%");
-		const ulong scoreBlock = myOptions.gaPopSize / 10;
+		const ulong scoreBlock = options_.ga_pop_size / 10;
 
 		OMP_PAR_FOR
-		for (int i = 0; i < myOptions.gaPopSize; i++)
+		for (int i = 0; i < options_.ga_pop_size; i++)
 		{
-			(myBuffPopData[i].*scoreChromoFunct)(shape);
+			(buff_pop_data_[i].*scoreChromoFunct)(shape);
 #ifndef _TARGET_GPU
 			if (i % scoreBlock == 0)
 			{
 				ERASE_LINE();
 				msg("Scoring: %.2f%%",
-				    (float) i / myOptions.gaPopSize);
+				    (float) i / options_.ga_pop_size);
 			}
 #endif
 		}
 		ERASE_LINE();
 		msg("Scoring: 100%% Done\n");
 	}
-	myTotScoreTime += TIMING_END("scoring", startTimeScoring);
+	tot_score_time_ += TIMING_END("scoring", startTimeScoring);
 }
 
 void
-EvolutionSolver::rankPopulation()
+EvolutionSolver::rank_population()
 {
 	// Sort population according to fitness
 	// (low score = more fit)
-	TIMING_START(startTimeRanking);
+	TIMING_START(rank_start_time);
 	{
-		std::sort(myBuffPop->begin(),
-		          myBuffPop->end());
+		std::sort(buff_pop_->begin(),
+		          buff_pop_->end());
 	}
-	myTotRankTime += TIMING_END("ranking", startTimeRanking);
+	tot_rank_time_ += TIMING_END("ranking", rank_start_time);
 }
 
 void
-EvolutionSolver::selectParents()
+EvolutionSolver::select_parents()
 {
-	TIMING_START(startTimeSelectParents);
+	TIMING_START(start_time_select_parents);
 	{
 		// Ensure variety within survivors using hashmap
 		// and crc as key
@@ -211,16 +207,16 @@ EvolutionSolver::selectParents()
 
 		// We don't want parallelism here because
 		// the loop must priotise low indexes
-		for (int i = 0; i < myBuffPop->size(); i++)
+		for (int i = 0; i < buff_pop_->size(); i++)
 		{
-			const Crc32 crc = myBuffPop->at(i).checksum();
+			const Crc32 crc = buff_pop_->at(i).checksum();
 			if (crcMap.find(crc) == crcMap.end())
 			{
 				// This individual is a new one - record
-				crcMap[crc] = myBuffPop->at(i);
+				crcMap[crc] = buff_pop_->at(i);
 				uniqueCount++;
 
-				if (uniqueCount >= mySurviverCutoff)
+				if (uniqueCount >= surviver_cutoff_)
 					break;
 			}
 		}
@@ -228,58 +224,58 @@ EvolutionSolver::selectParents()
 		// Insert map-value-indexed individual back into population
 		ulong popIndex = 0;
 		for (CrcMap::iterator it = crcMap.begin(); it != crcMap.end(); ++it)
-			myBuffPop->at(popIndex++) = it->second;
+			buff_pop_->at(popIndex++) = it->second;
 
 		// Sort survivors
-		std::sort(myBuffPop->begin(),
-		          myBuffPop->begin() + uniqueCount);
+		std::sort(buff_pop_->begin(),
+		          buff_pop_->begin() + uniqueCount);
 	}
-	myTotSelectTime += TIMING_END("selecting", startTimeSelectParents);
+	tot_select_time_ += TIMING_END("selecting", start_time_select_parents);
 }
 
 void
-EvolutionSolver::swapPopBuffers()
+EvolutionSolver::swap_pop_buffers()
 {
 	#pragma omp single
 	{
-		const Population * tmp = myCurrPop;
-		myCurrPop = myBuffPop;
-		myBuffPop = const_cast<Population *>(tmp);
-		myBuffPopData = myBuffPop->data();
-		myCurrPopData = myCurrPop->data();
+		const Population * tmp = curr_pop_;
+		curr_pop_ = buff_pop_;
+		buff_pop_ = const_cast<Population *>(tmp);
+		buff_pop_data_ = buff_pop_->data();
+		curr_pop_data_ = curr_pop_->data();
 	}
 }
 
 void
-EvolutionSolver::initPopulation(const Points3f & shape)
+EvolutionSolver::init_population(const Points3f & shape)
 {
 	TIMING_START(startTimeInit);
 	{
-		myPopulationBuffers[0] = Population();
-		myPopulationBuffers[0].resize(myOptions.gaPopSize);
-		myPopulationBuffers[1] = Population();
-		myPopulationBuffers[1].resize(myOptions.gaPopSize);
-		myCurrPop = &(myPopulationBuffers[0]);
-		myBuffPop = &(myPopulationBuffers[1]);
+		population_buffers_[0] = Population();
+		population_buffers_[0].resize(options_.ga_pop_size);
+		population_buffers_[1] = Population();
+		population_buffers_[1].resize(options_.ga_pop_size);
+		curr_pop_ = &(population_buffers_[0]);
+		buff_pop_ = &(population_buffers_[1]);
 
-		if (myBuffPop->size() != myCurrPop->size() || myBuffPop->size() == 0)
+		if (buff_pop_->size() != curr_pop_->size() || buff_pop_->size() == 0)
 			die("Buffer size (%d) and current population size (%d) differ or is zero.\n",
-			    myBuffPop->size(), myCurrPop->size());
+			    buff_pop_->size(), curr_pop_->size());
 
-		myPopSize = myOptions.gaPopSize;
+		pop_size_ = options_.ga_pop_size;
 
-		myBuffPopData = myBuffPop->data();
-		myCurrPopData = myCurrPop->data();
+		buff_pop_data_ = buff_pop_->data();
+		curr_pop_data_ = curr_pop_->data();
 
-		const ulong block = myOptions.gaPopSize / 10;
+		const ulong block = options_.ga_pop_size / 10;
 
 		msg("Initialising population: %.2f%%", 0.0f);
 
-		Chromosome * mpb0 = myPopulationBuffers[0].data();
-		Chromosome * mpb1 = myPopulationBuffers[1].data();
+		Chromosome * mpb0 = population_buffers_[0].data();
+		Chromosome * mpb1 = population_buffers_[1].data();
 
 		OMP_PAR_FOR
-		for (int i = 0; i < myOptions.gaPopSize; i++)
+		for (int i = 0; i < options_.ga_pop_size; i++)
 		{
 			(mpb0[i].*randomiseChromoFunct)();
 			(mpb1[i].*assignChromoFunct)(mpb0[i]);
@@ -287,14 +283,14 @@ EvolutionSolver::initPopulation(const Points3f & shape)
 			if (i % block == 0)
 			{
 				ERASE_LINE();
-				msg("Initialising population: %.2f%%", (float) i / myOptions.gaPopSize);
+				msg("Initialising population: %.2f%%", (float) i / options_.ga_pop_size);
 			}
 #endif
 		}
 
 		// Hard test - ensure scoring last element is OK
-		myPopulationBuffers[0].at(myOptions.gaPopSize - 1).score(shape);
-		myPopulationBuffers[1].at(myOptions.gaPopSize - 1).score(shape);
+		population_buffers_[0].at(options_.ga_pop_size - 1).score(shape);
+		population_buffers_[1].at(options_.ga_pop_size - 1).score(shape);
 
 		ERASE_LINE();
 		msg("Initialising population: 100%%\n");
@@ -302,35 +298,34 @@ EvolutionSolver::initPopulation(const Points3f & shape)
 	}
 	TIMING_END("init", startTimeInit);
 
-	// We filled buffer first (because myCurrPop shouldn't be modified)
-	swapPopBuffers();
+	// We filled buffer first (because curr_pop_ shouldn't be modified)
+	swap_pop_buffers();
 }
 
 void
-EvolutionSolver::printStartMsg(const Points3f & shape)
+EvolutionSolver::print_start_msg(const Points3f & shape)
 {
 	for (auto & p : shape)
 		dbg("Work Area Point: %s\n", p.to_string().c_str());
 
-	msg("Expecting length: %u (%u~%u), spec has %d points\n",
-	    myExpectedTargetLen,
-	    myMinTargetLen,
-	    myMaxTargetLen,
+	msg("Length guess: %u~%u, spec has %d points\n",
+	    Chromosome::min_len(),
+	    Chromosome::max_len(),
 	    shape.size());
-	msg("Using deviation allowance: %d nodes\n", myOptions.lenDevAlw);
+	msg("Using deviation allowance: %d nodes\n", options_.len_dev_alw);
 
 	// Want auto significant figure detection with streams
 	std::ostringstream psStr;
-	if (myOptions.gaPopSize > 1000)
-		psStr << (float) (myOptions.gaPopSize / 1000.0f) << "k";
+	if (options_.ga_pop_size > 1000)
+		psStr << (float) (options_.ga_pop_size / 1000.0f) << "k";
 	else
-		psStr << myOptions.gaPopSize;
+		psStr << options_.ga_pop_size;
 
 	std::ostringstream niStr;
-	if (myOptions.gaIters > 1000)
-		niStr << (float) (myOptions.gaIters / 1000.0f) << "k";
+	if (options_.ga_iters > 1000)
+		niStr << (float) (options_.ga_iters / 1000.0f) << "k";
 	else
-		niStr << myOptions.gaIters;
+		niStr << options_.ga_iters;
 
 
 	msg("EvolutionSolver starting with following settings:\n"
@@ -343,16 +338,16 @@ EvolutionSolver::printStartMsg(const Points3f & shape)
 	    "New species:                %u\n",
 	    psStr.str().c_str(),
 	    niStr.str().c_str(),
-	    mySurviverCutoff,
-	    myCrossCutoff,
-	    myPointMutateCutoff,
-	    myLimbMutateCutoff,
-	    myOptions.gaPopSize - myLimbMutateCutoff);
+	    surviver_cutoff_,
+	    cross_cutoff_,
+	    point_mutate_cutoff_,
+	    limb_mutate_cutoff_,
+	    options_.ga_pop_size - limb_mutate_cutoff_);
 
 	const int nOmpDevices = omp_get_num_devices();
 	const int hostDeviceId = omp_get_initial_device();
-	msg("There are %d devices. Host is #%d; currently using #%d\n", nOmpDevices, hostDeviceId, myOptions.device);
-	omp_set_default_device(myOptions.device);
+	msg("There are %d devices. Host is #%d; currently using #%d\n", nOmpDevices, hostDeviceId, options_.device);
+	omp_set_default_device(options_.device);
 
 	#pragma omp parallel
 	{
@@ -362,14 +357,14 @@ EvolutionSolver::printStartMsg(const Points3f & shape)
 }
 
 void
-EvolutionSolver::printEndMsg()
+EvolutionSolver::print_end_msg()
 {
 	msg("EvolutionSolver finished: ");
-	this->printTiming();
+	this->print_timing();
 
-	for (int i = 0; i < myOptions.nBestSols; i++)
+	for (int i = 0; i < options_.n_best_sols; i++)
 	{
-		const auto & p = myCurrPop->at(i);
+		const auto & p = curr_pop_->at(i);
 		msg("Solution #%d score %.2f: \n%s\n",
 		    p.getScore(),
 		    i,
@@ -378,15 +373,15 @@ EvolutionSolver::printEndMsg()
 }
 
 void
-EvolutionSolver::startTimer()
+EvolutionSolver::start_timer()
 {
-	myStartTimeInUs = get_timestamp_us();
+	start_time_in_us_ = get_timestamp_us();
 }
 
 void
-EvolutionSolver::printTiming()
+EvolutionSolver::print_timing()
 {
-	const double timeElapsedInUs = get_timestamp_us() - myStartTimeInUs;
+	const double timeElapsedInUs = get_timestamp_us() - start_time_in_us_;
 	const uint64_t minutes = std::floor(timeElapsedInUs / 1e6 / 60.0f);
 	const uint64_t seconds = std::floor(fmod(timeElapsedInUs / 1e6, 60.0f));
 	const uint64_t milliseconds = std::floor(fmod(timeElapsedInUs / 1e3, 1000.0f));
@@ -400,52 +395,52 @@ EvolutionSolver::EvolutionSolver(const RelaMat & relaMat,
                                  const Spec & spec,
                                  const RadiiList & radiiList,
                                  const Options & options) :
-	myRelaMat(relaMat),
-	mySpec(spec),
-	myRadiiList(radiiList),
-	myOptions(options)
+	relamat_(relaMat),
+	spec_(spec),
+	radii_list_(radiiList),
+	options_(options)
 {
-	mySurviverCutoff = std::round(options.gaSurviveRate * options.gaPopSize);
+	surviver_cutoff_ = std::round(options_.ga_survive_rate * options_.ga_pop_size);
 
-	myNonSurviverCount = (options.gaPopSize - mySurviverCutoff);
-	myCrossCutoff = mySurviverCutoff + std::round(options.gaCrossRate * myNonSurviverCount);
-	myPointMutateCutoff = myCrossCutoff + std::round(options.gaPointMutateRate * myNonSurviverCount);
-	myLimbMutateCutoff = std::min(
-	                         (ulong) (myPointMutateCutoff + std::round(options.gaLimbMutateRate * myNonSurviverCount)),
-	                         (ulong) options.gaPopSize);
+	non_surviver_count_ = (options_.ga_pop_size - surviver_cutoff_);
+	cross_cutoff_ = surviver_cutoff_ + std::round(options_.ga_cross_rate * non_surviver_count_);
+	point_mutate_cutoff_ = cross_cutoff_ + std::round(options_.ga_point_mutate_rate * non_surviver_count_);
+	limb_mutate_cutoff_ = std::min(
+	                         (ulong) (point_mutate_cutoff_ + std::round(options_.ga_limb_mutate_rate * non_surviver_count_)),
+	                         (ulong) options_.ga_pop_size);
 }
 
 const Population *
 EvolutionSolver::population() const
 {
-	return myCurrPop;
+	return curr_pop_;
 }
 
 const Population &
-EvolutionSolver::bestSoFar() const
+EvolutionSolver::best_so_far() const
 {
-	return myBestSoFar;
+	return best_so_far_;
 }
 
 void
 EvolutionSolver::run()
 {
-	this->startTimer();
-	for (auto & itr : mySpec.get_work_areas()) {
+	this->start_timer();
+	for (auto & itr : spec_.get_work_areas()) {
 		const Points3f shape = itr.second.to_points3f();
 
 		set_length_guesses(shape);
 
-		this->printStartMsg(shape);
+		this->print_start_msg(shape);
 
-		initPopulation(shape);
+		init_population(shape);
 
-		myBestSoFar.resize(myOptions.nBestSols);
+		best_so_far_.resize(options_.n_best_sols);
 
-		float lastGenBestScore = std::numeric_limits<double>::infinity();
-		int stagnantCount = 0;
+		float lastGenBestScore = std::numeric_limits<float>::infinity();
+		uint stagnantCount = 0;
 
-		const int genDispDigits = std::ceil(std::log(myOptions.gaIters) / std::log(10));
+		const int genDispDigits = std::ceil(std::log(options_.ga_iters) / std::log(10));
 		char * genMsgFmt;
 		int asprintf_ret = -1;
 		asprintf_ret = asprintf(&genMsgFmt,
@@ -455,27 +450,27 @@ EvolutionSolver::run()
 		                        "Avg Times: Evolve=%%.0f,Score=%%.0f,Rank=%%.0f,Select=%%.0f,Gen=%%.0f\n");
 
 
-		if (!myOptions.dry_run) {
+		if (!options_.dry_run) {
 			MAP_DATA()
 			{
-				for (int i = 0; i < myOptions.gaIters; i++)
+				for (int i = 0; i < options_.ga_iters; i++)
 				{
 					const double genStartTime = get_timestamp_us();
 					{
-						evolvePopulation();
+						evolve_population();
 
-						scorePopulation(shape);
+						score_population(shape);
 
-						rankPopulation();
+						rank_population();
 
-						selectParents();
+						select_parents();
 
-						swapPopBuffers();
+						swap_pop_buffers();
 					}
 
-					const float genBestScore = myCurrPop->front().getScore();
-					const ulong genBestChromoLen = myCurrPop->front().genes().size();
-					const float genWorstScore = myCurrPop->back().getScore();
+					const float genBestScore = curr_pop_->front().getScore();
+					const ulong genBestChromoLen = curr_pop_->front().genes().size();
+					const float genWorstScore = curr_pop_->back().getScore();
 					const double genTime = ((get_timestamp_us() - genStartTime) / 1e3);
 					msg(genMsgFmt, i,
 					    genBestScore,
@@ -483,25 +478,25 @@ EvolutionSolver::run()
 					    genWorstScore,
 					    genTime);
 
-					myTotGenTime += genTime;
+					tot_gen_time_ += genTime;
 
 					msg(avgTimeMsgFmt,
-					    (float) myTotEvolveTime / (i + 1),
-					    (float) myTotScoreTime / (i + 1),
-					    (float) myTotRankTime / (i + 1),
-					    (float) myTotSelectTime / (i + 1),
-					    (float) myTotGenTime / (i + 1));
+					    (float) tot_evolve_time_ / (i + 1),
+					    (float) tot_score_time_ / (i + 1),
+					    (float) tot_rank_time_ / (i + 1),
+					    (float) tot_select_time_ / (i + 1),
+					    (float) tot_gen_time_ / (i + 1));
 
 					// Can stop loop if best score is low enough
-					if (genBestScore < myOptions.scoreStopThreshold)
+					if (genBestScore < options_.score_stop_threshold)
 					{
-						msg("Score stop threshold %.2f reached\n", myOptions.scoreStopThreshold);
+						msg("Score stop threshold %.2f reached\n", options_.score_stop_threshold);
 						break;
 					}
 					else
 					{
-						for (int i = 0; i < myOptions.nBestSols; i++)
-							myBestSoFar.at(i) = myCurrPop->at(i);
+						for (int i = 0; i < options_.n_best_sols; i++)
+							best_so_far_.at(i) = curr_pop_->at(i);
 
 						if (float_approximates(genBestScore, lastGenBestScore))
 						{
@@ -514,14 +509,14 @@ EvolutionSolver::run()
 
 						lastGenBestScore = genBestScore;
 
-						if (stagnantCount >= myOptions.maxStagnantGens)
+						if (stagnantCount >= options_.max_stagnant_gens)
 						{
-							wrn("Solver stopped because max stagnancy is reached (%d)\n", myOptions.maxStagnantGens);
+							wrn("Solver stopped because max stagnancy is reached (%d)\n", options_.max_stagnant_gens);
 							break;
 						}
 						else
 						{
-							msg("Current stagnancy: %d, max: %d\n", stagnantCount, myOptions.maxStagnantGens);
+							msg("Current stagnancy: %d, max: %d\n", stagnantCount, options_.max_stagnant_gens);
 						}
 					}
 				}
@@ -532,7 +527,7 @@ EvolutionSolver::run()
 		free(avgTimeMsgFmt);
 	}
 
-	this->printEndMsg();
+	this->print_end_msg();
 }
 
 } // namespace elfin

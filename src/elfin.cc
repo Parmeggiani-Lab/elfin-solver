@@ -9,13 +9,10 @@
 #include <fstream>
 
 #include "arg_parser.h"
-#include "work_area.h"
-#include "json.h"
 #include "db_parser.h"
 #include "math_utils.h"
 #include "jutil.h"
 
-#include "EvolutionSolver.h"
 #include "ParallelUtils.h"
 #include "Kabsch.h"
 
@@ -44,7 +41,7 @@ void ElfinRunner::crash_dump() {
     if (es_started_) {
         wrn("Dumping latest results...\n");
 
-        const Population & p = es_->bestSoFar();
+        const Population & p = es_->best_so_far();
 
         for (int i = 0; i < p.size(); i++) {
             std::vector<std::string> node_names = p.at(i).getNodeNames();
@@ -80,9 +77,9 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
     ArgParser ap(argc, argv);
     options_ = ap.get_options();
 
-    mkdir_ifn_exists(options_.outputDir.c_str());
+    mkdir_ifn_exists(options_.output_dir.c_str());
 
-    msg("Using master seed: %d\n", options_.randSeed);
+    msg("Using master seed: %d\n", options_.rand_seed);
 
     DBParser::parse(parse_json(options_.xdb),
                          name_id_map_,
@@ -91,13 +88,13 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
                          radii_list_);
 
     Gene::setup(&id_name_map_);
-    setupParaUtils(options_.randSeed);
+    setupParaUtils(options_.rand_seed);
 
-    spec_.parse_from_json(parse_json(options_.inputFile));
+    spec_.parse_from_json(parse_json(options_.input_file));
 }
 
 void ElfinRunner::run() {
-    if (options_.runUnitTests) {
+    if (options_.run_unit_tests) {
         int fail_count = 0;
         fail_count += run_unit_tests();
         fail_count += run_meta_tests();
@@ -118,7 +115,7 @@ void ElfinRunner::run() {
 
         const Population * p = es_->population();
 
-        for (int i = 0; i < options_.nBestSols; i++) {
+        for (int i = 0; i < options_.n_best_sols; i++) {
             std::vector<std::string> node_names = p->at(i).getNodeNames();
             JSON nn = node_names;
             JSON j;
@@ -128,7 +125,7 @@ void ElfinRunner::run() {
 
             // write json solution data (no coordinates)
             std::ostringstream json_output_path;
-            json_output_path << options_.outputDir
+            json_output_path << options_.output_dir
                              << "/" << &p->at(i) << ".json";
 
             std::string json_data = j.dump();
@@ -138,7 +135,7 @@ void ElfinRunner::run() {
 
             // write csv (coorindates only)
             std::ostringstream csv_output_path;
-            csv_output_path << options_.outputDir << "/" << &p->at(i) << ".csv";
+            csv_output_path << options_.output_dir << "/" << &p->at(i) << ".csv";
 
             std::string csv_data = p->at(i).to_csv_string();
             write_binary(csv_output_path.str().c_str(),

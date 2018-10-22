@@ -18,8 +18,8 @@ namespace elfin
 
 // Static variables
 bool Chromosome::setupDone = false;
-uint Chromosome::myMinLen = 0;
-uint Chromosome::myMaxLen = 0;
+int Chromosome::min_len_ = 0;
+int Chromosome::max_len_ = 0;
 const RelaMat * Chromosome::myRelaMat = NULL;
 const RadiiList * Chromosome::myRadiiList = NULL;
 IdPairs Chromosome::myNeighbourCounts;
@@ -144,12 +144,12 @@ Chromosome::cross(const Chromosome & father, Chromosome & out) const
 			const uint leftLimbLen = i + 1; // This includes the node i
 			const uint maxJ = std::min(
 			                      std::max(
-			                          fgLen - (myMinLen - leftLimbLen) - 1, // -1 to account for the duplicate cross point node
+			                          fgLen - (min_len_ - leftLimbLen) - 1, // -1 to account for the duplicate cross point node
 			                          (uint) 0),
 			                      (uint) fgLen - 1);
 			const uint minJ = std::min(
 			                      std::max(
-			                          fgLen - (myMaxLen - leftLimbLen) - 1, // -1 to account for the duplicate cross point node
+			                          fgLen - (max_len_ - leftLimbLen) - 1, // -1 to account for the duplicate cross point node
 			                          (uint) 0),
 			                      (uint) fgLen - 1);
 			for (int j = minJ; j < maxJ; j++)
@@ -161,10 +161,10 @@ Chromosome::cross(const Chromosome & father, Chromosome & out) const
 					// Test 0-i=(left limb), j-end=(right limb)
 					const uint childLen = leftLimbLen + (fgLen - j - 1);
 
-					if (childLen < myMinLen || childLen > myMaxLen)
+					if (childLen < min_len_ || childLen > max_len_)
 					{
-						die("Fatal: length invalid (i=leftLimb) childLen=%d, myMinLen=%d, myMaxLen=%d\n",
-						    childLen, myMinLen, myMaxLen);
+						die("Fatal: length invalid (i=leftLimb) childLen=%d, min_len_=%d, max_len_=%d\n",
+						    childLen, min_len_, max_len_);
 					}
 #endif
 
@@ -243,7 +243,7 @@ Chromosome::randomise()
 	{
 		myGenes = genRandomGenes();
 	}
-	while (myGenes.size() < myMinLen || myGenes.size() > myMaxLen);
+	while (myGenes.size() < min_len_ || myGenes.size() > max_len_);
 	setOrigin(Origin::Random);
 }
 
@@ -340,7 +340,7 @@ Chromosome::pointMutate()
 		case PointMutateMode::InsertMode: // Insert mode
 		{
 			IdPairs insertableIds;
-			if (myGeneSize < myMaxLen)
+			if (myGeneSize < max_len_)
 			{
 				for (int i = 0; i < myGeneSize; i++)
 				{
@@ -384,7 +384,7 @@ Chromosome::pointMutate()
 		case PointMutateMode::DeleteMode: // Delete mode
 		{
 			Ids deletableIds;
-			if (myGeneSize > myMinLen)
+			if (myGeneSize > min_len_)
 			{
 				for (int i = 0; i < myGeneSize; i++)
 				{
@@ -476,14 +476,14 @@ Chromosome::limbMutate()
 	for (int i = 0; i < MAX_STOCHASTIC_FAILS; i++)
 	{
 		newGenes = mutateLeftLimb ?
-		           genRandomGenesReverse(myMaxLen, myGenes) :
-		           genRandomGenes(myMaxLen, myGenes);
+		           genRandomGenesReverse(max_len_, myGenes) :
+		           genRandomGenes(max_len_, myGenes);
 
-		if (newGenes.size() >= myMinLen)
+		if (newGenes.size() >= min_len_)
 			break;
 	}
 
-	if (newGenes.size() < myMinLen)
+	if (newGenes.size() < min_len_)
 		return false;
 
 	myGenes = newGenes;
@@ -512,18 +512,18 @@ Chromosome::copy() const
 }
 
 void
-Chromosome::setup(const uint minLen,
-                  const uint maxLen,
-                  const RelaMat & relaMat,
-                  const RadiiList & radiiList)
+Chromosome::setup(const int exp_len,
+                  const int len_dev,
+                  const RelaMat & relamat,
+                  const RadiiList & radii_list)
 {
 	// if (setupDone)
 	// die("Chromosome::setup() called second time!\n");
 
-	myMinLen = minLen;
-	myMaxLen = maxLen;
-	myRelaMat = &relaMat;
-	myRadiiList = &radiiList;
+	min_len_ = std::max(exp_len - len_dev, 1);
+	max_len_ = exp_len + len_dev;
+	myRelaMat = &relamat;
+	myRadiiList = &radii_list;
 
 	// Compute neighbour counts
 	const uint dim = myRelaMat->size();

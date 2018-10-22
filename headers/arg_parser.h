@@ -41,24 +41,24 @@ private:
     ARG_PARSER_CALLBACK_IN_HEADER(parse_config);
     ARG_PARSER_CALLBACK_IN_HEADER(set_input_file);
     ARG_PARSER_CALLBACK_IN_HEADER(set_xdb) { options_.xdb = arg_in; }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_output_dir) { options_.outputDir = arg_in; }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_output_dir) { options_.output_dir = arg_in; }
 
-    ARG_PARSER_CALLBACK_IN_HEADER(set_len_dev_alw) { options_.lenDevAlw = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_avg_pair_dist) { options_.avgPairDist = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_rand_seed) { options_.randSeed = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_len_dev_alw) { options_.len_dev_alw = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_avg_pair_dist) { options_.avg_pair_dist = parse_float(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_rand_seed) { options_.rand_seed = parse_long(arg_in.c_str()); }
 
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_pop_size) { options_.gaPopSize = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_iters) { options_.gaIters = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_survive_rate) { options_.gaSurviveRate = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_cross_rate) { options_.gaCrossRate = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_point_mutate_rate) { options_.gaPointMutateRate = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_limb_mutate_rate) { options_.gaLimbMutateRate = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_score_stop_threshold) { options_.scoreStopThreshold = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_max_stagnant_gens) { options_.maxStagnantGens = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_pop_size) { options_.ga_pop_size = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_iters) { options_.ga_iters = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_survive_rate) { options_.ga_survive_rate = parse_float(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_cross_rate) { options_.ga_cross_rate = parse_float(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_point_mutate_rate) { options_.ga_point_mutate_rate = parse_float(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_limb_mutate_rate) { options_.ga_limb_mutate_rate = parse_float(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_score_stop_threshold) { options_.score_stop_threshold = parse_float(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_max_stagnant_gens) { options_.max_stagnant_gens = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_log_level) { ::set_log_level((Log_Level) parse_long(arg_in.c_str())); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_run_unit_tests) { options_.runUnitTests = true; }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_run_unit_tests) { options_.run_unit_tests = true; }
     ARG_PARSER_CALLBACK_IN_HEADER(set_device) { options_.device = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_n_best_sols) { options_.nBestSols = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_n_best_sols) { options_.n_best_sols = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_dry_run) { options_.dry_run = true; }
 
     void print_args() const;

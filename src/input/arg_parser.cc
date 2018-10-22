@@ -25,13 +25,13 @@ ARG_PARSER_CALLBACK(failure_callback) {
 }
 
 ARG_PARSER_CALLBACK(parse_config) {
-    options_.configFile = arg_in;
+    options_.config_file = arg_in;
 
-    panic_if(!file_exists(options_.configFile.c_str()),
+    panic_if(!file_exists(options_.config_file.c_str()),
              "Settings file does not exist: \"%s\"\n",
-             options_.configFile.c_str());
+             options_.config_file.c_str());
 
-    const JSON j = parse_json(options_.configFile);
+    const JSON j = parse_json(options_.config_file);
 
     for (auto it = j.begin(); it != j.end(); ++it) {
         const std::string opt_name = "--" + it.key();
@@ -45,7 +45,7 @@ ARG_PARSER_CALLBACK(parse_config) {
 }
 
 ARG_PARSER_CALLBACK(set_input_file) {
-    options_.inputFile = arg_in;
+    options_.input_file = arg_in;
 }
 
 void ArgParser::print_args() const {
@@ -108,77 +108,77 @@ void ArgParser::check_options() const {
     panic_if(!file_exists(options_.xdb.c_str()),
              "xdb file could not be found\n");
 
-    panic_if(options_.inputFile == "",
+    panic_if(options_.input_file == "",
              "No input spec file given.\n");
 
-    panic_if(!file_exists(options_.inputFile.c_str()),
+    panic_if(!file_exists(options_.input_file.c_str()),
              "Input file could not be found\n");
 
-    panic_if(options_.configFile == "",
+    panic_if(options_.config_file == "",
              "No settings file file given.\n");
 
-    panic_if(!file_exists(options_.configFile.c_str()),
+    panic_if(!file_exists(options_.config_file.c_str()),
              "Settings file \"%s\" could not be found\n",
-             options_.configFile.c_str());
+             options_.config_file.c_str());
 
-    panic_if(options_.outputDir == "",
+    panic_if(options_.output_dir == "",
              "No output directory given.\n");
 
-    if (!file_exists(options_.outputDir.c_str())) {
+    if (!file_exists(options_.output_dir.c_str())) {
         wrn("Output directory does not exist; creating...\n");
-        mkdir_ifn_exists(options_.outputDir.c_str());
+        mkdir_ifn_exists(options_.output_dir.c_str());
     }
 
     // Settings
 
-    panic_if(options_.gaPopSize < 0, "Population size cannot be < 0\n");
+    panic_if(options_.ga_pop_size < 0, "Population size cannot be < 0\n");
 
-    panic_if(options_.gaIters < 0, "Number of iterations cannot be < 0\n");
+    panic_if(options_.ga_iters < 0, "Number of iterations cannot be < 0\n");
 
-    panic_if(options_.lenDevAlw < 0,
+    panic_if(options_.len_dev_alw < 0,
              "Gene length deviation must be an integer > 0\n");
 
     // GA params
-    panic_if(options_.gaSurviveRate < 0.0 ||
-             options_.gaSurviveRate > 1.0,
+    panic_if(options_.ga_survive_rate < 0.0 ||
+             options_.ga_survive_rate > 1.0,
              "GA survive rate must be between 0 and 1 inclusive\n");
-    panic_if(options_.gaCrossRate < 0.0 ||
-             options_.gaCrossRate > 1.0,
+    panic_if(options_.ga_cross_rate < 0.0 ||
+             options_.ga_cross_rate > 1.0,
              "GA cross rate must be between 0 and 1 inclusive\n");
-    panic_if(options_.gaPointMutateRate < 0.0 ||
-             options_.gaPointMutateRate > 1.0,
+    panic_if(options_.ga_point_mutate_rate < 0.0 ||
+             options_.ga_point_mutate_rate > 1.0,
              "GA point mutate rate must be between 0 and 1 inclusive\n");
-    panic_if(options_.gaLimbMutateRate < 0.0 ||
-             options_.gaLimbMutateRate > 1.0,
+    panic_if(options_.ga_limb_mutate_rate < 0.0 ||
+             options_.ga_limb_mutate_rate > 1.0,
              "GA limb mutate rate must be between 0 and 1 inclusive\n");
 
-    panic_if(options_.avgPairDist < 0, "Average CoM distance must be > 0\n");
+    panic_if(options_.avg_pair_dist < 0, "Average CoM distance must be > 0\n");
 
-    panic_if(options_.nBestSols < 0 ||
-             options_.nBestSols > options_.gaPopSize,
+    panic_if(options_.n_best_sols < 0 ||
+             options_.n_best_sols > options_.ga_pop_size,
              "Number of best solutions to output must be > 0 and < gaPopSize\n");
 }
 
 void ArgParser::correct_rates() {
     bool rateCorrected = false;
-    float sumRates = options_.gaCrossRate +
-                     options_.gaPointMutateRate +
-                     options_.gaLimbMutateRate;
+    float sumRates = options_.ga_cross_rate +
+                     options_.ga_point_mutate_rate +
+                     options_.ga_limb_mutate_rate;
     if ((rateCorrected = (sumRates > 1.0))) {
-        options_.gaCrossRate         /= sumRates;
-        options_.gaPointMutateRate   /= sumRates;
-        options_.gaLimbMutateRate    /= sumRates;
-        sumRates = options_.gaCrossRate +
-                   options_.gaPointMutateRate +
-                   options_.gaLimbMutateRate;
+        options_.ga_cross_rate         /= sumRates;
+        options_.ga_point_mutate_rate   /= sumRates;
+        options_.ga_limb_mutate_rate    /= sumRates;
+        sumRates = options_.ga_cross_rate +
+                   options_.ga_point_mutate_rate +
+                   options_.ga_limb_mutate_rate;
     }
 
     if (rateCorrected) {
         wrn("Sum of GA cross + point mutate + limb mutate rates must be <= 1\n");
         wrn("Rates corrected to: %.2f, %.2f, %.2f\n",
-            options_.gaCrossRate,
-            options_.gaPointMutateRate,
-            options_.gaLimbMutateRate);
+            options_.ga_cross_rate,
+            options_.ga_point_mutate_rate,
+            options_.ga_limb_mutate_rate);
     }
 }
 

@@ -26,7 +26,7 @@ inline int omp_get_initial_device() { return 0; }
 
 #ifdef _TARGET_GPU
 #define OMP_PAR_FOR _Pragma("omp target teams distribute parallel for simd schedule(static,1)")
-#define MAP_DATA() _Pragma("omp target data map(myBuffPopData[0:myPopSize], myCurrPopData[0:myPopSize])")
+#define MAP_DATA() _Pragma("omp target data map(buff_pop_data_[0:pop_size_], curr_pop_data_[0:pop_size_])")
 #else
 #define OMP_PAR_FOR _Pragma("omp parallel for simd schedule(runtime)")
 #define MAP_DATA() {}

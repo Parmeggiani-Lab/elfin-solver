@@ -34,26 +34,27 @@ GEN_ENUM_AND_STRING(Origin, OriginString, FOREACH_ORIGIN);
 class Chromosome
 {
 public:
-
+	/* ctors */
 	Chromosome();
 	Chromosome(const Chromosome & rhs);
 	Chromosome(const Genes & genes);
-	virtual ~Chromosome() {};
 
+	/* operators */
 	bool operator>(const Chromosome & rhs) const;
 	bool operator<(const Chromosome & rhs) const;
 
-	void score(const Points3f & ref);
-
-	// Getter & setters
+	/* getters */
 	float getScore() const;
-	Genes & genes();
 	const Genes & genes() const;
 	Crc32 checksum() const;
 	std::vector<std::string> getNodeNames() const;
+	static int min_len() { return min_len_; }
+	static int max_len() { return max_len_; }
 
-	std::string to_string() const;
-	std::string to_csv_string() const;
+	/* setters */
+	Genes & genes();
+
+	void score(const Points3f & ref);
 	bool cross(const Chromosome & father, Chromosome & out) const;
 	Chromosome mutateChild() const;
 	void autoMutate();
@@ -63,18 +64,20 @@ public:
 	void setOrigin(Origin o);
 	Origin getOrigin() const;
 	Chromosome copy() const;
+	std::string to_string() const;
+	std::string to_csv_string() const;
 
 	static Genes genRandomGenesReverse(
-	    const uint genMaxLen=myMaxLen,
+	    const uint genMaxLen=max_len_,
 	    Genes genes=Genes());
 	static Genes genRandomGenes(
-	    const uint genMaxLen=myMaxLen,
+	    const uint genMaxLen=max_len_,
 	    Genes genes=Genes());
 
-	static void setup(const uint minLen,
-	                  const uint maxLen,
-	                  const RelaMat & relaMat,
-	                  const RadiiList & radiiList);
+	static void setup(const int exp_len,
+	                  const int len_dev,
+	                  const RelaMat & rela_mat,
+	                  const RadiiList & radii_list);
 	static uint calcExpectedLength(const Points3f & len_ref,
 	                               const float avg_pair_dist);
 	static bool synthesiseReverse(Genes & genes);
@@ -86,8 +89,8 @@ private:
 	Origin myOrigin = Origin::New;
 
 	static bool setupDone;
-	static uint myMinLen;
-	static uint myMaxLen;
+	static int min_len_;
+	static int max_len_;
 	static const RelaMat * myRelaMat;
 	static const RadiiList * myRadiiList;
 	static IdPairs myNeighbourCounts;
