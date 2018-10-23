@@ -7,7 +7,7 @@
 
 #include "shorthands.h"
 #include "radii.h"
-#include "gene.h"
+#include "Gene.h"
 
 // COLLISION_MEASURE is one of {avgAll, maxHeavy, maxCA}
 #define COLLISION_MEASURE maxHeavy
