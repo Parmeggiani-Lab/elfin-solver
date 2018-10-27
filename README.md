@@ -12,7 +12,6 @@ git clone --single-branch -b v1 --depth 1 git@github.com:joy13975/elfin-solver.g
 ### To Update
 ```
 git pull
-git submodule update
 ./fetch_db
 ```
 
