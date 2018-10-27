@@ -34,7 +34,7 @@ To get help:
 
 ### Notes:
 1. The default configuration file is ```config.json```.
-2. Default paths in ```config.json``` assume that this repo is situated within the main elfin root as a submodule.
+2. Paths in ```config.json``` and the old documentation below assume that this repo is situated within the main elfin root as a submodule.
 
 # Old (v1) Documentation
 ## Core Solver Setup
