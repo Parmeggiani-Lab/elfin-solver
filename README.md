@@ -7,8 +7,6 @@ Output files produced by v1 will not be synthesizable in v2.
 ### To Download
 ```
 git clone --single-branch -b v1 --depth 1 git@github.com:joy13975/elfin-solver.git
-cd elfin-solver
-git submodule init
 ```
 
 ### To Update
