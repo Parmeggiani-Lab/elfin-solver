@@ -1,11 +1,12 @@
 # Elfin Solver V1
 [![Build Status](https://travis-ci.com/joy13975/elfin-solver.svg?branch=v1)](https://travis-ci.com/joy13975/elfin-solver)
 
-This is an old version of the elfin-solver and will not be applicable to v2 file formats.
+This is an old version of the elfin-solver.
+Output files produced by v1 will not be synthesizable in v2.
 
 ### To Download
 ```
-git clone --depth 1 git@github.com:joy13975/elfin-solver.git
+git clone --single-branch -b v1 --depth 1 git@github.com:joy13975/elfin-solver.git
 cd elfin-solver
 git submodule init
 ```
@@ -33,10 +34,7 @@ To get help:
 
 ### Notes:
 1. The default configuration file is ```config.json```.
-2. This repository is meant to be a submodule of the main [elfin] suit of tools, hence the strange path settings in ```config.json```.
-3. Makefile adds ```jutil/src/``` to the include path, that's why ```util.h``` gets included as if it was in 
-the same directory everywhere in the source.
-4. If ```jutil/src``` is not installed, you need to do.
+2. Default paths in ```config.json``` assume that this repo is situated within the main elfin root as a submodule.
 
 # Old (v1) Documentation
 ## Core Solver Setup
@@ -74,8 +72,7 @@ Notes:
 ## Usage
 Once you have compiled Elfin Core successfully, you can test run it with:
 ```
-# cd to celfin
-./bin/elfin                                             
+make test                                   
 ```
 
 The default configuration is at ```./celfin/config.json``` and uses the ```./bm/l10/1696.json``` example input. This demonstrates that the Core GA finds the zero score solution i.e. the original module constituents of the input. Execution outputs will be stored in ```./celfin/output/``` in JSON format (files named after their memory addresses). You can specify the output directory using the ```-o``` flag. Even if you force Elfin to stop using ctrl-c, the most recent best candidates will be saved.

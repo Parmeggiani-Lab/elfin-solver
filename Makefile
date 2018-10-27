@@ -108,7 +108,7 @@ deleteTestObjs:
 
 
 test: $(EXE)
-	./$(BIN_DIR)/$(EXE) -git 1
+	./$(BIN_DIR)/$(EXE) -git 1 -x xdb.json -i input/test_input_1696.json
 
 FORCE:
 .PHONY: all clean
