@@ -11,7 +11,7 @@
 #include "math_utils.h"
 
 #include "kabsch.h"
-#include "ParallelUtils.h"
+#include "parallel_utils.h"
 
 namespace elfin
 {
@@ -491,14 +491,6 @@ Origin
 Chromosome::getOrigin() const
 {
 	return myOrigin;
-}
-
-Chromosome
-Chromosome::copy() const
-{
-	Chromosome c = *this;
-	c.setOrigin(Origin::Copy);
-	return c;
 }
 
 void

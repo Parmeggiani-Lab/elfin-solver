@@ -62,7 +62,6 @@ public:
 	bool limbMutate();
 	void setOrigin(Origin o);
 	Origin getOrigin() const;
-	Chromosome copy() const;
 	std::string to_string() const;
 	std::string to_csv_string() const;
 
