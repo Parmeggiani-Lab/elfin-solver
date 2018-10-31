@@ -55,9 +55,9 @@ inline long TIMING_END(const char * sectionName, const double startTime) {
 namespace elfin
 {
 
-void setupParaUtils(uint globalSeed);
+void set_thread_seeds(uint global_seed);
 
-std::vector<uint> & getParaRandSeeds();
+std::vector<uint> & get_para_rand_seeds();
 
 inline ulong getDice(ulong ceiling)
 {
@@ -66,7 +66,7 @@ inline ulong getDice(ulong ceiling)
 	               (float)
 	               (ceiling - 1) *
 	               rand_r(
-	                   &(getParaRandSeeds().at(omp_get_thread_num()))
+	                   &(get_para_rand_seeds().at(omp_get_thread_num()))
 	               )
 	               / RAND_MAX
 	           )
