@@ -16,7 +16,7 @@ Gene::Gene(const uint _nodeId) :
     myCom(Point3f(0, 0, 0))
 {
     panic_if(!setupDone,
-             "Gene::setup() must be callsed first!\n");
+             "Gene::setup() must be called first!\n");
 }
 
 Gene::Gene(const uint _nodeId,
@@ -25,7 +25,7 @@ Gene::Gene(const uint _nodeId,
     myCom(_com)
 {
     panic_if(!setupDone,
-             "Gene::setup() must be callsed first!\n");
+             "Gene::setup() must be called first!\n");
 }
 
 Gene::Gene(const uint _nodeId,
@@ -36,7 +36,7 @@ Gene::Gene(const uint _nodeId,
     myCom(x, y, z)
 {
     panic_if(!setupDone,
-             "Gene::setup() must be callsed first!\n");
+             "Gene::setup() must be called first!\n");
 }
 
 uint &
