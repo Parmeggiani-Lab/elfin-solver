@@ -8,7 +8,7 @@
 #include <limits>
 
 #include "jutil.h"
-#include "ParallelUtils.h"
+#include "parallel_utils.h"
 
 namespace elfin
 {
@@ -44,260 +44,220 @@ EvolutionSolver::set_length_guesses(const Points3f & shape) {
 }
 
 void
-EvolutionSolver::evolve_population()
+EvolutionSolver::init_pop_buffs(const WorkArea & wa)
 {
-#ifdef _VTUNE
-	__itt_resume();  // start VTune, again use 2 underscores
-#endif
-
-	CrossingVector possibleCrossings;
-
-	TIMING_START(startTimeEvolving);
+	TIMING_START(startTimeInit);
 	{
-		// Probabilistic evolution
-		msg("Evolution: %.2f%%", (float) 0.0f);
-
-		ulong cross_count = 0, pm_count = 0, lm_count = 0, rand_count = 0;
-		const ulong gaPopBlock = options_.ga_pop_size / 10;
-		ulong cross_fail_count = 0;
-
-		OMP_PAR_FOR
-		for (int i = surviver_cutoff_; i < options_.ga_pop_size; i++)
-		{
-			Chromosome & chromoToEvolve = buff_pop_data_[i];
-			const ulong evolutionDice = surviver_cutoff_ +
-			                            get_dice_funct(non_surviver_count_);
-
-			if (evolutionDice < cross_cutoff_)
-			{
-				long motherId, fatherId;
-				if (get_dice_funct(2))
-				{
-					motherId = get_dice_funct(surviver_cutoff_);
-					fatherId = get_dice_funct(options_.ga_pop_size);
-				}
-				else
-				{
-					motherId = get_dice_funct(options_.ga_pop_size);
-					fatherId = get_dice_funct(surviver_cutoff_);
-				}
-
-				const Chromosome & mother = curr_pop_data_[motherId];
-				const Chromosome & father = curr_pop_data_[fatherId];
-
-				// Check compatibility
-				if (!(mother.*cross_chromosome_funct)(father, chromoToEvolve))
-				{
-					// Pick a random parent to inherit from and then mutate
-					(chromoToEvolve.*assign_chromo_funct)(mother);
-					(chromoToEvolve.*auto_mutate_chromo_funct)();
-					cross_fail_count++;
-				}
-				cross_count++;
-			}
-			else
-			{
-				// Replicate a high ranking parent
-				const ulong parentId = get_dice_funct(surviver_cutoff_);
-				(chromoToEvolve.*assign_chromo_funct)(curr_pop_data_[parentId]);
-
-				if (evolutionDice < point_mutate_cutoff_)
-				{
-					if (!(chromoToEvolve.*point_mutate_chromo_funct)())
-						(chromoToEvolve.*randomise_chromo_funct)();
-					pm_count++;
-				}
-				else if (evolutionDice < limb_mutate_cutoff_)
-				{
-					if (!(chromoToEvolve.*limb_mutate_chromo_funct)())
-						(chromoToEvolve.*randomise_chromo_funct)();
-					lm_count++;
-				}
-				else
-				{
-					// Individuals not covered by specified mutation
-					// rates undergo random destructive mutation
-					(chromoToEvolve.*randomise_chromo_funct)();
-					rand_count++;
-				}
-			}
-#ifndef _TARGET_GPU
-			if (i % gaPopBlock == 0)
-			{
-				ERASE_LINE();
-				msg("Evolution: %.2f%%", (float) i / options_.ga_pop_size);
-			}
-#endif
-		}
-
-		ERASE_LINE();
-		msg("Evolution: 100%% Done\n");
-
-		// Keep some actual counts to make sure the RNG is working
-		// correctly
-		dbg("Mutation rates: cross %.2f (fail=%d), pm %.2f, lm %.2f, rand %.2f, survivalCount: %d\n",
-		    (float) cross_count / non_surviver_count_,
-		    cross_fail_count,
-		    (float) pm_count / non_surviver_count_,
-		    (float) lm_count / non_surviver_count_,
-		    (float) rand_count / non_surviver_count_,
-		    surviver_cutoff_);
+		Population * p = new Population(options_, wa);
+		p->init(pop_size_, true);
+		curr_pop_ = p;
+		
+		buff_pop_ = new Population(options_, wa);
+		buff_pop_->init(pop_size_, false);
 	}
-	tot_evolve_time_ += TIMING_END("evolving", startTimeEvolving);
+	TIMING_END("init", startTimeInit);
 
-#ifdef _VTUNE
-	__itt_pause(); // stop VTune
-#endif
+	// We filled buffer first (because curr_pop_ shouldn't be modified)
+	swap_pop_buffs();
 }
 
-void (Chromosome::*scoreChromoFunct)(const Points3f &) = &Chromosome::score;
+// void
+// EvolutionSolver::evolve_population()
+// {
+// #ifdef _VTUNE
+// 	__itt_resume();  // start VTune, again use 2 underscores
+// #endif
+
+// 	CrossingVector possibleCrossings;
+
+// 	TIMING_START(startTimeEvolving);
+// 	{
+// 		// Probabilistic evolution
+// 		msg("Evolution: %.2f%%", (float) 0.0f);
+
+// 		ulong cross_count = 0, pm_count = 0, lm_count = 0, rand_count = 0;
+// 		const ulong gaPopBlock = options_.ga_pop_size / 10;
+// 		ulong cross_fail_count = 0;
+
+// 		OMP_PAR_FOR
+// 		for (int i = surviver_cutoff_; i < options_.ga_pop_size; i++)
+// 		{
+// 			Chromosome & chromo_to_evolve = buff_pop_data_[i];
+// 			const ulong evolution_dice = surviver_cutoff_ +
+// 			                            get_dice_funct(non_surviver_count_);
+
+// 			if (evolution_dice < cross_cutoff_)
+// 			{
+// 				long motherId, fatherId;
+// 				if (get_dice_funct(2))
+// 				{
+// 					motherId = get_dice_funct(surviver_cutoff_);
+// 					fatherId = get_dice_funct(options_.ga_pop_size);
+// 				}
+// 				else
+// 				{
+// 					motherId = get_dice_funct(options_.ga_pop_size);
+// 					fatherId = get_dice_funct(surviver_cutoff_);
+// 				}
+
+// 				const Chromosome & mother = curr_pop_data_[motherId];
+// 				const Chromosome & father = curr_pop_data_[fatherId];
+
+// 				// Check compatibility
+// 				if (!(mother.*cross_chromosome_funct)(father, chromo_to_evolve))
+// 				{
+// 					// Pick a random parent to inherit from and then mutate
+// 					(chromo_to_evolve.*assign_chromo_funct)(mother);
+// 					(chromo_to_evolve.*auto_mutate_chromo_funct)();
+// 					cross_fail_count++;
+// 				}
+// 				cross_count++;
+// 			}
+// 			else
+// 			{
+// 				// Replicate a high ranking parent
+// 				const ulong parentId = get_dice_funct(surviver_cutoff_);
+// 				(chromo_to_evolve.*assign_chromo_funct)(curr_pop_data_[parentId]);
+
+// 				if (evolution_dice < point_mutate_cutoff_)
+// 				{
+// 					if (!(chromo_to_evolve.*point_mutate_chromo_funct)())
+// 						(chromo_to_evolve.*randomise_chromo_funct)();
+// 					pm_count++;
+// 				}
+// 				else if (evolution_dice < limb_mutate_cutoff_)
+// 				{
+// 					if (!(chromo_to_evolve.*limb_mutate_chromo_funct)())
+// 						(chromo_to_evolve.*randomise_chromo_funct)();
+// 					lm_count++;
+// 				}
+// 				else
+// 				{
+// 					// Individuals not covered by specified mutation
+// 					// rates undergo random destructive mutation
+// 					(chromo_to_evolve.*randomise_chromo_funct)();
+// 					rand_count++;
+// 				}
+// 			}
+// #ifndef _TARGET_GPU
+// 			if (i % gaPopBlock == 0)
+// 			{
+// 				ERASE_LINE();
+// 				msg("Evolution: %.2f%%", (float) i / options_.ga_pop_size);
+// 			}
+// #endif
+// 		}
+
+// 		ERASE_LINE();
+// 		msg("Evolution: 100%% Done\n");
+
+// 		// Keep some actual counts to make sure the RNG is working
+// 		// correctly
+// 		dbg("Mutation rates: cross %.2f (fail=%d), pm %.2f, lm %.2f, rand %.2f, survivalCount: %d\n",
+// 		    (float) cross_count / non_surviver_count_,
+// 		    cross_fail_count,
+// 		    (float) pm_count / non_surviver_count_,
+// 		    (float) lm_count / non_surviver_count_,
+// 		    (float) rand_count / non_surviver_count_,
+// 		    surviver_cutoff_);
+// 	}
+// 	tot_evolve_time_ += TIMING_END("evolving", startTimeEvolving);
+
+// #ifdef _VTUNE
+// 	__itt_pause(); // stop VTune
+// #endif
+// }
+
+// void (Chromosome::*scoreChromoFunct)(const Points3f &) = &Chromosome::score;
+
+// void
+// EvolutionSolver::score_population(const Points3f & shape)
+// {
+// 	TIMING_START(startTimeScoring);
+// 	{
+// 		msg("Scoring: 0%%");
+// 		const ulong scoreBlock = options_.ga_pop_size / 10;
+
+// 		OMP_PAR_FOR
+// 		for (int i = 0; i < options_.ga_pop_size; i++)
+// 		{
+// 			(buff_pop_data_[i].*scoreChromoFunct)(shape);
+// #ifndef _TARGET_GPU
+// 			if (i % scoreBlock == 0)
+// 			{
+// 				ERASE_LINE();
+// 				msg("Scoring: %.2f%%",
+// 				    (float) i / options_.ga_pop_size);
+// 			}
+// #endif
+// 		}
+// 		ERASE_LINE();
+// 		msg("Scoring: 100%% Done\n");
+// 	}
+// 	tot_score_time_ += TIMING_END("scoring", startTimeScoring);
+// }
+
+// void
+// EvolutionSolver::rank_population()
+// {
+// 	// Sort population according to fitness
+// 	// (low score = more fit)
+// 	TIMING_START(rank_start_time);
+// 	{
+// 		std::sort(buff_pop_->begin(),
+// 		          buff_pop_->end());
+// 	}
+// 	tot_rank_time_ += TIMING_END("ranking", rank_start_time);
+// }
+
+// void
+// EvolutionSolver::select_parents()
+// {
+// 	TIMING_START(start_time_select_parents);
+// 	{
+// 		// Ensure variety within survivors using hashmap
+// 		// and crc as key
+// 		using CrcMap = std::unordered_map<Crc32, Chromosome>;
+// 		CrcMap crcMap;
+// 		ulong uniqueCount = 0;
+
+// 		// We don't want parallelism here because
+// 		// the loop must priotise low indexes
+// 		for (int i = 0; i < buff_pop_->size(); i++)
+// 		{
+// 			const Crc32 crc = buff_pop_->at(i).checksum();
+// 			if (crcMap.find(crc) == crcMap.end())
+// 			{
+// 				// This individual is a new one - record
+// 				crcMap[crc] = buff_pop_->at(i);
+// 				uniqueCount++;
+
+// 				if (uniqueCount >= surviver_cutoff_)
+// 					break;
+// 			}
+// 		}
+
+// 		// Insert map-value-indexed individual back into population
+// 		ulong popIndex = 0;
+// 		for (CrcMap::iterator it = crcMap.begin(); it != crcMap.end(); ++it)
+// 			buff_pop_->at(popIndex++) = it->second;
+
+// 		// Sort survivors
+// 		std::sort(buff_pop_->begin(),
+// 		          buff_pop_->begin() + uniqueCount);
+// 	}
+// 	tot_select_time_ += TIMING_END("selecting", start_time_select_parents);
+// }
 
 void
-EvolutionSolver::score_population(const Points3f & shape)
-{
-	TIMING_START(startTimeScoring);
-	{
-		msg("Scoring: 0%%");
-		const ulong scoreBlock = options_.ga_pop_size / 10;
-
-		OMP_PAR_FOR
-		for (int i = 0; i < options_.ga_pop_size; i++)
-		{
-			(buff_pop_data_[i].*scoreChromoFunct)(shape);
-#ifndef _TARGET_GPU
-			if (i % scoreBlock == 0)
-			{
-				ERASE_LINE();
-				msg("Scoring: %.2f%%",
-				    (float) i / options_.ga_pop_size);
-			}
-#endif
-		}
-		ERASE_LINE();
-		msg("Scoring: 100%% Done\n");
-	}
-	tot_score_time_ += TIMING_END("scoring", startTimeScoring);
-}
-
-void
-EvolutionSolver::rank_population()
-{
-	// Sort population according to fitness
-	// (low score = more fit)
-	TIMING_START(rank_start_time);
-	{
-		std::sort(buff_pop_->begin(),
-		          buff_pop_->end());
-	}
-	tot_rank_time_ += TIMING_END("ranking", rank_start_time);
-}
-
-void
-EvolutionSolver::select_parents()
-{
-	TIMING_START(start_time_select_parents);
-	{
-		// Ensure variety within survivors using hashmap
-		// and crc as key
-		using CrcMap = std::unordered_map<Crc32, Chromosome>;
-		CrcMap crcMap;
-		ulong uniqueCount = 0;
-
-		// We don't want parallelism here because
-		// the loop must priotise low indexes
-		for (int i = 0; i < buff_pop_->size(); i++)
-		{
-			const Crc32 crc = buff_pop_->at(i).checksum();
-			if (crcMap.find(crc) == crcMap.end())
-			{
-				// This individual is a new one - record
-				crcMap[crc] = buff_pop_->at(i);
-				uniqueCount++;
-
-				if (uniqueCount >= surviver_cutoff_)
-					break;
-			}
-		}
-
-		// Insert map-value-indexed individual back into population
-		ulong popIndex = 0;
-		for (CrcMap::iterator it = crcMap.begin(); it != crcMap.end(); ++it)
-			buff_pop_->at(popIndex++) = it->second;
-
-		// Sort survivors
-		std::sort(buff_pop_->begin(),
-		          buff_pop_->begin() + uniqueCount);
-	}
-	tot_select_time_ += TIMING_END("selecting", start_time_select_parents);
-}
-
-void
-EvolutionSolver::swap_pop_buffers()
+EvolutionSolver::swap_pop_buffs()
 {
 	#pragma omp single
 	{
 		const Population * tmp = curr_pop_;
 		curr_pop_ = buff_pop_;
 		buff_pop_ = const_cast<Population *>(tmp);
-		buff_pop_data_ = buff_pop_->data();
-		curr_pop_data_ = curr_pop_->data();
 	}
-}
-
-void
-EvolutionSolver::init_population(const Points3f & shape)
-{
-	TIMING_START(startTimeInit);
-	{
-		population_buffers_[0] = Population();
-		population_buffers_[0].resize(options_.ga_pop_size);
-		population_buffers_[1] = Population();
-		population_buffers_[1].resize(options_.ga_pop_size);
-		curr_pop_ = &(population_buffers_[0]);
-		buff_pop_ = &(population_buffers_[1]);
-
-		if (buff_pop_->size() != curr_pop_->size() || buff_pop_->size() == 0)
-			die("Buffer size (%d) and current population size (%d) differ or is zero.\n",
-			    buff_pop_->size(), curr_pop_->size());
-
-		pop_size_ = options_.ga_pop_size;
-
-		buff_pop_data_ = buff_pop_->data();
-		curr_pop_data_ = curr_pop_->data();
-
-		const ulong block = options_.ga_pop_size / 10;
-
-		msg("Initialising population: %.2f%%", 0.0f);
-
-		Chromosome * mpb0 = population_buffers_[0].data();
-		Chromosome * mpb1 = population_buffers_[1].data();
-
-		OMP_PAR_FOR
-		for (int i = 0; i < options_.ga_pop_size; i++)
-		{
-			(mpb0[i].*randomise_chromo_funct)();
-			(mpb1[i].*assign_chromo_funct)(mpb0[i]);
-#ifndef _TARGET_GPU
-			if (i % block == 0)
-			{
-				ERASE_LINE();
-				msg("Initialising population: %.2f%%", (float) i / options_.ga_pop_size);
-			}
-#endif
-		}
-
-		// Hard test - ensure scoring last element is OK
-		population_buffers_[0].at(options_.ga_pop_size - 1).score(shape);
-		population_buffers_[1].at(options_.ga_pop_size - 1).score(shape);
-
-		ERASE_LINE();
-		msg("Initialising population: 100%%\n");
-
-	}
-	TIMING_END("init", startTimeInit);
-
-	// We filled buffer first (because curr_pop_ shouldn't be modified)
-	swap_pop_buffers();
 }
 
 void
@@ -314,10 +274,10 @@ EvolutionSolver::print_start_msg(const Points3f & shape)
 
 	// Want auto significant figure detection with streams
 	std::ostringstream popsize_ss;
-	if (options_.ga_pop_size > 1000)
-		popsize_ss << (float) (options_.ga_pop_size / 1000.0f) << "k";
+	if (pop_size_ > 1000)
+		popsize_ss << (float) (pop_size_ / 1000.0f) << "k";
 	else
-		popsize_ss << options_.ga_pop_size;
+		popsize_ss << pop_size_;
 
 	std::ostringstream nitr_ss;
 	if (options_.ga_iters > 1000)
@@ -340,7 +300,7 @@ EvolutionSolver::print_start_msg(const Points3f & shape)
 	    cross_cutoff_,
 	    point_mutate_cutoff_,
 	    limb_mutate_cutoff_,
-	    options_.ga_pop_size - limb_mutate_cutoff_);
+	    pop_size_ - limb_mutate_cutoff_);
 
 	const int n_omp_devices = omp_get_num_devices();
 	const int host_device_id = omp_get_initial_device();
@@ -359,15 +319,6 @@ EvolutionSolver::print_end_msg()
 {
 	msg("EvolutionSolver finished: ");
 	this->print_timing();
-
-	for (int i = 0; i < options_.n_best_sols; i++)
-	{
-		const auto & p = curr_pop_->at(i);
-		msg("Solution #%d score %.2f: \n%s\n",
-		    p.getScore(),
-		    i,
-		    p.to_string().c_str());
-	}
 }
 
 void
@@ -390,17 +341,18 @@ EvolutionSolver::print_timing()
 /* Public Methods */
 
 EvolutionSolver::EvolutionSolver(const RelaMat & relamat,
-                                 const Spec & spec,
+                                 Spec & spec,
                                  const RadiiList & radii_list,
                                  const Options & options) :
 	relamat_(relamat),
 	spec_(spec),
 	radii_list_(radii_list),
-	options_(options)
+	options_(options),
+	pop_size_(options_.ga_pop_size)
 {
-	surviver_cutoff_ = std::round(options_.ga_survive_rate * options_.ga_pop_size);
+	surviver_cutoff_ = std::round(options_.ga_survive_rate * pop_size_);
 
-	non_surviver_count_ = (options_.ga_pop_size - surviver_cutoff_);
+	non_surviver_count_ = (pop_size_ - surviver_cutoff_);
 
 	cross_cutoff_ = surviver_cutoff_ +
 	                std::round(options_.ga_cross_rate * non_surviver_count_);
@@ -410,7 +362,7 @@ EvolutionSolver::EvolutionSolver(const RelaMat & relamat,
 
 	limb_mutate_cutoff_ = std::min(
 	                          (ulong) (point_mutate_cutoff_ + std::round(options_.ga_limb_mutate_rate * non_surviver_count_)),
-	                          (ulong) options_.ga_pop_size);
+	                          (ulong) pop_size_);
 }
 
 void
@@ -424,28 +376,36 @@ EvolutionSolver::run()
 
 		this->print_start_msg(shape);
 
-		init_population(shape);
+		// if this was a complex work area, we need to break it down to
+		// multiple simple ones by first choosing hubs and their orientations.
+		/*
+		TODO: Break complex work area
+		*/
+		WorkArea & wa = itr.second;
+		if (wa.type() != FREE) {
+			std::stringstream ss;
+			ss << "Skipping work_area: ";
+			ss << WorkTypeNames[wa.type()] << std::endl;
+			err(ss.str().c_str());
+			continue;
+		}
+		init_pop_buffs(wa);
 
-		best_so_far_.resize(options_.n_best_sols);
+		// init_population(shape);
 
-		float lastGenBestScore = std::numeric_limits<float>::infinity();
-		uint stagnantCount = 0;
+		wa.best_sols().resize(options_.n_best_sols);
+
+		float lastgen_best_score = std::numeric_limits<float>::infinity();
+		uint stagnant_count = 0;
 
 		const int genDispDigits = std::ceil(std::log(options_.ga_iters) / std::log(10));
-		char * genMsgFmt;
+		char * gen_msg_fmt;
 		int asprintf_ret = -1;
-		asprintf_ret = asprintf(&genMsgFmt,
+		asprintf_ret = asprintf(&gen_msg_fmt,
 		                        "Generation #%%%dd: best=%%.2f (%%.2f/module), worst=%%.2f, time taken=%%.0fms\n", genDispDigits);
-		char * avgTimeMsgFmt;
-		asprintf_ret = asprintf(&avgTimeMsgFmt,
+		char * avg_time_msg_fmt;
+		asprintf_ret = asprintf(&avg_time_msg_fmt,
 		                        "Avg Times: Evolve=%%.0f,Score=%%.0f,Rank=%%.0f,Select=%%.0f,Gen=%%.0f\n");
-
-
-        // if this was a complex work area, we need to break it down to
-        // multiple simple ones by first choosing hubs and their orientations.
-        /*
-        TODO: Break complex work area
-        */
 
 		if (!options_.dry_run) {
 			MAP_DATA()
@@ -454,30 +414,37 @@ EvolutionSolver::run()
 				{
 					const double genStartTime = get_timestamp_us();
 					{
-						evolve_population();
+						// evolve_population();
+						buff_pop_->evolve(curr_pop_);
 
-						score_population(shape);
+						// score_population(shape);
+						buff_pop_->score();
 
-						rank_population();
+						// rank_population();
+						buff_pop_->rank();
 
-						select_parents();
+						// select_parents();
+						buff_pop_->select();
 
-						swap_pop_buffers();
+						swap_pop_buffs();
 					}
 
-					const float genBestScore = curr_pop_->front().getScore();
-					const ulong genBestChromoLen = curr_pop_->front().genes().size();
-					const float genWorstScore = curr_pop_->back().getScore();
+					const Candidate * best_candidate = curr_pop_->candidates().front();
+					const Candidate * worst_candidate = curr_pop_->candidates().front();
+					
+					const float gen_best_score = best_candidate->get_score();
+					const ulong gen_best_len = best_candidate->nodes().size();
+					const float gen_worst_score = worst_candidate->get_score();
 					const double genTime = ((get_timestamp_us() - genStartTime) / 1e3);
-					msg(genMsgFmt, i,
-					    genBestScore,
-					    genBestScore / genBestChromoLen,
-					    genWorstScore,
+					msg(gen_msg_fmt, i,
+					    gen_best_score,
+					    gen_best_score / gen_best_len,
+					    gen_worst_score,
 					    genTime);
 
 					tot_gen_time_ += genTime;
 
-					msg(avgTimeMsgFmt,
+					msg(avg_time_msg_fmt,
 					    (float) tot_evolve_time_ / (i + 1),
 					    (float) tot_score_time_ / (i + 1),
 					    (float) tot_rank_time_ / (i + 1),
@@ -485,46 +452,50 @@ EvolutionSolver::run()
 					    (float) tot_gen_time_ / (i + 1));
 
 					// Can stop loop if best score is low enough
-					if (genBestScore < options_.score_stop_threshold)
+					if (gen_best_score < options_.score_stop_threshold)
 					{
 						msg("Score stop threshold %.2f reached\n", options_.score_stop_threshold);
 						break;
 					}
 					else
 					{
+						// update best sols for this work area
 						for (int i = 0; i < options_.n_best_sols; i++)
-							best_so_far_.at(i) = curr_pop_->at(i);
+							wa.best_sols()[i] = curr_pop_->candidates().at(i);
 
-						if (float_approximates(genBestScore, lastGenBestScore))
+						if (float_approximates(gen_best_score, lastgen_best_score))
 						{
-							stagnantCount++;
+							stagnant_count++;
 						}
 						else
 						{
-							stagnantCount = 0;
+							stagnant_count = 0;
 						}
 
-						lastGenBestScore = genBestScore;
+						lastgen_best_score = gen_best_score;
 
-						if (stagnantCount >= options_.max_stagnant_gens)
+						if (stagnant_count >= options_.max_stagnant_gens)
 						{
 							wrn("Solver stopped because max stagnancy is reached (%d)\n", options_.max_stagnant_gens);
 							break;
 						}
 						else
 						{
-							msg("Current stagnancy: %d, max: %d\n", stagnantCount, options_.max_stagnant_gens);
+							msg("Current stagnancy: %d, max: %d\n", stagnant_count, options_.max_stagnant_gens);
 						}
 					}
 				}
 			}
 		}
 
-		free(genMsgFmt);
-		free(avgTimeMsgFmt);
+		free(gen_msg_fmt);
+		free(avg_time_msg_fmt);
 	}
 
 	this->print_end_msg();
+
+	delete curr_pop_;
+	delete buff_pop_;
 }
 
 } // namespace elfin

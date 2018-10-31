@@ -23,8 +23,8 @@ typedef struct {
 
     // GA parameters
     uint rand_seed = 0x1337cafe;
-    long ga_pop_size = 10000;
-    long ga_iters = 1000;
+    ulong ga_pop_size = 10000;
+    ulong ga_iters = 1000;
     float ga_survive_rate = 0.1f;
     float ga_cross_rate = 0.5f;
     float ga_point_mutate_rate = 0.5f;

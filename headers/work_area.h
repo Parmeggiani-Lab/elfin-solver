@@ -27,6 +27,8 @@ namespace elfin {
 
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 
+class Candidate;
+
 class WorkArea
 {
 protected:
@@ -35,17 +37,21 @@ protected:
     UIJoints joints_;
     std::vector<UIJoint *> occupied_joints_;
     std::vector<UIJoint *> hinged_joints_;
+    std::vector<Candidate *> best_sols_;
 
 public:
     WorkArea(const JSON & j, const std::string & name);
     Points3f to_points3f() const;
 
+    Candidate * new_candidate(bool randomize) const;
+
     /* getters */
     std::string name() const { return name_; }
     WorkType type() const { return type_; }
     const UIJoints & joints() const { return joints_; }
-    const std::vector<UIJoint *> occupied_joints() const { return occupied_joints_; }
-    const std::vector<UIJoint *> hinged_joints() const { return hinged_joints_; }
+    const std::vector<UIJoint *> & occupied_joints() const { return occupied_joints_; }
+    const std::vector<UIJoint *> & hinged_joints() const { return hinged_joints_; }
+    std::vector<Candidate *> & best_sols() { return best_sols_; }
 };
 
 typedef std::unordered_map<std::string, WorkArea> WorkAreas;

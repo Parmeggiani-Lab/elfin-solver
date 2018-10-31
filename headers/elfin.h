@@ -25,9 +25,10 @@ private:
     bool es_started_ = false;
     static std::vector<ElfinRunner *> instances_;
 
-    int run_unit_tests();
-    int run_meta_tests();
-    void crash_dump();
+    void write_output(const std::string & alt_dir = "") const;
+    void crash_dump() const;
+    int run_unit_tests() const;
+    int run_meta_tests() const;
     static void interrupt_handler(const int signal);
 public:
     ElfinRunner(const int argc, const char ** argv);

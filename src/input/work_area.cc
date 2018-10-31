@@ -1,6 +1,12 @@
 #include "work_area.h"
 
 #include <tuple>
+#include <sstream>
+
+#include "elfin_exception.h"
+#include "free_candidate.h"
+#include "one_hinge_candidate.h"
+#include "two_hinge_candidate.h"
 
 namespace elfin {
 
@@ -60,6 +66,38 @@ Points3f WorkArea::to_points3f() const {
         res.emplace_back(itr.second.tran());
     }
     return res;
+}
+
+Candidate * WorkArea::new_candidate(bool randomize) const {
+    Candidate * c = nullptr;
+
+    err("Incomplete implementation: new_candidate()\n");
+    err("Handle randomize according to WorkArea\n");
+    try {
+        switch (type_) {
+        case FREE:
+            c = new FreeCandidate();
+            break;
+        case ONE_HINGE:
+            c = new OneHingeCandidate();
+            break;
+        case TWO_HINGE:
+            c = new TwoHingeCandidate();
+            break;
+        default:
+            std::stringstream ss;
+            ss << "Unimplemented WorkArea type: ";
+            ss << WorkTypeNames[type_] << std::endl;
+            throw ElfinException(ss.str());
+        }
+    }
+    catch (std::exception const& exc) {
+        err("Exception caught: \n");
+        raw_at(LOG_ERROR, exc.what());
+        throw exc;
+    }
+
+    return c;
 }
 
 }  /* elfin */

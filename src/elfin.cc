@@ -13,8 +13,7 @@
 #include "math_utils.h"
 #include "kabsch.h"
 #include "jutil.h"
-
-#include "ParallelUtils.h"
+#include "parallel_utils.h"
 
 #ifndef _NO_OMP
 #include <omp.h>
@@ -37,126 +36,63 @@ void ElfinRunner::interrupt_handler(const int signal) {
     exit(signal);
 }
 
-void ElfinRunner::crash_dump() {
+void ElfinRunner::write_output(const std::string & alt_dir) const {
+
+    if (alt_dir.length() > 0) {
+        mkdir_ifn_exists(alt_dir.c_str());
+    }
+
+    JSON data;
+    for (auto & kv : es_->work_areas()) {
+        const WorkArea & wa = kv.second;
+        JSON waj;
+        data[kv.first] = waj;
+
+        // for (const Candidate * c : wa.best_sols()) {
+        //     std::vector<std::string> node_names = c->getNodeNames();
+        //     JSON nn = node_names;
+        //     JSON j;
+        //     j["nodes"] = nn;
+        //     j["score"] = c->score();
+
+        // }
+    }
+
+    // format json output path
+    std::ostringstream json_output_path_ss;
+    json_output_path_ss << alt_dir << "/"
+                        << options_.output_dir
+                        << "/" << c << ".json";
+    const char * json_output_path =
+        json_output_path_ss.str().c_str();
+
+    // write json
+    std::string dump = data.dump();
+    write_binary(json_output_path,
+                 dump.c_str(),
+                 dump.size());
+}
+
+void ElfinRunner::crash_dump() const {
     if (es_started_) {
         wrn("Dumping latest results...\n");
-
-        const Population & p = es_->best_so_far();
-
-        for (int i = 0; i < p.size(); i++) {
-            std::vector<std::string> node_names = p.at(i).getNodeNames();
-            JSON nn = node_names;
-            JSON j;
-            j["nodes"] = nn;
-            j["score"] = p.at(i).getScore();
-
-            mkdir_ifn_exists("crash_dump");
-
-            std::ostringstream ss;
-            ss << "crash_dump/" << &p.at(i) << ".json";
-            std::string dump = j.dump();
-            const char * data = dump.c_str();
-            const size_t len = dump.size();
-            write_binary(ss.str().c_str(), data, len);
-        }
-
-        delete es_;
+        write_output("crash_dump");
+        delete _es;
     } else {
         wrn("GA did not get to start\n");
     }
 }
 
-ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
-    instances_.push_back(this);
-
-    std::signal(SIGINT, interrupt_handler);
-
-    // Default set to warning and above
-    set_log_level(LOG_WARN);
-
-    ArgParser ap(argc, argv);
-    options_ = ap.get_options();
-
-    mkdir_ifn_exists(options_.output_dir.c_str());
-
-    msg("Using master seed: %d\n", options_.rand_seed);
-
-    DBParser::parse(parse_json(options_.xdb),
-                         name_id_map_,
-                         id_name_map_,
-                         rela_mat_,
-                         radii_list_);
-
-    Gene::setup(&id_name_map_);
-    setupParaUtils(options_.rand_seed);
-
-    spec_.parse_from_json(parse_json(options_.input_file));
-}
-
-void ElfinRunner::run() {
-    if (options_.run_unit_tests) {
-        int fail_count = 0;
-        fail_count += run_unit_tests();
-        fail_count += run_meta_tests();
-
-        if (fail_count > 0) {
-            die("Some unit tests failed\n");
-        } else {
-            msg("Passed!\n");
-        }
-    } else {
-        es_ = new EvolutionSolver(rela_mat_,
-                                  spec_,
-                                  radii_list_,
-                                  options_);
-        es_started_ = true;
-
-        es_->run();
-
-        const Population * p = es_->population();
-
-        for (int i = 0; i < options_.n_best_sols; i++) {
-            std::vector<std::string> node_names = p->at(i).getNodeNames();
-            JSON nn = node_names;
-            JSON j;
-            j["nodes"] = nn;
-            j["score"] = p->at(i).getScore();
-
-
-            // write json solution data (no coordinates)
-            std::ostringstream json_output_path;
-            json_output_path << options_.output_dir
-                             << "/" << &p->at(i) << ".json";
-
-            std::string json_data = j.dump();
-            write_binary(json_output_path.str().c_str(),
-                         json_data.c_str(),
-                         json_data.size());
-
-            // write csv (coorindates only)
-            std::ostringstream csv_output_path;
-            csv_output_path << options_.output_dir << "/" << &p->at(i) << ".csv";
-
-            std::string csv_data = p->at(i).to_csv_string();
-            write_binary(csv_output_path.str().c_str(),
-                         csv_data.c_str(),
-                         csv_data.size());
-        }
-
-        delete es_;
-    }
-}
-
-int ElfinRunner::run_unit_tests() {
+int ElfinRunner::run_unit_tests() const {
     msg("Running unit tests...\n");
     int fail_count = 0;
     fail_count += _test_math_utils();
     fail_count += _test_kabsch(options_);
-    fail_count += _testChromosome(options_);
+    // fail_count += _testChromosome(options_); // deprecated
     return fail_count;
 }
 
-int ElfinRunner::run_meta_tests() {
+int ElfinRunner::run_meta_tests() const {
     msg("Running meta tests...\n");
     int fail_count = 0;
 
@@ -220,7 +156,7 @@ int ElfinRunner::run_meta_tests() {
 
         // Test parallel randomiser
 #ifndef _NO_OMP
-        std::vector<uint> para_rand_seeds = getParaRandSeeds();
+        std::vector<uint> para_rand_seeds = get_para_rand_seeds();
         const int n_threads = para_rand_seeds.size();
         const int para_rand_n = 8096;
         const int64_t dice_lim = 13377331;
@@ -230,7 +166,7 @@ int ElfinRunner::run_meta_tests() {
         for (int i = 0; i < para_rand_n; i++)
             rands1.at(i) = getDice(dice_lim);
 
-        getParaRandSeeds() = para_rand_seeds;
+        get_para_rand_seeds() = para_rand_seeds;
         std::vector<uint> rands2(para_rand_n);
         #pragma omp parallel for
         for (int i = 0; i < para_rand_n; i++)
@@ -251,6 +187,67 @@ int ElfinRunner::run_meta_tests() {
 
     return fail_count;
 }
+
+ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
+    instances_.push_back(this);
+
+    std::signal(SIGINT, interrupt_handler);
+
+    // Default set to warning and above
+    set_log_level(LOG_WARN);
+
+    ArgParser ap(argc, argv);
+    options_ = ap.get_options();
+
+    mkdir_ifn_exists(options_.output_dir.c_str());
+
+    msg("Using master seed: %d\n", options_.rand_seed);
+
+    DBParser::parse(parse_json(options_.xdb),
+                    name_id_map_,
+                    id_name_map_,
+                    rela_mat_,
+                    radii_list_);
+
+    Gene::setup(&id_name_map_);
+    set_thread_seeds(options_.rand_seed);
+
+    spec_.parse_from_json(parse_json(options_.input_file));
+}
+
+void ElfinRunner::run() {
+    try {
+        if (options_.run_unit_tests) {
+            int fail_count = 0;
+            fail_count += run_unit_tests();
+            fail_count += run_meta_tests();
+
+            if (fail_count > 0) {
+                die("Some unit tests failed\n");
+            } else {
+                msg("Passed!\n");
+            }
+        } else {
+            es_ = new EvolutionSolver(rela_mat_,
+                                      spec_,
+                                      radii_list_,
+                                      options_);
+
+            es_started_ = true;
+            es_->run();
+            write_output();
+
+            delete es_;
+        }
+    }
+    catch (std::exception const& exc) {
+        err("Exception caught: \n");
+        raw_at(LOG_ERROR, exc.what());
+        raw_at(LOG_ERROR, "\n");
+        throw exc;
+    }
+}
+
 }  // namespace elfin
 
 int main(const int argc, const char ** argv) {
