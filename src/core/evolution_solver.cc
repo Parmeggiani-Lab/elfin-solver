@@ -381,7 +381,7 @@ EvolutionSolver::run()
 		/*
 		TODO: Break complex work area
 		*/
-		std::string wa_name = itr.first;
+		const std::string wa_name = itr.first;
 		const WorkArea & wa = itr.second;
 		if (wa.type() != FREE) {
 			std::stringstream ss;
@@ -491,12 +491,12 @@ EvolutionSolver::run()
 
 		free(gen_msg_fmt);
 		free(avg_time_msg_fmt);
+
+		delete curr_pop_;
+		delete buff_pop_;
 	}
 
 	this->print_end_msg();
-
-	delete curr_pop_;
-	delete buff_pop_;
 }
 
 } // namespace elfin

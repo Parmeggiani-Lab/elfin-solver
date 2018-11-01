@@ -25,7 +25,7 @@ private:
     bool es_started_ = false;
     static std::vector<ElfinRunner *> instances_;
 
-    void write_output(const std::string & alt_dir = "") const;
+    void write_output(std::string alt_dir = "") const;
     void crash_dump() const;
     int run_unit_tests() const;
     int run_meta_tests() const;

@@ -68,7 +68,7 @@ public:
 	                const Options & options);
 
 	const WorkAreas & work_areas() const { return spec_.get_work_areas(); }
-	const SolutionMap & solution_map() const { return best_sols_; }
+	const SolutionMap & best_sols() const { return best_sols_; }
 
 	void run();
 };
