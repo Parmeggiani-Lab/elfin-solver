@@ -11,15 +11,16 @@
 namespace elfin
 {
 
-typedef std::vector<Chromosome> Population_v1;
+typedef std::unordered_map<std::string, std::vector<Candidate *>> SolutionMap;
 
 class EvolutionSolver
 {
 protected:
 	const RelaMat & relamat_;
-	Spec & spec_;
+	const Spec & spec_;
 	const RadiiList & radii_list_;
 	const Options & options_;
+	SolutionMap best_sols_;
 
 	ulong non_surviver_count_;
 	ulong surviver_cutoff_;
@@ -62,11 +63,12 @@ protected:
 
 public:
 	EvolutionSolver(const RelaMat & relaMat,
-	                Spec & spec,
+	                const Spec & spec,
 	                const RadiiList & radiiList,
 	                const Options & options);
 
-	const WorkAreas & work_areas() const { return spec_.get_work_areas_cst(); }
+	const WorkAreas & work_areas() const { return spec_.get_work_areas(); }
+	const SolutionMap & solution_map() const { return best_sols_; }
 
 	void run();
 };

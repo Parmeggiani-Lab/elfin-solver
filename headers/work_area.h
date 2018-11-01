@@ -37,7 +37,6 @@ protected:
     UIJoints joints_;
     std::vector<UIJoint *> occupied_joints_;
     std::vector<UIJoint *> hinged_joints_;
-    std::vector<Candidate *> best_sols_;
 
 public:
     WorkArea(const JSON & j, const std::string & name);
@@ -51,7 +50,6 @@ public:
     const UIJoints & joints() const { return joints_; }
     const std::vector<UIJoint *> & occupied_joints() const { return occupied_joints_; }
     const std::vector<UIJoint *> & hinged_joints() const { return hinged_joints_; }
-    std::vector<Candidate *> & best_sols() { return best_sols_; }
 };
 
 typedef std::unordered_map<std::string, WorkArea> WorkAreas;

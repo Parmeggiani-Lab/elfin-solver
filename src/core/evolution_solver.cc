@@ -51,7 +51,7 @@ EvolutionSolver::init_pop_buffs(const WorkArea & wa)
 		Population * p = new Population(options_, wa);
 		p->init(pop_size_, true);
 		curr_pop_ = p;
-		
+
 		buff_pop_ = new Population(options_, wa);
 		buff_pop_->init(pop_size_, false);
 	}
@@ -341,7 +341,7 @@ EvolutionSolver::print_timing()
 /* Public Methods */
 
 EvolutionSolver::EvolutionSolver(const RelaMat & relamat,
-                                 Spec & spec,
+                                 const Spec & spec,
                                  const RadiiList & radii_list,
                                  const Options & options) :
 	relamat_(relamat),
@@ -381,7 +381,8 @@ EvolutionSolver::run()
 		/*
 		TODO: Break complex work area
 		*/
-		WorkArea & wa = itr.second;
+		std::string wa_name = itr.first;
+		const WorkArea & wa = itr.second;
 		if (wa.type() != FREE) {
 			std::stringstream ss;
 			ss << "Skipping work_area: ";
@@ -392,8 +393,8 @@ EvolutionSolver::run()
 		init_pop_buffs(wa);
 
 		// init_population(shape);
-
-		wa.best_sols().resize(options_.n_best_sols);
+		best_sols_[wa_name] = std::vector<Candidate *>();
+		best_sols_[wa_name].resize(options_.n_best_sols);
 
 		float lastgen_best_score = std::numeric_limits<float>::infinity();
 		uint stagnant_count = 0;
@@ -431,7 +432,7 @@ EvolutionSolver::run()
 
 					const Candidate * best_candidate = curr_pop_->candidates().front();
 					const Candidate * worst_candidate = curr_pop_->candidates().front();
-					
+
 					const float gen_best_score = best_candidate->get_score();
 					const ulong gen_best_len = best_candidate->nodes().size();
 					const float gen_worst_score = worst_candidate->get_score();
@@ -461,7 +462,7 @@ EvolutionSolver::run()
 					{
 						// update best sols for this work area
 						for (int i = 0; i < options_.n_best_sols; i++)
-							wa.best_sols()[i] = curr_pop_->candidates().at(i);
+							best_sols_[wa_name][i] = curr_pop_->candidates().at(i);
 
 						if (float_approximates(gen_best_score, lastgen_best_score))
 						{
