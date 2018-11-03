@@ -1,5 +1,5 @@
 {
-	"input_file": "examples/H_all.json",
+	"input_file": "examples/H_1H2HC.json",
 	"xdb": "xdb.json",
 	"output_dir": "./output/",
 
