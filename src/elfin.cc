@@ -235,7 +235,7 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
                     rela_mat_,
                     radii_list_);
 
-    Gene::setup(&id_name_map_);
+    // Gene::setup(&id_name_map_);
     set_thread_seeds(options_.rand_seed);
 
     spec_.parse_from_json(parse_json(options_.input_file));

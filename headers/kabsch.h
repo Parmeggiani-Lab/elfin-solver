@@ -4,16 +4,16 @@
 #include <vector>
 
 #include "options.h"
-
-#include "Gene.h"
+#include "geometry.h"
+// #include "Gene.h"
 
 namespace elfin
 {
 
-float
-kabsch_score(
-    const Genes & genes,
-    Points3f ref);
+// float
+// kabsch_score(
+//     const Genes & genes,
+//     Points3f ref);
 
 float
 kabsch_score(

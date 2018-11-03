@@ -8,6 +8,7 @@
 #include "geometry.h"
 #include "checksum.h"
 #include "work_area.h"
+#include "counter_structs.h"
 
 namespace elfin {
 
@@ -38,7 +39,10 @@ public:
 
     virtual void init(const WorkArea & wa) = 0;
     virtual void score(const WorkArea & wa) = 0;
-    virtual void mutate(size_t rank) = 0;
+    virtual void mutate(
+        size_t rank, 
+        const MutationCutoffs & mt_cutoffs,
+        const MutationCounters & mt_counts) = 0;
     virtual Crc32 checksum() const;
 
     /* operators */

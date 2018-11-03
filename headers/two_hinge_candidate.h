@@ -14,7 +14,10 @@ public:
 
     virtual void init(const WorkArea & wa) {}
     virtual void score(const WorkArea & wa) {}
-    virtual void mutate(size_t rank) {}
+    virtual void mutate(
+        size_t rank, 
+        const MutationCutoffs & mt_cutoffs,
+        const MutationCounters & mt_counts) {}
 };
 
 }  /* elfin */

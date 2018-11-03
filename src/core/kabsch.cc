@@ -428,23 +428,23 @@ bool kabsch(
 	return retVal;
 }
 
-float
-kabsch_score(
-    const Genes & genes,
-    Points3f ref)
-{
-	// First make a copy of genes into points
-	Points3f mobile;
-	mobile.resize(genes.size());
+// float
+// kabsch_score(
+//     const Genes & genes,
+//     Points3f ref)
+// {
+// 	// First make a copy of genes into points
+// 	Points3f mobile;
+// 	mobile.resize(genes.size());
 
-	for (int i = 0; i < genes.size(); i++)
-	{
-		const Point3f & pt = genes.at(i).com();
-		mobile.at(i) = pt;
-	}
+// 	for (int i = 0; i < genes.size(); i++)
+// 	{
+// 		const Point3f & pt = genes.at(i).com();
+// 		mobile.at(i) = pt;
+// 	}
 
-	return kabsch_score(mobile, ref);
-}
+// 	return kabsch_score(mobile, ref);
+// }
 
 float
 kabsch_score(
@@ -560,82 +560,82 @@ int _test_kabsch(const Options &options)
 		    Afewer.size(), B.size());
 	}
 
-	// Load necessary data to setup Gene
-	RelaMat relaMat;
-	NameIdMap nameIdMap;
-	IdNameMap idNameMap;
-	RadiiList radiiList;
-	DBParser::parse(parse_json(options.xdb), nameIdMap, idNameMap, relaMat, radiiList);
+	// // Load necessary data to setup Gene
+	// RelaMat relaMat;
+	// NameIdMap nameIdMap;
+	// IdNameMap idNameMap;
+	// RadiiList radiiList;
+	// DBParser::parse(parse_json(options.xdb), nameIdMap, idNameMap, relaMat, radiiList);
 
-	Gene::setup(&idNameMap);
+	// Gene::setup(&idNameMap);
 
-	// Test Kabsch scoring
-	Genes G;
-	for (int i = 0; i < A.size(); i++)
-		G.push_back(Gene(i, A.at(i)));
+	// // Test Kabsch scoring
+	// Genes G;
+	// for (int i = 0; i < A.size(); i++)
+	// 	G.push_back(Gene(i, A.at(i)));
 
-	Point3f B0Copy = B.at(0);
+	// Point3f B0Copy = B.at(0);
 
-	float score = kabsch_score(G, B);
-	msg("A-B Score: %.10f\n", score);
-	if (!float_approximates(score, 7796.9331054688))
-	{
-		failCount++;
-		err("A-B Score test failed\n");
-	}
+	// float score = kabsch_score(G, B);
+	// msg("A-B Score: %.10f\n", score);
+	// if (!float_approximates(score, 7796.9331054688))
+	// {
+	// 	failCount++;
+	// 	err("A-B Score test failed\n");
+	// }
 
-	if (!B.at(0).approximates(B0Copy))
-	{
-		failCount++;
-		err("Scoring const-ness failed: shape B was modified during scoring\n");
-	}
+	// if (!B.at(0).approximates(B0Copy))
+	// {
+	// 	failCount++;
+	// 	err("Scoring const-ness failed: shape B was modified during scoring\n");
+	// }
 
 
-	// Test scoring identical shapes
-	G.clear();
-	for (int i = 0; i < B.size(); i++)
-		G.push_back(Gene(i, B.at(i)));
+	// // Test scoring identical shapes
+	// G.clear();
+	// for (int i = 0; i < B.size(); i++)
+	// 	G.push_back(Gene(i, B.at(i)));
 
-	score = kabsch_score(G, B);
+	// score = kabsch_score(G, B);
 
-	msg("B-B Score: %.10f\n", score);
-	if (!float_approximates(score, 0.0))
-	{
-		failCount++;
-		err("B-B self score failed\n");
-	}
+	// msg("B-B Score: %.10f\n", score);
+	// if (!float_approximates(score, 0.0))
+	// {
+	// 	failCount++;
+	// 	err("B-B self score failed\n");
+	// }
 
-	// Test shifted shapes
-	for (Gene & g : G)
-		g.com() += Vector3f(-10, 20, 30);
+	// // Test shifted shapes
+	// for (Gene & g : G)
+	// 	g.com() += Vector3f(-10, 20, 30);
 
-	score = kabsch_score(G, B);
+	// score = kabsch_score(G, B);
 
-	msg("B-B Shifted Score: %.10f\n", score);
-	if (!float_approximates(score, 0.0))
-	{
-		failCount++;
-		err("B-B shifted self score failed\n");
-	}
+	// msg("B-B Shifted Score: %.10f\n", score);
+	// if (!float_approximates(score, 0.0))
+	// {
+	// 	failCount++;
+	// 	err("B-B shifted self score failed\n");
+	// }
 
-	// Test scoring different sized (sub)shapes
-	G.clear();
-	for (int i = 0; i < B.size(); i++)
-	{
-		if (i == B.size() / 2)
-			continue;
-		G.push_back(Gene(i, B.at(i)));
-	}
+	// // Test scoring different sized (sub)shapes
+	// G.clear();
+	// for (int i = 0; i < B.size(); i++)
+	// {
+	// 	if (i == B.size() / 2)
+	// 		continue;
+	// 	G.push_back(Gene(i, B.at(i)));
+	// }
 
-	score = kabsch_score(G, B);
+	// score = kabsch_score(G, B);
 
-	msg("B[1:]-B score: %.10f\n", score);
+	// msg("B[1:]-B score: %.10f\n", score);
 	
-	if (!float_approximates(score, 650.2928466797))
-	{
-		err("Resampled score differs\n");
-		failCount++;
-	}
+	// if (!float_approximates(score, 650.2928466797))
+	// {
+	// 	err("Resampled score differs\n");
+	// 	failCount++;
+	// }
 
 	// Test verdict
 	if (failCount == 0)
