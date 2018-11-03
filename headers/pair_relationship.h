@@ -16,7 +16,7 @@ public:
 	    const std::vector<float> & com_b,
 	    const std::vector<float> & rot,
 	    const std::vector<float> & tran) :
-		com_b(com_b),
+		com_b_(com_b),
 		rot_(rot),
 		rot_inv_(rot_.transpose()),
 		tran_(tran)
@@ -24,7 +24,7 @@ public:
 
 	virtual ~PairRelationship() {};
 
-	const Point3f com_b;
+	const Point3f com_b_;
 	const Mat3x3 rot_;
 	const Mat3x3 rot_inv_;
 	const Vector3f tran_;
@@ -34,7 +34,7 @@ public:
 		std::ostringstream ss;
 
 		ss << "pr[" << std::endl;
-		ss << "    com_b_:" << com_b.to_string() << std::endl;
+		ss << "    com_b_:" << com_b_.to_string() << std::endl;
 		ss << "    rot_:" << rot_.to_string() << std::endl;
 		ss << "    rot_inv_:" << rot_inv_.to_string() << std::endl;
 		ss << "    tran_:" << tran_.to_string() << std::endl;
@@ -45,10 +45,10 @@ public:
 };
 
 typedef std::vector<PairRelationship *> RelaRow;
-class RelaMat : public std::vector<RelaRow>
+class RelationshipMatrix : public std::vector<RelaRow>
 {
 public:
-	~RelaMat() {
+	~RelationshipMatrix() {
 		for(auto & row : *this) {
 			while(row.size()) {
 				auto pr = row.back();
@@ -58,6 +58,8 @@ public:
 		}
 	};
 };
+
+extern const RelationshipMatrix & REL_MAT;
 
 } // namespace elfin
 

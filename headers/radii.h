@@ -15,6 +15,8 @@ struct Radii {
 };
 typedef std::vector<Radii> RadiiList;
 
+extern const RadiiList & RADII_LIST;
+
 }  /* elfin */
 
 #endif  /* end of include guard: RADII_H_ */

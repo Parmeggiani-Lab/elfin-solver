@@ -12,7 +12,6 @@ struct IdPair {
 };
 
 typedef std::vector<IdPair> IdPairs;
-typedef std::vector<std::tuple<IdPair, IdPairs>> CrossingVector;
 
 }  /* elfin */
 

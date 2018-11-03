@@ -5,6 +5,9 @@
 
 namespace elfin {
 
+/* This file declares the global structs that hold data parsed from the
+configuration file and data derived from those parsed.*/
+
 typedef struct {
     bool valid = true;
 
@@ -43,6 +46,16 @@ typedef struct {
 
     bool dry_run = false;
 } Options;
+
+extern const Options & OPTIONS;
+
+typedef struct {
+    ulong cross = 0;
+    ulong point = 0;
+    ulong limb = 0;
+} MutationCutoffs;
+
+extern const MutationCutoffs & MUTATION_CUTOFFS;
 
 }  /* elfin */
 

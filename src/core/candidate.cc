@@ -2,22 +2,33 @@
 
 #include <sstream>
 
+#include "shorthands.h"
+
 namespace elfin {
 
-std::string Candidate::Node::to_string(const IdNameMap & inm) const {
+const std::vector<std::string> Candidate::get_node_names() const {
+    std::vector<std::string> res;
+
+    for (auto & n : nodes_)
+        res.emplace_back(ID_NAME_MAP.at(n.id));
+
+    return res;
+}
+
+std::string Candidate::Node::to_string() const {
     std::stringstream ss;
-    ss << "ID: " << id_;
-    ss << " Name: " << inm.at(id_);
-    ss << " CoM: " << com_.to_string();
+    ss << "ID: " << id;
+    ss << " Name: " << ID_NAME_MAP.at(id);
+    ss << " CoM: " << com.to_string();
     return ss.str();
 }
 
 std::string Candidate::Node::to_csv_string() const {
-    return com_.to_csv_string();
+    return com.to_csv_string();
 }
 
 // virtual
-std::string Candidate::to_string(const IdNameMap & inm) const {
+std::string Candidate::to_string() const {
     std::stringstream ss;
 
     const long N = nodes_.size();
@@ -26,7 +37,7 @@ std::string Candidate::to_string(const IdNameMap & inm) const {
     {
         i++;
         ss << "Node #" << i << " / " << N;
-        ss << ": " << n.to_string(inm) << std::endl;
+        ss << ": " << n.to_string() << std::endl;
     }
 
     return ss.str();
@@ -48,7 +59,7 @@ Crc32 Candidate::checksum() const
     // Compute checksum lazily because it's only used once per generation
     Crc32 crc = 0xffff;
     for (auto & n : nodes_) {
-        const Point3f & pt = n.com_;
+        const Point3f & pt = n.com;
         checksum_cascade(&crc, &pt, sizeof(pt));
     }
 

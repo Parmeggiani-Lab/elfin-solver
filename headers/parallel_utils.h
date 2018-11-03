@@ -59,7 +59,7 @@ void set_thread_seeds(uint global_seed);
 
 std::vector<uint> & get_para_rand_seeds();
 
-inline ulong getDice(ulong ceiling)
+inline ulong get_dice(ulong ceiling)
 {
 	return (ulong) std::floor(
 	           (

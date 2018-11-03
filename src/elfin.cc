@@ -14,12 +14,28 @@
 #include "kabsch.h"
 #include "jutil.h"
 #include "parallel_utils.h"
+#include "roulette.h"
 
 #ifndef _NO_OMP
 #include <omp.h>
 #endif
 
 namespace elfin {
+
+/* link global references to data members */
+static Options options_;
+static Spec spec_;
+static RelationshipMatrix rel_mat_;
+static NameIdMap name_id_map_;
+static IdNameMap id_name_map_;
+static RadiiList radii_list_;
+
+const Options & OPTIONS = options_;
+const Spec & SPEC = spec_;
+const RelationshipMatrix & REL_MAT = rel_mat_;
+const NameIdMap & NAME_ID_MAP = name_id_map_;
+const IdNameMap & ID_NAME_MAP = id_name_map_;
+const RadiiList & RADII_LIST = radii_list_;
 
 std::vector<ElfinRunner *> ElfinRunner::instances_;
 
@@ -62,7 +78,7 @@ void ElfinRunner::write_output(std::string alt_dir) const {
     }
 
     JSON data;
-    for (auto & kv : es_->work_areas()) {
+    for (auto & kv : SPEC.work_areas()) {
         const std::string wa_name = kv.first;
         const WorkArea & wa = kv.second;
         JSON waj;
@@ -70,9 +86,8 @@ void ElfinRunner::write_output(std::string alt_dir) const {
 
         try {
             auto candidates = es_->best_sols().at(wa_name);
-            for (const Candidate * c : candidates) {
-                // std::vector<std::string> node_names = c->getNodeNames();
-                waj["nodes"] = "unimplemented";
+            for (auto c : candidates) {
+                waj["nodes"] = c->get_node_names();
                 waj["score"] = c->get_score();
             }
         }
@@ -113,8 +128,7 @@ int ElfinRunner::run_unit_tests() const {
     msg("Running unit tests...\n");
     int fail_count = 0;
     fail_count += _test_math_utils();
-    fail_count += _test_kabsch(options_);
-    // fail_count += _testChromosome(options_); // deprecated
+    fail_count += _test_kabsch();
     return fail_count;
 }
 
@@ -122,7 +136,7 @@ int ElfinRunner::run_meta_tests() const {
     msg("Running meta tests...\n");
     int fail_count = 0;
 
-    for (auto & itr : spec_.get_work_areas()) {
+    for (auto & itr : SPEC.work_areas()) {
         const WorkArea & wa = itr.second;
         Points3f moved_spec = wa.to_points3f();
 
@@ -159,10 +173,10 @@ int ElfinRunner::run_meta_tests() const {
 
         int rand_count[N] = {0};
         for (int i = 0; i < rand_trials; i++) {
-            const int dice = getDice(N);
+            const int dice = get_dice(N);
             if (dice >= N) {
                 fail_count++;
-                err("Failed to produce correct dice: getDice() "
+                err("Failed to produce correct dice: get_dice() "
                     "produced %d for [0-%d)",
                     dice, N);
                 break;
@@ -190,13 +204,13 @@ int ElfinRunner::run_meta_tests() const {
         std::vector<uint> rands1(para_rand_n);
         #pragma omp parallel for
         for (int i = 0; i < para_rand_n; i++)
-            rands1.at(i) = getDice(dice_lim);
+            rands1.at(i) = get_dice(dice_lim);
 
         get_para_rand_seeds() = para_rand_seeds;
         std::vector<uint> rands2(para_rand_n);
         #pragma omp parallel for
         for (int i = 0; i < para_rand_n; i++)
-            rands2.at(i) = getDice(dice_lim);
+            rands2.at(i) = get_dice(dice_lim);
 
         for (int i = 0; i < para_rand_n; i++) {
             if (rands1.at(i) != rands2.at(i)) {
@@ -232,10 +246,11 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
     DBParser::parse(parse_json(options_.xdb),
                     name_id_map_,
                     id_name_map_,
-                    rela_mat_,
+                    rel_mat_,
                     radii_list_);
 
-    // Gene::setup(&id_name_map_);
+    init_roulettes();
+
     set_thread_seeds(options_.rand_seed);
 
     spec_.parse_from_json(parse_json(options_.input_file));
@@ -254,11 +269,7 @@ void ElfinRunner::run() {
                 msg("Passed!\n");
             }
         } else {
-            es_ = new EvolutionSolver(rela_mat_,
-                                      spec_,
-                                      radii_list_,
-                                      options_);
-
+            es_ = new EvolutionSolver();
             es_started_ = true;
             es_->run();
             write_output();

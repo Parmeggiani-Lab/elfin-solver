@@ -7,12 +7,6 @@ typedef struct {
     ulong cross = 0;
     ulong point = 0;
     ulong limb = 0;
-} MutationCutoffs;
-
-typedef struct {
-    ulong cross = 0;
-    ulong point = 0;
-    ulong limb = 0;
     ulong rand = 0;
     ulong cross_fail = 0;
 } MutationCounters;
@@ -25,11 +19,6 @@ typedef struct {
     double score_time = 0.0f;
     double rank_time = 0.0f;
     double select_time = 0.0f;
-    struct {
-        ulong expected = 0;
-        ulong min = 0;
-        ulong max = 0;
-    } len;
 } PopulationCounters;
 
 }  /* elfin */

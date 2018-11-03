@@ -27,8 +27,6 @@ namespace elfin {
 
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 
-class Candidate;
-
 class WorkArea
 {
 protected:
@@ -41,8 +39,6 @@ protected:
 public:
     WorkArea(const JSON & j, const std::string & name);
     Points3f to_points3f() const;
-
-    Candidate * new_candidate(bool randomize) const;
 
     /* getters */
     std::string name() const { return name_; }

@@ -26,8 +26,10 @@ public:
     virtual ~Spec() {};
 
     void parse_from_json(const JSON & j);
-    const WorkAreas & get_work_areas() const { return work_areas_; };
+    const WorkAreas & work_areas() const { return work_areas_; };
 };
+
+extern const Spec & SPEC;
 
 }  /* elfin */
 

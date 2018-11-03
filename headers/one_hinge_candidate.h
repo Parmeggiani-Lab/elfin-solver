@@ -7,17 +7,12 @@ namespace elfin {
 
 class OneHingeCandidate : public Candidate {
 public:
-    OneHingeCandidate() {}
-
-    /* strings */
-    // virtual std::string to_string(const IdNameMap & inm) const;
-
-    virtual void init(const WorkArea & wa) {}
     virtual void score(const WorkArea & wa) {}
     virtual void mutate(
-        size_t rank, 
-        const MutationCutoffs & mt_cutoffs,
-        const MutationCounters & mt_counts) {}
+        long rank,
+        const CandidateLengths & cd_lens,
+        const MutationCounters & mt_counters=MutationCounters()) {}
+    virtual Candidate * new_copy() const { return nullptr; }
 };
 
 }  /* elfin */

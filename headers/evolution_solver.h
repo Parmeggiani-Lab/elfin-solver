@@ -1,26 +1,20 @@
 #ifndef EVOLUTIONSOLVER_H
 #define EVOLUTIONSOLVER_H
 
-#include "shorthands.h"
-#include "options.h"
-#include "spec.h"
-#include "population.h"
-#include "radii.h"
+#include <memory>
 
-// #include "Chromosome.h"
+#include "population.h"
 
 namespace elfin
 {
 
-typedef std::unordered_map<std::string, std::vector<Candidate *>> SolutionMap;
+typedef std::vector<std::shared_ptr<Candidate>> CandidateSharedPtrs;
+typedef std::unordered_map<std::string,
+        CandidateSharedPtrs> SolutionMap;
 
 class EvolutionSolver
 {
 protected:
-	const RelaMat & relamat_;
-	const Spec & spec_;
-	const RadiiList & radii_list_;
-	const Options & options_;
 	SolutionMap best_sols_;
 
 	double start_time_in_us_ = 0;
@@ -38,12 +32,6 @@ protected:
 	void print_timing();
 
 public:
-	EvolutionSolver(const RelaMat & relaMat,
-	                const Spec & spec,
-	                const RadiiList & radiiList,
-	                const Options & options);
-
-	const WorkAreas & work_areas() const { return spec_.get_work_areas(); }
 	const SolutionMap & best_sols() const { return best_sols_; }
 
 	void run();

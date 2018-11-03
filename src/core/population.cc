@@ -1,139 +1,173 @@
 #include "population.h"
 
 #include <unordered_map>
+#include <sstream>
 
 #include "free_candidate.h"
+#include "one_hinge_candidate.h"
+#include "two_hinge_candidate.h"
 #include "parallel_utils.h"
 
 namespace elfin {
 
-Population::Population(const Options & options, const WorkArea & work_area) :
+static MutationCutoffs mt_cutoffs_;
+const MutationCutoffs & MUTATION_CUTOFFS = mt_cutoffs_;
+
+Population::Population(const WorkArea & work_area) :
     work_area_(work_area) {
 
-    counts_.pop_size = options.ga_pop_size;
+    pop_counters_.pop_size = OPTIONS.ga_pop_size;
 
-    counts_.survivors = std::round(options.ga_survive_rate * options.ga_pop_size);
+    pop_counters_.survivors = std::round(OPTIONS.ga_survive_rate * OPTIONS.ga_pop_size);
 
-    counts_.non_survivors = (options.ga_pop_size - counts_.survivors);
+    pop_counters_.non_survivors = (OPTIONS.ga_pop_size - pop_counters_.survivors);
 
-    mutation_cutoffs_.cross =
-        counts_.survivors +
-        std::round(options.ga_cross_rate * counts_.non_survivors);
+    mt_cutoffs_.cross =
+        pop_counters_.survivors +
+        std::round(OPTIONS.ga_cross_rate * pop_counters_.non_survivors);
 
-    mutation_cutoffs_.point =
-        mutation_cutoffs_.cross +
-        std::round(options.ga_point_mutate_rate * counts_.non_survivors);
+    mt_cutoffs_.point =
+        mt_cutoffs_.cross +
+        std::round(OPTIONS.ga_point_mutate_rate * pop_counters_.non_survivors);
 
-    mutation_cutoffs_.limb =
+    mt_cutoffs_.limb =
         std::min(
-            (ulong) (mutation_cutoffs_.point +
-                     std::round(options.ga_limb_mutate_rate * counts_.non_survivors)),
-            counts_.pop_size);
+            (ulong) (mt_cutoffs_.point +
+                     std::round(OPTIONS.ga_limb_mutate_rate * pop_counters_.non_survivors)),
+            pop_counters_.pop_size);
 
     /*
      * Calculate expected length as sum of point
      * displacements over avg pair module distance
      */
     float sum_dist = 0.0f;
-    const Points3f shape = work_area.to_points3f(); 
+    const Points3f shape = work_area.to_points3f();
     for (auto i = shape.begin() + 1; i != shape.end(); ++i)
         sum_dist += (i - 1)->dist_to(*i);
 
     // Add one because division counts segments. We want number of points.
-    int expected_len = 1 + round(sum_dist / options.avg_pair_dist);
-    counts_.len.expected = expected_len;
-    counts_.len.min = std::max((int) (expected_len - options.len_dev_alw), 1);
-    counts_.len.max = expected_len + options.len_dev_alw;
-};
+    int expected_len = 1 + round(sum_dist / OPTIONS.avg_pair_dist);
+    candidate_lengths_.expected = expected_len;
+    candidate_lengths_.min = std::max((int) (expected_len - OPTIONS.len_dev_alw), 1);
+    candidate_lengths_.max = expected_len + OPTIONS.len_dev_alw;
+}
+
+Population::~Population() {
+    for (auto c : candidates_) {
+        delete c;
+    }
+    candidates_.clear();
+}
+
+Candidate * Population::new_candidate(bool randomize) const {
+    Candidate * c = nullptr;
+    try {
+        switch (work_area_.type()) {
+        case FREE:
+            c = new FreeCandidate();
+            break;
+        case ONE_HINGE:
+            c = new OneHingeCandidate();
+            break;
+        case TWO_HINGE:
+            c = new TwoHingeCandidate();
+            break;
+        default:
+            std::stringstream ss;
+            ss << "Unimplemented WorkArea type: ";
+            ss << WorkTypeNames[work_area_.type()] << std::endl;
+            throw ElfinException(ss.str());
+        }
+
+        if (randomize)
+            c->mutate(-1, candidate_lengths_);
+    }
+    catch (std::exception const& exc) {
+        err("Exception caught: \n");
+        raw_at(LOG_ERROR, exc.what());
+        throw exc;
+    }
+
+    return c;
+}
 
 void Population::init(size_t size, bool randomize) {
-    TIMING_START(init_start_time);
-    {
+    TIMING_START(init_start_time); {
         candidates_.clear();
         candidates_.resize(size);
 
         const size_t count_block = size / 10;
 
         OMP_PAR_FOR
-        for (size_t i = 0; i < size; i++)
-        {
+        for (size_t i = 0; i < size; i++) {
 #ifndef _TARGET_GPU
-            if (i % count_block == 0)
-            {
+            if (i % count_block == 0) {
                 if (i > 0) {
                     ERASE_LINE();
                 }
-                msg("Initialising population: %.2f%%", (float) i / size);
+                msg("\rInitialising population: %.2f%%", (float) i / size);
             }
 #endif
 
-            candidates_[i] = work_area_.new_candidate(randomize);
+            candidates_[i] = new_candidate(randomize);
         }
 
         // Scoring last candidate tests length, correct init and score func
         candidates_[size - 1]->score(work_area_);
         ERASE_LINE();
-        msg("Initialising population: 100%%");
+        msg("Initialising population: 100%%\n");
     }
     TIMING_END("init", init_start_time);
 }
 
 void Population::evolve(const Population * prev_gen) {
-    TIMING_START(evolve_start_time);
-    {
-        // Probabilistic evolution
-        msg("Evolution: %.2f%%", (float) 0.0f);
-
-        MutationCounters mt_counts;
-
-        const ulong ga_pop_block = counts_.pop_size / 10;
+    TIMING_START(evolve_start_time); {
+        MutationCounters mt_counters;
+        const ulong ga_pop_block = pop_counters_.pop_size / 10;
 
         OMP_PAR_FOR
-        for (int i = counts_.survivors; i < counts_.pop_size; i++)
-        {
-            candidates_[i]->mutate(i, mutation_cutoffs_, mt_counts);
+        for (int i = pop_counters_.survivors; i < pop_counters_.pop_size; i++) {
+            candidates_[i]->mutate(i, candidate_lengths_, mt_counters);
 
 #ifndef _TARGET_GPU
-            if (i % ga_pop_block == 0)
-            {
-                ERASE_LINE();
-                msg("Evolution: %.2f%%", (float) i / counts_.pop_size);
+            if (i % ga_pop_block == 0) {
+                if (i > 0) {
+                    ERASE_LINE();
+                }
+                msg("\rEvolution: %.2f%%", (float) i / pop_counters_.pop_size);
             }
 #endif
         }
 
         ERASE_LINE();
-        msg("Evolution: 100%% Done\n");
+        msg("Evolution: 100%%\n");
 
         // Keep some actual counts to make sure the RNG is working
         // correctly
         dbg("Mutation rates: cross %.2f (fail=%d), pm %.2f, lm %.2f, rand %.2f, survivalCount: %d\n",
-            (float) mt_counts.cross / counts_.non_survivors,
-            mt_counts.cross_fail,
-            (float) mt_counts.point / counts_.non_survivors,
-            (float) mt_counts.limb / counts_.non_survivors,
-            (float) mt_counts.rand / counts_.non_survivors,
-            counts_.survivors);
+            (float) mt_counters.cross / pop_counters_.non_survivors,
+            mt_counters.cross_fail,
+            (float) mt_counters.point / pop_counters_.non_survivors,
+            (float) mt_counters.limb / pop_counters_.non_survivors,
+            (float) mt_counters.rand / pop_counters_.non_survivors,
+            pop_counters_.survivors);
     }
-    counts_.evolve_time += TIMING_END("evolving", evolve_start_time);
+    pop_counters_.evolve_time += TIMING_END("evolving", evolve_start_time);
 }
 
 void Population::score() {
-    TIMING_START(score_start_time);
-    {
+    TIMING_START(score_start_time); {
         const size_t size = candidates_.size();
         const ulong count_block = size / 10;
 
         OMP_PAR_FOR
-        for (int i = 0; i < size; i++)
-        {
+        for (int i = 0; i < size; i++) {
 #ifndef _TARGET_GPU
-            if (i % count_block == 0)
-            {
+            if (i % count_block == 0) {
                 if (i > 0) {
                     ERASE_LINE();
                 }
-                msg("Scoring: %.2f%%",  (float) i / size);
+                msg("\rScoring: %.2f%%",  (float) i / size);
             }
 #endif
             candidates_[i]->score(work_area_);
@@ -142,21 +176,19 @@ void Population::score() {
         ERASE_LINE();
         msg("Scoring: 100%%\n");
     }
-    counts_.score_time += TIMING_END("scoring", score_start_time);
+    pop_counters_.score_time += TIMING_END("scoring", score_start_time);
 }
 
 void Population::rank() {
-    TIMING_START(rank_start_time);
-    {
+    TIMING_START(rank_start_time); {
         std::sort(candidates_.begin(),
                   candidates_.end());
     }
-    counts_.rank_time += TIMING_END("ranking", rank_start_time);
+    pop_counters_.rank_time += TIMING_END("ranking", rank_start_time);
 }
 
 void Population::select() {
-    TIMING_START(start_time_select);
-    {
+    TIMING_START(start_time_select); {
         // Select distinct survivors
 
         // Ensure variety within survivors using hashmap
@@ -166,16 +198,14 @@ void Population::select() {
 
         // We don't want parallelism here because
         // the loop must priotise low indexes
-        for (auto & c : candidates_)
-        {
+        for (auto & c : candidates_) {
             const Crc32 crc = c->checksum();
-            if (crc_map.find(crc) == crc_map.end())
-            {
+            if (crc_map.find(crc) == crc_map.end()) {
                 // This individual is a new one - record
                 crc_map[crc] = c;
                 unique_count++;
 
-                if (unique_count >= counts_.survivors)
+                if (unique_count >= pop_counters_.survivors)
                     break;
             }
         }
@@ -190,7 +220,7 @@ void Population::select() {
         std::sort(candidates_.begin(),
                   candidates_.begin() + unique_count);
     }
-    counts_.select_time += TIMING_END("selecting", start_time_select);
+    pop_counters_.select_time += TIMING_END("selecting", start_time_select);
 }
 
 }  /* elfin */

@@ -5,6 +5,7 @@
 
 #include "kabsch.h"
 
+#include "options.h"
 #include "db_parser.h"
 #include "json.h"
 #include "math_utils.h"
@@ -428,24 +429,6 @@ bool kabsch(
 	return retVal;
 }
 
-// float
-// kabsch_score(
-//     const Genes & genes,
-//     Points3f ref)
-// {
-// 	// First make a copy of genes into points
-// 	Points3f mobile;
-// 	mobile.resize(genes.size());
-
-// 	for (int i = 0; i < genes.size(); i++)
-// 	{
-// 		const Point3f & pt = genes.at(i).com();
-// 		mobile.at(i) = pt;
-// 	}
-
-// 	return kabsch_score(mobile, ref);
-// }
-
 float
 kabsch_score(
     Points3f mobile,
@@ -466,7 +449,7 @@ kabsch_score(
 	return rms;
 }
 
-int _test_kabsch(const Options &options)
+int _test_kabsch()
 {
 	using namespace elfin;
 
@@ -565,7 +548,7 @@ int _test_kabsch(const Options &options)
 	// NameIdMap nameIdMap;
 	// IdNameMap idNameMap;
 	// RadiiList radiiList;
-	// DBParser::parse(parse_json(options.xdb), nameIdMap, idNameMap, relaMat, radiiList);
+	// DBParser::parse(parse_json(OPTIONS.xdb), nameIdMap, idNameMap, relaMat, radiiList);
 
 	// Gene::setup(&idNameMap);
 
