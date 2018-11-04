@@ -26,24 +26,23 @@ ulong (*get_dice_funct)(ulong) = get_dice;
 
 void
 EvolutionSolver::init_pop_buffs(const WorkArea & wa) {
-    Population * p = new Population(wa);
+    Population * p;
+    p = new Population(wa);
     p->init(OPTIONS.ga_pop_size, true);
     curr_pop_ = p;
 
-    buff_pop_ = new Population(wa);
-    buff_pop_->init(OPTIONS.ga_pop_size, false);
-
-    // We filled buffer first (because curr_pop_ shouldn't be modified)
-    swap_pop_buffs();
+    p = new Population(wa);
+    p->init(curr_pop_->candidates());
+    buff_pop_ = p;
 }
 
 void
 EvolutionSolver::swap_pop_buffs() {
     #pragma omp single
     {
-        const Population * tmp = curr_pop_;
-        curr_pop_ = buff_pop_;
-        buff_pop_ = const_cast<Population *>(tmp);
+        const Population * tmp = buff_pop_;
+        buff_pop_ = curr_pop_;
+        curr_pop_ = const_cast<Population *>(tmp);
     }
 }
 
@@ -53,8 +52,8 @@ EvolutionSolver::print_start_msg(const Points3f & shape) {
         dbg("Work Area Point: %s\n", p.to_string().c_str());
 
     msg("Length guess: %u~%u, spec has %d points\n",
-        curr_pop_->candidate_lengths().min,
-        curr_pop_->candidate_lengths().max,
+        CANDIDATE_LENGTHS.min,
+        CANDIDATE_LENGTHS.max,
         shape.size());
     msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
 
@@ -83,7 +82,7 @@ EvolutionSolver::print_start_msg(const Points3f & shape) {
         "New species:                %u\n",
         popsize_ss.str().c_str(),
         nitr_ss.str().c_str(),
-        curr_pop_->pop_counters().survivors,
+        POPULATION_COUNTERS.survivors,
         MUTATION_CUTOFFS.cross,
         MUTATION_CUTOFFS.point,
         MUTATION_CUTOFFS.limb,
@@ -138,6 +137,8 @@ EvolutionSolver::run() {
             wrn(ss.str().c_str());
             continue;
         }
+        
+        Population::setup(wa);
         init_pop_buffs(wa);
 
         const Points3f shape = itr.second.to_points3f();
@@ -163,11 +164,10 @@ EvolutionSolver::run() {
             MAP_DATA() {
                 for (int i = 0; i < OPTIONS.ga_iters; i++) {
                     const double genStartTime = get_timestamp_us();
-                    buff_pop_->evolve(curr_pop_);
-                    buff_pop_->score();
-                    buff_pop_->rank();
-                    buff_pop_->select();
-                    swap_pop_buffs();
+                    curr_pop_->evolve(buff_pop_);
+                    curr_pop_->score();
+                    curr_pop_->rank();
+                    curr_pop_->select();
 
                     // Instrumentations
                     const Candidate * best_candidate = curr_pop_->candidates().front();
@@ -187,14 +187,10 @@ EvolutionSolver::run() {
 
                     const int n_gens = i + 1;
                     msg(avg_time_msg_fmt,
-                        (float) (curr_pop_->pop_counters().evolve_time +
-                                 buff_pop_->pop_counters().evolve_time) / n_gens,
-                        (float) (curr_pop_->pop_counters().score_time +
-                                 buff_pop_->pop_counters().score_time) / n_gens,
-                        (float) (curr_pop_->pop_counters().rank_time +
-                                 buff_pop_->pop_counters().rank_time) / n_gens,
-                        (float) (curr_pop_->pop_counters().select_time +
-                                 buff_pop_->pop_counters().select_time) / n_gens,
+                        (float) (POPULATION_COUNTERS.evolve_time) / n_gens,
+                        (float) (POPULATION_COUNTERS.score_time) / n_gens,
+                        (float) (POPULATION_COUNTERS.rank_time) / n_gens,
+                        (float) (POPULATION_COUNTERS.select_time) / n_gens,
                         (float) tot_gen_time / n_gens);
 
                     // Exit loop if best score is low enough
@@ -226,6 +222,8 @@ EvolutionSolver::run() {
                             msg("Current stagnancy: %d, max: %d\n", stagnant_count, OPTIONS.max_stagnant_gens);
                         }
                     }
+
+                    swap_pop_buffs();
                 }
             }
         }

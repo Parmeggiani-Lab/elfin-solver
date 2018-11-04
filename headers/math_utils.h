@@ -25,9 +25,9 @@ collides(const uint new_id,
 	for (ConstNodeIterator itr = begin_node; itr < end_node; itr++)
 	{
 		const float comDist = itr->com.sq_dist_to(new_com);
-		const float requiredComDist = RADII_LIST.at(itr->id).COLLISION_MEASURE +
+		const float required_com_dist = RADII_LIST.at(itr->id).COLLISION_MEASURE +
 		                              RADII_LIST.at(new_id).COLLISION_MEASURE;
-		if (comDist < (requiredComDist * requiredComDist))
+		if (comDist < (required_com_dist * required_com_dist))
 			return true;
 	}
 

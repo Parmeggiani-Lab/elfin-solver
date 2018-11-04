@@ -23,12 +23,12 @@
 namespace elfin {
 
 /* link global references to data members */
-static Options options_;
-static Spec spec_;
-static RelationshipMatrix rel_mat_;
-static NameIdMap name_id_map_;
-static IdNameMap id_name_map_;
-static RadiiList radii_list_;
+Options options_;
+Spec spec_;
+RelationshipMatrix rel_mat_;
+NameIdMap name_id_map_;
+IdNameMap id_name_map_;
+RadiiList radii_list_;
 
 const Options & OPTIONS = options_;
 const Spec & SPEC = spec_;
@@ -71,7 +71,6 @@ void ElfinRunner::interrupt_handler(const int signal) {
 }
 
 void ElfinRunner::write_output(std::string alt_dir) const {
-
     if (alt_dir.length() > 0) {
         mkdir_ifn_exists(alt_dir.c_str());
         alt_dir += "/";
@@ -87,8 +86,14 @@ void ElfinRunner::write_output(std::string alt_dir) const {
         try {
             auto candidates = es_->best_sols().at(wa_name);
             for (auto c : candidates) {
-                waj["nodes"] = c->get_node_names();
-                waj["score"] = c->get_score();
+                if (c) {
+                    auto node_names = c->get_node_names();
+                    waj["nodes"] = node_names;
+                    waj["score"] = c->get_score();
+                }
+                else {
+                    err("Null candidate in work area \"%s\"\n", wa_name.c_str());
+                }
             }
         }
         catch (std::out_of_range& e)
@@ -257,31 +262,23 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
 }
 
 void ElfinRunner::run() {
-    try {
-        if (options_.run_unit_tests) {
-            int fail_count = 0;
-            fail_count += run_unit_tests();
-            fail_count += run_meta_tests();
+    if (options_.run_unit_tests) {
+        int fail_count = 0;
+        fail_count += run_unit_tests();
+        fail_count += run_meta_tests();
 
-            if (fail_count > 0) {
-                die("Some unit tests failed\n");
-            } else {
-                msg("Passed!\n");
-            }
+        if (fail_count > 0) {
+            die("Some unit tests failed\n");
         } else {
-            es_ = new EvolutionSolver();
-            es_started_ = true;
-            es_->run();
-            write_output();
-
-            delete es_;
+            msg("Passed!\n");
         }
-    }
-    catch (std::exception const& exc) {
-        err("Exception caught: \n");
-        raw_at(LOG_ERROR, exc.what());
-        raw_at(LOG_ERROR, "\n");
-        throw exc;
+    } else {
+        es_ = new EvolutionSolver();
+        es_started_ = true;
+        es_->run();
+        write_output();
+
+        delete es_;
     }
 }
 

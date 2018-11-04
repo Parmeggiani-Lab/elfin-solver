@@ -38,7 +38,7 @@ inline int omp_get_initial_device() { return 0; }
 #define TIMING_START(varName) \
 	const double varName = get_timestamp_us();
 
-inline long TIMING_END(const char * sectionName, const double startTime) { 
+inline long TIMING_END(const char * sectionName, const double startTime) {
 	const long diff = (long) ((get_timestamp_us() - startTime) / 1e3);
 	msg("Section (%s) time: %.dms\n", sectionName, diff);
 	return diff;
@@ -59,17 +59,13 @@ void set_thread_seeds(uint global_seed);
 
 std::vector<uint> & get_para_rand_seeds();
 
-inline ulong get_dice(ulong ceiling)
+inline size_t get_dice(size_t ceiling)
 {
-	return (ulong) std::floor(
-	           (
-	               (float)
-	               (ceiling - 1) *
-	               rand_r(
-	                   &(get_para_rand_seeds().at(omp_get_thread_num()))
-	               )
-	               / RAND_MAX
-	           )
+	if (!ceiling) return 0;
+
+	uint & thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
+	return (size_t) std::floor(
+	           (float) (ceiling - 1) * rand_r(&thread_seed) / RAND_MAX
 	       );
 }
 } // namespace elfin

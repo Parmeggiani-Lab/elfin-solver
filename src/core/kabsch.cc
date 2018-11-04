@@ -11,15 +11,13 @@
 #include "math_utils.h"
 #include "jutil.h"
 
-namespace elfin
-{
+namespace elfin {
 
 template <typename T>
 using Matrix = std::vector<std::vector<T>>;
 
 std::vector<double>
-point3f_to_vector(Point3f const & pt)
-{
+point3f_to_vector(Point3f const & pt) {
 	std::vector<double> v;
 
 	v.resize(3);
@@ -31,8 +29,7 @@ point3f_to_vector(Point3f const & pt)
 }
 
 Matrix<double>
-points3f_to_vectors(Points3f const & pts)
-{
+points3f_to_vectors(Points3f const & pts) {
 	Matrix<double> out;
 
 	out.resize(pts.size());
@@ -45,8 +42,7 @@ points3f_to_vectors(Points3f const & pts)
 void
 resample(
     Points3f & ref,
-    Points3f & pts)
-{
+    Points3f & pts) {
 	const uint N = ref.size();
 
 	// Compute  shape total lengths
@@ -66,8 +62,7 @@ resample(
 
 	float refProp = 0.0f, ptsProp = 0.0f;
 	int mpi = 1;
-	for (int i = 1; i < pts.size(); i++)
-	{
+	for (int i = 1; i < pts.size(); i++) {
 		const Point3f & baseFpPoint = pts.at(i - 1);
 		const Point3f & nextFpPoint = pts.at(i);
 		const float baseFpProportion = ptsProp;
@@ -76,8 +71,7 @@ resample(
 		const Vector3f vec = nextFpPoint - baseFpPoint;
 
 		ptsProp += fpSegment;
-		while (refProp <= ptsProp && mpi < N)
-		{
+		while (refProp <= ptsProp && mpi < N) {
 			const float mpSegment =
 			    ref.at(mpi).dist_to(ref.at(mpi - 1))
 			    / refTotLen;
@@ -118,8 +112,7 @@ bool rosetta_kabsch(
     int const mode,
     double *rms,
     std::vector<double>& t,
-    std::vector<std::vector<double>> & u )
-{
+    std::vector<std::vector<double>> & u ) {
 	int i, j, m, m1, l, k;
 	double e0, rms1, d, h, g;
 	double cth, sth, sqrth, p, det, sigma;
@@ -408,8 +401,7 @@ bool kabsch(
     Matrix<double> & rot,
     Vector3f & tran,
     double & rms,
-    int mode = 1)
-{
+    int mode = 1) {
 	Matrix<double> xx = points3f_to_vectors(mobile);
 	Matrix<double> yy = points3f_to_vectors(ref);
 
@@ -429,11 +421,19 @@ bool kabsch(
 	return retVal;
 }
 
-float
-kabsch_score(
-    Points3f mobile,
-    Points3f ref)
-{
+float kabsch_score(const Nodes & nodes, const WorkArea & wa) {
+	// TODO: don't convert to Points3f
+	Points3f points;
+	for (auto & n : nodes) {
+		points.emplace_back(n.com);
+	}
+	return kabsch_score(points, wa.to_points3f());
+}
+
+float kabsch_score(Points3f mobile, Points3f ref) {
+	if(mobile.size() == 0)
+		return std::numeric_limits<float>::infinity();
+
 	if (ref.size() != mobile.size())
 		resample(ref, mobile);
 
@@ -449,8 +449,7 @@ kabsch_score(
 	return rms;
 }
 
-int _test_kabsch()
-{
+int _test_kabsch() {
 	using namespace elfin;
 
 	msg("Testing Kabsch\n");
@@ -467,8 +466,7 @@ int _test_kabsch()
 		Point3f(-41.8874231134215, 29.4831416883453, 8.70447045314168),
 	};
 
-	const Point3f arrB[] =
-	{
+	const Point3f arrB[] = {
 		Point3f(-29.2257707266972, -18.8897713349587, 9.48960740086143),
 		Point3f(-19.8753669720509, 42.3379642103244, -23.7788252219155),
 		Point3f(-2.90766514824093, -6.9792608670416, 10.2843089382083),
@@ -481,8 +479,7 @@ int _test_kabsch()
 		Point3f(-6.43013158961009, -9.12801538874479, 0.785828466111815),
 	};
 
-	const Point3f actualR[] =
-	{
+	const Point3f actualR[] = {
 		Point3f( 0.523673403299203, -0.276948392922051, -0.805646171923458),
 		Point3f(-0.793788382691122, -0.501965361762521, -0.343410511043611),
 		Point3f(-0.309299482996081, 0.819347522879342, -0.482704326238996),
@@ -506,22 +503,19 @@ int _test_kabsch()
 	msg("Kabsch call retVal: %s\n", retVal ? "ok" : "failed");
 
 	msg("Rot:\n");
-	for (int i = 0; i < rot.size(); i++)
-	{
+	for (int i = 0; i < rot.size(); i++) {
 		auto const & row = rot.at(i);
 
 		raw("%16.6f %16.6f %16.6f\n",
 		    row.at(0), row.at(1), row.at(2));
-		if (!Vector3f(row.at(0), row.at(1), row.at(2)).approximates(actualR[i]))
-		{
+		if (!Vector3f(row.at(0), row.at(1), row.at(2)).approximates(actualR[i])) {
 			failCount++;
 			err("Rotation test failed: row does not approximate actual rotation row\n");
 		}
 	}
 
 	msg("Tran: %s\n", tran.to_string().c_str());
-	if (!tran.approximates(actualTran))
-	{
+	if (!tran.approximates(actualTran)) {
 		failCount++;
 		err("Translation test failed: does not approximate actual translation\n");
 	}
@@ -536,8 +530,7 @@ int _test_kabsch()
 
 	resample(Afewer, B);
 
-	if (Afewer.size() != B.size())
-	{
+	if (Afewer.size() != B.size()) {
 		failCount++;
 		err("Upsampling failed: Lengths: Afewer=%d B=%d\n",
 		    Afewer.size(), B.size());
@@ -613,7 +606,7 @@ int _test_kabsch()
 	// score = kabsch_score(G, B);
 
 	// msg("B[1:]-B score: %.10f\n", score);
-	
+
 	// if (!float_approximates(score, 650.2928466797))
 	// {
 	// 	err("Resampled score differs\n");

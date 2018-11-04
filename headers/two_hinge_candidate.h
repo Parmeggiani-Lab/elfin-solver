@@ -10,8 +10,8 @@ public:
     virtual void score(const WorkArea & wa) {}
     virtual void mutate(
         long rank,
-        const CandidateLengths & cd_lens,
-        const MutationCounters & mt_counters=MutationCounters()) {}
+        MutationCounters & mt_counters,
+        const Candidates & candidates) {}
     virtual Candidate * new_copy() const { return nullptr; }
 };
 

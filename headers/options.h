@@ -47,7 +47,7 @@ typedef struct {
     bool dry_run = false;
 } Options;
 
-extern const Options & OPTIONS;
+extern const Options & OPTIONS; // defined in elfin.cc
 
 typedef struct {
     ulong cross = 0;
@@ -55,7 +55,7 @@ typedef struct {
     ulong limb = 0;
 } MutationCutoffs;
 
-extern const MutationCutoffs & MUTATION_CUTOFFS;
+extern const MutationCutoffs & MUTATION_CUTOFFS; // defined in population.cc
 
 }  /* elfin */
 

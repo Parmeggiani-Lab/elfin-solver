@@ -59,7 +59,7 @@ public:
 	};
 };
 
-extern const RelationshipMatrix & REL_MAT;
+extern const RelationshipMatrix & REL_MAT; // defined in elfin.cc
 
 } // namespace elfin
 

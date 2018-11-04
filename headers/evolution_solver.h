@@ -19,8 +19,8 @@ protected:
 
 	double start_time_in_us_ = 0;
 
-	const Population * curr_pop_;
-	Population * buff_pop_;
+	Population * curr_pop_;
+	const Population * buff_pop_;
 
 	void set_length_guesses(const Points3f & shape);
 

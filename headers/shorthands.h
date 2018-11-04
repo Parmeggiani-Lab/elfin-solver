@@ -9,8 +9,8 @@ namespace elfin {
 typedef std::unordered_map<std::string, long> NameIdMap;
 typedef std::unordered_map<long, std::string> IdNameMap;
 
-extern const NameIdMap & NAME_ID_MAP;
-extern const IdNameMap & ID_NAME_MAP;
+extern const NameIdMap & NAME_ID_MAP; // defined in elfin.cc
+extern const IdNameMap & ID_NAME_MAP; // defined in elfin.cc
 
 typedef uint32_t uint;
 typedef uint64_t ulong;

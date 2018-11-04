@@ -15,8 +15,8 @@ CC_SRC 			:= $(shell find src jutil -name '*.cc')
 OBJS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.o) $(CC_SRC:%.cc=$(OBJ_DIR)/%.o)
 DEPS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.d) $(CC_SRC:%.cc=$(OBJ_DIR)/%.d)
 
-$(info Sources to be compiled: [${C_SRC}] [${CC_SRC}])
-$(info Objects to be compiled: [${OBJS}])
+# $(info Sources to be compiled: [${C_SRC}] [${CC_SRC}])
+# $(info Objects to be compiled: [${OBJS}])
 
 DEBUG=yes
 OMP=yes

@@ -17,26 +17,26 @@ class Population
 protected:
     std::vector<Candidate *> candidates_;
     const WorkArea & work_area_;
-    PopulationCounters pop_counters_;
-    CandidateLengths candidate_lengths_;
 
     Candidate * new_candidate(bool randomize) const;
 
 public:
-    Population(const WorkArea & work_area);
+    Population(const WorkArea & work_area) :
+        work_area_(work_area) {};
     virtual ~Population();
 
     /* getters */
     const std::vector<Candidate *> & candidates() const { return candidates_; }
     void resize(size_t size) { candidates_.resize(size); }
-    const PopulationCounters & pop_counters() const { return pop_counters_; }
-    const CandidateLengths & candidate_lengths() const { return candidate_lengths_; }
 
     void init(size_t size, bool randomize);
+    void init(const Candidates & candidates);
     void evolve(const Population * prev_gen);
     void score();
     void rank();
     void select();
+
+    static void setup(const WorkArea & wa);
 };
 
 }  /* elfin */
