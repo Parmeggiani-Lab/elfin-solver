@@ -100,12 +100,11 @@ $(OBJ_DIR)/%.o: %.$1
 endef
 $(foreach EXT,$(EXTS),$(eval $(call make_rule,$(EXT))))
 
-$(EXE): deleteTestObjs $(OBJS)
+$(EXE): delete_test_objs $(OBJS)
 	$(COMPILE) $(OBJS) -o $(BIN_DIR)/$@ $(LD_FLAGS)
 
-deleteTestObjs:
+delete_test_objs:
 	rm -rf $(objToDelete)
-
 
 test: $(EXE)
 	$(BIN_DIR)/$(EXE) -c config/test.json
@@ -114,6 +113,9 @@ dry: $(EXE)
 	$(BIN_DIR)/$(EXE) -c config/test.json -dry
 
 valgrind: $(EXE)
+	valgrind --track-origins=yes --leak-check=full $(BIN_DIR)/$(EXE) -c config/test.json
+
+valgrind_dry: $(EXE)
 	valgrind --track-origins=yes --leak-check=full $(BIN_DIR)/$(EXE) -c config/test.json -dry
 
 FORCE:
