@@ -5,9 +5,9 @@
 
 namespace elfin {
 
-extern const IdPairs LINK_COUNTS;
-extern const std::vector<size_t> CTERM_ROULETTE;
-extern const std::vector<size_t> NTERM_ROULETTE;
+extern const IdPairs & LINK_COUNTS;
+extern const std::vector<size_t> & CTERM_ROULETTE;
+extern const std::vector<size_t> & NTERM_ROULETTE;
 
 void init_roulettes();
 
