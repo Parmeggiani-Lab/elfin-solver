@@ -115,7 +115,6 @@ void Population::init(size_t size, bool randomize) {
     TIMING_END("init", init_start_time);
 }
 
-
 void Population::init(const Candidates & candidates) {
     msg("Copying population...\n");
 

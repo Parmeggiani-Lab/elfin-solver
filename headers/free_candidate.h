@@ -11,8 +11,8 @@ namespace elfin {
 
 class FreeCandidate : public Candidate {
 private:
-    static Nodes gen_random_nodes(size_t max_len, Nodes & nodes);
-    static Nodes gen_random_nodes_reverse(size_t max_len, Nodes & nodes);
+    static void gen_random_nodes(size_t max_len, Nodes & nodes);
+    static void gen_random_nodes_reverse(size_t max_len, Nodes & nodes);
     static bool synthesise(Nodes & nodes);
     static bool synthesise_reverse(Nodes & nodes);
 
@@ -22,6 +22,9 @@ private:
         const FreeCandidate & father,
         FreeCandidate & out) const;
     bool point_mutate();
+    bool get_severable_id(
+        size_t & sever_id,
+        bool & mutate_left_limb) const;
     bool limb_mutate();
 
     FreeCandidate(const Nodes & nodes) {

@@ -6,9 +6,9 @@
 namespace elfin {
 
 struct IdPair {
-    long x, y;
+    size_t x, y;
     IdPair() : x(0), y(0) {};
-    IdPair(long _x, long _y) : x(_x), y(_y) {};
+    IdPair(size_t _x, size_t _y) : x(_x), y(_y) {};
 };
 
 typedef std::vector<IdPair> IdPairs;

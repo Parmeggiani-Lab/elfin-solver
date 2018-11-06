@@ -18,8 +18,8 @@ void init_counts() {
     link_counts_.resize(dim, IdPair());
     for (size_t i = 0; i < dim; i++)
     {
-        uint lhs = 0, rhs = 0;
-        for (int j = 0; j < dim; j++)
+        size_t lhs = 0, rhs = 0;
+        for (size_t j = 0; j < dim; j++)
         {
             if (REL_MAT.at(j).at(i) != NULL)
                 lhs++;
@@ -37,10 +37,10 @@ void init_roulettes() {
     cterm_roulette_.clear();
     nterm_roulette_.clear();
     for (size_t i = 0; i < REL_MAT.size(); i++) {
-        for (int j = 0; j < link_counts_.at(i).y; j++)
+        for (size_t j = 0; j < link_counts_.at(i).y; j++)
             cterm_roulette_.push_back(i);
 
-        for (int j = 0; j < link_counts_.at(i).x; j++)
+        for (size_t j = 0; j < link_counts_.at(i).x; j++)
             nterm_roulette_.push_back(i);
     }
 }

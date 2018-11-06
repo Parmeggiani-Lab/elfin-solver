@@ -137,7 +137,7 @@ EvolutionSolver::run() {
             wrn(ss.str().c_str());
             continue;
         }
-        
+
         Population::setup(wa);
         init_pop_buffs(wa);
 

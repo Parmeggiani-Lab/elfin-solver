@@ -10,11 +10,14 @@
 #include "counter_structs.h"
 #include "options.h"
 
+#define NO_POINT_MUTATE
+
 namespace elfin {
 
 /* private */
 
-Nodes FreeCandidate::gen_random_nodes(size_t max_len, Nodes & nodes) {
+// static
+void FreeCandidate::gen_random_nodes(size_t max_len, Nodes & nodes) {
     const size_t dim = REL_MAT.size();
 
     // A roulette wheel represents the probability of
@@ -29,7 +32,7 @@ Nodes FreeCandidate::gen_random_nodes(size_t max_len, Nodes & nodes) {
     // are simply repeated and we don't want this to
     // happen often.
 
-    if (nodes.size() == 0) {
+    if (nodes.empty()) {
         // Pick random starting node
         const size_t first_node_id = CTERM_ROULETTE.at(get_dice(CTERM_ROULETTE.size()));
         nodes.emplace_back(first_node_id, 0, 0, 0);
@@ -49,20 +52,21 @@ Nodes FreeCandidate::gen_random_nodes(size_t max_len, Nodes & nodes) {
 
             // Create roulette based on number of RHS neighbours
             // of the current neighbour being considered
-            if (pr_ptr and nodes.size() >= 2 and !collides(i,
-                                    pr_ptr->com_b_,
-                                    nodes.begin(),
-                                    nodes.end() - 2)) {
+            if (pr_ptr and
+                    !collides(i,
+                              pr_ptr->com_b_,
+                              nodes.begin(),
+                              nodes.end() - 2)) {
                 for (int j = 0; j < LINK_COUNTS.at(i).y; j++)
                     roulette_wheel.push_back(i);
             }
         }
 
-        if (roulette_wheel.size() == 0)
+        if (roulette_wheel.empty())
             break;
 
         // Pick a random valid neighbour
-        const uint next_node_id = roulette_wheel.at(get_dice(roulette_wheel.size()));
+        const size_t next_node_id = roulette_wheel.at(get_dice(roulette_wheel.size()));
 
         const PairRelationship * next_node_pr = rr.at(next_node_id);
 
@@ -74,14 +78,13 @@ Nodes FreeCandidate::gen_random_nodes(size_t max_len, Nodes & nodes) {
 
         nodes.emplace_back(next_node_id, 0, 0, 0);
     }
-
-    return nodes;
 }
 
-Nodes FreeCandidate::gen_random_nodes_reverse(size_t max_len, Nodes & nodes) {
+// static
+void FreeCandidate::gen_random_nodes_reverse(size_t max_len, Nodes & nodes) {
     const size_t dim = REL_MAT.size();
 
-    if (nodes.size() == 0) {
+    if (nodes.empty()) {
         // Pick random starting node
         const size_t first_node_id = CTERM_ROULETTE.at(get_dice(CTERM_ROULETTE.size()));
         nodes.emplace_back(first_node_id, 0, 0, 0);
@@ -94,7 +97,7 @@ Nodes FreeCandidate::gen_random_nodes_reverse(size_t max_len, Nodes & nodes) {
     std::reverse(nodes.begin(), nodes.end());
 
     while (nodes.size() < max_len) {
-        std::vector<uint> roulette_wheel;
+        std::vector<size_t> roulette_wheel;
         const Node & curr_node = nodes.back();
 
         // Compute whether each neighbour is colliding
@@ -116,11 +119,11 @@ Nodes FreeCandidate::gen_random_nodes_reverse(size_t max_len, Nodes & nodes) {
             }
         }
 
-        if (roulette_wheel.size() == 0)
+        if (roulette_wheel.empty())
             break;
 
         // Pick a random valid neighbour
-        const uint next_node_id =
+        const size_t next_node_id =
             roulette_wheel.at(get_dice(roulette_wheel.size()));
 
         const PairRelationship * next_node_pr =
@@ -137,12 +140,11 @@ Nodes FreeCandidate::gen_random_nodes_reverse(size_t max_len, Nodes & nodes) {
 
     // Reverse the reverse!
     std::reverse(nodes.begin(), nodes.end());
-
-    return nodes;
 }
 
+// static
 bool FreeCandidate::synthesise_reverse(Nodes & nodes) {
-    const uint N = nodes.size();
+    const size_t N = nodes.size();
     if (N == 0)
         return true;
 
@@ -189,8 +191,9 @@ bool FreeCandidate::synthesise_reverse(Nodes & nodes) {
     return true;
 }
 
+// static
 bool FreeCandidate::synthesise(Nodes & nodes) {
-    if (nodes.size() == 0)
+    if (nodes.empty())
         return true;
 
     // Zero all coords so they don't interfere with
@@ -218,10 +221,10 @@ bool FreeCandidate::synthesise(Nodes & nodes) {
         }
 
         if (nodes.size() < 2 or
-            collides(rhs_node.id,
-                     new_node_pr->com_b_,
-                     nodes.begin(),
-                     nodes.begin() + i - 2))
+                collides(rhs_node.id,
+                         new_node_pr->com_b_,
+                         nodes.begin(),
+                         nodes.begin() + i - 2))
             return false;
 
         // Grow shape
@@ -236,7 +239,7 @@ bool FreeCandidate::synthesise(Nodes & nodes) {
 }
 
 void FreeCandidate::randomize() {
-    nodes_ = gen_random_nodes(CANDIDATE_LENGTHS.max, nodes_);
+    gen_random_nodes(CANDIDATE_LENGTHS.max, nodes_);
 }
 
 void FreeCandidate::auto_mutate() {
@@ -251,65 +254,78 @@ void FreeCandidate::auto_mutate() {
     }
 }
 
-bool FreeCandidate::cross_mutate(
-    const FreeCandidate & father,
-    FreeCandidate & out) const {
-    // Current chromosome is mother
+IdPairs get_crossing_ids(
+    const FreeCandidate & mother,
+    const FreeCandidate & father) {
+    // Compute index pairs of mother and father nodes at which cross mutation
+    // is possible
     IdPairs crossing_ids;
-
     const Nodes & father_nodes = father.nodes();
     const ulong fn_len = father_nodes.size();
-    const ulong mn_len = nodes_.size();
+    const Nodes & mother_nodes = mother.nodes();
+    const ulong mn_len = mother_nodes.size();
 
-    // In below comments nodes1 = this, nodes2 = other
     for (size_t i = 0; i < mn_len; i++) {
         // Using i as nodes1 left limb cutoff
         const ulong left_limb_len = i + 1; // This includes the node i
-        const ulong max_j = std::min(
-                                std::max(
-                                    fn_len - (CANDIDATE_LENGTHS.min - left_limb_len) - 1, // -1 to account for the duplicate cross point node
-                                    (ulong) 0),
-                                fn_len - 1);
         const ulong min_j = std::min(
                                 std::max(
                                     fn_len - (CANDIDATE_LENGTHS.max - left_limb_len) - 1, // -1 to account for the duplicate cross point node
                                     (ulong) 0),
                                 fn_len - 1);
+
+        const ulong max_j = std::min(
+                                std::max(
+                                    fn_len - (CANDIDATE_LENGTHS.min - left_limb_len) - 1, // -1 to account for the duplicate cross point node
+                                    (ulong) 0),
+                                fn_len - 1);
         for (int j = min_j; j < max_j; j++) {
-            if (nodes_.at(i).id == father_nodes.at(j).id) {
+            if (mother_nodes.at(i).id == father_nodes.at(j).id) {
                 crossing_ids.push_back(IdPair(i, j));
             }
         }
     }
 
-    if (crossing_ids.size() > 0) {
-        // cross can fail - if resultant nodes collide during synth
-        for (size_t i = 0; i < MAX_FREECANDIDATE_MUTATE_FAILS; i++) {
-            // Pick random crossing point
-            const IdPair & cross_point = crossing_ids.at(get_dice(crossing_ids.size()));
-            const uint mother_node_id = cross_point.x;
-            const uint father_node_id = cross_point.y;
+    return crossing_ids;
+}
 
-            const Nodes & father_nodes = father.nodes();
+bool FreeCandidate::cross_mutate(
+    const FreeCandidate & father,
+    FreeCandidate & out) const {
+    // Current chromosome is mother
+    IdPairs crossing_ids = get_crossing_ids(*this, father);
 
-            Nodes new_nodes;
-            new_nodes.insert(
-                new_nodes.end(),
-                nodes_.begin(),
-                nodes_.begin() + mother_node_id);
-            new_nodes.insert(
-                new_nodes.end(),
-                father_nodes.begin() + father_node_id,
-                father_nodes.end());
+    size_t tries = 0;
+    bool cross_ok = false;
+    // cross can fail - if resultant nodes collide during synth
+    while (tries < MAX_FREECANDIDATE_MUTATE_FAILS and
+            crossing_ids.size()) {
+        // Pick random crossing point
+        const IdPair & cross_point = crossing_ids.at(get_dice(crossing_ids.size()));
+        const Nodes & father_nodes = father.nodes();
 
-            if (synthesise(new_nodes)) {
-                out = FreeCandidate(new_nodes);
-                return true;
-            }
+        Nodes new_nodes;
+
+        new_nodes.insert(
+            new_nodes.end(),
+            nodes_.begin(),
+            nodes_.begin() + cross_point.x);
+
+        new_nodes.insert(
+            new_nodes.end(),
+            father_nodes.begin() + cross_point.y,
+            father_nodes.end());
+
+        if (synthesise(new_nodes)) {
+            out = FreeCandidate(new_nodes);
+            cross_ok = true;
+            break;
         }
+
+        tries++;
     }
 
-    return false;
+    return cross_ok;
 }
 
 enum PointMutateMode {
@@ -326,6 +342,8 @@ bool FreeCandidate::point_mutate() {
     // 3. Delete the node
     // As of now it uses equal probability.
     // Could be opened up as a setting.
+
+#ifndef NO_POINT_MUTATE
     const size_t dim = REL_MAT.size();
     const size_t n_nodes = nodes_.size();
     std::vector<PointMutateMode> modes =
@@ -468,40 +486,49 @@ bool FreeCandidate::point_mutate() {
         }
         } // end of pm_mode switch
     }
+#endif
 
     return false;
 }
 
-bool FreeCandidate::limb_mutate() {
+bool FreeCandidate::get_severable_id(
+    size_t & sever_id,
+    bool & mutate_left_limb) const {
     const size_t N = nodes_.size();
-    if(N < 2)
+    if (N < 2)
         return false;
 
-    // Pick a node that can host an alternative limb
-    uint sever_id = -1;
-    bool mutate_left_limb = false;
-
-    for (size_t i = 0; i < MAX_FREECANDIDATE_MUTATE_FAILS; i++) {
-        const uint node_index = get_dice(N - 1) + 1;
-        const uint node_id = nodes_.at(node_index).id;
-
+    size_t tries = 0;
+    bool found_id = false;
+    while (tries < MAX_FREECANDIDATE_MUTATE_FAILS) {
+        const size_t node_index = get_dice(N - 1) + 1;
+        const size_t node_id = nodes_.at(node_index).id;
         const IdPair & ids = LINK_COUNTS.at(node_id);
 
-        if (ids.x == 1 and ids.y == 1)
-            continue;
+        if (ids.x != 1 or ids.y != 1) {
+            if (ids.x == 1)
+                mutate_left_limb = false;
+            else if (ids.y == 1)
+                mutate_left_limb = true;
+            else
+                mutate_left_limb = get_dice(2);
 
-        if (ids.x == 1)
-            mutate_left_limb = false;
-        else if (ids.y == 1)
-            mutate_left_limb = true;
-        else
-            mutate_left_limb = get_dice(2);
+            sever_id = node_index;
+            found_id = true;
+            break;
+        }
 
-        sever_id = node_index;
-        break;
+        tries++;
     }
 
-    if (sever_id == -1)
+    return found_id;
+}
+
+bool FreeCandidate::limb_mutate() {
+    // Pick a node that can host an alternative limb
+    size_t sever_id = 0;
+    bool mutate_left_limb = false;
+    if (!get_severable_id(sever_id, mutate_left_limb))
         return false;
 
     // Server the limb
@@ -513,9 +540,10 @@ bool FreeCandidate::limb_mutate() {
     // Re-generate that whole limb
     Nodes new_nodes;
     for (size_t i = 0; i < MAX_FREECANDIDATE_MUTATE_FAILS; i++) {
-        new_nodes = mutate_left_limb ?
-                    gen_random_nodes_reverse(CANDIDATE_LENGTHS.max, nodes_) :
-                    gen_random_nodes(CANDIDATE_LENGTHS.max, nodes_);
+        if (mutate_left_limb)
+            gen_random_nodes_reverse(CANDIDATE_LENGTHS.max, nodes_);
+        else
+            gen_random_nodes(CANDIDATE_LENGTHS.max, nodes_);
 
         if (new_nodes.size() >= CANDIDATE_LENGTHS.min)
             break;
@@ -550,6 +578,7 @@ void FreeCandidate::mutate(
     const Candidates & candidates) {
 
     if (rank == -1) {
+        // rank -1 is code for randomize
         this->randomize();
     }
     else if (rank < POPULATION_COUNTERS.survivors) {
@@ -561,23 +590,24 @@ void FreeCandidate::mutate(
             get_dice(POPULATION_COUNTERS.non_survivors);
 
         if (evolution_dice < MUTATION_CUTOFFS.cross) {
-            long motherId = get_dice(get_dice(2) ?
-                                     POPULATION_COUNTERS.survivors :
-                                     POPULATION_COUNTERS.pop_size);
-            long fatherId = get_dice(get_dice(2) ?
-                                     POPULATION_COUNTERS.survivors :
-                                     POPULATION_COUNTERS.pop_size);
+            const long mother_id = get_dice(get_dice(2) ?
+                                            POPULATION_COUNTERS.survivors :
+                                            POPULATION_COUNTERS.pop_size);
+            const long father_id = get_dice(get_dice(2) ?
+                                            POPULATION_COUNTERS.survivors :
+                                            POPULATION_COUNTERS.pop_size);
 
-            const FreeCandidate * mother = (FreeCandidate*) candidates.at(motherId);
-            const FreeCandidate * father = (FreeCandidate*) candidates.at(fatherId);
+            const FreeCandidate * mother = (FreeCandidate*) candidates.at(mother_id);
+            const FreeCandidate * father = (FreeCandidate*) candidates.at(father_id);
 
-            // Check compatibility
+            // Fall back to auto mutate if cross fails
             if (!mother->cross_mutate(*father, *this)) {
                 // Pick a random parent to inherit from and then mutate
                 *this = *mother;
                 this->auto_mutate();
                 mt_counters.cross_fail++;
             }
+
             mt_counters.cross++;
         }
         else {
@@ -608,6 +638,8 @@ void FreeCandidate::mutate(
         }
     }
 }
+
+/* public */
 
 Candidate * FreeCandidate::new_copy() const {
     Candidate * nc = new FreeCandidate(*this);

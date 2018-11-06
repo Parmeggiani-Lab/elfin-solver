@@ -23,7 +23,7 @@ void Spec::parse_from_json(const JSON & j) {
             auto & key_val = *wa_itr.first;
             const WorkArea & wa = key_val.second;
 
-            if (wa.joints().size() == 0) {
+            if (wa.joints().empty()) {
                 throw ElfinException("Work area \"" + it.key() + "\" has no joints associated.");
             }
         }
