@@ -65,7 +65,7 @@ private:
 
     Options options_;
 
-    /* Matching ArgBundle is an ugly O(n^2). Would be nice to do a map instead. */
+    /* Matching ArgBundle is O(n). Would be nice to do a map instead. */
     std::vector<ArgBundle> argb_ = {
         {"h", "help", "Print this help text and exit", false, &ArgParser::help_and_exit},
         {"c", "set_config_file", "Set config file path", true, &ArgParser::parse_config},

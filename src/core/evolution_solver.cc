@@ -14,6 +14,8 @@
 #include "jutil.h"
 #include "parallel_utils.h"
 
+// #define DEBUG_PRINT_POP
+
 namespace elfin {
 
 /* Private Methods */
@@ -22,28 +24,17 @@ namespace elfin {
 #include <ittnotify.h>
 #endif
 
-ulong (*get_dice_funct)(ulong) = get_dice;
-
 void
 EvolutionSolver::init_pop_buffs(const WorkArea & wa) {
-    Population * p;
-    p = new Population(wa);
-    p->init(OPTIONS.ga_pop_size, true);
-    curr_pop_ = p;
-
-    p = new Population(wa);
-    p->init(curr_pop_->candidates());
-    buff_pop_ = p;
+    curr_pop_ = new Population(wa);
+    buff_pop_ = new Population(*curr_pop_);
 }
 
 void
 EvolutionSolver::swap_pop_buffs() {
-    #pragma omp single
-    {
-        const Population * tmp = buff_pop_;
-        buff_pop_ = curr_pop_;
-        curr_pop_ = const_cast<Population *>(tmp);
-    }
+    const Population * tmp = buff_pop_;
+    buff_pop_ = curr_pop_;
+    curr_pop_ = const_cast<Population *>(tmp);
 }
 
 void
@@ -164,9 +155,23 @@ EvolutionSolver::run() {
             MAP_DATA() {
                 for (int i = 0; i < OPTIONS.ga_iters; i++) {
                     const double genStartTime = get_timestamp_us();
+
                     curr_pop_->evolve(buff_pop_);
                     curr_pop_->score();
                     curr_pop_->rank();
+
+#ifdef DEBUG_PRINT_POP
+                    for (auto & c : curr_pop_->candidates()) {
+                        wrn("c[#%x][cksm:%x] score %.2f\n",
+                            c, c->checksum(), c->get_score());
+                    }
+
+                    for (auto & c : buff_pop_->candidates()) {
+                        wrn("bc[#%x][cksm:%x] score %.2f\n",
+                            c, c->checksum(), c->get_score());
+                    }
+#endif // DEBUG_PRINT_POP
+
                     curr_pop_->select();
 
                     // Instrumentations
@@ -203,7 +208,7 @@ EvolutionSolver::run() {
                         // update best sols for this work area
                         for (int i = 0; i < OPTIONS.n_best_sols; i++)
                             best_sols_[wa_name][i] =
-                                std::shared_ptr<Candidate>(curr_pop_->candidates().at(i)->new_copy());
+                                std::shared_ptr<Candidate>(curr_pop_->candidates().at(i)->clone());
 
                         if (float_approximates(gen_best_score, lastgen_best_score)) {
                             stagnant_count++;
@@ -232,7 +237,9 @@ EvolutionSolver::run() {
         free(avg_time_msg_fmt);
 
         delete curr_pop_;
+        curr_pop_ = nullptr;
         delete buff_pop_;
+        buff_pop_ = nullptr;
     }
 
     this->print_end_msg();

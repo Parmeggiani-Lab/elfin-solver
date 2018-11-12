@@ -11,8 +11,12 @@ namespace elfin {
 
 class FreeCandidate : public Candidate {
 private:
-    static void gen_random_nodes(size_t max_len, Nodes & nodes);
-    static void gen_random_nodes_reverse(size_t max_len, Nodes & nodes);
+    static void gen_random_nodes(
+        Nodes & nodes,
+        const size_t & max_len = CANDIDATE_LENGTHS.max);
+    static void gen_random_nodes_reverse(
+        Nodes & nodes,
+        const size_t & max_len = CANDIDATE_LENGTHS.max);
     static bool synthesise(Nodes & nodes);
     static bool synthesise_reverse(Nodes & nodes);
 
@@ -27,13 +31,7 @@ private:
         bool & mutate_left_limb) const;
     bool limb_mutate();
 
-    FreeCandidate(const Nodes & nodes) {
-        nodes_ = Nodes(nodes);
-    };
-
 public:
-    FreeCandidate() {};
-
     /* strings */
     virtual std::string to_string() const;
 
@@ -42,7 +40,10 @@ public:
         long rank,
         MutationCounters & mt_counters,
         const Candidates & candidates);
-    virtual Candidate * new_copy() const;
+
+    /* ctors & dtors */
+    virtual FreeCandidate * clone() const;
+    virtual ~FreeCandidate() {}
 };
 
 }  /* elfin */

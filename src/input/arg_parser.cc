@@ -51,9 +51,9 @@ ARG_PARSER_CALLBACK(set_input_file) {
 void ArgParser::print_args() const {
     for (const auto & ab : argb_) {
         set_leading_spaces(8);
-        raw("%s, %s\n", ab.short_form, ab.long_form);
+        raw("%s, %s\n", ab.short_form.c_str(), ab.long_form.c_str());
         set_leading_spaces(12);
-        raw("%s\n", ab.description);
+        raw("%s\n", ab.description.c_str());
     }
     reset_leading_spaces();
 }

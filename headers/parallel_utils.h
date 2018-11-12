@@ -59,15 +59,6 @@ void set_thread_seeds(uint global_seed);
 
 std::vector<uint> & get_para_rand_seeds();
 
-inline size_t get_dice(size_t ceiling)
-{
-	if (!ceiling) return 0;
-
-	uint & thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
-	return (size_t) std::floor(
-	           (float) (ceiling - 1) * rand_r(&thread_seed) / RAND_MAX
-	       );
-}
 } // namespace elfin
 
 #endif /* include guard */

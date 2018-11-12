@@ -36,13 +36,13 @@ public:
 
 protected:
     /* data members */
-    std::deque<Node> nodes_;
+    std::vector<Node> nodes_;
     float score_ = NAN;
 
 public:
     /* getters */
     float get_score() const { return score_; }
-    const std::deque<Node> & nodes() const { return nodes_; }
+    const std::vector<Node> & nodes() const { return nodes_; }
     const std::vector<std::string> get_node_names() const;
 
     /* strings */
@@ -55,15 +55,19 @@ public:
         long rank,
         MutationCounters & mt_counters,
         const Candidates & candidates) = 0;
-    virtual Candidate * new_copy() const = 0;
+
+    /* ctors & dtors */
+    Candidate() {}
+    virtual Candidate * clone() const = 0;
+    virtual ~Candidate() {}
 
     /* operators */
     bool operator<(const Candidate & rhs) const { return score_ < rhs.score_; }
 };
 
 extern const Candidate::Lengths & CANDIDATE_LENGTHS; // defined in population.cc
-typedef std::deque<Candidate::Node> Nodes;
-typedef std::deque<Candidate::Node>::const_iterator ConstNodeIterator;
+typedef std::vector<Candidate::Node> Nodes;
+typedef std::vector<Candidate::Node>::const_iterator ConstNodeIterator;
 auto CandidatePtrComparator = [ ](const Candidate * lhs, const Candidate * rhs) {
     return lhs->get_score() < rhs->get_score();
 };

@@ -2,6 +2,7 @@
 #define ID_PAIR_H_
 
 #include <vector>
+#include <cstddef>
 
 namespace elfin {
 

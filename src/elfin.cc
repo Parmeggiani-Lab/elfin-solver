@@ -13,6 +13,7 @@
 #include "math_utils.h"
 #include "kabsch.h"
 #include "jutil.h"
+#include "random_utils.h"
 #include "parallel_utils.h"
 #include "roulette.h"
 
@@ -177,8 +178,8 @@ int ElfinRunner::run_meta_tests() const {
         const float rand_dev_tolerance = 0.05f * expect_avg;  // 5% deviation
 
         int rand_count[N] = {0};
-        for (int i = 0; i < rand_trials; i++) {
-            const int dice = get_dice(N);
+        for (size_t i = 0; i < rand_trials; i++) {
+            const size_t dice = get_dice(N);
             if (dice >= N) {
                 fail_count++;
                 err("Failed to produce correct dice: get_dice() "
@@ -189,7 +190,7 @@ int ElfinRunner::run_meta_tests() const {
             rand_count[dice]++;
         }
 
-        for (int i = 0; i < N; i++) {
+        for (size_t i = 0; i < N; i++) {
             const float rand_dev = static_cast<float>(
                                        abs(rand_count[i] - expect_avg) / (expect_avg));
             if (rand_dev > rand_dev_tolerance) {
@@ -208,16 +209,16 @@ int ElfinRunner::run_meta_tests() const {
 
         std::vector<uint> rands1(para_rand_n);
         #pragma omp parallel for
-        for (int i = 0; i < para_rand_n; i++)
+        for (size_t i = 0; i < para_rand_n; i++)
             rands1.at(i) = get_dice(dice_lim);
 
         get_para_rand_seeds() = para_rand_seeds;
         std::vector<uint> rands2(para_rand_n);
         #pragma omp parallel for
-        for (int i = 0; i < para_rand_n; i++)
+        for (size_t i = 0; i < para_rand_n; i++)
             rands2.at(i) = get_dice(dice_lim);
 
-        for (int i = 0; i < para_rand_n; i++) {
+        for (size_t i = 0; i < para_rand_n; i++) {
             if (rands1.at(i) != rands2.at(i)) {
                 fail_count++;
                 err("Parallel randomiser failed: %d vs %d\n",

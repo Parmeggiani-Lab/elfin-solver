@@ -60,13 +60,13 @@ void Population::setup(const WorkArea & wa) {
 }
 
 Population::~Population() {
-    for (auto c : candidates_) {
+    for (auto & c : candidates_) {
         delete c;
     }
     candidates_.clear();
 }
 
-Candidate * Population::new_candidate(bool randomize) const {
+Candidate * Population::new_candidate() const {
     Candidate * c = nullptr;
 
     switch (work_area_.type()) {
@@ -86,47 +86,54 @@ Candidate * Population::new_candidate(bool randomize) const {
         throw ElfinException(ss.str());
     }
 
-    if (randomize) {
-        MutationCounters dummy_mt_counters;
-        c->mutate(-1, dummy_mt_counters, candidates_);
-    }
+    MutationCounters dummy_mt_counters;
+    c->mutate(-1, dummy_mt_counters, candidates_);
 
     return c;
 }
 
-void Population::init(size_t size, bool randomize) {
+Population::Population(const WorkArea & work_area) :
+    work_area_(work_area) {
     TIMING_START(init_start_time);
     {
-        msg("Initializing population...\n");
+        const size_t size = OPTIONS.ga_pop_size;
+        msg("Initializing population of %u...\n", size);
 
         candidates_.clear();
         candidates_.resize(size);
 
         OMP_PAR_FOR
         for (size_t i = 0; i < size; i++) {
-            candidates_[i] = new_candidate(randomize);
+            candidates_[i] = new_candidate();
         }
 
         // Scoring last candidate tests length, correct init and score func
         candidates_[size - 1]->score(work_area_);
-        ERASE_LINE();
         msg("Initialization done\n");
     }
     TIMING_END("init", init_start_time);
 }
 
-void Population::init(const Candidates & candidates) {
-    msg("Copying population...\n");
+Population::Population(const Population & other) :
+    work_area_(other.work_area_) {
+    TIMING_START(copy_start_time);
+    {
+        const size_t size = other.candidates_.size();
+        msg("Copying population of %u...\n", size);
 
-    const size_t size = candidates.size();
-    candidates_.clear();
-    candidates_.resize(size);
+        candidates_.clear();
+        candidates_.resize(size);
 
-    OMP_PAR_FOR
-    for (size_t i = 0; i < size; i++) {
-        candidates_[i] = candidates[i]->new_copy();
+        OMP_PAR_FOR
+        for (size_t i = 0; i < size; i++) {
+            candidates_[i] = other.candidates_[i]->clone();
+        }
+
+        // Scoring last candidate tests length, correct init and score func
+        candidates_[size - 1]->score(work_area_);
+        msg("Copying done\n");
     }
-    msg("Copying done\n");
+    TIMING_END("copy", copy_start_time);
 }
 
 void Population::evolve(const Population * prev_gen) {
@@ -137,7 +144,7 @@ void Population::evolve(const Population * prev_gen) {
         mt_counters_ = {}; // clear mutation counters
 
         OMP_PAR_FOR
-        for (int i = pop_counters_.survivors; i < pop_counters_.pop_size; i++) {
+        for (long i = 0; i < pop_counters_.pop_size; i++) {
             candidates_[i]->mutate(i, mt_counters_, prev_gen->candidates());
         }
 
@@ -191,7 +198,7 @@ void Population::select() {
         // Select distinct survivors
 
         // Ensure variety within survivors using hashmap
-        // and crc as key
+        // where crc is key and cloned pointer is value.
         std::unordered_map<Crc32, Candidate *> crc_map;
         ulong unique_count = 0;
 
@@ -201,7 +208,7 @@ void Population::select() {
             const Crc32 crc = c->checksum();
             if (crc_map.find(crc) == crc_map.end()) {
                 // This individual is a new one - record
-                crc_map[crc] = c;
+                crc_map[crc] = c->clone();
                 unique_count++;
 
                 if (unique_count >= pop_counters_.survivors)
@@ -210,9 +217,11 @@ void Population::select() {
         }
 
         // Insert map-value-indexed individual back into population
-        ulong popIndex = 0;
+        ulong pop_index = 0;
         for (auto & kv : crc_map) {
-            candidates_[popIndex++] = kv.second;
+            delete candidates_[pop_index]; // free candidate memory
+            candidates_[pop_index] = kv.second;
+            pop_index++;
         }
 
         // Sort survivors

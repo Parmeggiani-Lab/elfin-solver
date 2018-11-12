@@ -15,22 +15,20 @@ namespace elfin {
 class Population
 {
 protected:
-    std::vector<Candidate *> candidates_;
+    Candidates candidates_;
     const WorkArea & work_area_;
 
-    Candidate * new_candidate(bool randomize) const;
+    Candidate * new_candidate() const;
 
 public:
-    Population(const WorkArea & work_area) :
-        work_area_(work_area) {};
+    Population(const WorkArea & work_area);
+    Population(const Population & other);
     virtual ~Population();
 
     /* getters */
-    const std::vector<Candidate *> & candidates() const { return candidates_; }
+    const Candidates & candidates() const { return candidates_; }
     void resize(size_t size) { candidates_.resize(size); }
 
-    void init(size_t size, bool randomize);
-    void init(const Candidates & candidates);
     void evolve(const Population * prev_gen);
     void score();
     void rank();

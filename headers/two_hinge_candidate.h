@@ -12,7 +12,7 @@ public:
         long rank,
         MutationCounters & mt_counters,
         const Candidates & candidates) {}
-    virtual Candidate * new_copy() const { return nullptr; }
+    virtual TwoHingeCandidate * clone() const { return nullptr; }
 };
 
 }  /* elfin */
