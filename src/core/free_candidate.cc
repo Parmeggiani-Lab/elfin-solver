@@ -12,8 +12,8 @@
 #include "options.h"
 
 // #define NO_POINT_MUTATE
-#define NO_LIMB_MUTATE
-#define NO_CROSS_MUTATE
+// #define NO_LIMB_MUTATE
+// #define NO_CROSS_MUTATE
 
 namespace elfin {
 
@@ -311,8 +311,7 @@ bool FreeCandidate::cross_mutate(
             father_nodes.end());
 
         if (synthesise(new_nodes)) {
-            // out.nodes_ = new_nodes;
-            out.set_nodes(new_nodes);
+            out.nodes_ = new_nodes;
             cross_ok = true;
             break;
         }
@@ -346,8 +345,8 @@ bool FreeCandidate::point_mutate() {
     const size_t n_nodes = nodes_.size();
     std::vector<PointMutateMode> modes =
     {
-        // PointMutateMode::SwapMode,
-        // PointMutateMode::InsertMode,
+        PointMutateMode::SwapMode,
+        PointMutateMode::InsertMode,
         PointMutateMode::DeleteMode
     };
 

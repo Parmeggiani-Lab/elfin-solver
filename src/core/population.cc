@@ -153,7 +153,7 @@ void Population::evolve(const Population * prev_gen) {
 
         // Keep some actual counts to make sure the RNG is working
         // correctly
-        dbg("Mutation rates: cross %.2f (fail=%d), pm %.2f, lm %.2f, rand %.2f, survivalCount: %d\n",
+        wrn("Mutation rates: cross %.2f (fail=%d), pm %.2f, lm %.2f, rand %.2f, survivalCount: %d\n",
             (float) mt_counters_.cross / pop_counters_.non_survivors,
             mt_counters_.cross_fail,
             (float) mt_counters_.point / pop_counters_.non_survivors,
