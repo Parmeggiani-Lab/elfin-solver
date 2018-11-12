@@ -12,16 +12,22 @@ namespace elfin {
 class UIJoint : public UIObject
 {
 public:
-    using UIObject::UIObject; // inherit ctors
-
     std::tuple<std::string, std::string, UIObject const *> occupant_triple_ =
         std::make_tuple("", "", nullptr);
     std::tuple<std::string, UIJoint const *> hinge_tuple_ =
         std::make_tuple("", nullptr);
-    std::vector<UIJoint const *> neighbours_;
+    std::vector<std::string> neighbours_;
+
+    UIJoint(const JSON & j, const std::string & name) :
+        UIObject(j, name) {
+        const JSON & jnbs = j["neighbours"];
+        for (auto it = jnbs.begin(); it != jnbs.end(); ++it) {
+            neighbours_.push_back(*it);
+        }
+    }
 };
 
-typedef std::unordered_map<std::string, UIJoint> UIJoints;
+typedef std::unordered_map<std::string, UIJoint> UIJointMap;
 
 }  /* elfin */
 

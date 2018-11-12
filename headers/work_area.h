@@ -32,9 +32,10 @@ class WorkArea
 protected:
     std::string name_;
     WorkType type_ = FREE;
-    UIJoints joints_;
+    UIJointMap joints_;
     std::vector<UIJoint *> occupied_joints_;
     std::vector<UIJoint *> hinged_joints_;
+    std::vector<UIJoint *> leaf_joints_;
 
 public:
     WorkArea(const JSON & j, const std::string & name);
@@ -43,7 +44,7 @@ public:
     /* getters */
     std::string name() const { return name_; }
     WorkType type() const { return type_; }
-    const UIJoints & joints() const { return joints_; }
+    const UIJointMap & joints() const { return joints_; }
     const std::vector<UIJoint *> & occupied_joints() const { return occupied_joints_; }
     const std::vector<UIJoint *> & hinged_joints() const { return hinged_joints_; }
 };

@@ -14,7 +14,7 @@
 #include "jutil.h"
 #include "parallel_utils.h"
 
-// #define DEBUG_PRINT_POP
+#define DEBUG_PRINT_POP 4
 
 namespace elfin {
 
@@ -38,12 +38,11 @@ EvolutionSolver::swap_pop_buffs() {
 }
 
 void
-EvolutionSolver::print_start_msg(const Points3f & shape) {
+EvolutionSolver::print_start_msg(const Points3f & shape) const {
     for (auto & p : shape)
         dbg("Work Area Point: %s\n", p.to_string().c_str());
 
-    msg("Length guess: %u~%u, spec has %d points\n",
-        CANDIDATE_LENGTHS.min,
+    msg("Length guess: <%lu, spec has %d points\n",
         CANDIDATE_LENGTHS.max,
         shape.size());
     msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
@@ -92,19 +91,40 @@ EvolutionSolver::print_start_msg(const Points3f & shape) {
 }
 
 void
-EvolutionSolver::print_end_msg() {
+EvolutionSolver::print_end_msg() const {
     msg("EvolutionSolver finished: ");
     this->print_timing();
 }
 
 void
-EvolutionSolver::print_timing() {
+EvolutionSolver::print_timing() const {
     const double time_elapsed_in_us = get_timestamp_us() - start_time_in_us_;
     const uint64_t minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
     const uint64_t seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
     const uint64_t milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
     raw("%um %us %ums\n",
         minutes, seconds, milliseconds);
+}
+
+void
+EvolutionSolver::debug_print_pop(size_t cutoff) const {
+    size_t count = 0;
+    for (auto & c : curr_pop_->candidates()) {
+        wrn("c [#%lu] [cksm:%x] [score:%.2f] [len:%lu]\n",
+            count, c->checksum(), c->get_score(), c->nodes().size());
+        count++;
+        if (count >= cutoff)
+            break;
+    }
+
+    count = 0;
+    for (auto & c : buff_pop_->candidates()) {
+        wrn("bc [#%lu] [cksm:%x] [score:%.2f] [len:%lu]\n",
+            count, c->checksum(), c->get_score(), c->nodes().size());
+        count++;
+        if (count >= cutoff)
+            break;
+    }
 }
 
 /* Public Methods */
@@ -156,27 +176,32 @@ EvolutionSolver::run() {
                 for (int i = 0; i < OPTIONS.ga_iters; i++) {
                     const double genStartTime = get_timestamp_us();
 
+#if DEBUG_PRINT_POP > 0
+                    wrn("Before evolve\n");
+                    debug_print_pop(DEBUG_PRINT_POP);
+#endif // DEBUG_PRINT_POP
+
                     curr_pop_->evolve(buff_pop_);
                     curr_pop_->score();
                     curr_pop_->rank();
 
-#ifdef DEBUG_PRINT_POP
-                    for (auto & c : curr_pop_->candidates()) {
-                        wrn("c[#%x][cksm:%x] score %.2f\n",
-                            c, c->checksum(), c->get_score());
-                    }
-
-                    for (auto & c : buff_pop_->candidates()) {
-                        wrn("bc[#%x][cksm:%x] score %.2f\n",
-                            c, c->checksum(), c->get_score());
-                    }
+#if DEBUG_PRINT_POP > 0
+                    wrn("Post rank\n");
+                    debug_print_pop(DEBUG_PRINT_POP);
 #endif // DEBUG_PRINT_POP
 
                     curr_pop_->select();
 
+#if DEBUG_PRINT_POP > 0
+                    wrn("Post select\n");
+                    debug_print_pop(DEBUG_PRINT_POP);
+#endif // DEBUG_PRINT_POP
+
                     // Instrumentations
-                    const Candidate * best_candidate = curr_pop_->candidates().front();
-                    const Candidate * worst_candidate = curr_pop_->candidates().front();
+                    const Candidate * best_candidate =
+                        curr_pop_->candidates().front();
+                    const Candidate * worst_candidate =
+                        curr_pop_->candidates().front();
 
                     const float gen_best_score = best_candidate->get_score();
                     const ulong gen_best_len = best_candidate->nodes().size();
@@ -212,6 +237,11 @@ EvolutionSolver::run() {
 
                         if (float_approximates(gen_best_score, lastgen_best_score)) {
                             stagnant_count++;
+                        }
+                        else if (gen_best_score > lastgen_best_score) {
+                            err("Best is worse than last gen!\n");
+                            debug_print_pop(16);
+                            die("Something is wrong...\n");
                         }
                         else {
                             stagnant_count = 0;

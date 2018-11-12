@@ -29,8 +29,6 @@ public:
     } Node;
 
     typedef struct {
-        ulong expected = 0;
-        ulong min = 0;
         ulong max = 0;
     } Lengths;
 

@@ -27,9 +27,11 @@ protected:
 	void init_pop_buffs(const WorkArea & wa);
 	void swap_pop_buffs();
 
-	void print_start_msg(const Points3f & shape);
-	void print_end_msg();
-	void print_timing();
+	void print_start_msg(const Points3f & shape) const;
+	void print_end_msg() const;
+	void print_timing() const;
+
+	void debug_print_pop(size_t cutoff = -1) const;
 
 public:
 	const SolutionMap & best_sols() const { return best_sols_; }

@@ -22,9 +22,7 @@ private:
 
     void randomize();
     void auto_mutate();
-    bool cross_mutate(
-        const FreeCandidate & father,
-        FreeCandidate & out) const;
+    bool cross_mutate(const FreeCandidate & father);
     bool point_mutate();
     bool get_severable_id(
         size_t & sever_id,

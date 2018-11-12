@@ -54,8 +54,6 @@ void Population::setup(const WorkArea & wa) {
     // Add one because division counts segments. We want number of points.
     int expected_len = 1 + round(sum_dist / OPTIONS.avg_pair_dist);
     cd_lengths_ = {}; // clear
-    cd_lengths_.expected = expected_len;
-    cd_lengths_.min = std::max((int) (expected_len - OPTIONS.len_dev_alw), 1);
     cd_lengths_.max = expected_len + OPTIONS.len_dev_alw;
 }
 
@@ -97,7 +95,7 @@ Population::Population(const WorkArea & work_area) :
     TIMING_START(init_start_time);
     {
         const size_t size = OPTIONS.ga_pop_size;
-        msg("Initializing population of %u...\n", size);
+        msg("Initializing population of %u...", size);
 
         candidates_.clear();
         candidates_.resize(size);
@@ -109,6 +107,8 @@ Population::Population(const WorkArea & work_area) :
 
         // Scoring last candidate tests length, correct init and score func
         candidates_[size - 1]->score(work_area_);
+
+        ERASE_LINE();
         msg("Initialization done\n");
     }
     TIMING_END("init", init_start_time);
@@ -119,7 +119,7 @@ Population::Population(const Population & other) :
     TIMING_START(copy_start_time);
     {
         const size_t size = other.candidates_.size();
-        msg("Copying population of %u...\n", size);
+        msg("Copying population of %u...", size);
 
         candidates_.clear();
         candidates_.resize(size);
@@ -131,6 +131,8 @@ Population::Population(const Population & other) :
 
         // Scoring last candidate tests length, correct init and score func
         candidates_[size - 1]->score(work_area_);
+
+        ERASE_LINE();
         msg("Copying done\n");
     }
     TIMING_END("copy", copy_start_time);
@@ -139,7 +141,7 @@ Population::Population(const Population & other) :
 void Population::evolve(const Population * prev_gen) {
     TIMING_START(evolve_start_time);
     {
-        msg("Evolving population...\n");
+        msg("Evolving population...");
 
         mt_counters_ = {}; // clear mutation counters
 
@@ -151,13 +153,17 @@ void Population::evolve(const Population * prev_gen) {
         ERASE_LINE();
         msg("Evolution done\n");
 
-        // Keep some actual counts to make sure the RNG is working
-        // correctly
-        wrn("Mutation rates: cross %.2f (fail=%d), pm %.2f, lm %.2f, rand %.2f, survivalCount: %d\n",
+        // RNG instrumentation
+        wrn(("Mutation rates:\n"
+             "\tCross %.2f (fail=%.2f), Point %.2f (fail=%.2f)\n"
+             "\tLimb %.2f (fail=%.2f), Rand %.2f\n"
+             "\tSurvivors: %lu\n"),
             (float) mt_counters_.cross / pop_counters_.non_survivors,
-            mt_counters_.cross_fail,
+            (float) mt_counters_.cross_fail / mt_counters_.cross,
             (float) mt_counters_.point / pop_counters_.non_survivors,
+            (float) mt_counters_.point_fail / mt_counters_.point,
             (float) mt_counters_.limb / pop_counters_.non_survivors,
+            (float) mt_counters_.limb_fail / mt_counters_.limb,
             (float) mt_counters_.rand / pop_counters_.non_survivors,
             pop_counters_.survivors);
     }
@@ -167,12 +173,12 @@ void Population::evolve(const Population * prev_gen) {
 void Population::score() {
     TIMING_START(score_start_time);
     {
-        msg("Scoring population...\n");
+        msg("Scoring population...");
 
         const size_t size = candidates_.size();
 
         OMP_PAR_FOR
-        for (int i = 0; i < size; i++) {
+        for (size_t i = 0; i < size; i++) {
             candidates_[i]->score(work_area_);
         }
 
@@ -185,9 +191,14 @@ void Population::score() {
 void Population::rank() {
     TIMING_START(rank_start_time);
     {
+        msg("Ranking population...");
+
         std::sort(candidates_.begin(),
                   candidates_.end(),
                   CandidatePtrComparator);
+
+        ERASE_LINE();
+        msg("Ranking done\n");
     }
     pop_counters_.rank_time += TIMING_END("ranking", rank_start_time);
 }
@@ -195,12 +206,12 @@ void Population::rank() {
 void Population::select() {
     TIMING_START(start_time_select);
     {
-        // Select distinct survivors
+        msg("Selecting population...");
 
         // Ensure variety within survivors using hashmap
         // where crc is key and cloned pointer is value.
         std::unordered_map<Crc32, Candidate *> crc_map;
-        ulong unique_count = 0;
+        size_t unique_count = 0;
 
         // We don't want parallelism here because
         // the loop must priotise low indexes
@@ -217,7 +228,7 @@ void Population::select() {
         }
 
         // Insert map-value-indexed individual back into population
-        ulong pop_index = 0;
+        size_t pop_index = 0;
         for (auto & kv : crc_map) {
             delete candidates_[pop_index]; // free candidate memory
             candidates_[pop_index] = kv.second;
@@ -226,7 +237,11 @@ void Population::select() {
 
         // Sort survivors
         std::sort(candidates_.begin(),
-                  candidates_.begin() + unique_count);
+                  candidates_.begin() + unique_count,
+                  CandidatePtrComparator);
+
+        ERASE_LINE();
+        msg("Selection done\n");
     }
     pop_counters_.select_time += TIMING_END("selecting", start_time_select);
 }

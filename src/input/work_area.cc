@@ -14,7 +14,8 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
         const JSON & jt_json = *it;
 
         auto j_itr = joints_.emplace(it.key(), UIJoint(jt_json, it.key()));
-        n_branches += jt_json["neighbours"].size() > 2;
+        const size_t n_nbs = jt_json["neighbours"].size();
+        n_branches += n_nbs > 2;
 
         auto & key_val = *j_itr.first;
         UIJoint * ptr = &(key_val.second);
@@ -30,6 +31,10 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
         if (jt_json["hinge"] != "") {
             ptr->hinge_tuple_ = std::make_tuple(jt_json["hinge"], nullptr);
             hinged_joints_.push_back(ptr);
+        }
+
+        if (n_nbs == 1) {
+            leaf_joints_.push_back(ptr);
         }
     }
 
@@ -59,9 +64,25 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
 
 Points3f WorkArea::to_points3f() const {
     Points3f res;
-    for (auto & itr : joints_) {
-        res.emplace_back(itr.second.tran());
+    if (leaf_joints_.size() != 2)
+        die("Size of leaf_joints_ not exactly 2 in work_area: %s\n", name_.c_str());
+
+    UIJoint const * prev = nullptr, * tmp = nullptr;
+    UIJoint const * j = leaf_joints_.at(0);
+    while (1) {
+        res.emplace_back(j->tran());
+
+        if (j == leaf_joints_.at(1))
+            break;
+
+        tmp = j;
+        std::string next_name = j->neighbours_.at(0);
+        if (prev and next_name == prev->name())
+            next_name = j->neighbours_.at(1);
+        j = &joints_.at(next_name);
+        prev = j;
     }
+
     return res;
 }
 

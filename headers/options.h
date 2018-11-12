@@ -20,9 +20,8 @@ typedef struct {
 
     ulong len_dev_alw = 3;
 
-    // Average CoM distance found by xDBStat.py as
-    // of 23/April/2017 is 37.9
-    float avg_pair_dist = 38.0f;
+    // Run elfinpy/stat_xdb.py to find this number with the latest xdb.json
+    float avg_pair_dist = 37.709864956942226f;
 
     // GA parameters
     uint rand_seed = 0x1337cafe;
