@@ -4,13 +4,14 @@
 #include <exception>
 
 #include "roulette.h"
-#include "pair_relationship.h"
+#include "transform_table.h"
 #include "random_utils.h"
 #include "parallel_utils.h"
 #include "math_utils.h"
 #include "kabsch.h"
 #include "counter_structs.h"
 #include "options.h"
+#include "map_types.h"
 
 // #define NO_POINT_MUTATE
 // #define NO_LIMB_MUTATE
@@ -60,7 +61,7 @@ void FreeCandidate::gen_random_nodes(
             // of the current neighbour being considered
             if (pr_ptr and
                     !collides(i,
-                              pr_ptr->com_b_,
+                              pr_ptr->com_b,
                               nodes.begin(),
                               nodes.end() - 2)) {
                 for (int j = 0; j < LINK_COUNTS.at(i).y; j++)
@@ -78,8 +79,8 @@ void FreeCandidate::gen_random_nodes(
 
         // Grow shape
         for (auto & n : nodes) {
-            n.com = n.com.dot(next_node_pr->rot_);
-            n.com += next_node_pr->tran_;
+            n.com = n.com.dot(next_node_pr->rot);
+            n.com += next_node_pr->tran;
         }
 
         nodes.emplace_back(next_node_id, 0, 0, 0);
@@ -114,7 +115,7 @@ void FreeCandidate::gen_random_nodes_reverse(
             if (pr_ptr == NULL)
                 continue;
 
-            const Point3f checkpoint = pr_ptr->tran_;
+            const Point3f checkpoint = pr_ptr->tran;
 
             // Create roulette based on number of LHS neighbours
             // of the current neighbour being considered
@@ -137,8 +138,8 @@ void FreeCandidate::gen_random_nodes_reverse(
 
         // Grow shape
         for (auto & n : nodes) {
-            n.com -= next_node_pr->tran_;
-            n.com = n.com.dot(next_node_pr->rot_inv_);
+            n.com -= next_node_pr->tran;
+            n.com = n.com.dot(next_node_pr->rot_inv);
         }
 
         nodes.emplace_back(next_node_id, 0, 0, 0);
@@ -178,7 +179,7 @@ bool FreeCandidate::synthesise_reverse(Nodes & nodes) {
             die("Fatal error in synthesise_reverse(): impossible pair\n");
         }
 
-        const Point3f checkpoint = new_node_pr->tran_;
+        const Point3f checkpoint = new_node_pr->tran;
 
         if (collides(lhs_node.id,
                      checkpoint,
@@ -189,8 +190,8 @@ bool FreeCandidate::synthesise_reverse(Nodes & nodes) {
         // Grow shape
         for (int j = N - 1; j > i - 1; j--) {
             auto & n = nodes.at(j);
-            n.com -= new_node_pr->tran_;
-            n.com = n.com.dot(new_node_pr->rot_inv_);
+            n.com -= new_node_pr->tran;
+            n.com = n.com.dot(new_node_pr->rot_inv);
         }
     }
 
@@ -220,22 +221,21 @@ bool FreeCandidate::synthesise(Nodes & nodes) {
                 rhs_node.id,
                 ID_NAME_MAP.at(rhs_node.id).c_str());
 
-            throw "wtf";
             die("Fatal error in synthesise(): impossible pair\n");
         }
 
-        if (nodes.size() < 2 or
+        if (i <= 2 or
                 collides(rhs_node.id,
-                         new_node_pr->com_b_,
+                         new_node_pr->com_b,
                          nodes.begin(),
-                         nodes.begin() + ((ulong) i) - 2))
+                         nodes.begin() + i - 2))
             return false;
 
         // Grow shape
         for (size_t j = 0; j < i; j++) {
             Node & n = nodes.at(j);
-            n.com = n.com.dot(new_node_pr->rot_);
-            n.com += new_node_pr->tran_;
+            n.com = n.com.dot(new_node_pr->rot);
+            n.com += new_node_pr->tran;
         }
     }
 

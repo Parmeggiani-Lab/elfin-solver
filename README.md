@@ -17,13 +17,4 @@ git submodule update --init --recursive
 git pull
 git submodule update
 ./fetch_db
-```
-
-### Weekly Goals
-
-- [ ] Restructure source tree into ```./src``` folder. 
-
-- [ ] Create handlers stubs for each work type.
-
-- [ ] Started working on the main core solver.
-​
+```​

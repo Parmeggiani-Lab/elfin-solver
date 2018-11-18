@@ -4,10 +4,6 @@
 #include <vector>
 #include <memory>
 
-#include "options.h"
-#include "spec.h"
-#include "pair_relationship.h"
-#include "shorthands.h"
 #include "evolution_solver.h"
 
 namespace elfin {

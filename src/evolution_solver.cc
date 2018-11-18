@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <limits>
 
-#include "shorthands.h"
+#include "int_types.h"
 #include "options.h"
 #include "spec.h"
 #include "radii.h"
@@ -110,7 +110,7 @@ void
 EvolutionSolver::debug_print_pop(size_t cutoff) const {
     size_t count = 0;
     for (auto & c : curr_pop_->candidates()) {
-        wrn("c [#%lu] [cksm:%x] [score:%.2f] [len:%lu]\n",
+        wrn("c  [#%lu] [cksm:%x] [score:%.2f] [len:%lu]\n",
             count, c->checksum(), c->get_score(), c->nodes().size());
         count++;
         if (count >= cutoff)

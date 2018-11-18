@@ -11,7 +11,6 @@
 namespace elfin
 {
 
-typedef std::vector<float>::const_iterator FloatConstIterator;
 class Mat3x3;
 
 class Vector3f
@@ -62,11 +61,8 @@ public:
 typedef Vector3f Point3f;
 typedef std::vector<Point3f> Points3f;
 
-std::string points_to_string(const Points3f & points);
-
-class Mat3x3
+struct Mat3x3
 {
-public:
 	Vector3f rows[3];
 
 	Mat3x3() : rows( { {0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}}) {};
@@ -108,6 +104,16 @@ public:
 	std::string to_string() const;
 };
 
+struct Transform
+{
+	// const Point3f com_b; // not used in new frame shifting method
+	Vector3f tran;
+	Mat3x3 rot;
+
+	Transform() {}
+	Transform(const Vector3f & _tran, const Mat3x3 & _rot) :
+		tran(_tran), rot(_rot) {}
+};
 
 } // namespace elfin
 

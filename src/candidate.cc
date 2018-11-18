@@ -2,15 +2,17 @@
 
 #include <sstream>
 
-#include "shorthands.h"
+#include "int_types.h"
+#include "map_types.h"
 
 namespace elfin {
 
 const std::vector<std::string> Candidate::get_node_names() const {
     std::vector<std::string> res;
 
-    for (auto & n : nodes_)
+    for (auto & n : nodes_) {
         res.emplace_back(ID_NAME_MAP.at(n.id));
+    }
 
     return res;
 }

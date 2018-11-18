@@ -142,20 +142,6 @@ Vector3f::approximates(const Vector3f & ref, double tolerance)
 	return true;
 }
 
-std::string
-points_to_string(const Points3f & points)
-{
-	std::ostringstream ss;
-
-	ss << "Points3f: " << &points << std::endl;
-
-	for (int i = 0; i < points.size(); i++)
-		ss << "[" << i << "]: " << points.at(i).to_string() << std::endl;
-
-	return ss.str();
-}
-
-
 /* Mat3x3 */
 
 Mat3x3::Mat3x3(Vector3f _rows[3])

@@ -11,12 +11,14 @@ namespace elfin {
 
 class UIJoint : public UIObject
 {
+protected:
+    std::vector<std::string> neighbours_;
+
 public:
     std::tuple<std::string, std::string, UIObject const *> occupant_triple_ =
         std::make_tuple("", "", nullptr);
     std::tuple<std::string, UIJoint const *> hinge_tuple_ =
         std::make_tuple("", nullptr);
-    std::vector<std::string> neighbours_;
 
     UIJoint(const JSON & j, const std::string & name) :
         UIObject(j, name) {
@@ -24,6 +26,11 @@ public:
         for (auto it = jnbs.begin(); it != jnbs.end(); ++it) {
             neighbours_.push_back(*it);
         }
+    }
+
+    /* getter */
+    const std::vector<std::string> & neighbours() const {
+        return neighbours_;
     }
 };
 

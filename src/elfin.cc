@@ -8,6 +8,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "options.h"
+#include "spec.h"
 #include "arg_parser.h"
 #include "db_parser.h"
 #include "math_utils.h"
@@ -26,19 +28,11 @@ namespace elfin {
 /* link global references to data members */
 Options options_;
 Spec spec_;
-RelationshipMatrix rel_mat_;
-NameIdMap name_id_map_;
-IdNameMap id_name_map_;
-RadiiList radii_list_;
-
 const Options & OPTIONS = options_;
 const Spec & SPEC = spec_;
-const RelationshipMatrix & REL_MAT = rel_mat_;
-const NameIdMap & NAME_ID_MAP = name_id_map_;
-const IdNameMap & ID_NAME_MAP = id_name_map_;
-const RadiiList & RADII_LIST = radii_list_;
 
 std::vector<ElfinRunner *> ElfinRunner::instances_;
+bool interrupt_caught = false;
 
 // https://stackoverflow.com/questions/8520560/get-a-file-name-from-a-path
 std::string get_filename(const std::string & path) {
@@ -59,16 +53,24 @@ std::string get_filename(const std::string & path) {
 }
 
 void ElfinRunner::interrupt_handler(const int signal) {
-    raw("\n\n");
-    wrn("Caught interrupt signal\n");
-
-    // Save latest results
-    for (auto er : instances_) {
-        er->crash_dump();
-        delete er;
+    if (interrupt_caught) {
+        raw("\n\n");
+        die("Caught interrupt signal (second)\n");
     }
+    else {
+        interrupt_caught = true;
 
-    exit(signal);
+        raw("\n\n");
+        wrn("Caught interrupt signal (first)\n");
+
+        // Save latest results
+        for (auto er : instances_) {
+            er->crash_dump();
+            delete er;
+        }
+
+        exit(signal);
+    }
 }
 
 void ElfinRunner::write_output(std::string alt_dir) const {
@@ -79,23 +81,30 @@ void ElfinRunner::write_output(std::string alt_dir) const {
 
     JSON data;
     for (auto & kv : SPEC.work_areas()) {
-        const std::string wa_name = kv.first;
+        const std::string & wa_name = kv.first;
         const WorkArea & wa = kv.second;
         JSON waj;
-        data[wa_name] = waj;
 
         try {
-            auto candidates = es_->best_sols().at(wa_name);
-            for (auto c : candidates) {
+            auto & candidates = es_->best_sols().at(wa_name);
+            for (size_t i = 0; i < candidates.size(); ++i)
+            {
+                JSON cand_json;
+                auto c = candidates.at(i);
+
                 if (c) {
                     auto node_names = c->get_node_names();
-                    waj["nodes"] = node_names;
-                    waj["score"] = c->get_score();
+                    cand_json["nodes"] = node_names;
+                    wrn("Output format not complete\n");
+                    cand_json["score"] = c->get_score();
                 }
                 else {
                     err("Null candidate in work area \"%s\"\n", wa_name.c_str());
                 }
+
+                waj[i] = cand_json;
             }
+            data[wa_name] = waj;
         }
         catch (std::out_of_range& e)
         {
@@ -249,11 +258,7 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
 
     msg("Using master seed: %d\n", options_.rand_seed);
 
-    DBParser::parse(parse_json(options_.xdb),
-                    name_id_map_,
-                    id_name_map_,
-                    rel_mat_,
-                    radii_list_);
+    DBParser::parse(parse_json(options_.xdb));
 
     init_roulettes();
 

@@ -6,11 +6,12 @@
 namespace elfin {
 
 struct Radii {
-    float avgAll;
-    float maxCA;
-    float maxHeavy;
+    float avg_all;
+    float max_ca;
+    float max_heavy;
+    
     Radii(float aa, float mca, float mh) :
-        avgAll(aa), maxCA(mca), maxHeavy(mh)
+        avg_all(aa), max_ca(mca), max_heavy(mh)
     {}
 };
 typedef std::vector<Radii> RadiiList;

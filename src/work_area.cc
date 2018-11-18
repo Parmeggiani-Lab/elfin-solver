@@ -76,9 +76,9 @@ Points3f WorkArea::to_points3f() const {
             break;
 
         tmp = j;
-        std::string next_name = j->neighbours_.at(0);
+        std::string next_name = j->neighbours().at(0);
         if (prev and next_name == prev->name())
-            next_name = j->neighbours_.at(1);
+            next_name = j->neighbours().at(1);
         j = &joints_.at(next_name);
         prev = j;
     }

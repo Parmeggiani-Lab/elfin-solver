@@ -16,8 +16,7 @@ namespace elfin {
 template <typename T>
 using Matrix = std::vector<std::vector<T>>;
 
-std::vector<double>
-point3f_to_vector(Point3f const & pt) {
+std::vector<double> point3f_to_vector(Point3f const & pt) {
 	std::vector<double> v;
 
 	v.resize(3);
@@ -28,8 +27,7 @@ point3f_to_vector(Point3f const & pt) {
 	return v;
 }
 
-Matrix<double>
-points3f_to_vectors(Points3f const & pts) {
+Matrix<double> points3f_to_vectors(Points3f const & pts) {
 	Matrix<double> out;
 
 	out.resize(pts.size());
@@ -39,20 +37,18 @@ points3f_to_vectors(Points3f const & pts) {
 	return out;
 }
 
-void
-resample(
-    Points3f & ref,
-    Points3f & pts) {
-	const uint N = ref.size();
+void resample(Points3f & ref,
+              Points3f & pts) {
+	const ulong N = ref.size();
 
 	// Compute  shape total lengths
-	float refTotLen = 0.0f;
-	for (int i = 1; i < N; i++)
-		refTotLen += ref.at(i).dist_to(ref.at(i - 1));
+	float ref_tot_len = 0.0f;
+	for (size_t i = 1; i < N; i++)
+		ref_tot_len += ref.at(i).dist_to(ref.at(i - 1));
 
-	float ptsTotLen = 0.0f;
-	for (int i = 1; i < pts.size(); i++)
-		ptsTotLen += pts.at(i).dist_to(pts.at(i - 1));
+	float pts_tot_len = 0.0f;
+	for (size_t i = 1; i < pts.size(); i++)
+		pts_tot_len += pts.at(i).dist_to(pts.at(i - 1));
 
 	// Upsample pts
 	Points3f resampled;
@@ -60,29 +56,29 @@ resample(
 	// First and last points are the same
 	resampled.push_back(pts.at(0));
 
-	float refProp = 0.0f, ptsProp = 0.0f;
+	float ref_prop = 0.0f, pts_prop = 0.0f;
 	int mpi = 1;
-	for (int i = 1; i < pts.size(); i++) {
-		const Point3f & baseFpPoint = pts.at(i - 1);
-		const Point3f & nextFpPoint = pts.at(i);
-		const float baseFpProportion = ptsProp;
-		const float fpSegment = nextFpPoint.dist_to(baseFpPoint)
-		                        / ptsTotLen;
-		const Vector3f vec = nextFpPoint - baseFpPoint;
+	for (size_t i = 1; i < pts.size(); i++) {
+		const Point3f & base_fp_point = pts.at(i - 1);
+		const Point3f & next_fp_point = pts.at(i);
+		const float base_fp_proportion = pts_prop;
+		const float fp_segment = next_fp_point.dist_to(base_fp_point)
+		                         / pts_tot_len;
+		const Vector3f vec = next_fp_point - base_fp_point;
 
-		ptsProp += fpSegment;
-		while (refProp <= ptsProp && mpi < N) {
+		pts_prop += fp_segment;
+		while (ref_prop <= pts_prop && mpi < N) {
 			const float mpSegment =
 			    ref.at(mpi).dist_to(ref.at(mpi - 1))
-			    / refTotLen;
+			    / ref_tot_len;
 
-			if (refProp + mpSegment > ptsProp)
+			if (ref_prop + mpSegment > pts_prop)
 				break;
-			refProp += mpSegment;
+			ref_prop += mpSegment;
 
-			const float s = (refProp - baseFpProportion)
-			                / fpSegment;
-			resampled.push_back(baseFpPoint + (vec * s));
+			const float s = (ref_prop - base_fp_proportion)
+			                / fp_segment;
+			resampled.push_back(base_fp_point + (vec * s));
 
 			mpi++;
 		}
@@ -415,10 +411,10 @@ bool kabsch(
 
 	const size_t n = mobile.size();
 
-	const bool retVal = rosetta_kabsch(xx, yy, n, mode, &rms, tt, rot);
+	const bool ret_val = rosetta_kabsch(xx, yy, n, mode, &rms, tt, rot);
 	tran = Vector3f(std::vector<float>(tt.begin(), tt.end()));
 
-	return retVal;
+	return ret_val;
 }
 
 float kabsch_score(const Nodes & nodes, const WorkArea & wa) {
@@ -431,7 +427,7 @@ float kabsch_score(const Nodes & nodes, const WorkArea & wa) {
 }
 
 float kabsch_score(Points3f mobile, Points3f ref) {
-	if(mobile.empty())
+	if (mobile.empty())
 		return std::numeric_limits<float>::infinity();
 
 	if (ref.size() != mobile.size())
@@ -445,9 +441,9 @@ float kabsch_score(Points3f mobile, Points3f ref) {
 	Vector3f tran;
 	double rms;
 
-	const bool retVal = kabsch(mobile, ref, rot, tran, rms, 0);
+	const bool ret_val = kabsch(mobile, ref, rot, tran, rms, 0);
 
-	panic_if(!retVal, "Kabsch failed!\n");
+	panic_if(!ret_val, "Kabsch failed!\n");
 
 	return rms;
 }
@@ -502,11 +498,11 @@ int _test_kabsch() {
 	unsigned int failCount = 0;
 
 	// Test Kabsch rotation and translation
-	const bool retVal = kabsch(A, B, rot, tran, rms);
-	msg("Kabsch call retVal: %s\n", retVal ? "ok" : "failed");
+	const bool ret_val = kabsch(A, B, rot, tran, rms);
+	msg("Kabsch call ret_val: %s\n", ret_val ? "ok" : "failed");
 
 	msg("Rot:\n");
-	for (int i = 0; i < rot.size(); i++) {
+	for (size_t i = 0; i < rot.size(); i++) {
 		auto const & row = rot.at(i);
 
 		raw("%16.6f %16.6f %16.6f\n",
@@ -541,7 +537,7 @@ int _test_kabsch() {
 
 	// // Load necessary data to setup Gene
 	// RelaMat relaMat;
-	// NameIdMap nameIdMap;
+	// StrIdMap nameIdMap;
 	// IdNameMap idNameMap;
 	// RadiiList radiiList;
 	// DBParser::parse(parse_json(OPTIONS.xdb), nameIdMap, idNameMap, relaMat, radiiList);
