@@ -16,7 +16,7 @@ namespace elfin {
 template <typename T>
 using Matrix = std::vector<std::vector<T>>;
 
-std::vector<double> point3f_to_vector(Point3f const & pt) {
+std::vector<double> Vector3f_to_vector(Vector3f const & pt) {
 	std::vector<double> v;
 
 	v.resize(3);
@@ -27,18 +27,18 @@ std::vector<double> point3f_to_vector(Point3f const & pt) {
 	return v;
 }
 
-Matrix<double> points3f_to_vectors(Points3f const & pts) {
+Matrix<double> V3fList_to_vectors(V3fList const & pts) {
 	Matrix<double> out;
 
 	out.resize(pts.size());
 	for (int i = 0; i < out.size(); i++)
-		out.at(i) = point3f_to_vector(pts.at(i));
+		out.at(i) = Vector3f_to_vector(pts.at(i));
 
 	return out;
 }
 
-void resample(Points3f & ref,
-              Points3f & pts) {
+void resample(V3fList & ref,
+              V3fList & pts) {
 	const ulong N = ref.size();
 
 	// Compute  shape total lengths
@@ -51,7 +51,7 @@ void resample(Points3f & ref,
 		pts_tot_len += pts.at(i).dist_to(pts.at(i - 1));
 
 	// Upsample pts
-	Points3f resampled;
+	V3fList resampled;
 
 	// First and last points are the same
 	resampled.push_back(pts.at(0));
@@ -59,8 +59,8 @@ void resample(Points3f & ref,
 	float ref_prop = 0.0f, pts_prop = 0.0f;
 	int mpi = 1;
 	for (size_t i = 1; i < pts.size(); i++) {
-		const Point3f & base_fp_point = pts.at(i - 1);
-		const Point3f & next_fp_point = pts.at(i);
+		const Vector3f & base_fp_point = pts.at(i - 1);
+		const Vector3f & next_fp_point = pts.at(i);
 		const float base_fp_proportion = pts_prop;
 		const float fp_segment = next_fp_point.dist_to(base_fp_point)
 		                         / pts_tot_len;
@@ -392,16 +392,16 @@ bool rosetta_kabsch(
 
 // A Wrapper to call the a bit more complicated Rosetta version
 bool kabsch(
-    const Points3f & mobile,
-    const Points3f & ref,
+    const V3fList & mobile,
+    const V3fList & ref,
     Matrix<double> & rot,
     Vector3f & tran,
     double & rms,
     int mode = 1) {
-	Matrix<double> xx = points3f_to_vectors(mobile);
-	Matrix<double> yy = points3f_to_vectors(ref);
+	Matrix<double> xx = V3fList_to_vectors(mobile);
+	Matrix<double> yy = V3fList_to_vectors(ref);
 
-	std::vector<double> tt = point3f_to_vector(tran);
+	std::vector<double> tt = Vector3f_to_vector(tran);
 
 	if (rot.size() < 3)
 		rot.resize(3);
@@ -418,15 +418,15 @@ bool kabsch(
 }
 
 float kabsch_score(const Nodes & nodes, const WorkArea & wa) {
-	// TODO: don't convert to Points3f
-	Points3f points;
+	// TODO: don't convert to V3fList
+	V3fList points;
 	for (auto & n : nodes) {
 		points.emplace_back(n.com);
 	}
-	return kabsch_score(points, wa.to_points3f());
+	return kabsch_score(points, wa.to_V3fList());
 }
 
-float kabsch_score(Points3f mobile, Points3f ref) {
+float kabsch_score(V3fList mobile, V3fList ref) {
 	if (mobile.empty())
 		return std::numeric_limits<float>::infinity();
 
@@ -452,44 +452,44 @@ int _test_kabsch() {
 	using namespace elfin;
 
 	msg("Testing Kabsch\n");
-	const Point3f arrA[] = {
-		Point3f(4.7008892286345, 42.938597096873, 14.4318130193692),
-		Point3f(-20.3679194392227, 27.5712678608402, -12.1390617339732),
-		Point3f(24.4692807074156, -1.32083675968276, 31.1580458282477),
-		Point3f(-31.1044984967455, -6.41414114190809, 3.28255887994549),
-		Point3f(18.6775433365315, -5.32162505701938, -14.9272896423117),
-		Point3f(-31.648884426273, -19.3650527983443, 43.9001561999887),
-		Point3f(-13.1515403509663, 0.850865538112699, 37.5942811492984),
-		Point3f(12.561856072969, 1.07715641721097, 5.01563428984222),
-		Point3f(28.0227435151377, 31.7627708322262, 12.2475086001227),
-		Point3f(-41.8874231134215, 29.4831416883453, 8.70447045314168),
+	const Vector3f arrA[] = {
+		Vector3f(4.7008892286345, 42.938597096873, 14.4318130193692),
+		Vector3f(-20.3679194392227, 27.5712678608402, -12.1390617339732),
+		Vector3f(24.4692807074156, -1.32083675968276, 31.1580458282477),
+		Vector3f(-31.1044984967455, -6.41414114190809, 3.28255887994549),
+		Vector3f(18.6775433365315, -5.32162505701938, -14.9272896423117),
+		Vector3f(-31.648884426273, -19.3650527983443, 43.9001561999887),
+		Vector3f(-13.1515403509663, 0.850865538112699, 37.5942811492984),
+		Vector3f(12.561856072969, 1.07715641721097, 5.01563428984222),
+		Vector3f(28.0227435151377, 31.7627708322262, 12.2475086001227),
+		Vector3f(-41.8874231134215, 29.4831416883453, 8.70447045314168),
 	};
 
-	const Point3f arrB[] = {
-		Point3f(-29.2257707266972, -18.8897713349587, 9.48960740086143),
-		Point3f(-19.8753669720509, 42.3379642103244, -23.7788252219155),
-		Point3f(-2.90766514824093, -6.9792608670416, 10.2843089382083),
-		Point3f(-26.9511839788441, -31.5183679875864, 21.1215780433683),
-		Point3f(34.4308792695389, 40.4880968679893, -27.825326598276),
-		Point3f(-30.5235710432951, 47.9748378356085, -38.2582349144194),
-		Point3f(-27.4078219027601, -6.11300268738968, -20.3324126781673),
-		Point3f(-32.9291952852141, -38.8880776559401, -18.1221698074118),
-		Point3f(-27.2335702183446, -24.1935304087933, -7.58332402861928),
-		Point3f(-6.43013158961009, -9.12801538874479, 0.785828466111815),
+	const Vector3f arrB[] = {
+		Vector3f(-29.2257707266972, -18.8897713349587, 9.48960740086143),
+		Vector3f(-19.8753669720509, 42.3379642103244, -23.7788252219155),
+		Vector3f(-2.90766514824093, -6.9792608670416, 10.2843089382083),
+		Vector3f(-26.9511839788441, -31.5183679875864, 21.1215780433683),
+		Vector3f(34.4308792695389, 40.4880968679893, -27.825326598276),
+		Vector3f(-30.5235710432951, 47.9748378356085, -38.2582349144194),
+		Vector3f(-27.4078219027601, -6.11300268738968, -20.3324126781673),
+		Vector3f(-32.9291952852141, -38.8880776559401, -18.1221698074118),
+		Vector3f(-27.2335702183446, -24.1935304087933, -7.58332402861928),
+		Vector3f(-6.43013158961009, -9.12801538874479, 0.785828466111815),
 	};
 
-	const Point3f actualR[] = {
-		Point3f( 0.523673403299203, -0.276948392922051, -0.805646171923458),
-		Point3f(-0.793788382691122, -0.501965361762521, -0.343410511043611),
-		Point3f(-0.309299482996081, 0.819347522879342, -0.482704326238996),
+	const Vector3f actualR[] = {
+		Vector3f( 0.523673403299203, -0.276948392922051, -0.805646171923458),
+		Vector3f(-0.793788382691122, -0.501965361762521, -0.343410511043611),
+		Vector3f(-0.309299482996081, 0.819347522879342, -0.482704326238996),
 	};
 
 	const Vector3f actualTran(-1.08234396236629,
 	                          5.08395199432057,
 	                          -13.0170407784248);
 
-	Points3f A(arrA, arrA + sizeof(arrA) / sizeof(arrA[0]));
-	Points3f B(arrB, arrB + sizeof(arrB) / sizeof(arrB[0]));
+	V3fList A(arrA, arrA + sizeof(arrA) / sizeof(arrA[0]));
+	V3fList B(arrB, arrB + sizeof(arrB) / sizeof(arrB[0]));
 
 	Matrix<double> rot;
 	Vector3f tran;
@@ -520,7 +520,7 @@ int _test_kabsch() {
 	}
 
 	// Test upsampling
-	Points3f Afewer = A;
+	V3fList Afewer = A;
 	Afewer.erase(Afewer.begin() + (Afewer.size() / 2),
 	             Afewer.begin() + (Afewer.size() / 2) + 1);
 
@@ -549,7 +549,7 @@ int _test_kabsch() {
 	// for (int i = 0; i < A.size(); i++)
 	// 	G.push_back(Gene(i, A.at(i)));
 
-	// Point3f B0Copy = B.at(0);
+	// Vector3f B0Copy = B.at(0);
 
 	// float score = kabsch_score(G, B);
 	// msg("A-B Score: %.10f\n", score);

@@ -37,7 +37,7 @@ public:
     virtual void mutate(
         long rank,
         MutationCounters & mt_counters,
-        const Candidates & candidates);
+        const CandidateList & candidates);
 
     /* ctors & dtors */
     virtual FreeCandidate * clone() const;

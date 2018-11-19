@@ -47,7 +47,7 @@ void Population::setup(const WorkArea & wa) {
      * displacements over avg pair module distance
      */
     float sum_dist = 0.0f;
-    const Points3f shape = wa.to_points3f();
+    const V3fList shape = wa.to_V3fList();
     for (auto i = shape.begin() + 1; i != shape.end(); ++i)
         sum_dist += (i - 1)->dist_to(*i);
 
@@ -195,7 +195,7 @@ void Population::rank() {
 
         std::sort(candidates_.begin(),
                   candidates_.end(),
-                  CandidatePtrComparator);
+                  Candidate::PtrComparator);
 
         ERASE_LINE();
         msg("Ranking done\n");
@@ -238,7 +238,7 @@ void Population::select() {
         // Sort survivors
         std::sort(candidates_.begin(),
                   candidates_.begin() + unique_count,
-                  CandidatePtrComparator);
+                  Candidate::PtrComparator);
 
         ERASE_LINE();
         msg("Selection done\n");

@@ -11,7 +11,7 @@ public:
     virtual void mutate(
         long rank,
         MutationCounters & mt_counters,
-        const Candidates & candidates) {}
+        const CandidateList & candidates) {}
     virtual TwoHingeCandidate * clone() const { return nullptr; }
 };
 

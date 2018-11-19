@@ -9,39 +9,61 @@
 #include "checksum.h"
 #include "work_area.h"
 #include "counter_structs.h"
+#include "string_types.h"
+
+#define COLLISION_MEASURE max_heavy
 
 namespace elfin {
 
 class Candidate;
-typedef std::vector<Candidate *> Candidates;
+typedef std::vector<Candidate *> CandidateList;
 
 class Candidate {
 public:
-    typedef struct Node {
-        size_t id;
-        Point3f com;
+    struct Node;
+    typedef std::vector<Node> NodeList;
+    typedef NodeList::const_iterator NodeListCItr;
 
-        Node(size_t id, float x, float y, float z) :
-            id(id), com(x, y, z) {};
+    typedef struct {
+        Module const * prototype;
+        Vector3f com;
+
+        Node(Module const * _prototype, float _x, float _y, float _z) :
+            prototype(_prototype), com(_x, _y, _z) {};
         Node() {};
         std::string to_string() const;
         std::string to_csv_string() const;
+
+        static bool collides(
+            const Vector3f & new_com,
+            const NodeListCItr nodes_begin,
+            const NodeListCItr nodes_end) const {
+            for (NodeListCItr it = nodes_begin; it != nodes_end; ++it) {
+                const float com_dist = it->com.sq_dist_to(new_com);
+                const float required_com_dist = it->prototype->radii().COLLISION_MEASURE +
+                                                it->prototype->radii().COLLISION_MEASURE;
+                if (com_dist < (required_com_dist * required_com_dist))
+                    return true;
+            }
+
+            return false;
+        }
     } Node;
 
     typedef struct {
-        ulong max = 0;
+        size_t max = 0;
     } Lengths;
 
 protected:
     /* data members */
-    std::vector<Node> nodes_;
+    NodeList nodes_;
     float score_ = NAN;
 
 public:
     /* getters */
     float get_score() const { return score_; }
-    const std::vector<Node> & nodes() const { return nodes_; }
-    const std::vector<std::string> get_node_names() const;
+    const NodeList & nodes() const { return nodes_; }
+    StrList get_node_names() const;
 
     /* strings */
     virtual std::string to_string() const;
@@ -52,23 +74,21 @@ public:
     virtual void mutate(
         long rank,
         MutationCounters & mt_counters,
-        const Candidates & candidates) = 0;
+        const CandidateList & candidates) = 0;
 
     /* ctors & dtors */
     Candidate() {}
     virtual Candidate * clone() const = 0;
     virtual ~Candidate() {}
 
-    /* operators */
+    /* other methods */
     bool operator<(const Candidate & rhs) const { return score_ < rhs.score_; }
+    static auto PtrComparator = [](const Candidate * lhs, const Candidate * rhs) {
+        return lhs->get_score() < rhs->get_score();
+    };
 };
 
 extern const Candidate::Lengths & CANDIDATE_LENGTHS; // defined in population.cc
-typedef std::vector<Candidate::Node> Nodes;
-typedef std::vector<Candidate::Node>::const_iterator ConstNodeIterator;
-auto CandidatePtrComparator = [ ](const Candidate * lhs, const Candidate * rhs) {
-    return lhs->get_score() < rhs->get_score();
-};
 
 
 } /* namespace elfin */

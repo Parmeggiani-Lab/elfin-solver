@@ -11,7 +11,7 @@ namespace elfin
 {
 
 float kabsch_score(const Nodes & nodes, const WorkArea & wa);
-float kabsch_score(Points3f mobile, Points3f ref);
+float kabsch_score(V3fList mobile, V3fList ref);
 
 int _test_kabsch();
 } // namespace elfin

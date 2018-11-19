@@ -17,7 +17,6 @@
 #include "jutil.h"
 #include "random_utils.h"
 #include "parallel_utils.h"
-#include "roulette.h"
 
 #ifndef _NO_OMP
 #include <omp.h>
@@ -153,7 +152,7 @@ int ElfinRunner::run_meta_tests() const {
 
     for (auto & itr : SPEC.work_areas()) {
         const WorkArea & wa = itr.second;
-        Points3f moved_spec = wa.to_points3f();
+        V3fList moved_spec = wa.to_V3fList();
 
         Vector3f rot_arr[3] = {
             Vector3f(1.0f, 0.0f, 0.0f),
@@ -168,13 +167,13 @@ int ElfinRunner::run_meta_tests() const {
         // one thousand Angstroms
         Vector3f tran(-39.0f, 999.3413f, -400.11f);
 
-        for (Point3f &p : moved_spec) {
+        for (Vector3f &p : moved_spec) {
             p = p.dot(rot_around_x);
             p += tran;
         }
 
         // Test scoring a transformed version of spec
-        const float trx_score = kabsch_score(moved_spec, wa.to_points3f());
+        const float trx_score = kabsch_score(moved_spec, wa.to_V3fList());
         if (!float_approximates(trx_score, 0)) {
             fail_count++;
             wrn("Self score test failed: self score should be 0\n");
@@ -259,8 +258,6 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
     msg("Using master seed: %d\n", options_.rand_seed);
 
     DBParser::parse(parse_json(options_.xdb));
-
-    init_roulettes();
 
     set_thread_seeds(options_.rand_seed);
 

@@ -2,16 +2,13 @@
 
 #include <sstream>
 
-#include "int_types.h"
-#include "map_types.h"
-
 namespace elfin {
 
-const std::vector<std::string> Candidate::get_node_names() const {
-    std::vector<std::string> res;
+StrList Candidate::get_node_names() const {
+    StrList res;
 
     for (auto & n : nodes_) {
-        res.emplace_back(ID_NAME_MAP.at(n.id));
+        res.emplace_back(n.prototype->name_);
     }
 
     return res;
@@ -19,9 +16,8 @@ const std::vector<std::string> Candidate::get_node_names() const {
 
 std::string Candidate::Node::to_string() const {
     std::stringstream ss;
-    ss << "ID: " << id;
-    ss << " Name: " << ID_NAME_MAP.at(id);
-    ss << " CoM: " << com.to_string();
+    ss << "Name: " << prototype->name_;
+    ss << ", CoM: " << com.to_string();
     return ss.str();
 }
 
@@ -33,13 +29,12 @@ std::string Candidate::Node::to_csv_string() const {
 std::string Candidate::to_string() const {
     std::stringstream ss;
 
-    const long N = nodes_.size();
-    long i = 0;
-    for (auto & n : nodes_)
+    const size_t N = nodes_.size();
+    for (size_t i = 0; i < N; ++i)
     {
-        i++;
-        ss << "Node #" << i << " / " << N;
-        ss << ": " << n.to_string() << std::endl;
+        const Node const & n = nodes_[i];
+        ss << "Nodes[#" << (i + 1) << " / " << N << "]: ";
+        ss << n.to_string() << std::endl;
     }
 
     return ss.str();
@@ -61,7 +56,7 @@ Crc32 Candidate::checksum() const
     // Compute checksum lazily because it's only used once per generation
     Crc32 crc = 0xffff;
     for (auto & n : nodes_) {
-        const Point3f & pt = n.com;
+        const Vector3f & pt = n.com;
         checksum_cascade(&crc, &pt, sizeof(pt));
     }
 

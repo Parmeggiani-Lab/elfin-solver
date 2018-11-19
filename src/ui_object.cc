@@ -9,7 +9,7 @@ JSON data into elfin representation.
 UIObject::UIObject(
     const JSON & j, const std::string & name) :
     rot_(Mat3x3(j["rot"])),
-    tran_(Point3f(j["trans"])),
+    tran_(Vector3f(j["trans"])),
     name_(name) {}
 
 UIObject::UIObject(

@@ -2,12 +2,13 @@
 #define MODULE_H_
 
 #include <vector>
+#include <unordered_map>
 #include <string>
 #include <tuple>
 
 #include "json.h"
 #include "geometry.h"
-#include "map_types.h"
+#include "string_types.h"
 
 namespace elfin {
 
@@ -20,8 +21,11 @@ GEN_ENUM_AND_STRING(ModuleType, ModuleTypeNames, FOREACH_MODULETYPE);
 #define FOREACH_TERMINUSTYPE(MACRO) \
     MACRO(N) \
     MACRO(C) \
+    MACRO(ENUM_COUNT) \
 
 GEN_ENUM_AND_STRING(TerminusType, TerminusTypeNames, FOREACH_TERMINUSTYPE);
+
+static_assert(TerminusType::ENUM_COUNT == 2);
 
 class Module
 {
@@ -29,15 +33,23 @@ public:
     /* types */
     typedef std::tuple<Transform, Module *> TxMod;
     struct Chain {
+        std::string name;
         std::vector<TxMod> n_links;
         std::vector<TxMod> c_links;
+        Chain(const std::string & _name) : name(_name) {}
     };
+    typedef std::unordered_map<std::string, Chain> ChainMap;
+    struct Radii {
+        float avg_all;
+        float max_ca;
+        float max_heavy;
+    } radii;
 
 protected:
-
     /* data members */
-    std::vector<Chain> chains_;
+    ChainMap chains_;
     size_t n_link_count_, c_link_count_;
+    Radii radii_;
 
     /* ctors & dtors */
     Module() {}
@@ -46,32 +58,30 @@ public:
     /* data members */
     const std::string name_;
     const ModuleType type_;
-    const IdStrMap chain_itn_;
 
     /* ctors & dtors */
-    Module(const str::string & name,
+    Module(const std::string & name,
            const ModuleType type,
-           const IdStrMap & chain_itn) :
-        name_(name),
-        type_(type),
-        chain_itn_(chain_itn)
-    {
-        const Chain def_chain;
-        chains_.resize(chain_itn_.size(), def_chain);
+           const StrList & chain_names) :
+        name_(name), type_(type) {
+        for (size_t i = 0; i < chain_names.size(); ++i) {
+            const std::string & cn = chain_names[i];
+            chains_[cn] = Chain(cn);
+        }
     }
     virtual ~Module() {}
-    static void link_modules(
+    static void link_chains(
         const JSON & tx_json,
-        Module * amod,
-        const size_t amod_chain_id
-        Module * bmod,
-        const size_t bmod_chain_id);
+        Chain & a_chain,
+        Chain & b_chain);
 
     /* getters & setters */
-    const std::vector<Chain> & chains() const { return chains_; }
+    const ChainMap & chains() const { return chains_; }
     const size_t n_link_count() const { return n_link_count_; }
     const size_t c_link_count() const { return c_link_count_; }
     const size_t all_link_count() const { return n_link_count_ + c_link_count; }
+    const Radii & radii() const { return radii_; }
+    const void set_radii(const Radii & radii) { radii_ = radii; }
 
     /* other methods */
     std::string to_string() const;

@@ -6,13 +6,14 @@
 #include <tuple>
 
 #include "ui_object.h"
+#include "string_types.h"
 
 namespace elfin {
 
 class UIJoint : public UIObject
 {
 protected:
-    std::vector<std::string> neighbours_;
+    StrList neighbours_;
 
 public:
     std::tuple<std::string, std::string, UIObject const *> occupant_triple_ =
@@ -29,7 +30,7 @@ public:
     }
 
     /* getter */
-    const std::vector<std::string> & neighbours() const {
+    const StrList & neighbours() const {
         return neighbours_;
     }
 };

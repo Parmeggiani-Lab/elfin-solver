@@ -15,7 +15,7 @@ namespace elfin {
 class Population
 {
 protected:
-    Candidates candidates_;
+    CandidateList candidates_;
     const WorkArea & work_area_;
 
     Candidate * new_candidate() const;
@@ -26,7 +26,7 @@ public:
     virtual ~Population();
 
     /* getters */
-    const Candidates & candidates() const { return candidates_; }
+    const CandidateList & candidates() const { return candidates_; }
     void resize(size_t size) { candidates_.resize(size); }
 
     void evolve(const Population * prev_gen);

@@ -62,8 +62,8 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
     }
 }
 
-Points3f WorkArea::to_points3f() const {
-    Points3f res;
+V3fList WorkArea::to_V3fList() const {
+    V3fList res;
     if (leaf_joints_.size() != 2)
         die("Size of leaf_joints_ not exactly 2 in work_area: %s\n", name_.c_str());
 

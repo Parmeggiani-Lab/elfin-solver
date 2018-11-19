@@ -7,10 +7,8 @@
 #include <unordered_map>
 #include <limits>
 
-#include "int_types.h"
 #include "options.h"
 #include "spec.h"
-#include "radii.h"
 #include "jutil.h"
 #include "parallel_utils.h"
 
@@ -38,7 +36,7 @@ EvolutionSolver::swap_pop_buffs() {
 }
 
 void
-EvolutionSolver::print_start_msg(const Points3f & shape) const {
+EvolutionSolver::print_start_msg(const V3fList & shape) const {
     for (auto & p : shape)
         dbg("Work Area Point: %s\n", p.to_string().c_str());
 
@@ -49,7 +47,7 @@ EvolutionSolver::print_start_msg(const Points3f & shape) const {
 
     // Want auto significant figure detection with streams
     std::ostringstream popsize_ss;
-    const ulong pop_size = OPTIONS.ga_pop_size;
+    const size_t pop_size = OPTIONS.ga_pop_size;
     if (pop_size > 1000)
         popsize_ss << (float) (pop_size / 1000.0f) << "k";
     else
@@ -152,14 +150,14 @@ EvolutionSolver::run() {
         Population::setup(wa);
         init_pop_buffs(wa);
 
-        const Points3f shape = itr.second.to_points3f();
+        const V3fList shape = itr.second.to_V3fList();
         this->print_start_msg(shape);
 
         best_sols_[wa_name] = CandidateSharedPtrs();
         best_sols_[wa_name].resize(OPTIONS.n_best_sols);
 
         float lastgen_best_score = std::numeric_limits<float>::infinity();
-        uint stagnant_count = 0;
+        size_t stagnant_count = 0;
 
         const int genDispDigits = std::ceil(std::log(OPTIONS.ga_iters) / std::log(10));
         char * gen_msg_fmt;
@@ -204,7 +202,7 @@ EvolutionSolver::run() {
                         curr_pop_->candidates().front();
 
                     const float gen_best_score = best_candidate->get_score();
-                    const ulong gen_best_len = best_candidate->nodes().size();
+                    const size_t gen_best_len = best_candidate->nodes().size();
                     const float gen_worst_score = worst_candidate->get_score();
                     const double gen_time = ((get_timestamp_us() - genStartTime) / 1e3);
                     msg(gen_msg_fmt, i,

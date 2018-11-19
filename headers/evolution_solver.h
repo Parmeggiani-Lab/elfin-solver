@@ -22,12 +22,12 @@ protected:
 	Population * curr_pop_;
 	const Population * buff_pop_;
 
-	void set_length_guesses(const Points3f & shape);
+	void set_length_guesses(const V3fList & shape);
 
 	void init_pop_buffs(const WorkArea & wa);
 	void swap_pop_buffs();
 
-	void print_start_msg(const Points3f & shape) const;
+	void print_start_msg(const V3fList & shape) const;
 	void print_end_msg() const;
 	void print_timing() const;
 

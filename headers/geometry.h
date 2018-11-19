@@ -11,11 +11,10 @@
 namespace elfin
 {
 
-class Mat3x3;
+struct Transform;
 
-class Vector3f
+struct Vector3f
 {
-public:
 	float x, y, z;
 
 	Vector3f() : Vector3f(0, 0, 0) {}
@@ -26,14 +25,14 @@ public:
 	Vector3f(float _x, float _y, float _z) :
 		x(_x), y(_y), z(_z) {}
 
-	template <typename Itb>
-	Vector3f(Itb itb) :
+	template <typename Iterable>
+	Vector3f(Iterable itb) :
 		Vector3f(itb.begin(), itb.begin() + 3) {}
 
 	template <typename ItrBegin, typename ItrEnd>
 	Vector3f(ItrBegin begin, ItrEnd end)
 	{
-		if ((end - begin) != 3)
+		if ((end - begin) < 3)
 			throw InvalidArgumentSize;
 
 		auto itr = begin;
@@ -58,61 +57,32 @@ public:
 	// We use 1e-6 because PDBs have only 4 decimals of precision
 	bool approximates(const Vector3f & ref, double tolerance = 1e-4);
 };
-typedef Vector3f Point3f;
-typedef std::vector<Point3f> Points3f;
+typedef std::vector<Vector3f> V3fList;
 
-struct Mat3x3
+class Transform
 {
-	Vector3f rows[3];
-
-	Mat3x3() : rows( { {0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}}) {};
-	Mat3x3(Vector3f _rows[3]);
-	Mat3x3(const std::vector<float> & v) :
-		Mat3x3(v.begin(), v.begin() + 9) {}
-
-	template <typename ItrBegin, typename ItrEnd>
-	Mat3x3(ItrBegin begin, ItrEnd end)
-	{
-		if ((end - begin) != 9)
-			throw "InvalidArgumentSize";
-
-		ItrBegin itr = begin;
-		for (int i = 0; i < 3; i++)
-		{
-			rows[i] = Vector3f(itr, itr + 3);
-			itr += 3;
-		}
-	}
-
-	template <typename Itrable3x3>
-	Mat3x3(Itrable3x3 itb)
-	{
-		if ((itb.end() - itb.begin()) != 3)
-			throw InvalidArgumentSize;
-		auto itr = itb.begin();
-		for (int i = 0; i < 3; i++)
-		{
-			rows[i] = Vector3f((*itr).begin(), (*itr).end());
-			itr++;
-		}
-	}
-
-	Vector3f dot(const Vector3f & rotMat) const;
-	Mat3x3 dot(const Mat3x3 & rotMat) const;
-	Mat3x3 transpose() const;
-
-	std::string to_string() const;
-};
-
-struct Transform
-{
-	// const Point3f com_b; // not used in new frame shifting method
-	Vector3f tran;
-	Mat3x3 rot;
-
+public:
+	/* types */
+	typedef float[4][4] ElementArray;
+	// typedef float(&)[4][4] ElementArrayRef;
+	typedef ElementArray & ElementArrayRef;
+private:
+	/* data members */
+	ElementArray elements_ = { 0 };
+public:
+	/* ctors & dtors */
 	Transform() {}
-	Transform(const Vector3f & _tran, const Mat3x3 & _rot) :
-		tran(_tran), rot(_rot) {}
+	Transform(const JSON & j);
+	void parse_elements_from_json(const JSON & j, ElementArrayRef ele) const;
+	Transform(const ElementArrayRef ele);
+	void init_with_elements(const ElementArrayRef ele);
+
+	/* other methods */
+	Transform operator*(const Transform & tx) const;
+	Transform & operator*=(const Transform & tx);
+	Transform operator*(const Vector3f & vec) const;
+	Transform inversed() const;
+	std::string to_string() const;
 };
 
 } // namespace elfin

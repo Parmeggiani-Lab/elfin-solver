@@ -9,10 +9,13 @@ namespace elfin {
 
 inline size_t get_dice(size_t ceiling)
 {
+    return (size_t) std::round(get_dice_0to1() * (ceiling ? ceiling - 1 : 0));
+}
+
+inline float get_dice_0to1()
+{
     uint & thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
-    return (size_t) std::round(
-               (float) (ceiling ? ceiling - 1 : 0) *
-               rand_r(&thread_seed) / RAND_MAX);
+    return (float) rand_r(&thread_seed) / RAND_MAX;
 }
 
 // https://stackoverflow.com/questions/9218724/get-random-element-and-remove-it

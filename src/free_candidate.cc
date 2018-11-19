@@ -3,15 +3,14 @@
 #include <sstream>
 #include <exception>
 
+#include "database.h"
 #include "roulette.h"
-#include "transform_table.h"
 #include "random_utils.h"
 #include "parallel_utils.h"
 #include "math_utils.h"
 #include "kabsch.h"
 #include "counter_structs.h"
 #include "options.h"
-#include "map_types.h"
 
 // #define NO_POINT_MUTATE
 // #define NO_LIMB_MUTATE
@@ -25,55 +24,37 @@ namespace elfin {
 void FreeCandidate::gen_random_nodes(
     Nodes & nodes,
     const size_t & max_len) {
-    const size_t rm_dim = REL_MAT.size();
-
-    // A roulette wheel represents the probability of
-    // each node being picked as the next node, based
-    // on the number of neighbours they have.
-    //
-    // This is so as to not pick "dead-end" nodes
-    // often, which can result in very "boring" shapes
-    // e.g. formed by repetition of just one node
-    //
-    // Once a dead-end node is picked, further nodes
-    // are simply repeated and we don't want this to
-    // happen often.
-
     if (nodes.empty()) {
         // Pick random starting node
-        const size_t first_node_id = pick_random(CTERM_ROULETTE);
-        nodes.emplace_back(first_node_id, 0, 0, 0);
+        nodes.emplace_back(XDB.get_rand_mod<C>(), 0, 0, 0);
     }
     else {
         synthesise(nodes);
     }
 
     while (nodes.size() <= max_len) {
-        std::vector<size_t> roulette_wheel;
+        // Compute non-colliding next module roulette
+        ModuleList compat_mods;
+        Roulette compat_mods_roulette;
         const Node & curr_node = nodes.back();
-
-        // Compute whether each neighbour is colliding
-        const std::vector<PairRelationship *> rr = REL_MAT.at(curr_node.id);
-        for (size_t i = 0; i < rm_dim; i++) {
-            const PairRelationship * pr_ptr = rr.at(i);
-
-            // Create roulette based on number of RHS neighbours
-            // of the current neighbour being considered
-            if (pr_ptr and
-                    !collides(i,
-                              pr_ptr->com_b,
-                              nodes.begin(),
-                              nodes.end() - 2)) {
-                for (int j = 0; j < LINK_COUNTS.at(i).y; j++)
-                    roulette_wheel.push_back(i);
+        for (auto & chain_it : curr_node->chains()) {
+            const Chain & chain = chain_it->second;
+            for (auto & txm : chain.c_links) {
+                if (!Candidate::Node::collides(
+                            std::get<0>(txm)->com_b,
+                            nodes.begin(),
+                            nodes.end() - 2)) {
+                    for (int j = 0; j < LINK_COUNTS.at(i).y; j++)
+                        compatible_modules.push_back(i);
+                }
             }
         }
 
-        if (roulette_wheel.empty())
+        if (compatible_modules.empty())
             break;
 
         // Pick a random valid neighbour
-        const size_t next_node_id = pick_random(roulette_wheel);
+        const size_t next_node_id = pick_random(compatible_modules);
 
         const PairRelationship * next_node_pr = rr.at(next_node_id);
 
@@ -95,8 +76,7 @@ void FreeCandidate::gen_random_nodes_reverse(
 
     if (nodes.empty()) {
         // Pick random starting node
-        const size_t first_node_id = pick_random(CTERM_ROULETTE);
-        nodes.emplace_back(first_node_id, 0, 0, 0);
+        nodes.emplace_back(XDB.get_rand_mod<C>(), 0, 0, 0);
     }
     else {
         synthesise_reverse(nodes);
@@ -115,7 +95,7 @@ void FreeCandidate::gen_random_nodes_reverse(
             if (pr_ptr == NULL)
                 continue;
 
-            const Point3f checkpoint = pr_ptr->tran;
+            const Vector3f checkpoint = pr_ptr->tran;
 
             // Create roulette based on number of LHS neighbours
             // of the current neighbour being considered
@@ -172,14 +152,14 @@ bool FreeCandidate::synthesise_reverse(Nodes & nodes) {
             // Fatal failure; diagnose!
             err("Synthesise(): impossible pair! %d(%s) <-x-> %d(%s)\n",
                 lhs_node.id,
-                ID_NAME_MAP.at(lhs_node.id).c_str(),
+                lhs_node->prototype->name_.c_str(),
                 rhs_node.id,
-                ID_NAME_MAP.at(rhs_node.id).c_str());
+                rhs_node->prototype->name_.c_str());
 
             die("Fatal error in synthesise_reverse(): impossible pair\n");
         }
 
-        const Point3f checkpoint = new_node_pr->tran;
+        const Vector3f checkpoint = new_node_pr->tran;
 
         if (collides(lhs_node.id,
                      checkpoint,
@@ -217,9 +197,9 @@ bool FreeCandidate::synthesise(Nodes & nodes) {
             // Fatal failure; diagnose!
             err("Synthesise(): impossible pair! %d(%s) <-x-> %d(%s)\n",
                 lhs_node.id,
-                ID_NAME_MAP.at(lhs_node.id).c_str(),
+                lhs_node->prototype->name_.c_str(),
                 rhs_node.id,
-                ID_NAME_MAP.at(rhs_node.id).c_str());
+                rhs_node->prototype->name_.c_str());
 
             die("Fatal error in synthesise(): impossible pair\n");
         }
@@ -564,7 +544,7 @@ void FreeCandidate::score(const WorkArea & wa) {
 void FreeCandidate::mutate(
     long rank,
     MutationCounters & mt_counters,
-    const Candidates & candidates) {
+    const CandidateList & candidates) {
 
     if (rank == -1) {
         // rank -1 is code for randomize

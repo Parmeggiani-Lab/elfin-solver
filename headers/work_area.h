@@ -39,7 +39,7 @@ protected:
 
 public:
     WorkArea(const JSON & j, const std::string & name);
-    Points3f to_points3f() const;
+    V3fList to_V3fList() const;
 
     /* getters */
     std::string name() const { return name_; }
