@@ -50,12 +50,11 @@ struct Vector3f
 	Vector3f & operator+=(const Vector3f & rhs);
 	Vector3f & operator-=(const Vector3f & rhs);
 	float dot(const Vector3f & rhs) const;
-	Vector3f dot(const Mat3x3 & rotMat) const;
 	float dist_to(const Vector3f & rhs) const;
 	float sq_dist_to(const Vector3f & rhs) const;
 
 	// We use 1e-6 because PDBs have only 4 decimals of precision
-	bool approximates(const Vector3f & ref, double tolerance = 1e-4);
+	bool approximates(const Vector3f & ref, const double tolerance = 1e-4);
 };
 typedef std::vector<Vector3f> V3fList;
 

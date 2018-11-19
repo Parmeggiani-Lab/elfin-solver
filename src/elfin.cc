@@ -154,22 +154,20 @@ int ElfinRunner::run_meta_tests() const {
         const WorkArea & wa = itr.second;
         V3fList moved_spec = wa.to_V3fList();
 
-        Vector3f rot_arr[3] = {
-            Vector3f(1.0f, 0.0f, 0.0f),
-            Vector3f(0.0f, -0.5177697998f, 0.855519979f),
-            Vector3f(0.0f, -0.855519979f, -0.5177697998f)
-        };
-        Mat3x3 rot_around_x = Mat3x3(rot_arr);
-
         // It seems that Kabsch cannot handle very large
         // translations, but in the scale we're working
         // at it should rarely, if ever, go beyond
         // one thousand Angstroms
-        Vector3f tran(-39.0f, 999.3413f, -400.11f);
+        float tx_ele[4][4] = {
+            1.0f, 0.0f, 0.0f, -39.0f,
+            0.0f, -0.5177697998f, 0.855519979f, 999.3413f
+            0.0f, -0.855519979f, -0.5177697998f, -400.11f
+        };
+
+        Transform tx(tx_ele);
 
         for (Vector3f &p : moved_spec) {
-            p = p.dot(rot_around_x);
-            p += tran;
+            p = tx * p;
         }
 
         // Test scoring a transformed version of spec

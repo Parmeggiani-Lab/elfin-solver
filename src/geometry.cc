@@ -71,23 +71,6 @@ float Vector3f::dot(const Vector3f & rhs) const
 	return this->x * rhs.x + this->y * rhs.y + this->z * rhs.z;
 }
 
-Vector3f Vector3f::dot(const Mat3x3 & mat) const
-{
-	const float rx = this->x * mat.rows[0].x +
-	                 this->y * mat.rows[1].x +
-	                 this->z * mat.rows[2].x;
-
-	const float ry = this->x * mat.rows[0].y +
-	                 this->y * mat.rows[1].y +
-	                 this->z * mat.rows[2].y;
-
-	const float rz = this->x * mat.rows[0].z +
-	                 this->y * mat.rows[1].z +
-	                 this->z * mat.rows[2].z;
-
-	return Vector3f(rx, ry, rz);
-}
-
 float Vector3f::dist_to(const Vector3f & rhs) const
 {
 	return sqrt(sq_dist_to(rhs));
@@ -101,7 +84,7 @@ float Vector3f::sq_dist_to(const Vector3f & rhs) const
 	return dx * dx + dy * dy + dz * dz;
 }
 
-bool Vector3f::approximates(const Vector3f & ref, double tolerance)
+bool Vector3f::approximates(const Vector3f & ref, const double tolerance)
 {
 	if (this->x != ref.x ||
 	        this->y != ref.y ||

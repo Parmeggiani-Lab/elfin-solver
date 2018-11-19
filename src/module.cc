@@ -14,13 +14,8 @@ void link_chains(
      * amod's C-terminus connects to bmod's N-terminus
      */
 
-    Vector3f com_b = parse_com_b_from_json(tx_json);
-    Vector3f tran = parse_tran_from_json(tx_json);
-    Mat3x3 rot = parse_rot_from_json(tx_json);
-
-    Transform tx = { com_b, trans, rot };
-    die("-com_b is probably wrong?\n");
-    Transform tx_inv = { -com_b, -trans, rot.transpose() };
+    Transform tx(tx_json);
+    Transform tx_inv = tx.inversed();
 
     TxMod tm = std::make_tuple(tx, bmod);
     TxMod tm_inv = std::make_tuple(tx_inv, amod);
@@ -36,12 +31,12 @@ std::string Module::to_string() const
 {
     std::ostringstream ss;
 
-    ss << "pr[" << std::endl;
-    ss << "    com_b:" << com_b.to_string() << std::endl;
-    ss << "    rot:" << rot.to_string() << std::endl;
-    ss << "    rot_inv:" << rot_inv.to_string() << std::endl;
-    ss << "    tran:" << tran.to_string() << std::endl;
-    ss << "]" << std::endl;
+    ss << "Mod[" << std::endl;
+    ss << "\tcom_b:" << com_b.to_string() << std::endl;
+    ss << "\trot:" << rot.to_string() << std::endl;
+    ss << "\trot_inv:" << rot_inv.to_string() << std::endl;
+    ss << "\ttran:" << tran.to_string() << std::endl;
+    ss << "  ]" << std::endl;
 
     return ss.str();
 }
