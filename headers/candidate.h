@@ -10,6 +10,7 @@
 #include "work_area.h"
 #include "counter_structs.h"
 #include "string_types.h"
+#include "module.h"
 
 #define COLLISION_MEASURE max_heavy
 
@@ -24,12 +25,12 @@ public:
     typedef std::vector<Node> NodeList;
     typedef NodeList::const_iterator NodeListCItr;
 
-    typedef struct {
-        Module const * prototype;
+    typedef struct Node {
+        const Module * prototype;
         Vector3f com;
 
-        Node(Module const * _prototype, float _x, float _y, float _z) :
-            prototype(_prototype), com(_x, _y, _z) {};
+        Node(const Module * _prototype, float _x, float _y, float _z) :
+            prototype(_prototype), com(_x, _y, _z) {}
         Node() {};
         std::string to_string() const;
         std::string to_csv_string() const;
@@ -37,7 +38,7 @@ public:
         static bool collides(
             const Vector3f & new_com,
             const NodeListCItr nodes_begin,
-            const NodeListCItr nodes_end) const {
+            const NodeListCItr nodes_end) {
             for (NodeListCItr it = nodes_begin; it != nodes_end; ++it) {
                 const float com_dist = it->com.sq_dist_to(new_com);
                 const float required_com_dist = it->prototype->radii().COLLISION_MEASURE +

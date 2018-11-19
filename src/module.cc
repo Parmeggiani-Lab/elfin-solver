@@ -1,12 +1,16 @@
 #include "module.h"
 
+#include <sstream>
+
 namespace elfin {
 
 //static
-void link_chains(
+void Module::link_chains(
     const JSON & tx_json,
-    Chain & a_chain,
-    Chain & b_chain) {
+    Module * mod_a,
+    const std::string & a_chain_id,
+    Module * mod_b,
+    const std::string & b_chain_id) {
     /*
      * Creates TxMod for appropriate chains in both amod and bmod (transform
      * for bmod is inverted).
@@ -14,17 +18,17 @@ void link_chains(
      * amod's C-terminus connects to bmod's N-terminus
      */
 
-    Transform tx(tx_json);
-    Transform tx_inv = tx.inversed();
+    const Transform tx(tx_json);
+    const Transform tx_inv = tx.inversed();
 
-    TxMod tm = std::make_tuple(tx, bmod);
-    TxMod tm_inv = std::make_tuple(tx_inv, amod);
+    Chain & a_chain = mod_a->chains_[a_chain_id];
+    Chain & b_chain = mod_b->chains_[b_chain_id];
 
-    a_chain.c_links.push_back(tm);
-    b_chain.n_links.push_back(tm_inv);
+    a_chain.c_links.push_back(std::make_tuple(tx, mod_b));
+    b_chain.n_links.push_back(std::make_tuple(tx_inv, mod_a));
 
-    amod.c_link_count++;
-    bmod.n_link_count++;
+    mod_a->c_link_count_++;
+    mod_b->n_link_count_++;
 }
 
 std::string Module::to_string() const
@@ -32,10 +36,12 @@ std::string Module::to_string() const
     std::ostringstream ss;
 
     ss << "Mod[" << std::endl;
-    ss << "\tcom_b:" << com_b.to_string() << std::endl;
-    ss << "\trot:" << rot.to_string() << std::endl;
-    ss << "\trot_inv:" << rot_inv.to_string() << std::endl;
-    ss << "\ttran:" << tran.to_string() << std::endl;
+    ss << "\tradii:" << std::endl;
+    ss << "\t\tavg_all=" << radii_.avg_all << std::endl;
+    ss << "\t\tmax_ca=" << radii_.max_ca << std::endl;
+    ss << "\t\tmax_heavy=" << radii_.max_heavy << std::endl;
+    ss << "\tn_link_count:" << n_link_count_ << std::endl;
+    ss << "\tc_link_count:" << c_link_count_ << std::endl;
     ss << "  ]" << std::endl;
 
     return ss.str();

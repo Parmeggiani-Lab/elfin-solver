@@ -10,6 +10,7 @@
 #include "json.h"
 #include "module.h"
 #include "roulette.h"
+#include "jutil.h"
 
 namespace elfin {
 
@@ -21,11 +22,10 @@ class Database
 private:
     /* data members */
     size_t link_total_;
-    static const Database * instance_ = nullptr;
+    static const Database * instance_;
 
     /* other methods */
-    void parse_from_json(const JSON & j);
-    void distribute_probability();
+    void distribute_cmlprobs();
 
 protected:
     /* data members */
@@ -34,8 +34,12 @@ protected:
 
 public:
     /* ctors & dtors */
-    Database(const JSON & j);
+    Database() {
+        panic_if(instance_, "Database instance already exists\n");
+        instance_ = this;
+    }
     virtual ~Database();
+    void parse_from_json(const JSON & xdb);
 
     /* getters & setters */
     const ModuleList & mod_list() const { return mod_list_; }

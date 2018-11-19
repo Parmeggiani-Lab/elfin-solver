@@ -11,7 +11,7 @@ Database xdb_;
 const Database & XDB = xdb_;
 
 void DBParser::parse(const JSON & j) {
-    xdb_ = Database::parse_from_json(j);
+    xdb_.parse_from_json(j);
 
 #ifdef PRINT_PARSED_DB
     const size_t n_mods = xdb_.mod_list().size();
@@ -19,16 +19,15 @@ void DBParser::parse(const JSON & j) {
 
     for (size_t i = 0; i < n_mods; ++i)
     {
-        const size_t n_chains = mod.chains().size();
+        const Module * mod = xdb_.mod_list().at(i);
+        const size_t n_chains = mod->chains().size();
         wrn("xdb_[#%lu:%s] has %lu chains\n",
-            i, mod.name_.c_str(), n_chains);
+            i, mod->name_.c_str(), n_chains);
 
-        for (size_t j = 0; j < n_chains; ++j)
-        {
-            wrn("\tchain[#%lu:%s]:\n",
-                j, mod.chain_itn_[j].c_str());
+        for (auto & chain_it : mod->chains()) {
+            wrn("\tchain[%s]:\n", chain_it.first.c_str());
 
-            const Chain & chain = mod.chains()[j];
+            auto & chain = chain_it.second;
             auto n_links = chain.n_links;
             for (size_t k = 0; k < n_links.size(); ++k)
             {

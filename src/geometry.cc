@@ -122,11 +122,11 @@ Transform::Transform(const JSON & j) {
 	init_with_elements(ele);
 }
 
-void Transform::parse_elements_from_json(const JSON & j, ElementArrayRef ele) const {
+void Transform::parse_elements_from_json(const JSON & tx_json, ElementArrayRef ele) const {
 	size_t i = 0, j = 0;
-	for (auto row_it : j) {
-		for (auto f_it : row_it.second) {
-			ele[i][j] = (*f_it.second).get<float>();
+	for (auto row_json : tx_json) {
+		for (auto f_json : row_json) {
+			ele[i][j] = f_json.get<float>();
 			++j;
 		}
 		++i;
@@ -142,7 +142,7 @@ void Transform::init_with_elements(const ElementArrayRef ele) {
 }
 
 /* other methods */
-Transform operator*(const Transform & tx_b) const {
+Transform Transform::operator*(const Transform & tx_b) const {
 	/*
 	 * In A * B = C, A is this current Transform.
 	 */
@@ -159,7 +159,7 @@ Transform operator*(const Transform & tx_b) const {
 	return Transform(ele);
 }
 
-Transform & operator*=(const Transform & tx_b) {
+Transform & Transform::operator*=(const Transform & tx_b) {
 	/*
 	 * A *= B => A = B * A
 	 * A is this current Transform.
@@ -176,7 +176,7 @@ Transform & operator*=(const Transform & tx_b) {
 	return *this;
 }
 
-Transform operator*(const Vector3f & vec) const {
+Vector3f Transform::operator*(const Vector3f & vec) const {
 	const float x = vec[0] + elements_[3][0];
 	const float y = vec[1] + elements_[3][1];
 	const float z = vec[2] + elements_[3][2];
@@ -199,7 +199,7 @@ Transform operator*(const Vector3f & vec) const {
 	return Vector3f(rx, ry, rz);
 }
 
-Transform inversed() const {
+Transform Transform::inversed() const {
 	ElementArray ele;
 	for (size_t i = 0; i < 4; ++i) {
 		for (size_t j = i + 1; j < 4; ++j) {
@@ -209,10 +209,10 @@ Transform inversed() const {
 	return Transform(ele);
 }
 
-std::string to_string() const {
+std::string Transform::to_string() const {
 	std::ostringstream ss;
 
-	ss << "tx[\n"
+	ss << "tx[\n";
 	for (size_t i = 0; i < 4; ++i) {
 		ss << "\t[ ";
 		for (size_t j = 0; j < 4; ++j) {

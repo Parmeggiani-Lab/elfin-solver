@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 
+#include "jutil.h"
 #include "json.h"
 #include "geometry.h"
 #include "string_types.h"
@@ -43,16 +44,13 @@ public:
         float avg_all;
         float max_ca;
         float max_heavy;
-    } radii;
+    };
 
 protected:
     /* data members */
     ChainMap chains_;
     size_t n_link_count_, c_link_count_;
     Radii radii_;
-
-    /* ctors & dtors */
-    Module() {}
 
 public:
     /* data members */
@@ -62,24 +60,26 @@ public:
     /* ctors & dtors */
     Module(const std::string & name,
            const ModuleType type,
-           const StrList & chain_names) :
+           const StrList & chain_ids) :
         name_(name), type_(type) {
-        for (size_t i = 0; i < chain_names.size(); ++i) {
-            const std::string & cn = chain_names[i];
+        for (size_t i = 0; i < chain_ids.size(); ++i) {
+            const std::string & cn = chain_ids[i];
             chains_[cn] = Chain(cn);
         }
     }
     virtual ~Module() {}
     static void link_chains(
         const JSON & tx_json,
-        Chain & a_chain,
-        Chain & b_chain);
+        Module * mod_a,
+        const std::string & a_chain_id,
+        Module * mod_b,
+        const std::string & b_chain_id);
 
     /* getters & setters */
     const ChainMap & chains() const { return chains_; }
     const size_t n_link_count() const { return n_link_count_; }
     const size_t c_link_count() const { return c_link_count_; }
-    const size_t all_link_count() const { return n_link_count_ + c_link_count; }
+    const size_t all_link_count() const { return n_link_count_ + c_link_count_; }
     const Radii & radii() const { return radii_; }
     const void set_radii(const Radii & radii) { radii_ = radii; }
 

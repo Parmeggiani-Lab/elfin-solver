@@ -4,13 +4,15 @@
 #include <vector>
 
 #include "jutil.h"
+#include "random_utils.h"
 
 namespace elfin {
 
-template<typename T>
 struct Roulette
 {
     std::vector<float> cmlprobs;
+    
+    template<typename T>
     T rand_item(const std::vector<T> items) const {
         /*
          * Picks a random module based on cumulative probability derived as

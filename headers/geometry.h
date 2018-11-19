@@ -49,6 +49,12 @@ struct Vector3f
 	Vector3f operator*(const float f) const;
 	Vector3f & operator+=(const Vector3f & rhs);
 	Vector3f & operator-=(const Vector3f & rhs);
+	float operator[](const size_t idx) {
+		return *(&x + idx);
+	}
+	float operator[](const size_t idx) const {
+		return *(&x + idx);
+	}
 	float dot(const Vector3f & rhs) const;
 	float dist_to(const Vector3f & rhs) const;
 	float sq_dist_to(const Vector3f & rhs) const;
@@ -62,7 +68,7 @@ class Transform
 {
 public:
 	/* types */
-	typedef float[4][4] ElementArray;
+	typedef float ElementArray[4][4];
 	// typedef float(&)[4][4] ElementArrayRef;
 	typedef ElementArray & ElementArrayRef;
 private:
@@ -72,14 +78,14 @@ public:
 	/* ctors & dtors */
 	Transform() {}
 	Transform(const JSON & j);
-	void parse_elements_from_json(const JSON & j, ElementArrayRef ele) const;
+	void parse_elements_from_json(const JSON & tx_json, ElementArrayRef ele) const;
 	Transform(const ElementArrayRef ele);
 	void init_with_elements(const ElementArrayRef ele);
 
 	/* other methods */
 	Transform operator*(const Transform & tx) const;
 	Transform & operator*=(const Transform & tx);
-	Transform operator*(const Vector3f & vec) const;
+	Vector3f operator*(const Vector3f & vec) const;
 	Transform inversed() const;
 	std::string to_string() const;
 };

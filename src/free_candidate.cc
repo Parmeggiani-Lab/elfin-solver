@@ -7,7 +7,6 @@
 #include "roulette.h"
 #include "random_utils.h"
 #include "parallel_utils.h"
-#include "math_utils.h"
 #include "kabsch.h"
 #include "counter_structs.h"
 #include "options.h"

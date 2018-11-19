@@ -8,7 +8,6 @@
 #include "options.h"
 #include "db_parser.h"
 #include "json.h"
-#include "math_utils.h"
 #include "jutil.h"
 
 namespace elfin {

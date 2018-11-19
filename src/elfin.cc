@@ -12,7 +12,6 @@
 #include "spec.h"
 #include "arg_parser.h"
 #include "db_parser.h"
-#include "math_utils.h"
 #include "kabsch.h"
 #include "jutil.h"
 #include "random_utils.h"
