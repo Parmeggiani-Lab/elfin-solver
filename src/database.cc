@@ -6,7 +6,7 @@
 #include "random_utils.h"
 #include "options.h"
 
-#define DEBUG_PRINT_CMLPROBS
+// #define DEBUG_PRINT_CMLPROBS
 
 namespace elfin {
 
@@ -62,13 +62,12 @@ void Database::parse_from_json(const JSON & xdb) {
         const float radius = (*jit)["radii"][OPTIONS.radius_type];
         mod_list_.push_back(new Module(name, mod_type, radius, chain_ids));
     };
-
     for_each_module(init_module);
 
+    size_t link_total = 0;
     auto parse_link = [&](JSON_MOD_PARAMS) {
         Module * const mod_a = mod_list_.at(name_id_map[jit.key()]);
 
-        // Add neighbouring nodes
         const JSON & chains_json = (*jit)["chains"];
         for (auto a_chain_it = chains_json.begin();
                 a_chain_it != chains_json.end();
@@ -90,7 +89,12 @@ void Database::parse_from_json(const JSON & xdb) {
                         b_chain_it != b_chains_json.end();
                         ++b_chain_it) {
                     const size_t tx_id = (*b_chain_it).get<size_t>();
-                    const JSON & tx_json = xdb["n_to_c_tx"][tx_id];
+                    panic_if(tx_id >= xdb["n_to_c_tx"].size(),
+                             ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
+                              "\tEither xdb.json is corrupted or "
+                              "there is a coding error in dbgen.py...\n"));
+
+                    const JSON & tx_json = xdb["n_to_c_tx"][tx_id]["tx"];
                     Module::link_chains(
                         tx_json,
                         mod_a,
@@ -98,30 +102,36 @@ void Database::parse_from_json(const JSON & xdb) {
                         mod_b,
                         b_chain_it.key());
 
-                    roulettes_.n.cmlprobs.push_back(roulettes_.n_total++);
-                    roulettes_.c.cmlprobs.push_back(roulettes_.c_total++);
-                    roulettes_.all.cmlprobs.push_back(roulettes_.all_total++);
+                    link_total++;
                 }
             }
         }
     };
     for_each_module(parse_link);
 
-    roulettes_.normalize();
+    size_t n_acm = 0, c_acm = 0, all_acm = 0;
+    for (auto mod : mod_list_) {
+        roulettes_.n.cmlprobs.push_back(
+            (float) n_acm / link_total);
+        roulettes_.c.cmlprobs.push_back(
+            (float) c_acm / link_total);
+        roulettes_.all.cmlprobs.push_back(
+            (float) all_acm / (2 * link_total));
+        n_acm += mod->n_link_count();
+        c_acm += mod->c_link_count();
+        all_acm += mod->all_link_count();
+    }
 
 #ifdef DEBUG_PRINT_CMLPROBS
     wrn("---Cumulative Probability Debug---\n");
-    for (auto mod : mod_list_) {
-        wrn("mod[%s] n=%.3f, c=%.3f, all:\n",
-            mod->name_.c_str(),
-            roulettes_.n.cmlprobs.back(),
-            roulettes_.c.cmlprobs.back(),
-            roulettes_.all.cmlprobs.back());
+    wrn("Total %lu links\n", link_total);
+    for (size_t i = 0; i < mod_list_.size(); ++i) {
+        wrn("mod[#%lu:%s] n=%.3f, c=%.3f, all=%.3f\n",
+            i, mod_list_.at(i)->name_.c_str(),
+            roulettes_.n.cmlprobs.at(i),
+            roulettes_.c.cmlprobs.at(i),
+            roulettes_.all.cmlprobs.at(i));
     }
-    wrn("Totals n=%lu, c=%lu, all=%luf\n",
-        roulettes_.n_total,
-        roulettes_.c_total,
-        roulettes_.all_total);
 #endif  /* ifdef DEBUG_PRINT_CMLPROBS */
 }
 

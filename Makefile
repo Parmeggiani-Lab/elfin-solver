@@ -25,7 +25,7 @@ TIMING=yes
 MAX_ERRORS=1
 
 ifeq ($(DEBUG), yes)
-	DEBUG_FLAGS=-ggdb3
+	DEBUG_FLAGS=-ggdb3 -fsanitize=address -fno-omit-frame-pointer
 else
 	DEBUG_FLAGS=
 endif

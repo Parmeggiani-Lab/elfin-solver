@@ -36,7 +36,7 @@ void Population::setup(const WorkArea & wa) {
 
     mt_cutoffs_.limb =
         std::min(
-            (ulong) (mt_cutoffs_.point +
+            (size_t) (mt_cutoffs_.point +
                      std::round(OPTIONS.ga_limb_mutate_rate * pop_counters_.non_survivors)),
             pop_counters_.pop_size);
 

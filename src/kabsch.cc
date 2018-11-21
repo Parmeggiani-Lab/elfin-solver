@@ -38,7 +38,7 @@ Matrix<double> V3fList_to_vectors(V3fList const & pts) {
 
 void resample(V3fList & ref,
               V3fList & pts) {
-	const ulong N = ref.size();
+	const size_t N = ref.size();
 
 	// Compute  shape total lengths
 	float ref_tot_len = 0.0f;

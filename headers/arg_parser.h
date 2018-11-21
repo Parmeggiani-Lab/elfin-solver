@@ -75,7 +75,7 @@ private:
         {"o", "output_dir", "Set output directory (default=./output/)", true, &ArgParser::set_output_dir},
         {"l", "len_dev_alw", "Set length deviation allowance (default=3)", true, &ArgParser::set_len_dev_alw},
         {"a", "avg_pair_dist", "Overwrite default=average distance between doubles of CoMs (default=38.0)", true, &ArgParser::set_avg_pair_dist},
-        {"s", "seed", "Set RNG seed (default=0x1337cafe; setting to 0 uses time as seed)", true, &ArgParser::set_rand_seed},
+        {"s", "rand_seed", "Set RNG seed (default=0x1337cafe; setting to 0 uses time as seed)", true, &ArgParser::set_rand_seed},
         {"gps", "ga_pop_size", "Set GA population size (default=10000)", true, &ArgParser::set_ga_pop_size},
         {"git", "ga_iters", "Set GA iterations (default=1000)", true, &ArgParser::set_ga_iters},
         {"gsr", "ga_survive_rate", "Set GA survival rate (default=0.1)", true, &ArgParser::set_ga_survive_rate},

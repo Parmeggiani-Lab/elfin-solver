@@ -30,7 +30,7 @@ GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 class WorkArea
 {
 protected:
-    std::string name_;
+    std::string name_ = "unamed_area";
     WorkType type_ = FREE;
     UIJointMap joints_;
     std::vector<UIJoint *> occupied_joints_;
@@ -39,6 +39,7 @@ protected:
 
 public:
     WorkArea(const JSON & j, const std::string & name);
+    WorkArea() {}
     V3fList to_V3fList() const;
 
     /* getters */

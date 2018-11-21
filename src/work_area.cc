@@ -2,6 +2,7 @@
 
 #include <tuple>
 #include <sstream>
+#include <iostream>
 
 #include "elfin_exception.h"
 
@@ -12,8 +13,8 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
     size_t n_branches = 0;
     for (auto it = j.begin(); it != j.end(); ++it) {
         const JSON & jt_json = *it;
-
-        auto j_itr = joints_.emplace(it.key(), UIJoint(jt_json, it.key()));
+        const std::string & joint_name = it.key();
+        auto j_itr = joints_.emplace(joint_name, UIJoint(jt_json, joint_name));
         const size_t n_nbs = jt_json["neighbours"].size();
         n_branches += n_nbs > 2;
 

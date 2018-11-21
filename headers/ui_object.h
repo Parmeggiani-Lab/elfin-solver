@@ -12,7 +12,7 @@ namespace elfin {
 class UIObject
 {
 protected:
-    std::string name_;
+    std::string name_ = "unamed_ui_object";
     Transform tx_;
 
 public:

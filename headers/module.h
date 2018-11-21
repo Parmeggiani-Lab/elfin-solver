@@ -43,7 +43,8 @@ public:
 protected:
     /* data members */
     ChainMap chains_;
-    size_t n_link_count_, c_link_count_;
+    size_t n_link_count_ = 0;
+    size_t c_link_count_ = 0;
 
 public:
     /* data members */

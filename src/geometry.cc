@@ -1,6 +1,7 @@
 #include <sstream>
 #include <cmath>
 #include <iomanip>
+#include <iostream>
 
 #include "geometry.h"
 #include "jutil.h"
@@ -123,13 +124,16 @@ Transform::Transform(const JSON & j) {
 }
 
 void Transform::parse_elements_from_json(const JSON & tx_json, ElementArrayRef ele) const {
-	size_t i = 0, j = 0;
+	size_t i = 0;
 	for (auto row_json : tx_json) {
+		size_t j = 0;
 		for (auto f_json : row_json) {
 			ele[i][j] = f_json.get<float>();
 			++j;
+			panic_when(j > 4);
 		}
 		++i;
+		panic_when(i > 4);
 	}
 }
 
@@ -138,7 +142,7 @@ Transform::Transform(const ElementArrayRef ele) {
 }
 
 void Transform::init_with_elements(const ElementArrayRef ele) {
-	std::copy(&ele[0][0], &ele[0][0] + (16 * sizeof(float)), &elements_[0][0]);
+	std::copy(&ele[0][0], &ele[0][0] + 16, &elements_[0][0]);
 }
 
 /* other methods */

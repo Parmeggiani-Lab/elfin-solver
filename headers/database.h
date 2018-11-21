@@ -21,7 +21,6 @@ class Database
 {
 private:
     /* data members */
-    size_t link_total_;
     static const Database * instance_;
 
     /* other methods */
@@ -32,12 +31,6 @@ protected:
     ModuleList mod_list_;
     struct {
         Roulette n, c, all;
-        size_t n_total, c_total, all_total;
-        void normalize() {
-            n.normalize(n_total);
-            c.normalize(c_total);
-            all.normalize(all_total);
-        }
     } roulettes_;
 
 public:
