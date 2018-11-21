@@ -10,220 +10,25 @@
 #include "kabsch.h"
 #include "counter_structs.h"
 #include "options.h"
+#include "terminus_type.h"
+#include "id_pair.h"
 
-// #define NO_POINT_MUTATE
-// #define NO_LIMB_MUTATE
-// #define NO_CROSS_MUTATE
+#define NO_POINT_MUTATE
+#define NO_LIMB_MUTATE
+#define NO_CROSS_MUTATE
+
+#if defined(NO_POINT_MUTATE) || \
+    defined(NO_LIMB_MUTATE) || \
+    defined(NO_CROSS_MUTATE)
+#warning "Mutation code not being compiled!!"
+#endif
 
 namespace elfin {
 
 /* private */
 
-// static
-void FreeCandidate::gen_random_nodes(
-    Nodes & nodes,
-    const size_t & max_len) {
-    if (nodes.empty()) {
-        // Pick random starting node
-        nodes.emplace_back(XDB.get_rand_mod<C>(), 0, 0, 0);
-    }
-    else {
-        synthesise(nodes);
-    }
-
-    while (nodes.size() <= max_len) {
-        // Compute non-colliding next module roulette
-        ModuleList compat_mods;
-        Roulette compat_mods_roulette;
-        const Node & curr_node = nodes.back();
-        for (auto & chain_it : curr_node->chains()) {
-            const Chain & chain = chain_it->second;
-            for (auto & txm : chain.c_links) {
-                if (!Candidate::Node::collides(
-                            std::get<0>(txm)->com_b,
-                            nodes.begin(),
-                            nodes.end() - 2)) {
-                    for (int j = 0; j < LINK_COUNTS.at(i).y; j++)
-                        compatible_modules.push_back(i);
-                }
-            }
-        }
-
-        if (compatible_modules.empty())
-            break;
-
-        // Pick a random valid neighbour
-        const size_t next_node_id = pick_random(compatible_modules);
-
-        const PairRelationship * next_node_pr = rr.at(next_node_id);
-
-        // Grow shape
-        for (auto & n : nodes) {
-            n.com = n.com.dot(next_node_pr->rot);
-            n.com += next_node_pr->tran;
-        }
-
-        nodes.emplace_back(next_node_id, 0, 0, 0);
-    }
-}
-
-// static
-void FreeCandidate::gen_random_nodes_reverse(
-    Nodes & nodes,
-    const size_t & max_len) {
-    const size_t rm_dim = REL_MAT.size();
-
-    if (nodes.empty()) {
-        // Pick random starting node
-        nodes.emplace_back(XDB.get_rand_mod<C>(), 0, 0, 0);
-    }
-    else {
-        synthesise_reverse(nodes);
-    }
-
-    // Reverse order so growth tip is at back
-    std::reverse(nodes.begin(), nodes.end());
-
-    while (nodes.size() <= max_len) {
-        std::vector<size_t> roulette_wheel;
-        const Node & curr_node = nodes.back();
-
-        // Compute whether each neighbour is colliding
-        for (size_t i = 0; i < rm_dim; i++) {
-            const PairRelationship * pr_ptr = REL_MAT.at(i).at(curr_node.id);
-            if (pr_ptr == NULL)
-                continue;
-
-            const Vector3f checkpoint = pr_ptr->tran;
-
-            // Create roulette based on number of LHS neighbours
-            // of the current neighbour being considered
-            if (!collides(i,
-                          checkpoint,
-                          nodes.begin(),
-                          nodes.end() - 2)) {
-                for (int j = 0; j < LINK_COUNTS.at(i).x; j++)
-                    roulette_wheel.push_back(i);
-            }
-        }
-
-        if (roulette_wheel.empty())
-            break;
-
-        // Pick a random valid neighbour
-        const size_t next_node_id = pick_random(roulette_wheel);
-        const PairRelationship * next_node_pr =
-            REL_MAT.at(next_node_id).at(curr_node.id);
-
-        // Grow shape
-        for (auto & n : nodes) {
-            n.com -= next_node_pr->tran;
-            n.com = n.com.dot(next_node_pr->rot_inv);
-        }
-
-        nodes.emplace_back(next_node_id, 0, 0, 0);
-    }
-
-    // Reverse the reverse!
-    std::reverse(nodes.begin(), nodes.end());
-}
-
-// static
-bool FreeCandidate::synthesise_reverse(Nodes & nodes) {
-    const size_t N = nodes.size();
-    if (N == 0)
-        return true;
-
-    // Zero all coords so they don't interfere with
-    // collision check before being synth'd
-    for (auto & n : nodes)
-        n.com.x = (n.com.y = (n.com.z = 0));
-
-    for (int i = N - 1; i > 0; i--) {
-        const auto & lhs_node = nodes.at(i - 1);
-        const auto & rhs_node = nodes.at(i);
-
-        // Check collision
-        const PairRelationship * new_node_pr =
-            REL_MAT.at(lhs_node.id).at(rhs_node.id);
-
-        if (new_node_pr == NULL) {
-            // Fatal failure; diagnose!
-            err("Synthesise(): impossible pair! %d(%s) <-x-> %d(%s)\n",
-                lhs_node.id,
-                lhs_node->prototype->name_.c_str(),
-                rhs_node.id,
-                rhs_node->prototype->name_.c_str());
-
-            die("Fatal error in synthesise_reverse(): impossible pair\n");
-        }
-
-        const Vector3f checkpoint = new_node_pr->tran;
-
-        if (collides(lhs_node.id,
-                     checkpoint,
-                     nodes.begin() + i + 2,
-                     nodes.end()))
-            return false;
-
-        // Grow shape
-        for (int j = N - 1; j > i - 1; j--) {
-            auto & n = nodes.at(j);
-            n.com -= new_node_pr->tran;
-            n.com = n.com.dot(new_node_pr->rot_inv);
-        }
-    }
-
-    return true;
-}
-
-// static
-bool FreeCandidate::synthesise(Nodes & nodes) {
-    // Zero all coords so they don't interfere with
-    // collision check before being synth'd
-    for (Node & n : nodes)
-        n.com.x = (n.com.y = (n.com.z = 0));
-
-    for (size_t i = 1; i < nodes.size(); i++) {
-        const Node & lhs_node = nodes.at(i - 1);
-        const Node & rhs_node = nodes.at(i);
-
-        // Check collision
-        const PairRelationship * new_node_pr =
-            REL_MAT.at(lhs_node.id).at(rhs_node.id);
-
-        if (new_node_pr == NULL) {
-            // Fatal failure; diagnose!
-            err("Synthesise(): impossible pair! %d(%s) <-x-> %d(%s)\n",
-                lhs_node.id,
-                lhs_node->prototype->name_.c_str(),
-                rhs_node.id,
-                rhs_node->prototype->name_.c_str());
-
-            die("Fatal error in synthesise(): impossible pair\n");
-        }
-
-        if (i <= 2 or
-                collides(rhs_node.id,
-                         new_node_pr->com_b,
-                         nodes.begin(),
-                         nodes.begin() + i - 2))
-            return false;
-
-        // Grow shape
-        for (size_t j = 0; j < i; j++) {
-            Node & n = nodes.at(j);
-            n.com = n.com.dot(new_node_pr->rot);
-            n.com += new_node_pr->tran;
-        }
-    }
-
-    return true;
-}
-
 void FreeCandidate::randomize() {
-    nodes_.clear();
-    gen_random_nodes(nodes_);
+    nodes_.randomize(nodes_.begin(), TerminusType::ANY, NodeList::MAX_LEN);
 }
 
 void FreeCandidate::auto_mutate() {
@@ -244,15 +49,15 @@ IdPairs get_crossing_ids(
     // Compute index pairs of mother and father nodes at which cross mutation
     // is possible
     IdPairs crossing_ids;
-    const Nodes & mother_nodes = mother.nodes();
+    const NodeList & mother_nodes = mother.nodes();
     const size_t mn_len = mother_nodes.size();
-    const Nodes & father_nodes = father.nodes();
+    const NodeList & father_nodes = father.nodes();
     const size_t fn_len = father_nodes.size();
 
     for (long i = 1; i < (long) mn_len - 1; i++) {
         // Using i as nodes1 left limb cutoff
         for (long j = 1; j < (long) fn_len - 1; j++) {
-            if (mother_nodes.at(i).id == father_nodes.at(j).id) {
+            if (mother_nodes.at(i).prototype == father_nodes.at(j).prototype) {
                 crossing_ids.push_back(IdPair(i, j));
             }
         }
@@ -274,9 +79,9 @@ bool FreeCandidate::cross_mutate(const FreeCandidate & father) {
             crossing_ids.size()) {
         // Pick random crossing point
         const IdPair & cross_point = pick_random(crossing_ids);
-        const Nodes & father_nodes = father.nodes();
+        const NodeList & father_nodes = father.nodes();
 
-        Nodes new_nodes;
+        NodeList new_nodes;
 
         new_nodes.insert(
             new_nodes.end(),
@@ -350,7 +155,7 @@ bool FreeCandidate::point_mutate() {
                                 (i == n_nodes - 1 or REL_MAT.at(j).at(nodes_.at(i + 1).id))
                            ) {
                             // Make sure resultant shape won't collide with itself
-                            Nodes test_nodes(nodes_);
+                            NodeList test_nodes(nodes_);
                             test_nodes.at(i).id = j;
 
                             // dbg("checking swap at %d/%d of %s\n",
@@ -375,7 +180,7 @@ bool FreeCandidate::point_mutate() {
         case PointMutateMode::InsertMode: {
             IdPairs insertable_ids;
             for (size_t i = 0; i < n_nodes; i++) {
-                for (int j = 0; j < rm_dim; j++) {
+                for (size_t j = 0; j < rm_dim; j++) {
                     // Check whether j can be inserted before i
                     if (
                         (i == 0 or // Pass if inserting at the left end
@@ -385,7 +190,7 @@ bool FreeCandidate::point_mutate() {
                          REL_MAT.at(j).at(nodes_.at(i).id))
                     ) {
                         // Make sure resultant shape won't collide with itself
-                        Nodes test_nodes(nodes_);
+                        NodeList test_nodes(nodes_);
                         Node new_node;
                         new_node.id = j;
                         test_nodes.insert(test_nodes.begin() + i, //This is insertion before i
@@ -424,7 +229,7 @@ bool FreeCandidate::point_mutate() {
                     const Node & rhs_node = nodes_.at(i + 1);
                     if (REL_MAT.at(lhs_node.id).at(rhs_node.id)) {
                         // Make sure resultant shape won't collide with itself
-                        Nodes test_nodes(
+                        NodeList test_nodes(
                             nodes_.begin(),
                             nodes_.begin() + i);
                         test_nodes.insert(
@@ -462,47 +267,13 @@ bool FreeCandidate::point_mutate() {
     return mutate_success;
 }
 
-bool FreeCandidate::get_severable_id(
-    size_t & sever_id,
-    bool & mutate_left_limb) const {
-    const size_t N = nodes_.size();
-    if (N < 2)
-        return false;
-
-    size_t tries = 0;
-    bool found_id = false;
-    while (tries < MAX_FREECANDIDATE_MUTATE_FAILS) {
-        const size_t node_index = get_dice(N - 1) + 1;
-        const size_t node_id = nodes_.at(node_index).id;
-        const IdPair & ids = LINK_COUNTS.at(node_id);
-
-        if (ids.x != 1 or ids.y != 1) {
-            if (ids.x == 1)
-                mutate_left_limb = false;
-            else if (ids.y == 1)
-                mutate_left_limb = true;
-            else
-                mutate_left_limb = get_dice(2);
-
-            sever_id = node_index;
-            found_id = true;
-            break;
-        }
-
-        tries++;
-    }
-
-    return found_id;
-}
-
 bool FreeCandidate::limb_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_LIMB_MUTATE
     // Pick a node that can host an alternative limb
     size_t sever_id = 0;
-    bool mutate_left_limb = false;
-    if (get_severable_id(sever_id, mutate_left_limb)) {
+    if (pick_sever_point(nodes_, sever_id)) {
         // Server the limb
         if (mutate_left_limb)
             nodes_.erase(nodes_.begin(), nodes_.begin() + sever_id);

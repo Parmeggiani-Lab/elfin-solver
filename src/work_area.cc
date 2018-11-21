@@ -70,7 +70,7 @@ V3fList WorkArea::to_V3fList() const {
     UIJoint const * prev = nullptr, * tmp = nullptr;
     UIJoint const * j = leaf_joints_.at(0);
     while (1) {
-        res.emplace_back(j->tran());
+        res.emplace_back(j->tx().collapsed());
 
         if (j == leaf_joints_.at(1))
             break;

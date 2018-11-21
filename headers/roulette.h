@@ -11,18 +11,16 @@ namespace elfin {
 struct Roulette
 {
     std::vector<float> cmlprobs;
-    
+
+    /*
+     * Picks a random item of type T based on cumulative probability.
+     *
+     * WARNING: This assumes the cumulative probabilities were assigned in
+     * ascending sorted order.
+     */
     template<typename T>
     T rand_item(const std::vector<T> items) const {
-        /*
-         * Picks a random module based on cumulative probability derived as
-         * n_links of module over database link_total_.
-         *
-         * WARNING: This assumes the cumulative probabilities were assigned in
-         * ascending sorted order.
-         */
-        panic_if(items.size() != cmlprobs.size(),
-                 "Roulette::rand_item() size mismatch: items.size() != cmlprobs.size()");
+        panic_when(items.size() != cmlprobs.size());
 
         auto itr = std::upper_bound(
                        cmlprobs.begin(),
@@ -30,6 +28,18 @@ struct Roulette
                        get_dice_0to1()
                    );
         return items.at(itr - cmlprobs.begin());
+    }
+
+    /*
+     * Divides all cumulative probabilities by sum so the range becomes
+     * (0, 1].
+     */
+    void normalize(const size_t sum) {
+        panic_when(sum <= cmlprobs.back());
+        
+        for (float & cp : cmlprobs) {
+            cp /= sum;
+        }
     }
 };
 

@@ -60,6 +60,7 @@ private:
     ARG_PARSER_CALLBACK_IN_HEADER(set_device) { options_.device = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_n_best_sols) { options_.n_best_sols = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_dry_run) { options_.dry_run = true; }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_radius_type) { options_.radius_type = arg_in; }
 
     void print_args() const;
 
@@ -72,9 +73,9 @@ private:
         {"i", "input_file", "Set input file path", true, &ArgParser::set_input_file},
         {"x", "xdb", "Set xdb database file path (default=./xdb.json)", true, &ArgParser::set_xdb},
         {"o", "output_dir", "Set output directory (default=./output/)", true, &ArgParser::set_output_dir},
-        {"d", "len_dev_alw", "Set length deviation allowance (default=3)", true, &ArgParser::set_len_dev_alw},
+        {"l", "len_dev_alw", "Set length deviation allowance (default=3)", true, &ArgParser::set_len_dev_alw},
         {"a", "avg_pair_dist", "Overwrite default=average distance between doubles of CoMs (default=38.0)", true, &ArgParser::set_avg_pair_dist},
-        {"rs", "rand_seed", "Set RNG seed (default=0x1337cafe; setting to 0 uses time as seed)", true, &ArgParser::set_rand_seed},
+        {"s", "seed", "Set RNG seed (default=0x1337cafe; setting to 0 uses time as seed)", true, &ArgParser::set_rand_seed},
         {"gps", "ga_pop_size", "Set GA population size (default=10000)", true, &ArgParser::set_ga_pop_size},
         {"git", "ga_iters", "Set GA iterations (default=1000)", true, &ArgParser::set_ga_iters},
         {"gsr", "ga_survive_rate", "Set GA survival rate (default=0.1)", true, &ArgParser::set_ga_survive_rate},
@@ -87,7 +88,8 @@ private:
         {"t", "test", "Run unit tests", false, &ArgParser::set_run_unit_tests},
         {"dv", "device", "Run on accelerator device ID", true, &ArgParser::set_device},
         {"n", "n_best_sols", "Set number of best solutions to output", true, &ArgParser::set_n_best_sols},
-        {"dry", "dry_run", "Enable dry run - exit just after initializing first population", false, &ArgParser::set_dry_run}
+        {"dry", "dry_run", "Enable dry run - exit just after initializing first population", false, &ArgParser::set_dry_run},
+        {"r", "radius", "Set radius type from one of {max_ca_dist (default), max_heavy_dist, average_all}", true, &ArgParser::set_radius_type}
     };
 
     void check_options() const;

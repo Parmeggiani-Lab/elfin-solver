@@ -32,13 +32,13 @@ void DBParser::parse(const JSON & j) {
             for (size_t k = 0; k < n_links.size(); ++k)
             {
                 wrn("\t\tn_links[%lu] -> xdb_[%s]\n", 
-                    k, std::get<1>(n_links[k])->name_.c_str());
+                    k, n_links[k].mod->name_.c_str());
             }
             auto c_links = chain.c_links;
             for (size_t k = 0; k < c_links.size(); ++k)
             {
                 wrn("\t\tc_links[%lu] -> xdb_[%s]\n", 
-                    k, std::get<1>(c_links[k])->name_.c_str());
+                    k, c_links[k].mod->name_.c_str());
             }
         }
     }

@@ -142,6 +142,30 @@ void Transform::init_with_elements(const ElementArrayRef ele) {
 }
 
 /* other methods */
+std::string Transform::to_string() const {
+	std::ostringstream ss;
+
+	ss << "tx[\n";
+	for (size_t i = 0; i < 4; ++i) {
+		ss << "\t[ ";
+		for (size_t j = 0; j < 4; ++j) {
+			ss << elements_[i][j];
+			if (j < 3) {
+				ss << ", ";
+			}
+		}
+		ss << " ]\n";
+	}
+	ss << "  ]";
+
+	return ss.str();
+}
+
+std::string Transform::to_csv_string() const
+{
+	return collapsed().to_csv_string();
+}
+
 Transform Transform::operator*(const Transform & tx_b) const {
 	/*
 	 * In A * B = C, A is this current Transform.
@@ -209,23 +233,8 @@ Transform Transform::inversed() const {
 	return Transform(ele);
 }
 
-std::string Transform::to_string() const {
-	std::ostringstream ss;
-
-	ss << "tx[\n";
-	for (size_t i = 0; i < 4; ++i) {
-		ss << "\t[ ";
-		for (size_t j = 0; j < 4; ++j) {
-			ss << elements_[i][j];
-			if (j < 3) {
-				ss << ", ";
-			}
-		}
-		ss << " ]\n";
-	}
-	ss << "  ]";
-
-	return ss.str();
+Vector3f Transform::collapsed() const {
+	return this->operator*(Vector3f());
 }
 
 } // namespace elfin

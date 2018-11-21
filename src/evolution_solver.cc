@@ -11,6 +11,7 @@
 #include "spec.h"
 #include "jutil.h"
 #include "parallel_utils.h"
+#include "node_list.h"
 
 #define DEBUG_PRINT_POP 4
 
@@ -41,7 +42,7 @@ EvolutionSolver::print_start_msg(const V3fList & shape) const {
         dbg("Work Area Point: %s\n", p.to_string().c_str());
 
     msg("Length guess: <%lu, spec has %d points\n",
-        CANDIDATE_LENGTHS.max,
+        NodeList::MAX_LEN,
         shape.size());
     msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
 
@@ -163,7 +164,7 @@ EvolutionSolver::run() {
         char * gen_msg_fmt;
         int asprintf_ret = -1;
         asprintf_ret = asprintf(&gen_msg_fmt,
-                                "Generation #%%%dd: best=%%.2f (%%.2f/module), worst=%%.2f, time taken=%%.0fms\n", genDispDigits);
+                                "Generation #%%%dlu: best=%%.2f (%%.2f/module), worst=%%.2f, time taken=%%.0fms\n", genDispDigits);
         char * avg_time_msg_fmt;
         asprintf_ret = asprintf(&avg_time_msg_fmt,
                                 "Avg Times: Evolve=%%.0f,Score=%%.0f,Rank=%%.0f,Select=%%.0f,Gen=%%.0f\n");
@@ -171,7 +172,7 @@ EvolutionSolver::run() {
         double tot_gen_time = 0.0f;
         if (!OPTIONS.dry_run) {
             MAP_DATA() {
-                for (int i = 0; i < OPTIONS.ga_iters; i++) {
+                for (size_t i = 0; i < OPTIONS.ga_iters; i++) {
                     const double genStartTime = get_timestamp_us();
 
 #if DEBUG_PRINT_POP > 0
@@ -213,7 +214,7 @@ EvolutionSolver::run() {
 
                     tot_gen_time += gen_time;
 
-                    const int n_gens = i + 1;
+                    const size_t n_gens = i + 1;
                     msg(avg_time_msg_fmt,
                         (float) (POPULATION_COUNTERS.evolve_time) / n_gens,
                         (float) (POPULATION_COUNTERS.score_time) / n_gens,
@@ -229,9 +230,11 @@ EvolutionSolver::run() {
                     }
                     else {
                         // update best sols for this work area
-                        for (int i = 0; i < OPTIONS.n_best_sols; i++)
-                            best_sols_[wa_name][i] =
-                                std::shared_ptr<Candidate>(curr_pop_->candidates().at(i)->clone());
+                        for (size_t j = 0; j < OPTIONS.n_best_sols; j++) {
+                            best_sols_[wa_name][j] =
+                                std::shared_ptr<Candidate>(
+                                    curr_pop_->candidates().at(j)->clone());
+                        }
 
                         if (float_approximates(gen_best_score, lastgen_best_score)) {
                             stagnant_count++;

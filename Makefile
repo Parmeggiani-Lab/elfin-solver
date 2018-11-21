@@ -22,6 +22,7 @@ DEBUG=yes
 OMP=yes
 TARGET=cpu
 TIMING=yes
+MAX_ERRORS=1
 
 ifeq ($(DEBUG), yes)
 	DEBUG_FLAGS=-ggdb3
@@ -85,7 +86,7 @@ endif
 
 OPT_FLAGS 		+= -O3
 CC_FLAGS 		+= -MMD -std=c++11 \
-					$(OPT_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) $(TIMING_FLAGS) $(DEFS) $(INCS) $(EXTRA_FLAGS)
+					$(OPT_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) $(TIMING_FLAGS) $(DEFS) $(INCS) -fmax-errors=$(MAX_ERRORS) $(EXTRA_FLAGS)
 
 COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS)
 

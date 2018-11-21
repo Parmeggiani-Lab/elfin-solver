@@ -19,49 +19,44 @@ namespace elfin {
 
 GEN_ENUM_AND_STRING(ModuleType, ModuleTypeNames, FOREACH_MODULETYPE);
 
-#define FOREACH_TERMINUSTYPE(MACRO) \
-    MACRO(N) \
-    MACRO(C) \
-    MACRO(ENUM_COUNT) \
-
-GEN_ENUM_AND_STRING(TerminusType, TerminusTypeNames, FOREACH_TERMINUSTYPE);
-
-static_assert(TerminusType::ENUM_COUNT == 2);
-
 class Module
 {
 public:
     /* types */
-    typedef std::tuple<Transform, Module *> TxMod;
+    struct Link
+    {
+        Transform tx;
+        Module * mod;
+        Link() {}
+        Link(const Transform & _tx, Module * _mod) :
+            tx(_tx), mod(_mod) {}
+    };
     struct Chain {
         std::string name;
-        std::vector<TxMod> n_links;
-        std::vector<TxMod> c_links;
+        std::vector<Link> n_links;
+        std::vector<Link> c_links;
         Chain(const std::string & _name) : name(_name) {}
+        Chain() : name("unnamed") {}
     };
     typedef std::unordered_map<std::string, Chain> ChainMap;
-    struct Radii {
-        float avg_all;
-        float max_ca;
-        float max_heavy;
-    };
 
 protected:
     /* data members */
     ChainMap chains_;
     size_t n_link_count_, c_link_count_;
-    Radii radii_;
 
 public:
     /* data members */
     const std::string name_;
     const ModuleType type_;
+    const float radius_;
 
     /* ctors & dtors */
     Module(const std::string & name,
            const ModuleType type,
+           const float radius,
            const StrList & chain_ids) :
-        name_(name), type_(type) {
+        name_(name), type_(type), radius_(radius) {
         for (size_t i = 0; i < chain_ids.size(); ++i) {
             const std::string & cn = chain_ids[i];
             chains_[cn] = Chain(cn);
@@ -80,8 +75,6 @@ public:
     const size_t n_link_count() const { return n_link_count_; }
     const size_t c_link_count() const { return c_link_count_; }
     const size_t all_link_count() const { return n_link_count_ + c_link_count_; }
-    const Radii & radii() const { return radii_; }
-    const void set_radii(const Radii & radii) { radii_ = radii; }
 
     /* other methods */
     std::string to_string() const;

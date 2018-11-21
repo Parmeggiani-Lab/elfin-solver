@@ -30,7 +30,7 @@ Matrix<double> V3fList_to_vectors(V3fList const & pts) {
 	Matrix<double> out;
 
 	out.resize(pts.size());
-	for (int i = 0; i < out.size(); i++)
+	for (size_t i = 0; i < out.size(); i++)
 		out.at(i) = Vector3f_to_vector(pts.at(i));
 
 	return out;
@@ -416,11 +416,11 @@ bool kabsch(
 	return ret_val;
 }
 
-float kabsch_score(const Nodes & nodes, const WorkArea & wa) {
+float kabsch_score(const NodeList & nodes, const WorkArea & wa) {
 	// TODO: don't convert to V3fList
 	V3fList points;
 	for (auto & n : nodes) {
-		points.emplace_back(n.com);
+		points.emplace_back(n.tx.collapsed());
 	}
 	return kabsch_score(points, wa.to_V3fList());
 }

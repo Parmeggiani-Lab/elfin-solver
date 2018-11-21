@@ -18,6 +18,8 @@ typedef struct {
     std::string config_file = "";
     std::string output_dir = "output";
 
+    std::string radius_type = "max_ca_dist";
+
     ulong len_dev_alw = 3;
 
     // Run elfinpy/stat_xdb.py to find this number with the latest xdb.json

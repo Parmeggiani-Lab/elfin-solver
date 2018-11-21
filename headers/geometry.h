@@ -7,31 +7,25 @@
 
 #include "json.h"
 #include "elfin_exception.h"
+#include "jutil.h"
 
 namespace elfin
 {
 
-struct Transform;
-
-struct Vector3f
-{
+struct Vector3f {
 	float x, y, z;
 
+	/* ctors & dtors */
 	Vector3f() : Vector3f(0, 0, 0) {}
-
 	Vector3f(const Vector3f & rhs) :
 		x(rhs.x), y(rhs.y), z(rhs.z) {}
-
 	Vector3f(float _x, float _y, float _z) :
 		x(_x), y(_y), z(_z) {}
-
 	template <typename Iterable>
 	Vector3f(Iterable itb) :
 		Vector3f(itb.begin(), itb.begin() + 3) {}
-
 	template <typename ItrBegin, typename ItrEnd>
-	Vector3f(ItrBegin begin, ItrEnd end)
-	{
+	Vector3f(ItrBegin begin, ItrEnd end) {
 		if ((end - begin) < 3)
 			throw InvalidArgumentSize;
 
@@ -41,6 +35,7 @@ struct Vector3f
 		z = *itr++;
 	}
 
+	/* other methods */
 	std::string to_string() const;
 	std::string to_csv_string() const;
 
@@ -50,16 +45,18 @@ struct Vector3f
 	Vector3f & operator+=(const Vector3f & rhs);
 	Vector3f & operator-=(const Vector3f & rhs);
 	float operator[](const size_t idx) {
+		panic_when(idx > 2);
 		return *(&x + idx);
 	}
 	float operator[](const size_t idx) const {
+		panic_when(idx > 2);
 		return *(&x + idx);
 	}
 	float dot(const Vector3f & rhs) const;
 	float dist_to(const Vector3f & rhs) const;
 	float sq_dist_to(const Vector3f & rhs) const;
 
-	// We use 1e-6 because PDBs have only 4 decimals of precision
+	// We use 1e-4 because PDBs have only 4 decimals of precision
 	bool approximates(const Vector3f & ref, const double tolerance = 1e-4);
 };
 typedef std::vector<Vector3f> V3fList;
@@ -69,7 +66,6 @@ class Transform
 public:
 	/* types */
 	typedef float ElementArray[4][4];
-	// typedef float(&)[4][4] ElementArrayRef;
 	typedef ElementArray & ElementArrayRef;
 private:
 	/* data members */
@@ -83,11 +79,13 @@ public:
 	void init_with_elements(const ElementArrayRef ele);
 
 	/* other methods */
+	std::string to_string() const;
+	std::string to_csv_string() const;
 	Transform operator*(const Transform & tx) const;
 	Transform & operator*=(const Transform & tx);
 	Vector3f operator*(const Vector3f & vec) const;
 	Transform inversed() const;
-	std::string to_string() const;
+	Vector3f collapsed() const;
 };
 
 } // namespace elfin

@@ -140,7 +140,6 @@ void ElfinRunner::crash_dump() const {
 int ElfinRunner::run_unit_tests() const {
     msg("Running unit tests...\n");
     int fail_count = 0;
-    fail_count += _test_math_utils();
     fail_count += _test_kabsch();
     return fail_count;
 }
@@ -157,10 +156,11 @@ int ElfinRunner::run_meta_tests() const {
         // translations, but in the scale we're working
         // at it should rarely, if ever, go beyond
         // one thousand Angstroms
-        float tx_ele[4][4] = {
-            1.0f, 0.0f, 0.0f, -39.0f,
-            0.0f, -0.5177697998f, 0.855519979f, 999.3413f
-            0.0f, -0.855519979f, -0.5177697998f, -400.11f
+        const float tx_ele[4][4] = {
+            1.0f, .0f, .0f, -39.0f,
+            .0f, -0.5177697998f, 0.855519979f, 999.3413f,
+            .0f, -0.855519979f, -0.5177697998f, -400.11f,
+            .0f, .0f, .0f, 1.0f
         };
 
         Transform tx(tx_ele);

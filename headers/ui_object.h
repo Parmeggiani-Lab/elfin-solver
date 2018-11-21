@@ -11,6 +11,7 @@ namespace elfin {
 
 class UIObject
 {
+protected:
     std::string name_;
     Transform tx_;
 

@@ -12,11 +12,9 @@ namespace elfin {
 
 PopulationCounters pop_counters_;
 MutationCutoffs mt_cutoffs_;
-Candidate::Lengths cd_lengths_;
 MutationCounters mt_counters_;
 const PopulationCounters & POPULATION_COUNTERS = pop_counters_;
 const MutationCutoffs & MUTATION_CUTOFFS = mt_cutoffs_;
-const Candidate::Lengths & CANDIDATE_LENGTHS = cd_lengths_;
 const MutationCounters & MUTATION_COUNTERS = mt_counters_;
 
 void Population::setup(const WorkArea & wa) {
@@ -52,9 +50,8 @@ void Population::setup(const WorkArea & wa) {
         sum_dist += (i - 1)->dist_to(*i);
 
     // Add one because division counts segments. We want number of points.
-    int expected_len = 1 + round(sum_dist / OPTIONS.avg_pair_dist);
-    cd_lengths_ = {}; // clear
-    cd_lengths_.max = expected_len + OPTIONS.len_dev_alw;
+    size_t expected_len = 1 + round(sum_dist / OPTIONS.avg_pair_dist);
+    NodeList::set_max_len(expected_len + OPTIONS.len_dev_alw);
 }
 
 Population::~Population() {

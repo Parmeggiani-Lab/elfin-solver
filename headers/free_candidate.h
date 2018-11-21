@@ -11,22 +11,10 @@ namespace elfin {
 
 class FreeCandidate : public Candidate {
 private:
-    static void gen_random_nodes(
-        Nodes & nodes,
-        const size_t & max_len = CANDIDATE_LENGTHS.max);
-    static void gen_random_nodes_reverse(
-        Nodes & nodes,
-        const size_t & max_len = CANDIDATE_LENGTHS.max);
-    static bool synthesise(Nodes & nodes);
-    static bool synthesise_reverse(Nodes & nodes);
-
     void randomize();
     void auto_mutate();
     bool cross_mutate(const FreeCandidate & father);
     bool point_mutate();
-    bool get_severable_id(
-        size_t & sever_id,
-        bool & mutate_left_limb) const;
     bool limb_mutate();
 
 public:

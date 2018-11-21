@@ -75,7 +75,7 @@ const ArgBundle * ArgParser::match_arg_bundle(const char *arg_in) {
 }
 
 void ArgParser::parse_options(const int argc, char const *argv[]) {
-    for (int i = 1; i < argc; i++) {
+    for (size_t i = 1; i < argc; i++) {
         // iterate through argument bundle to match argument
         auto arg = argv[i];
         auto ab = match_arg_bundle(arg);

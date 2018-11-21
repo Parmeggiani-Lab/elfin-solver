@@ -30,12 +30,20 @@ private:
 protected:
     /* data members */
     ModuleList mod_list_;
-    Roulette n_roulette, c_roulette;
+    struct {
+        Roulette n, c, all;
+        size_t n_total, c_total, all_total;
+        void normalize() {
+            n.normalize(n_total);
+            c.normalize(c_total);
+            all.normalize(all_total);
+        }
+    } roulettes_;
 
 public:
     /* ctors & dtors */
     Database() {
-        panic_if(instance_, "Database instance already exists\n");
+        panic_if(instance_, "Multiple instantiation of Database()\n");
         instance_ = this;
     }
     virtual ~Database();
@@ -44,13 +52,14 @@ public:
     /* getters & setters */
     const ModuleList & mod_list() const { return mod_list_; }
     static const Database * instance() { return instance_; }
-    template<TerminusType TERMINUS>
     Module const * get_rand_mod() const {
-        if (TERMINUS == N) {
-            return n_roulette.rand_item(mod_list_);
-        } else {
-            return c_roulette.rand_item(mod_list_);
-        }
+        return roulettes_.all.rand_item(mod_list_);
+    }
+    Module const * get_rand_mod_n() const {
+        return roulettes_.n.rand_item(mod_list_);
+    }
+    Module const * get_rand_mod_c() const {
+        return roulettes_.c.rand_item(mod_list_);
     }
 };
 

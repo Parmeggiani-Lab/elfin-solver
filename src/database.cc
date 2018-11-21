@@ -4,6 +4,7 @@
 
 #include "string_types.h"
 #include "random_utils.h"
+#include "options.h"
 
 #define DEBUG_PRINT_CMLPROBS
 
@@ -12,32 +13,6 @@ namespace elfin {
 const Database * Database::instance_ = nullptr;
 
 /* private */
-
-void Database::distribute_cmlprobs() {
-    size_t n_cmllink = 0, c_cmllink = 0;
-    for (auto mod : mod_list_) {
-        float n_cmlprob = (float) n_cmllink / link_total_;
-        float c_cmlprob = (float) c_cmllink / link_total_;
-        n_roulette.cmlprobs.push_back(n_cmlprob);
-        c_roulette.cmlprobs.push_back(c_cmlprob);
-
-#ifdef DEBUG_PRINT_CMLPROBS
-        wrn("mod[%s] n_cmlprob=%.3f, c_cmlprob=%.3f\n",
-            mod->name_.c_str(),
-            n_roulette.cmlprobs.back(),
-            c_roulette.cmlprobs.back());
-#endif  /* ifdef DEBUG_PRINT_CMLPROBS */
-
-        n_cmllink += mod->n_link_count();
-        c_cmllink += mod->c_link_count();
-    }
-
-#ifdef DEBUG_PRINT_CMLPROBS
-    wrn("Final n_cmlprob=%.3f, c_cmlprob=%.3f\n",
-        (float) n_cmllink / link_total_,
-        (float) c_cmllink / link_total_);
-#endif  /* ifdef DEBUG_PRINT_CMLPROBS */
-}
 
 /* public */
 #define JSON_MOD_PARAMS JSON::const_iterator jit, ModuleType mod_type
@@ -83,12 +58,13 @@ void Database::parse_from_json(const JSON & xdb) {
                 ++chain_it) {
             chain_ids.push_back(chain_it.key());
         }
-        mod_list_.push_back(new Module(name, mod_type, chain_ids));
+
+        const float radius = (*jit)["radii"][OPTIONS.radius_type];
+        mod_list_.push_back(new Module(name, mod_type, radius, chain_ids));
     };
 
     for_each_module(init_module);
 
-    link_total_ = 0;
     auto parse_link = [&](JSON_MOD_PARAMS) {
         Module * const mod_a = mod_list_.at(name_id_map[jit.key()]);
 
@@ -121,26 +97,32 @@ void Database::parse_from_json(const JSON & xdb) {
                         a_chain_id,
                         mod_b,
                         b_chain_it.key());
-                    link_total_++;
+
+                    roulettes_.n.cmlprobs.push_back(roulettes_.n_total++);
+                    roulettes_.c.cmlprobs.push_back(roulettes_.c_total++);
+                    roulettes_.all.cmlprobs.push_back(roulettes_.all_total++);
                 }
             }
         }
     };
     for_each_module(parse_link);
 
-    distribute_cmlprobs();
+    roulettes_.normalize();
 
-    // Build radii list for collision checking
-    auto parse_radii = [&](JSON_MOD_PARAMS) {
-        const JSON & radii = (*jit)["radii"];
-        const Module::Radii r = {
-            radii["average_all"],
-            radii["max_ca_dist"],
-            radii["max_heavy_dist"]
-        };
-        mod_list_.at(name_id_map[jit.key()])->set_radii(r);
-    };
-    for_each_module(parse_radii);
+#ifdef DEBUG_PRINT_CMLPROBS
+    wrn("---Cumulative Probability Debug---\n");
+    for (auto mod : mod_list_) {
+        wrn("mod[%s] n=%.3f, c=%.3f, all:\n",
+            mod->name_.c_str(),
+            roulettes_.n.cmlprobs.back(),
+            roulettes_.c.cmlprobs.back(),
+            roulettes_.all.cmlprobs.back());
+    }
+    wrn("Totals n=%lu, c=%lu, all=%luf\n",
+        roulettes_.n_total,
+        roulettes_.c_total,
+        roulettes_.all_total);
+#endif  /* ifdef DEBUG_PRINT_CMLPROBS */
 }
 
 Database::~Database() {
