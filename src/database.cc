@@ -1,25 +1,23 @@
 #include "database.h"
 
 #include <unordered_map>
+#include <sstream>
 
-#include "string_types.h"
+#include "string_utils.h"
 #include "random_utils.h"
 #include "input_manager.h"
 
-#define PRINT_CMLPROBS
-#define PRINT_PARSED_DB
+// #define PRINT_CMLPROBS
+// #define PRINT_DB
 
 namespace elfin {
 
 void Database::Drawable::compute_cmlprobs() {
     size_t n_acm = 0, c_acm = 0, all_acm = 0;
     for (auto mod : mod_list) {
-        n.cmlprobs.push_back(
-            (float) n_acm);
-        c.cmlprobs.push_back(
-            (float) c_acm);
-        all.cmlprobs.push_back(
-            (float) all_acm);
+        n.cmlprobs.push_back(n_acm);
+        c.cmlprobs.push_back(c_acm);
+        all.cmlprobs.push_back(all_acm);
         n_acm += mod->n_link_count();
         c_acm += mod->c_link_count();
         all_acm += mod->all_link_count();
@@ -32,25 +30,65 @@ void Database::Drawable::compute_cmlprobs() {
     }
 }
 
+std::string Database::Drawable::to_string() const {
+    std::stringstream ss;
+    for (size_t i = 0; i < mod_list.size(); ++i) {
+        ss << string_format(
+               "mod[#%lu:%s] n=%.3f, c=%.3f, all=%.3f\n",
+               i,
+               mod_list.at(i)->name_.c_str(),
+               n.cmlprobs.at(i),
+               c.cmlprobs.at(i),
+               all.cmlprobs.at(i));
+    }
+    return ss.str();
+}
+
+void Database::Drawables::categorize() {
+    for (auto mod : all.mod_list) {
+        const size_t n_itf = mod->count_interfaces();
+        if (n_itf < 2) {
+            die("mod[%s] has fewer interfaces(%lu) than expected(2)\n",
+                mod->name_.c_str(), n_itf);
+        } else if (n_itf == 2) {
+            basic.mod_list.push_back(mod);
+        } else {
+            complex.mod_list.push_back(mod);
+        }
+
+        if (mod->type_ == ModuleType::SINGLE) {
+            singles.mod_list.push_back(mod);
+        } else if (mod->type_ == ModuleType::HUB) {
+            hubs.mod_list.push_back(mod);
+        } else {
+            die("mod[%s] has unknown ModuleType: %s\n",
+                mod->name_.c_str(), ModuleTypeNames[mod->type_]);
+        }
+    }
+}
+
 /* protected */
 void Database::print_cmlprobs() {
 #ifdef PRINT_CMLPROBS
     wrn("---Cumulative Probability Debug---\n");
-    for (size_t i = 0; i < drawables_.all.mod_list.size(); ++i) {
-        wrn("mod[#%lu:%s] n=%.3f, c=%.3f, all=%.3f\n",
-            i, drawables_.all.mod_list.at(i)->name_.c_str(),
-            drawables_.all.n.cmlprobs.at(i),
-            drawables_.all.c.cmlprobs.at(i),
-            drawables_.all.all.cmlprobs.at(i));
-    }
+    wrn("All:\n%s", drawables_.all.to_string().c_str());
+    wrn("Singles:\n%s", drawables_.singles.to_string().c_str());
+    wrn("Hubs:\n%s", drawables_.hubs.to_string().c_str());
+    wrn("Basic:\n%s", drawables_.basic.to_string().c_str());
+    wrn("Complex:\n%s", drawables_.complex.to_string().c_str());
+
 #endif  /* ifdef PRINT_CMLPROBS */
 }
 
 void Database::print_db() {
-#ifdef PRINT_PARSED_DB
+#ifdef PRINT_DB
     wrn("---DB Link Parse Debug---\n");
     const size_t n_mods = drawables_.all.mod_list.size();
-    wrn("Database has %lu mods\n", n_mods);
+    wrn("Database has %lu mods, of which...\n", n_mods);
+    wrn("%lu are singles\n", drawables_.singles.mod_list.size());
+    wrn("%lu are hubs\n", drawables_.hubs.mod_list.size());
+    wrn("%lu are basic\n", drawables_.basic.mod_list.size());
+    wrn("%lu are complex\n", drawables_.complex.mod_list.size());
 
     for (size_t i = 0; i < n_mods; ++i)
     {
@@ -77,7 +115,7 @@ void Database::print_db() {
             }
         }
     }
-#endif /* ifdef PRINT_PARSED_DB */
+#endif /* ifdef PRINT_DB */
 }
 
 /* public */
@@ -144,7 +182,6 @@ void Database::parse_from_json(const JSON & xdb) {
             // No need to run through "n" because xdb contains only n-c
             // transforms. In link_chains we create inversed versions for c-n
             // transforms.
-
             const JSON & c_json = (*a_chain_it)["c"];
             for (auto c_it = c_json.begin();
                     c_it != c_json.end();
@@ -175,6 +212,7 @@ void Database::parse_from_json(const JSON & xdb) {
     };
     for_each_module(parse_link);
 
+    drawables_.categorize();
     drawables_.compute_cmlprobs();
 
     print_db();

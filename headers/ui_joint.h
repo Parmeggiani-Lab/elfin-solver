@@ -6,7 +6,7 @@
 #include <tuple>
 
 #include "ui_object.h"
-#include "string_types.h"
+#include "string_utils.h"
 
 namespace elfin {
 

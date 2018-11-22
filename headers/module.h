@@ -9,7 +9,7 @@
 #include "jutil.h"
 #include "json.h"
 #include "geometry.h"
-#include "string_types.h"
+#include "string_utils.h"
 
 namespace elfin {
 
@@ -73,9 +73,10 @@ public:
 
     /* getters & setters */
     const ChainMap & chains() const { return chains_; }
-    const size_t n_link_count() const { return n_link_count_; }
-    const size_t c_link_count() const { return c_link_count_; }
-    const size_t all_link_count() const { return n_link_count_ + c_link_count_; }
+    size_t n_link_count() const { return n_link_count_; }
+    size_t c_link_count() const { return c_link_count_; }
+    size_t all_link_count() const { return n_link_count_ + c_link_count_; }
+    size_t count_interfaces() const;
 
     /* other methods */
     std::string to_string() const;

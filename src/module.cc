@@ -35,6 +35,16 @@ void Module::link_chains(
     mod_b->n_link_count_++;
 }
 
+size_t Module::count_interfaces() const {
+    size_t n = 0;
+    for (auto map_it : chains_) {
+        const Chain & c = map_it.second;
+        n += (c.n_links.size() > 0) + (c.c_links.size() > 0);
+    }
+
+    return n;
+}
+
 std::string Module::to_string() const
 {
     std::ostringstream ss;

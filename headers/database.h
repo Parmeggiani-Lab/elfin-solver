@@ -34,6 +34,7 @@ protected:
         Module const * draw_c() const {
             return c.rand_item(mod_list);
         }
+        std::string to_string() const;
     };
 
     struct Drawables {
@@ -41,12 +42,17 @@ protected:
          * Basic: mods with 2 termini
          * Complex: mods with > 2 termini
          */
-        Drawable all, basic, complex;
+        Drawable all; // This keeps the pointers to be freed 
+        Drawable singles, hubs, basic, complex;
         void compute_cmlprobs() {
             all.compute_cmlprobs();
+            singles.compute_cmlprobs();
+            hubs.compute_cmlprobs();
             basic.compute_cmlprobs();
             complex.compute_cmlprobs();
         }
+
+        void categorize();
     };
 
     Drawables drawables_;

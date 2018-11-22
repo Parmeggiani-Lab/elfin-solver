@@ -23,11 +23,16 @@ OMP=yes
 TARGET=cpu
 TIMING=yes
 MAX_ERRORS=1
+ASAN=no
 
 ifeq ($(DEBUG), yes)
-	DEBUG_FLAGS=-ggdb3 -fsanitize=address -fno-omit-frame-pointer
+	DEBUG_FLAGS=-ggdb3
 else
 	DEBUG_FLAGS=
+endif
+
+ifeq ($(ASAN), yes)
+	DEBUG_FLAGS+=-fsanitize=address -fno-omit-frame-pointer
 endif
 
 ifeq ($(TARGET), gpu)

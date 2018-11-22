@@ -9,7 +9,7 @@
 #include "geometry.h"
 #include "checksum.h"
 #include "work_area.h"
-#include "string_types.h"
+#include "string_utils.h"
 #include "node_list.h"
 #include "mutation_counters.h"
 
