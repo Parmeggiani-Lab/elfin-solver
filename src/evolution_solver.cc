@@ -7,9 +7,8 @@
 #include <unordered_map>
 #include <limits>
 
-#include "options.h"
-#include "spec.h"
 #include "jutil.h"
+#include "input_manager.h"
 #include "parallel_utils.h"
 #include "node_list.h"
 
@@ -71,11 +70,11 @@ EvolutionSolver::print_start_msg(const V3fList & shape) const {
         "New species:                %u\n",
         popsize_ss.str().c_str(),
         nitr_ss.str().c_str(),
-        POPULATION_COUNTERS.survivors,
-        MUTATION_CUTOFFS.cross,
-        MUTATION_CUTOFFS.point,
-        MUTATION_CUTOFFS.limb,
-        pop_size - MUTATION_CUTOFFS.limb);
+        CUTOFFS.survivors,
+        CUTOFFS.cross,
+        CUTOFFS.point,
+        CUTOFFS.limb,
+        pop_size - CUTOFFS.limb);
 
     const int n_omp_devices = omp_get_num_devices();
     const int host_device_id = omp_get_initial_device();
@@ -155,7 +154,7 @@ EvolutionSolver::run() {
         this->print_start_msg(shape);
 
         best_sols_[wa_name] = CandidateSharedPtrs();
-        best_sols_[wa_name].resize(OPTIONS.n_best_sols);
+        best_sols_[wa_name].resize(OPTIONS.keep_n);
 
         float lastgen_best_score = std::numeric_limits<float>::infinity();
         size_t stagnant_count = 0;
@@ -216,21 +215,21 @@ EvolutionSolver::run() {
 
                     const size_t n_gens = i + 1;
                     msg(avg_time_msg_fmt,
-                        (float) (POPULATION_COUNTERS.evolve_time) / n_gens,
-                        (float) (POPULATION_COUNTERS.score_time) / n_gens,
-                        (float) (POPULATION_COUNTERS.rank_time) / n_gens,
-                        (float) (POPULATION_COUNTERS.select_time) / n_gens,
+                        (float) (GA_TIMES.evolve_time) / n_gens,
+                        (float) (GA_TIMES.score_time) / n_gens,
+                        (float) (GA_TIMES.rank_time) / n_gens,
+                        (float) (GA_TIMES.select_time) / n_gens,
                         (float) tot_gen_time / n_gens);
 
                     // Exit loop if best score is low enough
-                    if (gen_best_score < OPTIONS.score_stop_threshold) {
+                    if (gen_best_score < OPTIONS.ga_stop_score) {
                         msg("Score stop threshold %.2f reached\n",
-                            OPTIONS.score_stop_threshold);
+                            OPTIONS.ga_stop_score);
                         break;
                     }
                     else {
                         // update best sols for this work area
-                        for (size_t j = 0; j < OPTIONS.n_best_sols; j++) {
+                        for (size_t j = 0; j < OPTIONS.keep_n; j++) {
                             best_sols_[wa_name][j] =
                                 std::shared_ptr<Candidate>(
                                     curr_pop_->candidates().at(j)->clone());
@@ -250,12 +249,13 @@ EvolutionSolver::run() {
 
                         lastgen_best_score = gen_best_score;
 
-                        if (stagnant_count >= OPTIONS.max_stagnant_gens) {
-                            wrn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.max_stagnant_gens);
+                        if (OPTIONS.ga_stop_stagnancy != -1 and
+                                stagnant_count >= OPTIONS.ga_stop_stagnancy) {
+                            wrn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.ga_stop_stagnancy);
                             break;
                         }
                         else {
-                            msg("Current stagnancy: %d, max: %d\n", stagnant_count, OPTIONS.max_stagnant_gens);
+                            msg("Current stagnancy: %d, max: %d\n", stagnant_count, OPTIONS.ga_stop_stagnancy);
                         }
                     }
 

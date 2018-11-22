@@ -5,19 +5,13 @@
 
 namespace elfin {
 
-/* This file declares the global structs that hold data parsed from the
-configuration file and data derived from those parsed.*/
-
 struct Options {
     bool valid = true;
 
-    // Input settings
     std::string xdb = "xdb.json";
     std::string input_file = "";
-
     std::string config_file = "";
     std::string output_dir = "output";
-
     std::string radius_type = "max_ca_dist";
 
     size_t len_dev_alw = 3;
@@ -25,38 +19,28 @@ struct Options {
     // Run elfinpy/stat_xdb.py to find this number with the latest xdb.json
     float avg_pair_dist = 37.709864956942226f;
 
-    // GA parameters
+    /* GA parameters */
     uint rand_seed = 0x1337cafe;
     size_t ga_pop_size = 10000;
     size_t ga_iters = 1000;
-    float ga_survive_rate = 0.1f;
+    float ga_survive_rate = 0.05f;
     float ga_cross_rate = 0.5f;
-    float ga_point_mutate_rate = 0.5f;
-    float ga_limb_mutate_rate = 0.5f;
+    float ga_point_mutate_rate = 0.3f;
+    float ga_limb_mutate_rate = 0.3f;
 
-    // Use a small number but not exactly 0.0
-    // because of imprecise float comparison
-    float score_stop_threshold = 0.01f;
+    // Use a small number but not exactly 0.0 because of imprecise float
+    // comparison
+    float ga_stop_score = 0.001f;
 
-    int max_stagnant_gens = 50;
+    long ga_stop_stagnancy = 50;
 
     bool run_unit_tests = false;
 
     int device = 0;
-    int n_best_sols = 3;
+    size_t keep_n = 3;
 
     bool dry_run = false;
 };
-
-extern const Options & OPTIONS; // defined in elfin.cc
-
-struct MutationCutoffs{
-    size_t cross = 0;
-    size_t point = 0;
-    size_t limb = 0;
-} ;
-
-extern const MutationCutoffs & MUTATION_CUTOFFS; // defined in population.cc
 
 }  /* elfin */
 

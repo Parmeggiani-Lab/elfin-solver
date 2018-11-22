@@ -29,8 +29,6 @@ public:
     const WorkAreas & work_areas() const { return work_areas_; };
 };
 
-extern const Spec & SPEC; // defined in elfin.cc
-
 }  /* elfin */
 
 #endif  /* end of include guard: SPEC_H_ */

@@ -154,9 +154,9 @@ void ArgParser::check_options() const {
 
     panic_if(options_.avg_pair_dist < 0, "Average CoM distance must be > 0\n");
 
-    panic_if(options_.n_best_sols < 0 ||
-             options_.n_best_sols > options_.ga_pop_size,
-             "Number of best solutions to output must be > 0 and < gaPopSize\n");
+    panic_if(options_.keep_n < 0 ||
+             options_.keep_n > options_.ga_pop_size,
+             "Number of best solutions to output must be > 0 and < ga_pop_size\n");
 }
 
 void ArgParser::correct_rates() {

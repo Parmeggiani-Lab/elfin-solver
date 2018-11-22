@@ -8,10 +8,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "options.h"
+#include "input_manager.h"
 #include "spec.h"
-#include "arg_parser.h"
-#include "db_parser.h"
+#include "database.h"
 #include "kabsch.h"
 #include "jutil.h"
 #include "random_utils.h"
@@ -22,12 +21,6 @@
 #endif
 
 namespace elfin {
-
-/* link global references to data members */
-Options options_;
-Spec spec_;
-const Options & OPTIONS = options_;
-const Spec & SPEC = spec_;
 
 std::vector<ElfinRunner *> ElfinRunner::instances_;
 bool interrupt_caught = false;
@@ -113,8 +106,8 @@ void ElfinRunner::write_output(std::string alt_dir) const {
     // format json output path
     std::ostringstream json_output_path_ss;
     json_output_path_ss << alt_dir
-                        << options_.output_dir << "/"
-                        << get_filename(options_.input_file)
+                        << OPTIONS.output_dir << "/"
+                        << get_filename(OPTIONS.input_file)
                         << ".json";
 
     std::string json_out_path_str = json_output_path_ss.str();
@@ -244,25 +237,13 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
 
     std::signal(SIGINT, interrupt_handler);
 
-    // Default set to warning and above
     set_log_level(LOG_WARN);
 
-    ArgParser ap(argc, argv);
-    options_ = ap.get_options();
-
-    mkdir_ifn_exists(options_.output_dir.c_str());
-
-    msg("Using master seed: %d\n", options_.rand_seed);
-
-    DBParser::parse(parse_json(options_.xdb));
-
-    set_thread_seeds(options_.rand_seed);
-
-    spec_.parse_from_json(parse_json(options_.input_file));
+    InputManager::setup(argc, argv);
 }
 
 void ElfinRunner::run() {
-    if (options_.run_unit_tests) {
+    if (OPTIONS.run_unit_tests) {
         int fail_count = 0;
         fail_count += run_unit_tests();
         fail_count += run_meta_tests();

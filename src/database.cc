@@ -4,21 +4,88 @@
 
 #include "string_types.h"
 #include "random_utils.h"
-#include "options.h"
+#include "input_manager.h"
 
-// #define DEBUG_PRINT_CMLPROBS
+#define PRINT_CMLPROBS
+#define PRINT_PARSED_DB
 
 namespace elfin {
 
-const Database * Database::instance_ = nullptr;
+void Database::Drawable::compute_cmlprobs() {
+    size_t n_acm = 0, c_acm = 0, all_acm = 0;
+    for (auto mod : mod_list) {
+        n.cmlprobs.push_back(
+            (float) n_acm);
+        c.cmlprobs.push_back(
+            (float) c_acm);
+        all.cmlprobs.push_back(
+            (float) all_acm);
+        n_acm += mod->n_link_count();
+        c_acm += mod->c_link_count();
+        all_acm += mod->all_link_count();
+    }
 
-/* private */
+    for (size_t i = 0; i < mod_list.size(); ++i) {
+        n.cmlprobs[i] /= n_acm;
+        c.cmlprobs[i] /= c_acm;
+        all.cmlprobs[i] /= all_acm;
+    }
+}
+
+/* protected */
+void Database::print_cmlprobs() {
+#ifdef PRINT_CMLPROBS
+    wrn("---Cumulative Probability Debug---\n");
+    for (size_t i = 0; i < drawables_.all.mod_list.size(); ++i) {
+        wrn("mod[#%lu:%s] n=%.3f, c=%.3f, all=%.3f\n",
+            i, drawables_.all.mod_list.at(i)->name_.c_str(),
+            drawables_.all.n.cmlprobs.at(i),
+            drawables_.all.c.cmlprobs.at(i),
+            drawables_.all.all.cmlprobs.at(i));
+    }
+#endif  /* ifdef PRINT_CMLPROBS */
+}
+
+void Database::print_db() {
+#ifdef PRINT_PARSED_DB
+    wrn("---DB Link Parse Debug---\n");
+    const size_t n_mods = drawables_.all.mod_list.size();
+    wrn("Database has %lu mods\n", n_mods);
+
+    for (size_t i = 0; i < n_mods; ++i)
+    {
+        const Module * mod = drawables_.all.mod_list.at(i);
+        const size_t n_chains = mod->chains().size();
+        wrn("xdb_[#%lu:%s] has %lu chains\n",
+            i, mod->name_.c_str(), n_chains);
+
+        for (auto & chain_it : mod->chains()) {
+            wrn("\tchain[%s]:\n", chain_it.first.c_str());
+
+            auto & chain = chain_it.second;
+            auto n_links = chain.n_links;
+            for (size_t k = 0; k < n_links.size(); ++k)
+            {
+                wrn("\t\tn_links[%lu] -> xdb_[%s]\n",
+                    k, n_links[k].mod->name_.c_str());
+            }
+            auto c_links = chain.c_links;
+            for (size_t k = 0; k < c_links.size(); ++k)
+            {
+                wrn("\t\tc_links[%lu] -> xdb_[%s]\n",
+                    k, c_links[k].mod->name_.c_str());
+            }
+        }
+    }
+#endif /* ifdef PRINT_PARSED_DB */
+}
 
 /* public */
 #define JSON_MOD_PARAMS JSON::const_iterator jit, ModuleType mod_type
 typedef std::function<void(JSON_MOD_PARAMS)> JsonModTypeLambda;
+
 void Database::parse_from_json(const JSON & xdb) {
-    mod_list_.clear();
+    drawables_ = Drawables();
 
     // Define lambas for code reuse
     const JSON & singles = xdb["modules"]["singles"];
@@ -48,7 +115,7 @@ void Database::parse_from_json(const JSON & xdb) {
     std::unordered_map<std::string, size_t> name_id_map;
     auto init_module = [&](JSON_MOD_PARAMS) {
         const std::string & name = jit.key();
-        const size_t mod_id = mod_list_.size();
+        const size_t mod_id = drawables_.all.mod_list.size();
         name_id_map[name] = mod_id;
 
         StrList chain_ids;
@@ -60,13 +127,13 @@ void Database::parse_from_json(const JSON & xdb) {
         }
 
         const float radius = (*jit)["radii"][OPTIONS.radius_type];
-        mod_list_.push_back(new Module(name, mod_type, radius, chain_ids));
+        drawables_.all.mod_list.push_back(new Module(name, mod_type, radius, chain_ids));
     };
     for_each_module(init_module);
 
-    size_t link_total = 0;
     auto parse_link = [&](JSON_MOD_PARAMS) {
-        Module * const mod_a = mod_list_.at(name_id_map[jit.key()]);
+        Module * const mod_a =
+            drawables_.all.mod_list.at(name_id_map[jit.key()]);
 
         const JSON & chains_json = (*jit)["chains"];
         for (auto a_chain_it = chains_json.begin();
@@ -82,7 +149,8 @@ void Database::parse_from_json(const JSON & xdb) {
             for (auto c_it = c_json.begin();
                     c_it != c_json.end();
                     ++c_it) {
-                Module * const mod_b = mod_list_.at(name_id_map[c_it.key()]);
+                Module * const mod_b =
+                    drawables_.all.mod_list.at(name_id_map[c_it.key()]);
 
                 const JSON & b_chains_json = (*c_it);
                 for (auto b_chain_it = b_chains_json.begin();
@@ -101,45 +169,22 @@ void Database::parse_from_json(const JSON & xdb) {
                         a_chain_id,
                         mod_b,
                         b_chain_it.key());
-
-                    link_total++;
                 }
             }
         }
     };
     for_each_module(parse_link);
 
-    size_t n_acm = 0, c_acm = 0, all_acm = 0;
-    for (auto mod : mod_list_) {
-        roulettes_.n.cmlprobs.push_back(
-            (float) n_acm / link_total);
-        roulettes_.c.cmlprobs.push_back(
-            (float) c_acm / link_total);
-        roulettes_.all.cmlprobs.push_back(
-            (float) all_acm / (2 * link_total));
-        n_acm += mod->n_link_count();
-        c_acm += mod->c_link_count();
-        all_acm += mod->all_link_count();
-    }
+    drawables_.compute_cmlprobs();
 
-#ifdef DEBUG_PRINT_CMLPROBS
-    wrn("---Cumulative Probability Debug---\n");
-    wrn("Total %lu links\n", link_total);
-    for (size_t i = 0; i < mod_list_.size(); ++i) {
-        wrn("mod[#%lu:%s] n=%.3f, c=%.3f, all=%.3f\n",
-            i, mod_list_.at(i)->name_.c_str(),
-            roulettes_.n.cmlprobs.at(i),
-            roulettes_.c.cmlprobs.at(i),
-            roulettes_.all.cmlprobs.at(i));
-    }
-#endif  /* ifdef DEBUG_PRINT_CMLPROBS */
+    print_db();
+    print_cmlprobs();
 }
 
 Database::~Database() {
-    for (auto mod : mod_list_) {
+    for (auto mod : drawables_.all.mod_list) {
         delete mod;
     }
-    mod_list_.clear();
 }
 
 }  /* elfin */

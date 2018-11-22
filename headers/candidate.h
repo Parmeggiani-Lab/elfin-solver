@@ -5,13 +5,13 @@
 #include <string>
 #include <deque>
 
+#include "input_manager.h"
 #include "geometry.h"
 #include "checksum.h"
 #include "work_area.h"
-#include "counter_structs.h"
 #include "string_types.h"
-#include "module.h"
 #include "node_list.h"
+#include "mutation_counters.h"
 
 namespace elfin {
 

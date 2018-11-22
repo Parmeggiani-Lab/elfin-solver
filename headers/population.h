@@ -6,9 +6,6 @@
 
 #include "candidate.h"
 #include "work_area.h"
-#include "jutil.h"
-#include "options.h"
-#include "counter_structs.h"
 
 namespace elfin {
 
@@ -17,6 +14,13 @@ class Population
 protected:
     CandidateList candidates_;
     const WorkArea & work_area_;
+
+    struct {
+        double evolve_time = 0.0f;
+        double score_time = 0.0f;
+        double rank_time = 0.0f;
+        double select_time = 0.0f;
+    } ga_times_;
 
     Candidate * new_candidate() const;
 

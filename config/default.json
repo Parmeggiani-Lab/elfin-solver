@@ -16,5 +16,5 @@
 	"ga_point_mutate_rate": 0.4,
 	"ga_limb_mutate_rate": 0.4,
 
-	"max_stagnant_gens": 5
+	"ga_stop_stagnancy": 5
 }

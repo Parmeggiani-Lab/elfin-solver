@@ -53,12 +53,12 @@ private:
     ARG_PARSER_CALLBACK_IN_HEADER(set_ga_cross_rate) { options_.ga_cross_rate = parse_float(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_ga_point_mutate_rate) { options_.ga_point_mutate_rate = parse_float(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_ga_limb_mutate_rate) { options_.ga_limb_mutate_rate = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_score_stop_threshold) { options_.score_stop_threshold = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_max_stagnant_gens) { options_.max_stagnant_gens = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_stop_score) { options_.ga_stop_score = parse_float(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_stop_stagnancy) { options_.ga_stop_stagnancy = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_log_level) { ::set_log_level((Log_Level) parse_long(arg_in.c_str())); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_run_unit_tests) { options_.run_unit_tests = true; }
     ARG_PARSER_CALLBACK_IN_HEADER(set_device) { options_.device = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_n_best_sols) { options_.n_best_sols = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_keep_n) { options_.keep_n = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_dry_run) { options_.dry_run = true; }
     ARG_PARSER_CALLBACK_IN_HEADER(set_radius_type) { options_.radius_type = arg_in; }
 
@@ -68,28 +68,142 @@ private:
 
     /* Matching ArgBundle is O(n). Would be nice to do a map instead. */
     std::vector<ArgBundle> argb_ = {
-        {"h", "help", "Print this help text and exit", false, &ArgParser::help_and_exit},
-        {"c", "set_config_file", "Set config file path", true, &ArgParser::parse_config},
-        {"i", "input_file", "Set input file path", true, &ArgParser::set_input_file},
-        {"x", "xdb", "Set xdb database file path (default=./xdb.json)", true, &ArgParser::set_xdb},
-        {"o", "output_dir", "Set output directory (default=./output/)", true, &ArgParser::set_output_dir},
-        {"l", "len_dev_alw", "Set length deviation allowance (default=3)", true, &ArgParser::set_len_dev_alw},
-        {"a", "avg_pair_dist", "Overwrite default=average distance between doubles of CoMs (default=38.0)", true, &ArgParser::set_avg_pair_dist},
-        {"s", "rand_seed", "Set RNG seed (default=0x1337cafe; setting to 0 uses time as seed)", true, &ArgParser::set_rand_seed},
-        {"gps", "ga_pop_size", "Set GA population size (default=10000)", true, &ArgParser::set_ga_pop_size},
-        {"git", "ga_iters", "Set GA iterations (default=1000)", true, &ArgParser::set_ga_iters},
-        {"gsr", "ga_survive_rate", "Set GA survival rate (default=0.1)", true, &ArgParser::set_ga_survive_rate},
-        {"gcr", "ga_cross_rate", "Set GA surviver cross rate (default=0.60)", true, &ArgParser::set_ga_cross_rate},
-        {"gmr", "ga_point_mutate_rate", "Set GA surviver point mutation rate (default=0.3)", true, &ArgParser::set_ga_point_mutate_rate},
-        {"gmr", "ga_limb_mutate_rate", "Set GA surviver limb mutation rate (default=0.3)", true, &ArgParser::set_ga_limb_mutate_rate},
-        {"stt", "score_stop_threshold", "Set GA exit score threshold (default=0.0)", true, &ArgParser::set_score_stop_threshold},
-        {"msg", "max_stagnant_gens", "Set number of stagnant generations before GA exits (default=50)", true, &ArgParser::set_max_stagnant_gens},
-        {"lg", "log_level", "Set log level", true, &ArgParser::set_log_level},
-        {"t", "test", "Run unit tests", false, &ArgParser::set_run_unit_tests},
-        {"dv", "device", "Run on accelerator device ID", true, &ArgParser::set_device},
-        {"n", "n_best_sols", "Set number of best solutions to output", true, &ArgParser::set_n_best_sols},
-        {"dry", "dry_run", "Enable dry run - exit just after initializing first population", false, &ArgParser::set_dry_run},
-        {"r", "radius", "Set radius type from one of {max_ca_dist (default), max_heavy_dist, average_all}", true, &ArgParser::set_radius_type}
+        {   "h",
+            "help",
+            "Print this help text and exit",
+            false,
+            &ArgParser::help_and_exit
+        },
+        {   "c",
+            "set_config_file",
+            "Set config file path (default=None)",
+            true,
+            &ArgParser::parse_config
+        },
+        {   "i",
+            "input_file",
+            "Set input file path (default=None) - compulsory paramter",
+            true,
+            &ArgParser::set_input_file
+        },
+        {   "x",
+            "xdb",
+            "Set xdb database file path (default=./xdb.json)",
+            true,
+            &ArgParser::set_xdb
+        },
+        {   "o",
+            "output_dir",
+            "Set output directory (default=./output/)",
+            true,
+            &ArgParser::set_output_dir
+        },
+        {   "l",
+            "len_dev_alw",
+            "Set length deviation allowance (default=3)",
+            true,
+            &ArgParser::set_len_dev_alw
+        },
+        {   "a",
+            "avg_pair_dist",
+            ("Overwrite average distance between doubles of CoMs "
+            "(default=~37.71)"),
+            true,
+            &ArgParser::set_avg_pair_dist
+        },
+        {   "s",
+            "rand_seed",
+            ("Set RNG seed (default=0x1337cafe). Value of 0 uses time as "
+            "seed)"),
+            true,
+            &ArgParser::set_rand_seed
+        },
+        {   "gps",
+            "ga_pop_size",
+            "Set GA population size (default=10000)",
+            true,
+            &ArgParser::set_ga_pop_size
+        },
+        {   "git",
+            "ga_iters",
+            "Set GA iterations (default=1000)",
+            true,
+            &ArgParser::set_ga_iters
+        },
+        {   "gsr",
+            "ga_survive_rate",
+            "Set GA survival rate (default=0.05)",
+            true,
+            &ArgParser::set_ga_survive_rate
+        },
+        {   "gcr",
+            "ga_cross_rate",
+            "Set GA surviver cross rate (default=0.60)",
+            true,
+            &ArgParser::set_ga_cross_rate
+        },
+        {   "gmr",
+            "ga_point_mutate_rate",
+            "Set GA surviver point mutation rate (default=0.3)",
+            true,
+            &ArgParser::set_ga_point_mutate_rate
+        },
+        {   "gmr",
+            "ga_limb_mutate_rate",
+            "Set GA surviver limb mutation rate (default=0.3)",
+            true,
+            &ArgParser::set_ga_limb_mutate_rate
+        },
+        {   "stt",
+            "ga_stop_score",
+            "Set GA exit score threshold (default=0.001)",
+            true,
+            &ArgParser::set_ga_stop_score
+        },
+        {   "msg",
+            "ga_stop_stagnancy",
+            ("Set number of stagnant generations "
+            "before GA exits (default=50). Value of -1 means no stop by "
+            "stagnancy."),
+            true, &ArgParser::set_ga_stop_stagnancy
+        },
+        {   "lg",
+            "log_level",
+            "Set log level (default=LOG_WARN=2). Value ranges is (0-7)",
+            true,
+            &ArgParser::set_log_level
+        },
+        {   "t",
+            "test",
+            "Run unit tests",
+            false,
+            &ArgParser::set_run_unit_tests
+        },
+        {   "dv",
+            "device",
+            "Run on accelerator device ID (default=0)",
+            true,
+            &ArgParser::set_device
+        },
+        {   "kn",
+            "keep_n",
+            "Set number of best solutions to keep for output (default=3)",
+            true,
+            &ArgParser::set_keep_n
+        },
+        {   "dry",
+            "dry_run",
+            "Enable dry run - exit just after initializing first population",
+            false,
+            &ArgParser::set_dry_run
+        },
+        {   "r",
+            "radius",
+            ("Set radius type from one of {max_ca_dist (default), "
+            "max_heavy_dist, average_all}"),
+            true,
+            &ArgParser::set_radius_type
+        }
     };
 
     void check_options() const;

@@ -3,6 +3,9 @@
 #include <unordered_map>
 #include <sstream>
 
+#include "jutil.h"
+#include "input_manager.h"
+#include "mutation_counters.h"
 #include "free_candidate.h"
 #include "one_hinge_candidate.h"
 #include "two_hinge_candidate.h"
@@ -10,36 +13,7 @@
 
 namespace elfin {
 
-PopulationCounters pop_counters_;
-MutationCutoffs mt_cutoffs_;
-MutationCounters mt_counters_;
-const PopulationCounters & POPULATION_COUNTERS = pop_counters_;
-const MutationCutoffs & MUTATION_CUTOFFS = mt_cutoffs_;
-const MutationCounters & MUTATION_COUNTERS = mt_counters_;
-
 void Population::setup(const WorkArea & wa) {
-    pop_counters_ = {}; // clear
-    pop_counters_.pop_size = OPTIONS.ga_pop_size;
-
-    pop_counters_.survivors = std::round(OPTIONS.ga_survive_rate * OPTIONS.ga_pop_size);
-
-    pop_counters_.non_survivors = (OPTIONS.ga_pop_size - pop_counters_.survivors);
-
-    mt_cutoffs_ = {}; // clear
-    mt_cutoffs_.cross =
-        pop_counters_.survivors +
-        std::round(OPTIONS.ga_cross_rate * pop_counters_.non_survivors);
-
-    mt_cutoffs_.point =
-        mt_cutoffs_.cross +
-        std::round(OPTIONS.ga_point_mutate_rate * pop_counters_.non_survivors);
-
-    mt_cutoffs_.limb =
-        std::min(
-            (size_t) (mt_cutoffs_.point +
-                     std::round(OPTIONS.ga_limb_mutate_rate * pop_counters_.non_survivors)),
-            pop_counters_.pop_size);
-
     /*
      * Calculate expected length as sum of point
      * displacements over avg pair module distance
@@ -50,7 +24,7 @@ void Population::setup(const WorkArea & wa) {
         sum_dist += (i - 1)->dist_to(*i);
 
     // Add one because division counts segments. We want number of points.
-    size_t expected_len = 1 + round(sum_dist / OPTIONS.avg_pair_dist);
+    const size_t expected_len = 1 + round(sum_dist / OPTIONS.avg_pair_dist);
     NodeList::set_max_len(expected_len + OPTIONS.len_dev_alw);
 }
 
@@ -140,11 +114,11 @@ void Population::evolve(const Population * prev_gen) {
     {
         msg("Evolving population...");
 
-        mt_counters_ = {}; // clear mutation counters
+        MutationCounters mc = {};
 
         OMP_PAR_FOR
-        for (long i = 0; i < pop_counters_.pop_size; i++) {
-            candidates_[i]->mutate(i, mt_counters_, prev_gen->candidates());
+        for (long i = 0; i < CUTOFFS.pop_size; i++) {
+            candidates_[i]->mutate(i, mc, prev_gen->candidates());
         }
 
         ERASE_LINE();
@@ -155,16 +129,17 @@ void Population::evolve(const Population * prev_gen) {
              "\tCross %.2f (fail=%.2f), Point %.2f (fail=%.2f)\n"
              "\tLimb %.2f (fail=%.2f), Rand %.2f\n"
              "\tSurvivors: %lu\n"),
-            (float) mt_counters_.cross / pop_counters_.non_survivors,
-            (float) mt_counters_.cross_fail / mt_counters_.cross,
-            (float) mt_counters_.point / pop_counters_.non_survivors,
-            (float) mt_counters_.point_fail / mt_counters_.point,
-            (float) mt_counters_.limb / pop_counters_.non_survivors,
-            (float) mt_counters_.limb_fail / mt_counters_.limb,
-            (float) mt_counters_.rand / pop_counters_.non_survivors,
-            pop_counters_.survivors);
+            (float) mc.cross / CUTOFFS.non_survivors,
+            (float) mc.cross_fail / mc.cross,
+            (float) mc.point / CUTOFFS.non_survivors,
+            (float) mc.point_fail / mc.point,
+            (float) mc.limb / CUTOFFS.non_survivors,
+            (float) mc.limb_fail / mc.limb,
+            (float) mc.rand / CUTOFFS.non_survivors,
+            CUTOFFS.survivors);
     }
-    pop_counters_.evolve_time += TIMING_END("evolving", evolve_start_time);
+    InputManager::ga_times().evolve_time +=
+        TIMING_END("evolving", evolve_start_time);
 }
 
 void Population::score() {
@@ -182,7 +157,8 @@ void Population::score() {
         ERASE_LINE();
         msg("Scoring done\n");
     }
-    pop_counters_.score_time += TIMING_END("scoring", score_start_time);
+    InputManager::ga_times().score_time +=
+        TIMING_END("scoring", score_start_time);
 }
 
 void Population::rank() {
@@ -197,7 +173,8 @@ void Population::rank() {
         ERASE_LINE();
         msg("Ranking done\n");
     }
-    pop_counters_.rank_time += TIMING_END("ranking", rank_start_time);
+    InputManager::ga_times().rank_time +=
+        TIMING_END("ranking", rank_start_time);
 }
 
 void Population::select() {
@@ -219,7 +196,7 @@ void Population::select() {
                 crc_map[crc] = c->clone();
                 unique_count++;
 
-                if (unique_count >= pop_counters_.survivors)
+                if (unique_count >= CUTOFFS.survivors)
                     break;
             }
         }
@@ -240,7 +217,8 @@ void Population::select() {
         ERASE_LINE();
         msg("Selection done\n");
     }
-    pop_counters_.select_time += TIMING_END("selecting", start_time_select);
+    InputManager::ga_times().select_time +=
+        TIMING_END("selecting", start_time_select);
 }
 
 }  /* elfin */

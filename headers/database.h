@@ -19,44 +19,49 @@ typedef std::vector<Module *> ModuleList;
 // singleton class
 class Database
 {
-private:
-    /* data members */
-    static const Database * instance_;
-
-    /* other methods */
-    void distribute_cmlprobs();
-
 protected:
     /* data members */
-    ModuleList mod_list_;
-    struct {
+    struct Drawable {
+        ModuleList mod_list;
         Roulette n, c, all;
-    } roulettes_;
+        void compute_cmlprobs();
+        Module const * draw_all() const {
+            return all.rand_item(mod_list);
+        }
+        Module const * draw_n() const {
+            return n.rand_item(mod_list);
+        }
+        Module const * draw_c() const {
+            return c.rand_item(mod_list);
+        }
+    };
 
+    struct Drawables {
+        /*
+         * Basic: mods with 2 termini
+         * Complex: mods with > 2 termini
+         */
+        Drawable all, basic, complex;
+        void compute_cmlprobs() {
+            all.compute_cmlprobs();
+            basic.compute_cmlprobs();
+            complex.compute_cmlprobs();
+        }
+    };
+
+    Drawables drawables_;
+
+    /* other methods */
+    void print_cmlprobs();
+    void print_db();
 public:
     /* ctors & dtors */
-    Database() {
-        panic_if(instance_, "Multiple instantiation of Database()\n");
-        instance_ = this;
-    }
+    Database() {}
     virtual ~Database();
+
+    /* other methods */
     void parse_from_json(const JSON & xdb);
-
-    /* getters & setters */
-    const ModuleList & mod_list() const { return mod_list_; }
-    static const Database * instance() { return instance_; }
-    Module const * get_rand_mod() const {
-        return roulettes_.all.rand_item(mod_list_);
-    }
-    Module const * get_rand_mod_n() const {
-        return roulettes_.n.rand_item(mod_list_);
-    }
-    Module const * get_rand_mod_c() const {
-        return roulettes_.c.rand_item(mod_list_);
-    }
 };
-
-extern const Database & XDB; // defined in db_parser.cc
 
 }  /* elfin */
 

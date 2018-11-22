@@ -5,8 +5,7 @@
 
 #include "kabsch.h"
 
-#include "options.h"
-#include "db_parser.h"
+#include "input_manager.h"
 #include "json.h"
 #include "jutil.h"
 

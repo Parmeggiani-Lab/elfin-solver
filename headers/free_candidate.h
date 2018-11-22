@@ -10,13 +10,6 @@ namespace elfin {
 #define MAX_FREECANDIDATE_MUTATE_FAILS 10
 
 class FreeCandidate : public Candidate {
-private:
-    void randomize();
-    void auto_mutate();
-    bool cross_mutate(const FreeCandidate & father);
-    bool point_mutate();
-    bool limb_mutate();
-
 public:
     /* strings */
     virtual std::string to_string() const;
