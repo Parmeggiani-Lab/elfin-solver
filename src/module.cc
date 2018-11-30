@@ -30,19 +30,22 @@ void Module::link_chains(
 
     a_chain.c_links.emplace_back(tx, mod_b);
     b_chain.n_links.emplace_back(tx_inv, mod_a);
-
-    mod_a->c_link_count_++;
-    mod_b->n_link_count_++;
 }
 
-size_t Module::count_interfaces() const {
-    size_t n = 0;
+/*
+ * Counts interfaces. Supposed to be called after database gets parsed from
+ * JSON.
+ */
+void Module::finalize() {
     for (auto map_it : chains_) {
         const Chain & c = map_it.second;
-        n += (c.n_links.size() > 0) + (c.c_links.size() > 0);
-    }
+        const size_t cls = c.c_links.size();
+        const size_t nls = c.n_links.size();
 
-    return n;
+        c_link_count_ += cls;
+        n_link_count_ += nls;
+        interface_count_ += (cls > 0) + (nls > 0);
+    }
 }
 
 std::string Module::to_string() const
@@ -59,5 +62,23 @@ std::string Module::to_string() const
 
     return ss.str();
 }
+
+//static
+Module::CmlSumFunctor Module::n_link_count_functor =
+[](Module *& m) {
+    return m->n_link_count();
+};
+
+//static
+Module::CmlSumFunctor Module::c_link_count_functor =
+[](Module *& m) {
+    return m->c_link_count();
+};
+
+//static
+Module::CmlSumFunctor Module::all_link_count_functor =
+[](Module *& m) {
+    return m->all_link_count();
+};
 
 }  /* elfin */

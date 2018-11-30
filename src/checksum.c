@@ -49,8 +49,7 @@ const static Crc32 crc32_table[256] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x2d02ef8d
 };
 
-Crc32 checksum_new(void const *__restrict__ p_data, size_t size)
-{
+Crc32 checksum_new(void const *__restrict__ p_data, size_t size) {
 	Crc32 crc = 0;
 	char *pCur = (char *) p_data;
 	for (; size--; ++pCur)
@@ -59,8 +58,7 @@ Crc32 checksum_new(void const *__restrict__ p_data, size_t size)
 	return crc;
 }
 
-void checksum_cascade(Crc32 *__restrict__ crc, void const *__restrict__ p_data, size_t size)
-{
+void checksum_cascade(Crc32 *__restrict__ crc, void const *__restrict__ p_data, size_t size) {
 	char *pCur = (char *) p_data;
 	for (; size--; ++pCur)
 		*crc = ((*crc) >> 8) ^ crc32_table[(*crc ^ *pCur) & 0xff];

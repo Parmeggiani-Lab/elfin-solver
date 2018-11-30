@@ -1,17 +1,22 @@
 #ifndef TERMINUS_TYPE_H_
 #define TERMINUS_TYPE_H_
 
+#include <string>
+
+#include "jutil.h"
+
 namespace elfin {
 
 #define FOREACH_TERMINUSTYPE(MACRO) \
     MACRO(N) \
     MACRO(C) \
     MACRO(ANY) \
+    MACRO(NONE) \
     MACRO(ENUM_COUNT) \
 
 GEN_ENUM_AND_STRING(TerminusType, TerminusTypeNames, FOREACH_TERMINUSTYPE);
 
-static_assert(TerminusType::ENUM_COUNT == 3);
+void death_by_bad_terminus(std::string func_name, TerminusType term);
 
 }  /* elfin */
 

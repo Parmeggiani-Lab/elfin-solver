@@ -5,10 +5,12 @@
 #include <iostream>
 #include <string>
 #include <cstdio>
+#include <unordered_map>
 
 namespace elfin {
 
 typedef std::vector<std::string> StrList;
+typedef std::unordered_map<std::string, size_t> StrIndexMap;
 
 /*
  * From

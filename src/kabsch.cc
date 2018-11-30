@@ -415,12 +415,7 @@ bool kabsch(
 	return ret_val;
 }
 
-float kabsch_score(const NodeList & nodes, const WorkArea & wa) {
-	// TODO: don't convert to V3fList
-	V3fList points;
-	for (auto & n : nodes) {
-		points.emplace_back(n.tx.collapsed());
-	}
+float kabsch_score(const V3fList & points, const WorkArea & wa) {
 	return kabsch_score(points, wa.to_V3fList());
 }
 

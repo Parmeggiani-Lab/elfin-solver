@@ -6,13 +6,15 @@
 namespace elfin {
 
 class TwoHingeCandidate : public Candidate {
+protected:
+    virtual bool cross_mutate(const Candidate * father) {}
+    virtual bool point_mutate() {}
+    virtual bool limb_mutate() {}
+    virtual void grow() = 0;
 public:
     virtual void score(const WorkArea & wa) {}
-    virtual void mutate(
-        long rank,
-        MutationCounters & mt_counters,
-        const CandidateList & candidates) {}
     virtual TwoHingeCandidate * clone() const { return nullptr; }
+    virtual void copy_from() const { die("unimplemented"); }
 };
 
 }  /* elfin */

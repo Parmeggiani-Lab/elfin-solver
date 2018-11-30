@@ -10,7 +10,6 @@
 #include "jutil.h"
 #include "input_manager.h"
 #include "parallel_utils.h"
-#include "node_list.h"
 
 #define DEBUG_PRINT_POP 4
 
@@ -40,8 +39,8 @@ EvolutionSolver::print_start_msg(const V3fList & shape) const {
     for (auto & p : shape)
         dbg("Work Area Point: %s\n", p.to_string().c_str());
 
-    msg("Length guess: <%lu, spec has %d points\n",
-        NodeList::MAX_LEN,
+    msg("Length guess: <%lu\nSpec has %d points\n",
+        Candidate::MAX_LEN,
         shape.size());
     msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
 

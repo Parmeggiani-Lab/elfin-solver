@@ -7,8 +7,8 @@
 #include "input_manager.h"
 #include "mutation_counters.h"
 #include "free_candidate.h"
-#include "one_hinge_candidate.h"
-#include "two_hinge_candidate.h"
+// #include "one_hinge_candidate.h"
+// #include "two_hinge_candidate.h"
 #include "parallel_utils.h"
 
 namespace elfin {
@@ -25,7 +25,7 @@ void Population::setup(const WorkArea & wa) {
 
     // Add one because division counts segments. We want number of points.
     const size_t expected_len = 1 + round(sum_dist / OPTIONS.avg_pair_dist);
-    NodeList::set_max_len(expected_len + OPTIONS.len_dev_alw);
+    Candidate::set_max_len(expected_len + OPTIONS.len_dev_alw);
 }
 
 Population::~Population() {
@@ -42,12 +42,12 @@ Candidate * Population::new_candidate() const {
     case FREE:
         c = new FreeCandidate();
         break;
-    case ONE_HINGE:
-        c = new OneHingeCandidate();
-        break;
-    case TWO_HINGE:
-        c = new TwoHingeCandidate();
-        break;
+    // case ONE_HINGE:
+    //     c = new OneHingeCandidate();
+    //     break;
+    // case TWO_HINGE:
+    //     c = new TwoHingeCandidate();
+    //     break;
     default:
         std::stringstream ss;
         ss << "Unimplemented WorkArea type: ";

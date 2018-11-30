@@ -7,26 +7,16 @@
 #include "random_utils.h"
 #include "input_manager.h"
 
-// #define PRINT_CMLPROBS
+// #define PRINT_DRAWABLES
 // #define PRINT_DB
 
 namespace elfin {
 
-void Database::Drawable::compute_cmlprobs() {
-    size_t n_acm = 0, c_acm = 0, all_acm = 0;
+void Database::Drawable::init_cml_sums() {
     for (auto mod : mod_list) {
-        n.cmlprobs.push_back(n_acm);
-        c.cmlprobs.push_back(c_acm);
-        all.cmlprobs.push_back(all_acm);
-        n_acm += mod->n_link_count();
-        c_acm += mod->c_link_count();
-        all_acm += mod->all_link_count();
-    }
-
-    for (size_t i = 0; i < mod_list.size(); ++i) {
-        n.cmlprobs[i] /= n_acm;
-        c.cmlprobs[i] /= c_acm;
-        all.cmlprobs[i] /= all_acm;
+        all.cumulate(mod->all_link_count());
+        n.cumulate(mod->n_link_count());
+        c.cumulate(mod->c_link_count());
     }
 }
 
@@ -34,19 +24,33 @@ std::string Database::Drawable::to_string() const {
     std::stringstream ss;
     for (size_t i = 0; i < mod_list.size(); ++i) {
         ss << string_format(
-               "mod[#%lu:%s] n=%.3f, c=%.3f, all=%.3f\n",
+               "mod[#%lu:%s] n=%lu, c=%lu, all=%lu\n",
                i,
                mod_list.at(i)->name_.c_str(),
-               n.cmlprobs.at(i),
-               c.cmlprobs.at(i),
-               all.cmlprobs.at(i));
+               n.cml_sum().at(i),
+               c.cml_sum().at(i),
+               all.cml_sum().at(i));
     }
+
+    ss << string_format("Total: n=%lu, c=%lu, all=%lu\n",
+                        n.total(),
+                        c.total(),
+                        all.total());
     return ss.str();
 }
 
+/*
+ * Divides modules in the following categories:
+ *   basic (2 termini)
+ *   complex (>2 termini)
+ *   singles
+ *   hubs
+ *
+ * Note: Categorization can only be done after link parsing.
+ */
 void Database::Drawables::categorize() {
-    for (auto mod : all.mod_list) {
-        const size_t n_itf = mod->count_interfaces();
+    for (auto mod : all_mods.mod_list) {
+        const size_t n_itf = mod->interface_count();
         if (n_itf < 2) {
             die("mod[%s] has fewer interfaces(%lu) than expected(2)\n",
                 mod->name_.c_str(), n_itf);
@@ -68,22 +72,21 @@ void Database::Drawables::categorize() {
 }
 
 /* protected */
-void Database::print_cmlprobs() {
-#ifdef PRINT_CMLPROBS
-    wrn("---Cumulative Probability Debug---\n");
-    wrn("All:\n%s", drawables_.all.to_string().c_str());
+void Database::print_drawables() {
+#ifdef PRINT_DRAWABLES
+    wrn("---Drawables Debug---\n");
+    wrn("All:\n%s", drawables_.all_mods.to_string().c_str());
     wrn("Singles:\n%s", drawables_.singles.to_string().c_str());
     wrn("Hubs:\n%s", drawables_.hubs.to_string().c_str());
     wrn("Basic:\n%s", drawables_.basic.to_string().c_str());
     wrn("Complex:\n%s", drawables_.complex.to_string().c_str());
-
-#endif  /* ifdef PRINT_CMLPROBS */
+#endif  /* ifdef PRINT_DRAWABLES */
 }
 
 void Database::print_db() {
 #ifdef PRINT_DB
     wrn("---DB Link Parse Debug---\n");
-    const size_t n_mods = drawables_.all.mod_list.size();
+    const size_t n_mods = drawables_.all_mods.mod_list.size();
     wrn("Database has %lu mods, of which...\n", n_mods);
     wrn("%lu are singles\n", drawables_.singles.mod_list.size());
     wrn("%lu are hubs\n", drawables_.hubs.mod_list.size());
@@ -92,7 +95,7 @@ void Database::print_db() {
 
     for (size_t i = 0; i < n_mods; ++i)
     {
-        const Module * mod = drawables_.all.mod_list.at(i);
+        const Module * mod = drawables_.all_mods.mod_list.at(i);
         const size_t n_chains = mod->chains().size();
         wrn("xdb_[#%lu:%s] has %lu chains\n",
             i, mod->name_.c_str(), n_chains);
@@ -153,25 +156,25 @@ void Database::parse_from_json(const JSON & xdb) {
     std::unordered_map<std::string, size_t> name_id_map;
     auto init_module = [&](JSON_MOD_PARAMS) {
         const std::string & name = jit.key();
-        const size_t mod_id = drawables_.all.mod_list.size();
+        const size_t mod_id = drawables_.all_mods.mod_list.size();
         name_id_map[name] = mod_id;
 
-        StrList chain_ids;
+        StrList chain_names;
         const JSON & chains_json = (*jit)["chains"];
         for (auto chain_it = chains_json.begin();
                 chain_it != chains_json.end();
                 ++chain_it) {
-            chain_ids.push_back(chain_it.key());
+            chain_names.push_back(chain_it.key());
         }
 
         const float radius = (*jit)["radii"][OPTIONS.radius_type];
-        drawables_.all.mod_list.push_back(new Module(name, mod_type, radius, chain_ids));
+        drawables_.all_mods.mod_list.push_back(new Module(name, mod_type, radius, chain_names));
     };
     for_each_module(init_module);
 
     auto parse_link = [&](JSON_MOD_PARAMS) {
         Module * const mod_a =
-            drawables_.all.mod_list.at(name_id_map[jit.key()]);
+            drawables_.all_mods.mod_list.at(name_id_map[jit.key()]);
 
         const JSON & chains_json = (*jit)["chains"];
         for (auto a_chain_it = chains_json.begin();
@@ -187,7 +190,7 @@ void Database::parse_from_json(const JSON & xdb) {
                     c_it != c_json.end();
                     ++c_it) {
                 Module * const mod_b =
-                    drawables_.all.mod_list.at(name_id_map[c_it.key()]);
+                    drawables_.all_mods.mod_list.at(name_id_map[c_it.key()]);
 
                 const JSON & b_chains_json = (*c_it);
                 for (auto b_chain_it = b_chains_json.begin();
@@ -212,15 +215,19 @@ void Database::parse_from_json(const JSON & xdb) {
     };
     for_each_module(parse_link);
 
+    for (auto mod : drawables_.all_mods.mod_list) {
+        mod->finalize();
+    }
+
     drawables_.categorize();
-    drawables_.compute_cmlprobs();
+    drawables_.init_cml_sums();
 
     print_db();
-    print_cmlprobs();
+    print_drawables();
 }
 
 Database::~Database() {
-    for (auto mod : drawables_.all.mod_list) {
+    for (auto mod : drawables_.all_mods.mod_list) {
         delete mod;
     }
 }

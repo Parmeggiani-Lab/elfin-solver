@@ -69,7 +69,12 @@ public:
 	typedef ElementArray & ElementArrayRef;
 private:
 	/* data members */
-	ElementArray elements_ = { 0 };
+	ElementArray elements_ = {
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{0, 0, 0, 0}
+	};
 public:
 	/* ctors & dtors */
 	Transform() {}
