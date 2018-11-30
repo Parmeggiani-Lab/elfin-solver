@@ -297,13 +297,31 @@ bool FreeCandidate::limb_mutate() {
 void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
     // cry if nodes_ does not at least have the tip_index
     panic_when(tip_index >= nodes_.size());
+    Node * tip_node = nodes_.at(tip_index);
 
     if (term == TerminusType::ANY) {
         term = get_dice(2) == 0 ? TerminusType::N : TerminusType::C;
     }
 
     // cry if not free term available
-    panic_when(nodes_.at(tip_index)->free_term().size(term) == 0);
+    panic_when(tip_node->free_term().size(term) == 0);
+    auto & free_chain_ids = tip_node->free_term().get(term);
+
+    while (nodes_.size() < Candidate::MAX_LEN) {
+        // pick random chain
+        size_t tip_chain_id = pick_random(free_chain_ids);
+        auto & chain = tip_node->prototype()->chains().at(tip_chain_id);
+        auto & links = chain.get_links(term);
+        const auto & link = pick_random(links);
+        
+        // TODO: think about whether a deque is necessary. What about set??
+        Node * new_node = new Node(link.mod, link.tx * tip_node->tx());
+
+        tip_node->occupy_terminus(term, tip_chain_id);
+        new_node->occupy_terminus(OPPOSITE_TERM[term], link.target_chain_id);
+
+        nodes_.push_back(new_node);
+    }
 
     // while(nodes_.size() - start_size < n_nodes)
     // {

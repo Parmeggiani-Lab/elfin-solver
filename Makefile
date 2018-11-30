@@ -28,7 +28,7 @@ ASAN=no
 ifeq ($(DEBUG), yes)
 	DEBUG_FLAGS=-ggdb3
 else
-	DEBUG_FLAGS=
+	DEBUG_FLAGS=-DNDBUG
 endif
 
 ifeq ($(ASAN), yes)

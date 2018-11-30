@@ -4,32 +4,35 @@
 
 namespace elfin {
 
-//static
+/*
+ * Creates links for appropriate chains in both mod_a and mod_b (transform
+ * for mod_b is inverted).
+ *
+ * mod_a's C-terminus connects to mod_b's N-terminus
+ * (static)
+ */
 void Module::link_chains(
     const JSON & tx_json,
     Module * mod_a,
-    const std::string & a_chain_id,
+    const std::string & a_chain_name,
     Module * mod_b,
-    const std::string & b_chain_id) {
-    /*
-     * Creates Link for appropriate chains in both amod and bmod (transform
-     * for bmod is inverted).
-     *
-     * amod's C-terminus connects to bmod's N-terminus
-     */
-
+    const std::string & b_chain_name) {
+    // Create transforms
     const Transform tx(tx_json);
     const Transform tx_inv = tx.inversed();
 
-    ChainMap & a_chains = mod_a->chains_;
-    panic_when(a_chains.find(a_chain_id) == a_chains.end());
-    Chain & a_chain = a_chains[a_chain_id];
-    ChainMap & b_chains = mod_b->chains_;
-    panic_when(b_chains.find(b_chain_id) == b_chains.end());
-    Chain & b_chain = b_chains[b_chain_id];
+    // Find chains
+    ChainList & a_chains = mod_a->chains_;
+    const size_t a_chain_id = mod_a->chain_id_map().at(a_chain_name);
+    Chain & a_chain = a_chains.at(a_chain_id);
 
-    a_chain.c_links.emplace_back(tx, mod_b);
-    b_chain.n_links.emplace_back(tx_inv, mod_a);
+    ChainList & b_chains = mod_b->chains_;
+    const size_t b_chain_id = mod_b->chain_id_map().at(b_chain_name);
+    Chain & b_chain = b_chains.at(b_chain_id);
+
+    // Create links
+    a_chain.c_links.emplace_back(tx, mod_b, b_chain_id);
+    b_chain.n_links.emplace_back(tx_inv, mod_a, a_chain_id);
 }
 
 /*
@@ -37,10 +40,9 @@ void Module::link_chains(
  * JSON.
  */
 void Module::finalize() {
-    for (auto map_it : chains_) {
-        const Chain & c = map_it.second;
-        const size_t cls = c.c_links.size();
-        const size_t nls = c.n_links.size();
+    for (auto & chain : chains_) {
+        const size_t cls = chain.c_links.size();
+        const size_t nls = chain.n_links.size();
 
         c_link_count_ += cls;
         n_link_count_ += nls;

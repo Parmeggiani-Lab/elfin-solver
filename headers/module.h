@@ -10,6 +10,7 @@
 #include "json.h"
 #include "geometry.h"
 #include "string_utils.h"
+#include "terminus_type.h"
 
 namespace elfin {
 
@@ -27,9 +28,10 @@ public:
     {
         Transform tx;
         Module * mod;
+        size_t target_chain_id;
         Link() {}
-        Link(const Transform & _tx, Module * _mod) :
-            tx(_tx), mod(_mod) {}
+        Link(const Transform & _tx, Module * _mod, size_t chain_id) :
+            tx(_tx), mod(_mod), target_chain_id(chain_id) {}
     };
     struct Chain {
         std::string name = "unamed";
@@ -37,12 +39,23 @@ public:
         std::vector<Link> c_links;
         Chain(const std::string & _name) : name(_name) {}
         Chain() {}
+        const std::vector<Link> & get_links(TerminusType term) const {
+            if (term == TerminusType::N) {
+                return n_links;
+            }
+            else if (term == TerminusType::C) {
+                return c_links;
+            }
+            else {
+                death_by_bad_terminus(__PRETTY_FUNCTION__, term);
+            }
+        }
     };
-    typedef std::unordered_map<std::string, Chain> ChainMap;
+    typedef std::vector<Chain> ChainList;
 
 protected:
     /* data members */
-    ChainMap chains_;
+    ChainList chains_;
     size_t n_link_count_ = 0;
     size_t c_link_count_ = 0;
     size_t interface_count_ = 0;
@@ -66,8 +79,10 @@ public:
         name_(name), type_(type), radius_(radius), chain_names_(chain_names) {
         for (size_t i = 0; i < chain_names.size(); ++i) {
             const std::string & cn = chain_names[i];
-            chains_[cn] = Chain(cn);
-            chain_id_map_[cn] = i;
+
+            assert(i == chains_.size());
+            chain_id_map_[cn] = chains_.size();
+            chains_.emplace_back(cn);
         }
     }
     virtual ~Module() {}
@@ -79,7 +94,7 @@ public:
         const std::string & b_chain_id);
 
     /* getters & setters */
-    const ChainMap & chains() const { return chains_; }
+    const ChainList & chains() const { return chains_; }
     void finalize();
     size_t n_link_count() const { return n_link_count_; }
     size_t c_link_count() const { return c_link_count_; }

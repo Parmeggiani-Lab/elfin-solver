@@ -100,10 +100,11 @@ void Database::print_db() {
         wrn("xdb_[#%lu:%s] has %lu chains\n",
             i, mod->name_.c_str(), n_chains);
 
-        for (auto & chain_it : mod->chains()) {
-            wrn("\tchain[%s]:\n", chain_it.first.c_str());
+        for (auto & chain : mod->chains()) {
+            wrn("\tchain[#%lu:%s]:\n",
+                mod->chain_id_map().at(chain.name),
+                chain.name.c_str());
 
-            auto & chain = chain_it.second;
             auto n_links = chain.n_links;
             for (size_t k = 0; k < n_links.size(); ++k)
             {
