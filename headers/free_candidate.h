@@ -28,7 +28,6 @@ public:
 
     /* ctors & dtors */
     virtual FreeCandidate * clone() const;
-    virtual void copy_from(const Candidate * other);
     virtual ~FreeCandidate() {}
 
     /* other methods */

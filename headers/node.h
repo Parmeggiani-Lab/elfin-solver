@@ -38,8 +38,6 @@ public:
     virtual std::string to_csv_string() const;
 };
 
-typedef std::deque<Node *> NodeDeque;
-
 }  /* elfin */
 
 #endif  /* end of include guard: NODE_H_ */

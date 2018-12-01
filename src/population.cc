@@ -189,10 +189,10 @@ void Population::select() {
 
         // We don't want parallelism here because
         // the loop must priotise low indexes
-        for (auto & c : candidates_) {
+        for (auto c : candidates_) {
             const Crc32 crc = c->checksum();
             if (crc_map.find(crc) == crc_map.end()) {
-                // This individual is a new one - record
+                // Record a new candidate
                 crc_map[crc] = c->clone();
                 unique_count++;
 

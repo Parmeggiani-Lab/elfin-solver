@@ -27,8 +27,8 @@ namespace elfin {
  * possible.
  */
 IdPairs get_crossing_ids(
-    const NodeDeque & mother,
-    const NodeDeque & father) {
+    const Nodes & mother,
+    const Nodes & father) {
     IdPairs crossing_ids;
     const size_t mn_len = mother.size();;
     const size_t fn_len = father.size();
@@ -51,8 +51,8 @@ bool FreeCandidate::cross_mutate(
     bool cross_ok = false;
 
 #ifndef NO_CROSS_MUTATE
-    const NodeDeque & mother_nodes = mother->nodes();
-    const NodeDeque & father_nodes = father->nodes();
+    const Nodes & mother_nodes = mother->nodes();
+    const Nodes & father_nodes = father->nodes();
     IdPairs crossing_ids = get_crossing_ids(mother_nodes, father_nodes);
 
     size_t tries = 0;
@@ -62,7 +62,7 @@ bool FreeCandidate::cross_mutate(
         // Pick random crossing point
         const IdPair & cross_point = pick_random(crossing_ids);
 
-        NodeDeque new_nodes;
+        Nodes new_nodes;
 
         new_nodes.insert(
             new_nodes.end(),
@@ -124,7 +124,7 @@ bool FreeCandidate::point_mutate() {
                                 (i == n_nodes - 1 or REL_MAT.at(j).at(nodes_.at(i + 1).id))
                            ) {
                             // Make sure resultant shape won't collide with itself
-                            NodeDeque test_nodes(nodes_);
+                            Nodes test_nodes(nodes_);
                             test_nodes.at(i).id = j;
 
                             // dbg("checking swap at %d/%d of %s\n",
@@ -159,7 +159,7 @@ bool FreeCandidate::point_mutate() {
                          REL_MAT.at(j).at(nodes_.at(i).id))
                     ) {
                         // Make sure resultant shape won't collide with itself
-                        NodeDeque test_nodes(nodes_);
+                        Nodes test_nodes(nodes_);
                         Node new_node;
                         new_node.id = j;
                         test_nodes.insert(test_nodes.begin() + i, //This is insertion before i
@@ -198,7 +198,7 @@ bool FreeCandidate::point_mutate() {
                     const Node & rhs_node = nodes_.at(i + 1);
                     if (REL_MAT.at(lhs_node.id).at(rhs_node.id)) {
                         // Make sure resultant shape won't collide with itself
-                        NodeDeque test_nodes(
+                        Nodes test_nodes(
                             nodes_.begin(),
                             nodes_.begin() + i);
                         test_nodes.insert(
@@ -314,8 +314,7 @@ void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
         auto & links = chain.get_links(term);
         const auto & link = pick_random(links);
         
-        // TODO: think about whether a deque is necessary. What about set??
-        Node * new_node = new Node(link.mod, link.tx * tip_node->tx());
+        Node * new_node = new Node(link.mod, tip_node->tx() * link.tx);
 
         tip_node->occupy_terminus(term, tip_chain_id);
         new_node->occupy_terminus(OPPOSITE_TERM[term], link.target_chain_id);
@@ -402,12 +401,6 @@ void FreeCandidate::score(const WorkArea & wa) {
 
 FreeCandidate * FreeCandidate::clone() const {
     return new FreeCandidate(*this);
-}
-
-//virtual
-void FreeCandidate::copy_from(const Candidate * other) {
-    *this = *((FreeCandidate*) other);
-    Candidate::copy_from(other);
 }
 
 }  /* elfin */

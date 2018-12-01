@@ -83,8 +83,9 @@ Crc32 Candidate::checksum() const
     // Compute checksum lazily because it's only used once per generation
     Crc32 crc = 0xffff;
     for (auto & n : nodes_) {
-        const Transform & pt = n->tx();
-        checksum_cascade(&crc, &pt, sizeof(pt));
+        // Compute checksum based on prototype identity sequence
+        const Module * prot = n->prototype();
+        checksum_cascade(&crc, &prot, sizeof(prot));
     }
 
     return crc;
@@ -148,34 +149,8 @@ void Candidate::mutate(
     }
 }
 
-void free_nodes(const NodeDeque & nodes) {
-    for (auto node : nodes) {
-        delete node;
-    }
-}
-
-Candidate::Candidate(const Candidate & other) {
-    *this = other;
-}
-
-Candidate & Candidate::operator=(const Candidate & other) {
-    free_nodes(nodes_);
-    nodes_.clear();
-
-    // Make new node pointers
-    for (auto node : other.nodes_) {
-        nodes_.push_back(node->clone());
-    }
-
-    return *this;
-}
-
 void Candidate::copy_from(const Candidate * other) {
     *this = *other;
-}
-
-Candidate::~Candidate() {
-    free_nodes(nodes_);
 }
 
 bool Candidate::PtrComparator(const Candidate * lhs, const Candidate * rhs) {

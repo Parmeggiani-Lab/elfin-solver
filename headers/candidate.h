@@ -11,7 +11,7 @@
 #include "work_area.h"
 #include "string_utils.h"
 #include "mutation_counters.h"
-#include "node.h"
+#include "nodes.h"
 #include "terminus_type.h"
 
 namespace elfin {
@@ -32,7 +32,7 @@ protected:
 
     /* data members */
     static size_t MAX_LEN_;
-    NodeDeque nodes_;
+    Nodes nodes_;
     float score_ = NAN;
 
     /* other methods */
@@ -82,7 +82,7 @@ public:
 
     /* getters */
     float get_score() const { return score_; }
-    const std::deque<Node *> & nodes() const { return nodes_; }
+    const Nodes & nodes() const { return nodes_; }
     StrList get_node_names() const;
 
     /* strings */
@@ -98,11 +98,8 @@ public:
 
     /* ctors & dtors */
     Candidate() {}
-    Candidate(const Candidate & other);
-    Candidate & operator=(const Candidate & other);
     virtual Candidate * clone() const = 0;
     virtual void copy_from(const Candidate * other);
-    virtual ~Candidate();
 
     /* other methods */
     bool operator<(const Candidate & rhs) const { return score_ < rhs.score_; }
