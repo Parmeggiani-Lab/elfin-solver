@@ -1,8 +1,9 @@
-# Elfin Solver V1
+# Elfin Solver v1 (dev)
 [![Build Status](https://travis-ci.com/joy13975/elfin-solver.svg?branch=v1)](https://travis-ci.com/joy13975/elfin-solver)
 
-This is an old version of the elfin-solver.
-Output files produced by v1 will not be synthesizable in v2.
+## WARNING
+ - This is an old version of the elfin-solver, infrequently updated to work with the v2 toolchain so as to still produce v1 results before v2 becomes baseline useable.
+ - Output files produced by v1 will not be synthesizable in v2.
 
 ### To Download
 ```
