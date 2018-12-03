@@ -1,16 +1,15 @@
 #include "chain.h"
 
-#include <algorithm>
-
 namespace elfin {
 
 /* public */
-const LinkList & Chain::get_links(const TerminusType term) const {
+const Terminus & Chain::get_term(
+    const TerminusType term) const {
     if (term == TerminusType::N) {
-        return n_links;
+        return n_term;
     }
     else if (term == TerminusType::C) {
-        return c_links;
+        return c_term;
     }
     else {
         death_by_bad_terminus(__PRETTY_FUNCTION__, term);
@@ -18,16 +17,13 @@ const LinkList & Chain::get_links(const TerminusType term) const {
 }
 
 void Chain::finalize() {
-    /*
-     * Sort links by interface count in ascending order to facilitate fast
-     * pick_random()
-     */
-    std::sort(n_links_.begin(), n_links_.end(), Link::InterfaceComparator);
-    std::sort(c_links_.begin(), c_links_.end(), Link::InterfaceComparator);
+    n_term_.finalize();
+    c_term_.finalize();
 }
 
-const Link & Chain::pick_random_link() const {
-    die("not impl\n");
+const Link & Chain::pick_random_link(
+    const TerminusType term) const {
+    return get_term(term).pick_random_link(term);
 }
 
 }  /* elfin */

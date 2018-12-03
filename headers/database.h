@@ -21,13 +21,9 @@ protected:
     /* types */
     typedef std::vector<Module *> ModPtrList;
     typedef Roulette<ModPtrList, Module *> ModPtrRoulette;
-
-    /* data members */
     struct Drawable {
         ModPtrList mod_list;
-        ModPtrRoulette all;
-        ModPtrRoulette n;
-        ModPtrRoulette c;
+        ModPtrRoulette all, n, c;
         std::string to_string() const;
         void init_cml_sums();
         Drawable() : all(mod_list), n(mod_list), c(mod_list) {}
@@ -37,7 +33,6 @@ protected:
             return *this;
         }
     };
-
     struct Drawables {
         /*
          * Basic: mods with 2 termini
@@ -55,6 +50,7 @@ protected:
         }
     };
 
+    /* data members */
     Drawables drawables_;
 
     /* other methods */

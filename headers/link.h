@@ -16,11 +16,11 @@ struct Link
     size_t target_chain_id;
 
     /* ctors & dtors */
-    Link(const Transform & _tx, Module * _mod, size_t chain_id) :
+    Link(const Transform & _tx, Module * _mod, const size_t chain_id) :
         tx(_tx), mod(_mod), target_chain_id(chain_id) {}
 
     /* other methods */
-    static bool InterfaceComparator(const Link & lhs, const Link & rhs);
+    static bool CompareByInterfaceCount(const Link & lhs, const Link & rhs);
 };
 
 typedef std::vector<Link> LinkList;

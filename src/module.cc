@@ -4,30 +4,25 @@
 
 namespace elfin {
 
-Module::Module(const std::string & name,
-               const ModuleType type,
-               const float radius,
-               const StrList & chain_names) :
-    name_(name),
-    type_(type),
-    radius_(radius),
-    chain_names_(chain_names) {
-    for (auto & cn : chain_names_) {
+Module::Module(const std::string & _name,
+               const ModuleType _type,
+               const float _radius,
+               const StrList & _chain_names) :
+    name(_name),
+    type(_type),
+    radius(_radius),
+    chain_names(_chain_names) {
+    for (auto & cn : chain_names) {
         chain_id_map_[cn] = chains_.size();
-        chains_.emplace_back(cn);
+        chains_.push_back(cn);
     }
 }
 
 void Module::finalize() {
+    // Chain finalize() relies on Terminus finalize(), which assumes that
+    // all Module counts are calculated
     for (auto & chain : chains_) {
         chain.finalize();
-
-        const size_t cls = chain.c_links.size();
-        const size_t nls = chain.n_links.size();
-
-        counts_.c_link += cls;
-        counts_.n_link += nls;
-        counts_.interface += (cls > 0) + (nls > 0);
     }
 }
 
@@ -66,14 +61,34 @@ void Module::create_link(
     ChainList & a_chains = mod_a->chains_;
     const size_t a_chain_id = mod_a->chain_id_map.at(a_chain_name);
     Chain & a_chain = a_chains.at(a_chain_id);
+    wrn("a_chain_id=%lu\n", a_chain_id);
 
     ChainList & b_chains = mod_b->chains_;
     const size_t b_chain_id = mod_b->chain_id_map.at(b_chain_name);
     Chain & b_chain = b_chains.at(b_chain_id);
+    wrn("b_chain_id=%lu\n", b_chain_id);
 
-    // Create links
-    a_chain.c_links_.emplace_back(tx, mod_b, b_chain_id);
-    b_chain.n_links_.emplace_back(tx_inv, mod_a, a_chain_id);
+    // Create links and count
+    a_chain.c_term_.links_.emplace_back(tx, mod_b, b_chain_id);
+    mod_a->counts_.c_link++;
+    wrn("mod_a chain[%s] counts: %lu, %lu, %lu\n",
+        a_chain.name.c_str(),
+        mod_a->counts.n_link,
+        mod_a->counts.c_link,
+        mod_a->counts.interface);
+    if (a_chain.c_term.links.size() == 1) { // 0 -> 1 indicates a new interface
+        mod_a->counts_.interface++;
+    }
+    b_chain.n_term_.links_.emplace_back(tx_inv, mod_a, a_chain_id);
+    mod_b->counts_.n_link++;
+    if (b_chain.n_term.links.size() == 1) { // 0 -> 1 indicates a new interface
+        mod_b->counts_.interface++;
+    }
+    wrn("mod_b chain[%s]: %lu, %lu, %lu\n",
+        b_chain.name.c_str(),
+        mod_b->counts.n_link,
+        mod_b->counts.c_link,
+        mod_b->counts.interface);
 }
 
 }  /* elfin */

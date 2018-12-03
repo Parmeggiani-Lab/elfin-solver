@@ -11,7 +11,7 @@ Node::Node(const Module * prototype, const Transform & tx) :
     for (auto & chain : prototype_->chains) {
         const size_t chain_id = prototype_->chain_id_map.at(chain.name);
 
-        if (chain.n_links.size() > 0) {
+        if (chain.n_term.links.size() > 0) {
 #ifdef NDEBUG
             if (!term_tracker_.is_free(TerminusType::N, chain_id)) {
                 die(("Tried to add chain_id[%lu] that already "
@@ -22,7 +22,7 @@ Node::Node(const Module * prototype, const Transform & tx) :
 
             term_tracker_.get_free(TerminusType::N).push_back(chain_id);
         }
-        if (chain.c_links.size() > 0) {
+        if (chain.c_term.links.size() > 0) {
 #ifdef NDEBUG
             if (!term_tracker_.is_free(TerminusType::C, chain_id)) {
                 die(("Tried to add chain_id[%lu] that already "

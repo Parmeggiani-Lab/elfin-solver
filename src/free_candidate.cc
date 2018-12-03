@@ -310,20 +310,20 @@ void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
         term = random_term();
     }
 
-    // cry if no free term available
     while (nodes_.size() < Candidate::MAX_LEN) {
 #ifndef NDEBUG
-        // pick random chain and then random link
-        DEBUG(tip_node->term_tracker().get_free_size(term) == 0);
+        // cry if no free term available
+        DEBUG(0 == tip_node->term_tracker().get_free_size(term));
 #endif  /* ifndef NDEBUG */
 
+        // pick random chain and then random link
         auto & free_chain_ids = tip_node->term_tracker().get_free(term);
         wrn("free size: %lu\n", free_chain_ids.size());
         const size_t tip_chain_id = pick_random(free_chain_ids);
         wrn("tip_chain_id: %lu\n", tip_chain_id);
         auto & chain = tip_node->prototype()->chains.at(tip_chain_id);
-        auto & links = chain.get_links(term);
-        const auto & link = pick_random(links);
+
+        const auto & link = chain.pick_random_link(term);
         wrn("link: %x\n", &link);
 
         Node * new_node = new Node(link.mod, tip_node->tx() * link.tx);
@@ -345,7 +345,7 @@ void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
         else {
             wrn("Shouldn't reach here because we're only using basic modules!\n");
             die("Node: %s\n", new_node->to_string().c_str());
-            term = random_term();
+            // term = random_term();
         }
     }
 }

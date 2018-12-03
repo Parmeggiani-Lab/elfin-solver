@@ -2,22 +2,13 @@
 
 namespace elfin {
 
-/* private */
-void Nodes::destroy_nodes() {
-    for (auto node : *this) {
-        delete node;
-    }
-
-    this->clear();
-}
-
 /* public */
 Nodes::Nodes(const Nodes & other) {
     *this = other;
 }
 
 Nodes & Nodes::operator=(const Nodes & other) {
-    this->destroy_nodes();
+    clear();
 
     // Make new node pointers
     for (auto node : other) {
@@ -28,7 +19,15 @@ Nodes & Nodes::operator=(const Nodes & other) {
 }
 
 Nodes::~Nodes() {
-    destroy_nodes();
+    clear();
+}
+
+void Nodes::clear() {
+    for (auto node : *this) {
+        delete node;
+    }
+
+    NodesContainer::clear();
 }
 
 }  /* elfin */

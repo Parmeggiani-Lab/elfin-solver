@@ -16,6 +16,7 @@ namespace elfin {
 #define FOREACH_MODULETYPE(MACRO) \
     MACRO(SINGLE) \
     MACRO(HUB) \
+    MACRO(NOT_MODULE) \
 
 GEN_ENUM_AND_STRING(ModuleType, ModuleTypeNames, FOREACH_MODULETYPE);
 
@@ -29,21 +30,17 @@ public:
     };
 
 private:
-    std::string name_;
-    ModuleType type_;
-    float radius_;
     ChainList chains_;
-    StrList chain_names_;
     StrIndexMap chain_id_map_;
 
-    Counts counts_;
+    Counts counts_ = {};
 
 public:
     /* data members */
-    const std::string & name = name_;
-    const ModuleType & type = type_;
-    const float & radius = radius_;
-    const StrList & chain_names = chain_names_;
+    const std::string name;
+    const ModuleType type;
+    const float radius;
+    const StrList chain_names;
     const ChainList & chains = chains_;
     const StrIndexMap & chain_id_map = chain_id_map_;
 
@@ -62,9 +59,9 @@ public:
     static void create_link(
         const JSON & tx_json,
         Module * mod_a,
-        const std::string & a_chain_id,
+        const std::string & a_chain_name,
         Module * mod_b,
-        const std::string & b_chain_id);
+        const std::string & b_chain_name);
 };
 
 }  /* elfin */

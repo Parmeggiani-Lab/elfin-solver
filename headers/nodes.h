@@ -7,16 +7,18 @@
 
 namespace elfin {
 
-class Nodes : public std::deque<Node *> {
-private:
-    void destroy_nodes();
+typedef std::deque<Node *> NodesContainer;
 
+class Nodes : public NodesContainer {
 public:
     /* ctors & dtors */
     Nodes() {}
     Nodes(const Nodes & other);
     Nodes & operator=(const Nodes & other);
     virtual ~Nodes();
+
+    /* other methods */
+    void clear();
 };
 
 }  /* elfin */

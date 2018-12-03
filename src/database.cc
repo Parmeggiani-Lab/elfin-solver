@@ -8,7 +8,7 @@
 #include "input_manager.h"
 
 // #define PRINT_DRAWABLES
-// #define PRINT_DB
+#define PRINT_DB
 
 namespace elfin {
 
@@ -96,26 +96,26 @@ void Database::print_db() {
     for (size_t i = 0; i < n_mods; ++i)
     {
         const Module * mod = drawables_.all_mods.mod_list.at(i);
-        const size_t n_chains = mod->chains().size();
+        const size_t n_chains = mod->chains.size();
         wrn("xdb_[#%lu:%s] has %lu chains\n",
-            i, mod->name_.c_str(), n_chains);
+            i, mod->name.c_str(), n_chains);
 
-        for (auto & chain : mod->chains()) {
+        for (auto & chain : mod->chains) {
             wrn("\tchain[#%lu:%s]:\n",
-                mod->chain_id_map().at(chain.name),
+                mod->chain_id_map.at(chain.name),
                 chain.name.c_str());
 
-            auto n_links = chain.n_links;
+            auto & n_links = chain.n_term.links;
             for (size_t k = 0; k < n_links.size(); ++k)
             {
                 wrn("\t\tn_links[%lu] -> xdb_[%s]\n",
-                    k, n_links[k].mod->name_.c_str());
+                    k, n_links[k].mod->name.c_str());
             }
-            auto c_links = chain.c_links;
+            auto & c_links = chain.n_term.links;
             for (size_t k = 0; k < c_links.size(); ++k)
             {
                 wrn("\t\tc_links[%lu] -> xdb_[%s]\n",
-                    k, c_links[k].mod->name_.c_str());
+                    k, c_links[k].mod->name.c_str());
             }
         }
     }
@@ -220,9 +220,9 @@ void Database::parse_from_json(const JSON & xdb) {
     for_each_module(parse_link);
 
     // Finalize modules
-    for (auto mod : nf_mod_list) {
-        mod->finalize();
-    }
+    // for (auto mod : nf_mod_list) {
+    //     mod->finalize();
+    // }
 
     drawables_.categorize();
     drawables_.init_cml_sums();
