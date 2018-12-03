@@ -9,6 +9,7 @@
 
 // #define PRINT_DRAWABLES
 #define PRINT_DB
+#define PRINT_NAME_ID_MAP
 
 namespace elfin {
 
@@ -163,6 +164,10 @@ void Database::parse_from_json(const JSON & xdb) {
         const size_t mod_id = nf_mod_list.size();
         name_id_map[name] = mod_id;
 
+#ifdef PRINT_NAME_ID_MAP
+        wrn("Module %s maps to id %lu\n", name.c_str(), mod_id);
+#endif  /* ifndef PRINT_NAME_ID_MAP */
+
         StrList chain_names;
         const JSON & chains_json = (*jit)["chains"];
         for (auto chain_it = chains_json.begin();
@@ -177,8 +182,10 @@ void Database::parse_from_json(const JSON & xdb) {
     for_each_module(init_module);
 
     auto parse_link = [&](JSON_MOD_PARAMS) {
+        const size_t mod_a_id = name_id_map[jit.key()];
         Module * const mod_a =
-            nf_mod_list.at(name_id_map[jit.key()]);
+            nf_mod_list.at(mod_a_id);
+        err("mod_a_id=%lu\n", mod_a_id);
 
         const JSON & chains_json = (*jit)["chains"];
         for (auto a_chain_it = chains_json.begin();
@@ -193,8 +200,10 @@ void Database::parse_from_json(const JSON & xdb) {
             for (auto c_it = c_json.begin();
                     c_it != c_json.end();
                     ++c_it) {
+                const size_t mod_b_id = name_id_map[c_it.key()];
                 Module * const mod_b =
-                    nf_mod_list.at(name_id_map[c_it.key()]);
+                    nf_mod_list.at(mod_b_id);
+                err("mod_b_id=%lu\n", mod_b_id);
 
                 const JSON & b_chains_json = (*c_it);
                 for (auto b_chain_it = b_chains_json.begin();

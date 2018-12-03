@@ -62,20 +62,29 @@ void Module::create_link(
     const size_t a_chain_id = mod_a->chain_id_map.at(a_chain_name);
     Chain & a_chain = a_chains.at(a_chain_id);
     wrn("a_chain_id=%lu\n", a_chain_id);
+    wrn("mod_a[%x] chain[%s] size: %lu, counts: %lu, %lu, %lu\n",
+        mod_a,
+        a_chain.name.c_str(),
+        a_chains.size(),
+        mod_a->counts.n_link,
+        mod_a->counts.c_link,
+        mod_a->counts.interface);
 
     ChainList & b_chains = mod_b->chains_;
     const size_t b_chain_id = mod_b->chain_id_map.at(b_chain_name);
     Chain & b_chain = b_chains.at(b_chain_id);
     wrn("b_chain_id=%lu\n", b_chain_id);
+    wrn("mod_b[%x] chain[%s] size: %lu, counts: %lu, %lu, %lu\n",
+        mod_b,
+        b_chain.name.c_str(),
+        b_chains.size(),
+        mod_b->counts.n_link,
+        mod_b->counts.c_link,
+        mod_b->counts.interface);
 
     // Create links and count
     a_chain.c_term_.links_.emplace_back(tx, mod_b, b_chain_id);
     mod_a->counts_.c_link++;
-    wrn("mod_a chain[%s] counts: %lu, %lu, %lu\n",
-        a_chain.name.c_str(),
-        mod_a->counts.n_link,
-        mod_a->counts.c_link,
-        mod_a->counts.interface);
     if (a_chain.c_term.links.size() == 1) { // 0 -> 1 indicates a new interface
         mod_a->counts_.interface++;
     }
@@ -84,11 +93,6 @@ void Module::create_link(
     if (b_chain.n_term.links.size() == 1) { // 0 -> 1 indicates a new interface
         mod_b->counts_.interface++;
     }
-    wrn("mod_b chain[%s]: %lu, %lu, %lu\n",
-        b_chain.name.c_str(),
-        mod_b->counts.n_link,
-        mod_b->counts.c_link,
-        mod_b->counts.interface);
 }
 
 }  /* elfin */
