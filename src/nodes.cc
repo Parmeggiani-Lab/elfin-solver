@@ -23,6 +23,8 @@ Nodes & Nodes::operator=(const Nodes & other) {
     for (auto node : other) {
         this->push_back(node->clone());
     }
+
+    return *this;
 }
 
 Nodes::~Nodes() {
