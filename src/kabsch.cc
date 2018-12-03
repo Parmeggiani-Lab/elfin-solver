@@ -488,7 +488,7 @@ int _test_kabsch() {
 	Vector3f tran;
 	double rms;
 
-	unsigned int failCount = 0;
+	uint32_t failCount = 0;
 
 	// Test Kabsch rotation and translation
 	const bool ret_val = kabsch(A, B, rot, tran, rms);

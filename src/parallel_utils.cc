@@ -5,9 +5,9 @@
 namespace elfin
 {
 
-std::vector<unsigned int> para_rand_seeds;
+std::vector<uint32_t> para_rand_seeds;
 
-void set_thread_seeds(unsigned int global_seed)
+void set_thread_seeds(uint32_t global_seed)
 {
 	// Seending the RNG needs to be done per-thread because std::rand()
 	// is not requied to be thread-safe
@@ -23,7 +23,7 @@ void set_thread_seeds(unsigned int global_seed)
 	}
 }
 
-std::vector<unsigned int> & get_para_rand_seeds()
+std::vector<uint32_t> & get_para_rand_seeds()
 {
 	return para_rand_seeds;
 }

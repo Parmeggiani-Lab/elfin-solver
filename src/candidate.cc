@@ -22,7 +22,7 @@ bool Candidate::collides(
     for (const auto node : nodes_) {
         const float sq_com_dist = node->tx().collapsed().sq_dist_to(new_com);
         const float required_com_dist = mod_radius +
-                                        node->prototype()->radius_;
+                                        node->prototype()->radius;
         if (sq_com_dist < (required_com_dist * required_com_dist)) {
             return true;
         }
@@ -49,7 +49,7 @@ StrList Candidate::get_node_names() const {
     StrList res;
 
     for (auto & n : nodes_) {
-        res.emplace_back(n->prototype()->name_);
+        res.emplace_back(n->prototype()->name);
     }
 
     return res;

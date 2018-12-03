@@ -18,6 +18,8 @@ GEN_ENUM_AND_STRING(TerminusType, TerminusTypeNames, FOREACH_TERMINUSTYPE);
 
 void death_by_bad_terminus(std::string func_name, TerminusType term);
 
+TerminusType random_term();
+
 const TerminusType OPPOSITE_TERM[2] = { TerminusType::C, TerminusType::N };
 
 }  /* elfin */

@@ -26,7 +26,7 @@ MAX_ERRORS=1
 ASAN=no
 
 ifeq ($(DEBUG), yes)
-	DEBUG_FLAGS=-ggdb3
+	DEBUG_FLAGS=-ggdb3 -export-dynamic
 else
 	DEBUG_FLAGS=-DNDBUG
 endif

@@ -6,7 +6,11 @@
 #include "random_utils.h"
 #include "kabsch.h"
 #include "input_manager.h"
-#include "id_pair.h"
+#include "id_types.h"
+
+#ifndef NDEBUG
+#include "debug_utils.h"
+#endif  /* ifndef NDEBUG */
 
 #define NO_POINT_MUTATE
 #define NO_LIMB_MUTATE
@@ -249,9 +253,9 @@ bool FreeCandidate::pick_sever_point(
 
     for (size_t i = 0; i < nodes_.size(); ++i) {
         const Module * proto = nodes_.at(i)->prototype();
-        if ((term == N and proto->n_link_count() > 1) or
-                (term == C and proto->c_link_count() > 1) or
-                (term == ANY and proto->all_link_count() > 2)) {
+        if ((term == N and proto->counts.n_link > 1) or
+                (term == C and proto->counts.c_link > 1) or
+                (term == ANY and proto->counts.all_link() > 2)) {
 
             non_dead_end_ids.push_back(i);
 
@@ -295,65 +299,55 @@ bool FreeCandidate::limb_mutate() {
 }
 
 void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
+#ifndef NDEBUG
     // cry if nodes_ does not at least have the tip_index
-    panic_when(tip_index >= nodes_.size());
+    DEBUG(tip_index >= nodes_.size());
+#endif  /* ifndef NDEBUG */
+
     Node * tip_node = nodes_.at(tip_index);
 
     if (term == TerminusType::ANY) {
-        term = get_dice(2) == 0 ? TerminusType::N : TerminusType::C;
+        term = random_term();
     }
 
-    // cry if not free term available
-    panic_when(tip_node->free_term().size(term) == 0);
-    auto & free_chain_ids = tip_node->free_term().get(term);
-
+    // cry if no free term available
     while (nodes_.size() < Candidate::MAX_LEN) {
-        // pick random chain
-        size_t tip_chain_id = pick_random(free_chain_ids);
-        auto & chain = tip_node->prototype()->chains().at(tip_chain_id);
+#ifndef NDEBUG
+        // pick random chain and then random link
+        DEBUG(tip_node->term_tracker().get_free_size(term) == 0);
+#endif  /* ifndef NDEBUG */
+
+        auto & free_chain_ids = tip_node->term_tracker().get_free(term);
+        wrn("free size: %lu\n", free_chain_ids.size());
+        const size_t tip_chain_id = pick_random(free_chain_ids);
+        wrn("tip_chain_id: %lu\n", tip_chain_id);
+        auto & chain = tip_node->prototype()->chains.at(tip_chain_id);
         auto & links = chain.get_links(term);
         const auto & link = pick_random(links);
-        
+        wrn("link: %x\n", &link);
+
         Node * new_node = new Node(link.mod, tip_node->tx() * link.tx);
-
-        tip_node->occupy_terminus(term, tip_chain_id);
-        new_node->occupy_terminus(OPPOSITE_TERM[term], link.target_chain_id);
-
+        Node::connect(tip_node, tip_chain_id, term, new_node, link.target_chain_id);
         nodes_.push_back(new_node);
+
+        tip_node = new_node;
+
+#ifndef NDEBUG
+        DEBUG(0 == new_node->term_tracker().get_free_size(TerminusType::ANY));
+#endif  /* ifndef NDEBUG */
+
+        if (new_node->term_tracker().get_free_size(TerminusType::N) == 0) {
+            term = TerminusType::C;
+        }
+        else if (new_node->term_tracker().get_free_size(TerminusType::C) == 0) {
+            term = TerminusType::N;
+        }
+        else {
+            wrn("Shouldn't reach here because we're only using basic modules!\n");
+            die("Node: %s\n", new_node->to_string().c_str());
+            term = random_term();
+        }
     }
-
-    // while(nodes_.size() - start_size < n_nodes)
-    // {
-    //     // Find list of non-colliding neighbour modules
-    //     std::vector<const Module::Link *> compat_links;
-    //     const Node & tip_node = dir == Right ? nodes_.back() : nodes_.front();
-    //     const Transform & base_tx = tip_node.tx;
-    //     const Module * node_proto = tip_node->prototype();
-
-    //     Roulette roulette;
-    //     for (auto & chain_map_it : node_proto->chains()) {
-    //         const Module::Chain & chain = chain_map_it.second;
-    //         for (auto & c_link : chain.c_links) {
-    //             Transform tx = c_link.tx * base_tx;
-
-    //             if (!nodes_.collides(
-    //                         tx.collapsed(),
-    //                         node_proto->radius_)) {
-    //                 compat_links.push_back(&c_link);;
-    //                 roulette.cumulate(node_proto->c_link_count());
-    //             }
-    //         }
-    //     }
-
-    //     if (compat_links.empty())
-    //         break;
-
-    //     // Pick a random valid neighbour
-    //     const Module::Link * link = roulette.rand_item(compat_links);
-
-    //     // Grow shape
-    //     nodes_.emplace_back(link->mod, link->tx * base_tx);
-    // }
 }
 
 void FreeCandidate::regrow() {
@@ -361,17 +355,16 @@ void FreeCandidate::regrow() {
 
     // Pick random starting node (basic module)
     const Module * mod = XDB.get_drawables().basic.all.rand_item();
-    Node * new_node = new Node(mod);
-    // new_node->set_free_term(TerminusType::ANY); // can be N/C or NN/CC...
 
+    Node * new_node = new Node(mod);
     nodes_.push_back(new_node);
 
-    // Pick random temrinus
+    // Pick random terminus
     TerminusType term;
-    if (new_node->free_term().size(TerminusType::N) == 0) {
+    if (new_node->term_tracker().get_free_size(TerminusType::N) == 0) {
         term = TerminusType::C;
     }
-    else if (new_node->free_term().size(TerminusType::C) == 0) {
+    else if (new_node->term_tracker().get_free_size(TerminusType::C) == 0) {
         term = TerminusType::N;
     }
     else {

@@ -200,18 +200,18 @@ int ElfinRunner::run_meta_tests() const {
 
         // Test parallel randomiser
 #ifndef _NO_OMP
-        std::vector<unsigned int> para_rand_seeds = get_para_rand_seeds();
+        std::vector<uint32_t> para_rand_seeds = get_para_rand_seeds();
         const int n_threads = para_rand_seeds.size();
         const int para_rand_n = 8096;
         const int64_t dice_lim = 13377331;
 
-        std::vector<unsigned int> rands1(para_rand_n);
+        std::vector<uint32_t> rands1(para_rand_n);
         #pragma omp parallel for
         for (size_t i = 0; i < para_rand_n; i++)
             rands1.at(i) = get_dice(dice_lim);
 
         get_para_rand_seeds() = para_rand_seeds;
-        std::vector<unsigned int> rands2(para_rand_n);
+        std::vector<uint32_t> rands2(para_rand_n);
         #pragma omp parallel for
         for (size_t i = 0; i < para_rand_n; i++)
             rands2.at(i) = get_dice(dice_lim);

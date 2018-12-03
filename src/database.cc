@@ -13,10 +13,10 @@
 namespace elfin {
 
 void Database::Drawable::init_cml_sums() {
-    for (auto mod : mod_list) {
-        all.cumulate(mod->all_link_count());
-        n.cumulate(mod->n_link_count());
-        c.cumulate(mod->c_link_count());
+    for (auto fin_mod : mod_list) {
+        all.cumulate(fin_mod->counts.all_link());
+        n.cumulate(fin_mod->counts.n_link);
+        c.cumulate(fin_mod->counts.c_link);
     }
 }
 
@@ -26,7 +26,7 @@ std::string Database::Drawable::to_string() const {
         ss << string_format(
                "mod[#%lu:%s] n=%lu, c=%lu, all=%lu\n",
                i,
-               mod_list.at(i)->name_.c_str(),
+               mod_list.at(i)->name.c_str(),
                n.cml_sum().at(i),
                c.cml_sum().at(i),
                all.cml_sum().at(i));
@@ -50,23 +50,23 @@ std::string Database::Drawable::to_string() const {
  */
 void Database::Drawables::categorize() {
     for (auto mod : all_mods.mod_list) {
-        const size_t n_itf = mod->interface_count();
+        const size_t n_itf = mod->counts.interface;
         if (n_itf < 2) {
             die("mod[%s] has fewer interfaces(%lu) than expected(2)\n",
-                mod->name_.c_str(), n_itf);
+                mod->name.c_str(), n_itf);
         } else if (n_itf == 2) {
             basic.mod_list.push_back(mod);
         } else {
             complex.mod_list.push_back(mod);
         }
 
-        if (mod->type_ == ModuleType::SINGLE) {
+        if (mod->type == ModuleType::SINGLE) {
             singles.mod_list.push_back(mod);
-        } else if (mod->type_ == ModuleType::HUB) {
+        } else if (mod->type == ModuleType::HUB) {
             hubs.mod_list.push_back(mod);
         } else {
             die("mod[%s] has unknown ModuleType: %s\n",
-                mod->name_.c_str(), ModuleTypeNames[mod->type_]);
+                mod->name.c_str(), ModuleTypeNames[mod->type]);
         }
     }
 }
@@ -153,11 +153,14 @@ void Database::parse_from_json(const JSON & xdb) {
         for_each_hub(lambda);
     };
 
+    // Non-finalized module list
+    ModPtrList & nf_mod_list = drawables_.all_mods.mod_list;
+
     // Build mapping between name and id
     std::unordered_map<std::string, size_t> name_id_map;
     auto init_module = [&](JSON_MOD_PARAMS) {
         const std::string & name = jit.key();
-        const size_t mod_id = drawables_.all_mods.mod_list.size();
+        const size_t mod_id = nf_mod_list.size();
         name_id_map[name] = mod_id;
 
         StrList chain_names;
@@ -169,13 +172,13 @@ void Database::parse_from_json(const JSON & xdb) {
         }
 
         const float radius = (*jit)["radii"][OPTIONS.radius_type];
-        drawables_.all_mods.mod_list.push_back(new Module(name, mod_type, radius, chain_names));
+        nf_mod_list.push_back(new Module(name, mod_type, radius, chain_names));
     };
     for_each_module(init_module);
 
     auto parse_link = [&](JSON_MOD_PARAMS) {
         Module * const mod_a =
-            drawables_.all_mods.mod_list.at(name_id_map[jit.key()]);
+            nf_mod_list.at(name_id_map[jit.key()]);
 
         const JSON & chains_json = (*jit)["chains"];
         for (auto a_chain_it = chains_json.begin();
@@ -184,14 +187,14 @@ void Database::parse_from_json(const JSON & xdb) {
             const std::string & a_chain_id = a_chain_it.key();
 
             // No need to run through "n" because xdb contains only n-c
-            // transforms. In link_chains we create inversed versions for c-n
-            // transforms.
+            // transforms. In create_link(), an inversed version for c-n
+            // transform is created.
             const JSON & c_json = (*a_chain_it)["c"];
             for (auto c_it = c_json.begin();
                     c_it != c_json.end();
                     ++c_it) {
                 Module * const mod_b =
-                    drawables_.all_mods.mod_list.at(name_id_map[c_it.key()]);
+                    nf_mod_list.at(name_id_map[c_it.key()]);
 
                 const JSON & b_chains_json = (*c_it);
                 for (auto b_chain_it = b_chains_json.begin();
@@ -201,10 +204,10 @@ void Database::parse_from_json(const JSON & xdb) {
                     panic_if(tx_id >= xdb["n_to_c_tx"].size(),
                              ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
                               "\tEither xdb.json is corrupted or "
-                              "there is a coding error in dbgen.py...\n"));
+                              "there is an error in dbgen.py.\n"));
 
                     const JSON & tx_json = xdb["n_to_c_tx"][tx_id]["tx"];
-                    Module::link_chains(
+                    Module::create_link(
                         tx_json,
                         mod_a,
                         a_chain_id,
@@ -216,7 +219,8 @@ void Database::parse_from_json(const JSON & xdb) {
     };
     for_each_module(parse_link);
 
-    for (auto mod : drawables_.all_mods.mod_list) {
+    // Finalize modules
+    for (auto mod : nf_mod_list) {
         mod->finalize();
     }
 

@@ -4,13 +4,17 @@
 #include <vector>
 
 #include "parallel_utils.h"
-#include "stack_trace.h"
+
+#ifndef NDEBUG
+#include "string_utils.h"
+#include "debug_utils.h"
+#endif  /* ifndef NDEBUG */
 
 namespace elfin {
 
 inline float get_dice_0to1()
 {
-    unsigned int & thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
+    uint32_t & thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
     return (float) rand_r(&thread_seed) / RAND_MAX;
 }
 
@@ -21,10 +25,7 @@ inline size_t get_dice(size_t ceiling)
 
 template <typename T>
 inline void check_item_not_empty(const std::vector<T> & v, const char * func_name) {
-    if (v.empty()) {
-        print_stacktrace();
-        die("Empty items for %s\n", func_name);
-    }
+    DEBUG(v.empty(), string_format("Empty items for %s\n", func_name));
 }
 
 // https://stackoverflow.com/questions/9218724/get-random-element-and-remove-it

@@ -20,7 +20,7 @@ struct Options {
     float avg_pair_dist = 37.709864956942226f;
 
     /* GA parameters */
-    unsigned int rand_seed = 0x1337cafe;
+    uint32_t rand_seed = 0x1337cafe;
     size_t ga_pop_size = 10000;
     size_t ga_iters = 1000;
     float ga_survive_rate = 0.05f;

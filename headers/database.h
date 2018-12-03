@@ -30,10 +30,7 @@ protected:
         ModPtrRoulette c;
         std::string to_string() const;
         void init_cml_sums();
-        Drawable() :
-            all(mod_list, Module::all_link_count_functor),
-            n(mod_list, Module::n_link_count_functor),
-            c(mod_list, Module::c_link_count_functor) {}
+        Drawable() : all(mod_list), n(mod_list), c(mod_list) {}
         Drawable & operator=(const Drawable & other) {
             mod_list = other.mod_list; // copy mod_list
             // Don't copy Rouletes because they rely on ref to this->mod_list

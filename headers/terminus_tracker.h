@@ -3,57 +3,54 @@
 
 #include <vector>
 
+#include "id_types.h"
 #include "terminus_type.h"
 
 namespace elfin {
 
 class TerminusTracker {
 private:
+    /* types */
+    class FreeChainListPair {
+    private:
+        /*
+         * n and c store chain ids (convertible to chain names). Although
+         * vectors require O(n) for find(), n are c are usually very small
+         * vectors.
+         *
+         * Other choices are:
+         * - use unordered_set for O(1) find() but O(n)
+         * pick_random().
+         * - use unordered_set with a vector of pointers into the set. O(1)
+         *   for all but requires extra data.
+        */
+        IdList n_, c_;
+        IdList & _get(const TerminusType term);
+    public:
+        IdList & get(const TerminusType term) { return _get(term); }
+        const IdList & get(const TerminusType term) const {
+            return const_cast<TerminusTracker::FreeChainListPair *>(this)->_get(term);
+        }
+        size_t size(const TerminusType term) const;
+    };
+
     /* data members */
-    /*
-     * n and c store chain ids (convertible to chain names). Although
-     * vectors require O(n) for find() in occupy_terminus, n are c are
-     * usually very small vectors.
-     *
-     * Other choices are:
-     * - use unordered_set for O(1) find() but O(n)
-     * pick_random().
-     * - use unordered_set with a vector of pointers into the set. O(1)
-     *   for all but requires extra data.
-    */
-    std::vector<size_t> & __get(TerminusType term) {
-        if (term == TerminusType::N) {
-            return n_;
-        }
-        else if (term == TerminusType::C) {
-            return c_;
-        }
-        else {
-            death_by_bad_terminus(__PRETTY_FUNCTION__, term);
-        }
-    }
+    FreeChainListPair free_chains_;
+
 public:
-    std::vector<size_t> n_, c_;
-    std::vector<size_t> & get(TerminusType term) {
-        return __get(term);
+    /* getters & setters */
+    IdList & get_free(const TerminusType term) { return free_chains_.get(term); }
+    const IdList & get_free(const TerminusType term) const {
+        return free_chains_.get(term);
     }
-    const std::vector<size_t> & get(TerminusType term) const {
-        return const_cast<TerminusTracker *>(this)->__get(term);
+
+    /* other methods */
+    size_t get_free_size(const TerminusType term) const {
+        return free_chains_.size(term);
     }
-    size_t size(TerminusType term) const {
-        if (term == TerminusType::N) {
-            return n_.size();
-        }
-        else if (term == TerminusType::C) {
-            return c_.size();
-        }
-        else if (term == TerminusType::ANY) {
-            return n_.size() + c_.size();
-        }
-        else {
-            death_by_bad_terminus(__PRETTY_FUNCTION__, term);
-        }
-    }
+    bool is_free(const TerminusType term, const size_t chain_id) const;
+    void occupy_terminus(const TerminusType term, const size_t chain_id);
+    void free_terminus(const TerminusType term, const size_t chain_id);
 };
 
 }  /* elfin */

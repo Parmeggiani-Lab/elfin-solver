@@ -4,6 +4,9 @@
 #include <vector>
 #include <cstddef>
 
+/*
+ * Contains types that has to do with keeping array indicies (size_t).
+ */
 namespace elfin {
 
 struct IdPair {
@@ -13,6 +16,8 @@ struct IdPair {
 };
 
 typedef std::vector<IdPair> IdPairs;
+
+typedef std::vector<size_t> IdList;
 
 }  /* elfin */
 
