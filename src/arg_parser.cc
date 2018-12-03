@@ -2,7 +2,6 @@
 
 #include "json.h"
 
-#include <regex>
 #include <sstream>
 
 namespace elfin {

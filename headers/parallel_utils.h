@@ -55,9 +55,9 @@ inline long TIMING_END(const char * sectionName, const double startTime) {
 namespace elfin
 {
 
-void set_thread_seeds(uint global_seed);
+void set_thread_seeds(unsigned int global_seed);
 
-std::vector<uint> & get_para_rand_seeds();
+std::vector<unsigned int> & get_para_rand_seeds();
 
 } // namespace elfin
 

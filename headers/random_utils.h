@@ -10,7 +10,7 @@ namespace elfin {
 
 inline float get_dice_0to1()
 {
-    uint & thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
+    unsigned int & thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
     return (float) rand_r(&thread_seed) / RAND_MAX;
 }
 
