@@ -1,5 +1,7 @@
 #include "chain.h"
 
+// #define PRINT_FINALIZE
+
 namespace elfin {
 
 /* public */
@@ -18,7 +20,16 @@ const Terminus & Chain::get_term(
 }
 
 void Chain::finalize() {
+#ifdef PRINT_FINALIZE
+    wrn("Finalizing chain %s N term\n", name.c_str());
+#endif  /* ifdef PRINT_FINALIZE */
+
     n_term_.finalize();
+
+#ifdef PRINT_FINALIZE
+    wrn("Finalizing chain %s C term\n", name.c_str());
+#endif  /* ifdef PRINT_FINALIZE */
+    
     c_term_.finalize();
 }
 

@@ -17,15 +17,13 @@ private:
 
     /* data members */
     LinkList links_;
-    LinkListRoulette n_rlt_, c_rlt_;
+    LinkListRoulette n_rlt_ = LinkListRoulette(links_);
+    LinkListRoulette c_rlt_ = LinkListRoulette(links_);
     size_t basic_link_size_;
 
 public:
     /* data members */
-    const LinkList & links = links_;
-
-    /* ctors & dtors */
-    Terminus() : n_rlt_(links_), c_rlt_(links_) {}
+    const LinkList & links() const { return links_; }
 
     /* other mehotds */
     void finalize();

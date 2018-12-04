@@ -227,9 +227,9 @@ void Database::parse_from_json(const JSON & xdb) {
     for_each_module(parse_link);
 
     // Finalize modules
-    // for (auto mod : nf_mod_list) {
-    //     mod->finalize();
-    // }
+    for (auto mod : nf_mod_list) {
+        mod->finalize();
+    }
 
     drawables_.categorize();
     drawables_.init_cml_sums();

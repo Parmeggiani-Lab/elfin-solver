@@ -318,13 +318,9 @@ void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
 
         // pick random chain and then random link
         auto & free_chain_ids = tip_node->term_tracker().get_free(term);
-        wrn("free size: %lu\n", free_chain_ids.size());
         const size_t tip_chain_id = pick_random(free_chain_ids);
-        wrn("tip_chain_id: %lu\n", tip_chain_id);
-        auto & chain = tip_node->prototype()->chains.at(tip_chain_id);
-
+        auto & chain = tip_node->prototype()->chains().at(tip_chain_id);
         const auto & link = chain.pick_random_link(term);
-        wrn("link: %x\n", &link);
 
         Node * new_node = new Node(link.mod, tip_node->tx() * link.tx);
         Node::connect(tip_node, tip_chain_id, term, new_node, link.target_chain_id);

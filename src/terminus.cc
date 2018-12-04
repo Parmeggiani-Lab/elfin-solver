@@ -5,23 +5,31 @@
 #include "module.h"
 #include "debug_utils.h"
 
+// #define PRINT_FINALIZE
+
 namespace elfin {
 
 /* public */
 
 void Terminus::finalize() {
+#ifdef PRINT_FINALIZE
+    wrn("Finalizing term with %lu links\n", links_.size());
+#endif  /* ifdef PRINT_FINALIZE */
     /*
      * Sort links by interface count in ascending order to facilitate fast
      * pick_random() that support partitioning by interface count.
      */
     std::sort(links_.begin(), links_.end(), Link::CompareByInterfaceCount);
 
-    for (size_t i = 0; i < links.size(); i++) {
+    for (auto itr = links_.begin();
+            itr != links_.end();
+            itr++) {
+        Link & link = *itr;
 #ifndef NDEBUG
-        DEBUG(links[i].mod == nullptr);
+        DEBUG(link.mod == nullptr);
 #endif  /* ifndef NDEBUG */
 
-        const Module * target_prot = links[i].mod;
+        const Module * target_prot = link.mod;
         if (target_prot->counts.interface > 2) {
             // Fill the rest of the roulette with cumulated sum
             n_rlt_.cumulate(0);
@@ -47,15 +55,32 @@ void Terminus::finalize() {
             {
                 // zero C-count means all interfaces are N type
                 n_rlt_.cumulate(ncount);
-                n_rlt_.cumulate(ncount);
+                c_rlt_.cumulate(ncount);
             }
             else {
                 n_rlt_.cumulate(ncount);
                 c_rlt_.cumulate(ccount);
             }
-            basic_link_size_ = i + 1; // Record last basic link
+            basic_link_size_ = itr - links_.begin(); // Record last basic link
         }
     }
+
+#ifdef PRINT_FINALIZE
+    wrn(("Terminus finalize:\n"
+         "\tn_rlt_.cml_sum size=%lu\n"
+         "\tn_rlt_.container size=%lu\n"
+         "\tc_rlt_.cml_sum size=%lu\n"
+         "\tc_rlt_.container size=%lu\n"),
+        n_rlt_.cml_sum().size(),
+        n_rlt_.container().size(),
+        c_rlt_.cml_sum().size(),
+        c_rlt_.container().size());
+#endif  /* ifdef PRINT_FINALIZE */
+
+#ifndef NDEBUG
+    DEBUG(n_rlt_.cml_sum().size() != n_rlt_.container().size());
+    DEBUG(c_rlt_.cml_sum().size() != c_rlt_.container().size());
+#endif  /* ifndef NDEBUG */
 }
 
 const Link & Terminus::pick_random_link(

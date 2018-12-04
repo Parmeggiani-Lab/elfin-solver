@@ -31,9 +31,9 @@ public:
     };
 
 private:
+    /* data members */
     ChainList chains_;
     StrIndexMap chain_id_map_;
-
     Counts counts_ = {};
 
 public:
@@ -42,8 +42,8 @@ public:
     const ModuleType type;
     const float radius;
     const StrList chain_names;
-    const ChainList & chains = chains_;
-    const StrIndexMap & chain_id_map = chain_id_map_;
+    const ChainList & chains() const { return chains_; };
+    const StrIndexMap & chain_id_map() const { return chain_id_map_; };
 
     // finalizer fields
     const Counts & counts = counts_;

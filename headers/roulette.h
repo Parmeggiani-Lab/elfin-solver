@@ -6,6 +6,8 @@
 
 #include "jutil.h"
 #include "random_utils.h"
+#include "string_utils.h"
+#include "debug_utils.h"
 
 namespace elfin {
 
@@ -23,11 +25,14 @@ public:
 
     /* getters & setters */
     const std::vector<size_t> & cml_sum() const { return cml_sum_; }
+    const Container & container() const { return container_; }
     size_t total() const { return total_; }
 
     ItemType & rand_item() {
 #ifndef NDEBUG
-        DEBUG(cml_sum_.size() != container_.size());
+        DEBUG(cml_sum_.size() != container_.size(),
+              string_format("cml_sum size=%lu but container size=%lu\n",
+                            cml_sum_.size(), container_.size()));
 #endif  /* ifndef NDEBUG */
         auto itr = std::upper_bound(
                        cml_sum_.begin(),
@@ -39,7 +44,9 @@ public:
 
     const ItemType & rand_item() const {
 #ifndef NDEBUG
-        DEBUG(cml_sum_.size() != container_.size());
+        DEBUG(cml_sum_.size() != container_.size(),
+              string_format("cml_sum size=%lu but container size=%lu\n",
+                            cml_sum_.size(), container_.size()));
 #endif  /* ifndef NDEBUG */
         auto itr = std::upper_bound(
                        cml_sum_.begin(),
