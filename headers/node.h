@@ -26,7 +26,9 @@ public:
     /* getters & setters */
     const Module * prototype() const { return prototype_; }
     Transform & tx() { return tx_; }
-    const TerminusTracker & term_tracker() const { return term_tracker_; }
+    const TerminusTracker & term_tracker() const {
+        return term_tracker_;
+    }
     static void connect(
         Node * node_a,
         const size_t a_chain_id,

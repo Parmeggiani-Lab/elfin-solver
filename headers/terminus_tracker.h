@@ -13,14 +13,20 @@ class TerminusTracker {
 private:
     /* types */
     struct FreeChainListPair {
+        /*
+         * It's possible to provide O(1) find() and pick_random()
+         */
         IdList n, c;
         size_t size(const TerminusType term) const;
         IdList & get(const TerminusType term);
     };
 
     /* data members */
-    FreeChainListPair free_chains_;
+    ChainList & chains_;
+    FreeChainListPair free_chains_, busy_chains_;
 
+    /* other methods */
+    bool is_free(const TerminusType term, const size_t chain_id) const;
 public:
     /* ctors & dtors */
     TerminusTracker(const ChainList & chains);
@@ -28,10 +34,10 @@ public:
     /* getters & setters */
 
     /* other methods */
-    size_t get_free_size(const TerminusType term) const {
+    size_t count_free_chains(const TerminusType term) const {
         return free_chains_.size(term);
     }
-    bool is_free(const TerminusType term, const size_t chain_id) const;
+    const Chain & pick_random_free_chain(const TerminusType term) const;
     void occupy_terminus(const TerminusType term, const size_t chain_id);
     void free_terminus(const TerminusType term, const size_t chain_id);
 };
