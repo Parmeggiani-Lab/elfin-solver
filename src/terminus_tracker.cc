@@ -13,7 +13,8 @@ IdList & TerminusTracker::FreeChainListPair::_get(const TerminusType term) {
         return c_;
     }
     else {
-        death_by_bad_terminus(__PRETTY_FUNCTION__, term);
+        death_by_bad_terminus(__PRETTY_FUNCTION__, term); // Aborts
+        exit(1); // To suppress warning
     }
 }
 
@@ -30,7 +31,8 @@ size_t TerminusTracker::FreeChainListPair::size(
         return n_.size() + c_.size();
     }
     else {
-        death_by_bad_terminus(__PRETTY_FUNCTION__, term);
+        death_by_bad_terminus(__PRETTY_FUNCTION__, term); // Aborts
+        exit(1); // To suppress warning
     }
 }
 

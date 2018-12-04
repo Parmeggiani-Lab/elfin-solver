@@ -53,10 +53,6 @@ public:
            const ModuleType type,
            const float radius,
            const StrList & chain_names);
-    ~Module() {
-        err("?\n");
-        DEBUG("Dtor\b");
-    }
 
     /* other methods */
     void finalize();

@@ -12,16 +12,33 @@ Module::Module(const std::string & _name,
     type(_type),
     radius(_radius),
     chain_names(_chain_names) {
-    for (auto & cn : chain_names) {
+    wrn("New Module at 0x%x\n", this);
+    size_t i = 0;
+
+    // chains_.reserve(chain_names.size());
+    for (const std::string & cn : chain_names) {
         chain_id_map_[cn] = chains_.size();
-        chains_.push_back(cn);
+        chains_.emplace_back(cn);
+        Chain & actual = chains_.back();
+        wrn("Created chain[%s] #%lu, chains_.size()=%lu at 0x%x ? 0x%x; actual: 0x%x, 0x%x, 0x%x, 0x%x\n",
+            cn.c_str(),
+            i,
+            chains_.size(),
+            &actual,
+            &chains_.at(i),
+            &actual.c_term_,
+            &actual.c_term_.links,
+            &actual.n_term_,
+            &actual.n_term_.links);
+        i++;
     }
+    wrn("First chain: 0x%x ? 0x%x\n", &chains_.at(0), &(chains_[0]));
 }
 
 void Module::finalize() {
     // Chain finalize() relies on Terminus finalize(), which assumes that
     // all Module counts are calculated
-    for (auto & chain : chains_) {
+    for (Chain & chain : chains_) {
         chain.finalize();
     }
 }
@@ -61,36 +78,50 @@ void Module::create_link(
     ChainList & a_chains = mod_a->chains_;
     const size_t a_chain_id = mod_a->chain_id_map.at(a_chain_name);
     Chain & a_chain = a_chains.at(a_chain_id);
-    wrn("a_chain_id=%lu\n", a_chain_id);
-    wrn("mod_a[%x] chain[%s] size: %lu, counts: %lu, %lu, %lu\n",
+    wrn("mod_a[0x%x:%s] size: %lu, chain[0x%x:%s:%lu], counts: %lu, %lu, %lu\n",
         mod_a,
-        a_chain.name.c_str(),
+        mod_a->name.c_str(),
         a_chains.size(),
+        &a_chain,
+        a_chain.name.c_str(),
+        a_chain_id,
         mod_a->counts.n_link,
         mod_a->counts.c_link,
         mod_a->counts.interface);
+    wrn("a_chain: 0x%x, 0x%x, 0x%x, 0x%x\n",
+        &a_chain.c_term_,
+        &a_chain.c_term_.links,
+        &a_chain.n_term_,
+        &a_chain.n_term_.links);
 
     ChainList & b_chains = mod_b->chains_;
     const size_t b_chain_id = mod_b->chain_id_map.at(b_chain_name);
     Chain & b_chain = b_chains.at(b_chain_id);
-    wrn("b_chain_id=%lu\n", b_chain_id);
-    wrn("mod_b[%x] chain[%s] size: %lu, counts: %lu, %lu, %lu\n",
+    wrn("mod_b[0x%x:%s], size: %lu, chain[0x%x:%s:%lu], counts: %lu, %lu, %lu\n",
         mod_b,
-        b_chain.name.c_str(),
+        mod_b->name.c_str(),
         b_chains.size(),
+        &b_chain,
+        b_chain.name.c_str(),
+        b_chain_id,
         mod_b->counts.n_link,
         mod_b->counts.c_link,
         mod_b->counts.interface);
+    wrn("b_chain: 0x%x, 0x%x, 0x%x, 0x%x\n",
+        &b_chain.c_term_,
+        &b_chain.c_term_.links,
+        &b_chain.n_term_,
+        &b_chain.n_term_.links);
 
     // Create links and count
     a_chain.c_term_.links_.emplace_back(tx, mod_b, b_chain_id);
     mod_a->counts_.c_link++;
-    if (a_chain.c_term.links.size() == 1) { // 0 -> 1 indicates a new interface
+    if (a_chain.c_term_.links.size() == 1) { // 0 -> 1 indicates a new interface
         mod_a->counts_.interface++;
     }
     b_chain.n_term_.links_.emplace_back(tx_inv, mod_a, a_chain_id);
     mod_b->counts_.n_link++;
-    if (b_chain.n_term.links.size() == 1) { // 0 -> 1 indicates a new interface
+    if (b_chain.n_term_.links.size() == 1) { // 0 -> 1 indicates a new interface
         mod_b->counts_.interface++;
     }
 }

@@ -67,7 +67,8 @@ const Link & Terminus::pick_random_link(
         return c_rlt_.rand_item();
     }
     else {
-        death_by_bad_terminus(__PRETTY_FUNCTION__, term);
+        death_by_bad_terminus(__PRETTY_FUNCTION__, term); // Aborts
+        exit(1); // To suppress warning
     }
 }
 

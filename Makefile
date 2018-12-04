@@ -26,7 +26,7 @@ MAX_ERRORS=1
 ASAN=no
 
 ifeq ($(DEBUG), yes)
-	DEBUG_FLAGS=-ggdb3 -export-dynamic
+	DEBUG_FLAGS=-ggdb3 -rdynamic
 else
 	DEBUG_FLAGS=-DNDBUG
 endif
@@ -90,10 +90,12 @@ else ifeq ($(CXX), g++)
 endif
 
 OPT_FLAGS 		+= -O3
-CC_FLAGS 		+= -MMD -std=c++11 \
-					$(OPT_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) $(TIMING_FLAGS) $(DEFS) $(INCS) -fmax-errors=$(MAX_ERRORS) $(EXTRA_FLAGS)
+CC_FLAGS 		+= -MMD -std=c++11
+					
 
-COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS)
+COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS) \
+	$(OPT_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) $(TIMING_FLAGS) \
+	$(DEFS) $(INCS) -fmax-errors=$(MAX_ERRORS) $(EXTRA_FLAGS)
 
 #
 # start of rules

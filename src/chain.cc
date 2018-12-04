@@ -6,13 +6,14 @@ namespace elfin {
 const Terminus & Chain::get_term(
     const TerminusType term) const {
     if (term == TerminusType::N) {
-        return n_term;
+        return n_term_;
     }
     else if (term == TerminusType::C) {
-        return c_term;
+        return c_term_;
     }
     else {
-        death_by_bad_terminus(__PRETTY_FUNCTION__, term);
+        death_by_bad_terminus(__PRETTY_FUNCTION__, term); // Aborts
+        exit(1); // To suppress warning
     }
 }
 

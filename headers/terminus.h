@@ -34,4 +34,4 @@ public:
 
 }  /* elfin */
 
-#endif  /* end of include guard: TERMINUS_H_ */ 
+#endif  /* end of include guard: TERMINUS_H_ */
