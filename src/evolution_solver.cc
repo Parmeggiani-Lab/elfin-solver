@@ -15,6 +15,20 @@
 
 namespace elfin {
 
+auto get_score_msg_format = []() {
+    size_t gen_digits = std::ceil(std::log(OPTIONS.ga_iters) / std::log(10));
+    return string_format(
+               ("Generation #%%%lulu: "
+                "best=%%.2f (%%.2f/module), "
+                "worst=%%.2f, time taken=%%.0fms\n"),
+               gen_digits);
+};
+std::string timing_msg_format =
+    string_format(
+        ("Mean Times: Evolve=%%.0f, "
+         "Score=%%.0f, Rank=%%.0f, "
+         "Select=%%.0f, Gen=%%.0f\n"));
+
 /* Private Methods */
 
 #ifdef _VTUNE
@@ -32,6 +46,85 @@ EvolutionSolver::swap_pop_buffs() {
     const Population * tmp = buff_pop_;
     buff_pop_ = curr_pop_;
     curr_pop_ = const_cast<Population *>(tmp);
+}
+
+void
+EvolutionSolver::collect_gen_data(
+    const size_t gen_id,
+    const double gen_start_time,
+    double & tot_gen_time,
+    size_t & stagnant_count,
+    float & lastgen_best_score,
+    CandidateSharedPtrs & best_sols,
+    bool & should_break) {
+    // Stat collection
+    const Candidate * best_candidate =
+        curr_pop_->candidates().front();
+    const Candidate * worst_candidate =
+        curr_pop_->candidates().front();
+
+    const float gen_best_score = best_candidate->get_score();
+    const size_t gen_best_len = best_candidate->nodes().size();
+    const float gen_worst_score = worst_candidate->get_score();
+    const double gen_time = ((get_timestamp_us() - gen_start_time) / 1e3);
+
+    tot_gen_time += gen_time;
+
+    // Print score stats
+    msg(get_score_msg_format().c_str(),
+        gen_id,
+        gen_best_score,
+        gen_best_score / gen_best_len,
+        gen_worst_score,
+        gen_time);
+
+    // Compute stagnancy & check inverted scores
+    if (float_approximates(gen_best_score, lastgen_best_score)) {
+        stagnant_count++;
+    }
+    else if (gen_best_score > lastgen_best_score) {
+        err("Best is worse than last gen!\n");
+        debug_print_pop(16);
+        die("Something is wrong...\n");
+    }
+    else {
+        stagnant_count = 0;
+    }
+
+    lastgen_best_score = gen_best_score;
+
+    // Print timing stats
+    const size_t n_gens = gen_id + 1;
+    msg(timing_msg_format.c_str(),
+        (double) (GA_TIMES.evolve_time) / n_gens,
+        (double) (GA_TIMES.score_time) / n_gens,
+        (double) (GA_TIMES.rank_time) / n_gens,
+        (double) (GA_TIMES.select_time) / n_gens,
+        (double) tot_gen_time / n_gens);
+
+    // update best sols
+    for (size_t j = 0; j < OPTIONS.keep_n; j++) {
+        best_sols[j] =
+            std::shared_ptr<Candidate>(
+                curr_pop_->candidates().at(j)->clone());
+    }
+
+    // Check stop conditions
+    if (gen_best_score < OPTIONS.ga_stop_score) {
+        msg("Score stop threshold %.2f reached\n",
+            OPTIONS.ga_stop_score);
+        should_break = true;
+        return;
+    }
+
+    if (OPTIONS.ga_stop_stagnancy != -1 and
+            stagnant_count >= OPTIONS.ga_stop_stagnancy) {
+        wrn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.ga_stop_stagnancy);
+        should_break = true;
+        return;
+    }
+
+    msg("Current stagnancy: %d, max: %d\n", stagnant_count, OPTIONS.ga_stop_stagnancy);
 }
 
 void
@@ -126,10 +219,17 @@ EvolutionSolver::debug_print_pop(size_t cutoff) const {
 
 /* Public Methods */
 
+EvolutionSolver::~EvolutionSolver() {
+    delete curr_pop_;
+    curr_pop_ = nullptr;
+    delete buff_pop_;
+    buff_pop_ = nullptr;
+}
+
 void
 EvolutionSolver::run() {
     start_time_in_us_ = get_timestamp_us();
-    for (auto & itr : SPEC.work_areas()) {
+    for (auto & itr : SPEC.work_area_map()) {
 
         // if this was a complex work area, we need to break it down to
         // multiple simple ones by first choosing hubs and their orientations.
@@ -155,23 +255,14 @@ EvolutionSolver::run() {
         best_sols_[wa_name] = CandidateSharedPtrs();
         best_sols_[wa_name].resize(OPTIONS.keep_n);
 
-        float lastgen_best_score = std::numeric_limits<float>::infinity();
-        size_t stagnant_count = 0;
-
-        const int genDispDigits = std::ceil(std::log(OPTIONS.ga_iters) / std::log(10));
-        char * gen_msg_fmt;
-        int asprintf_ret = -1;
-        asprintf_ret = asprintf(&gen_msg_fmt,
-                                "Generation #%%%dlu: best=%%.2f (%%.2f/module), worst=%%.2f, time taken=%%.0fms\n", genDispDigits);
-        char * avg_time_msg_fmt;
-        asprintf_ret = asprintf(&avg_time_msg_fmt,
-                                "Avg Times: Evolve=%%.0f,Score=%%.0f,Rank=%%.0f,Select=%%.0f,Gen=%%.0f\n");
-
         double tot_gen_time = 0.0f;
+        size_t stagnant_count = 0;
+        float lastgen_best_score = std::numeric_limits<float>::infinity();
+
         if (!OPTIONS.dry_run) {
             MAP_DATA() {
-                for (size_t i = 0; i < OPTIONS.ga_iters; i++) {
-                    const double genStartTime = get_timestamp_us();
+                for (size_t gen_id = 0; gen_id < OPTIONS.ga_iters; gen_id++) {
+                    const double gen_start_time = get_timestamp_us();
 
 #if DEBUG_PRINT_POP > 0
                     wrn("Before evolve\n");
@@ -194,82 +285,21 @@ EvolutionSolver::run() {
                     debug_print_pop(DEBUG_PRINT_POP);
 #endif // DEBUG_PRINT_POP
 
-                    // Instrumentations
-                    const Candidate * best_candidate =
-                        curr_pop_->candidates().front();
-                    const Candidate * worst_candidate =
-                        curr_pop_->candidates().front();
-
-                    const float gen_best_score = best_candidate->get_score();
-                    const size_t gen_best_len = best_candidate->nodes().size();
-                    const float gen_worst_score = worst_candidate->get_score();
-                    const double gen_time = ((get_timestamp_us() - genStartTime) / 1e3);
-                    msg(gen_msg_fmt, i,
-                        gen_best_score,
-                        gen_best_score / gen_best_len,
-                        gen_worst_score,
-                        gen_time);
-
-                    tot_gen_time += gen_time;
-
-                    const size_t n_gens = i + 1;
-                    msg(avg_time_msg_fmt,
-                        (float) (GA_TIMES.evolve_time) / n_gens,
-                        (float) (GA_TIMES.score_time) / n_gens,
-                        (float) (GA_TIMES.rank_time) / n_gens,
-                        (float) (GA_TIMES.select_time) / n_gens,
-                        (float) tot_gen_time / n_gens);
-
-                    // Exit loop if best score is low enough
-                    if (gen_best_score < OPTIONS.ga_stop_score) {
-                        msg("Score stop threshold %.2f reached\n",
-                            OPTIONS.ga_stop_score);
-                        break;
-                    }
-                    else {
-                        // update best sols for this work area
-                        for (size_t j = 0; j < OPTIONS.keep_n; j++) {
-                            best_sols_[wa_name][j] =
-                                std::shared_ptr<Candidate>(
-                                    curr_pop_->candidates().at(j)->clone());
-                        }
-
-                        if (float_approximates(gen_best_score, lastgen_best_score)) {
-                            stagnant_count++;
-                        }
-                        else if (gen_best_score > lastgen_best_score) {
-                            err("Best is worse than last gen!\n");
-                            debug_print_pop(16);
-                            die("Something is wrong...\n");
-                        }
-                        else {
-                            stagnant_count = 0;
-                        }
-
-                        lastgen_best_score = gen_best_score;
-
-                        if (OPTIONS.ga_stop_stagnancy != -1 and
-                                stagnant_count >= OPTIONS.ga_stop_stagnancy) {
-                            wrn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.ga_stop_stagnancy);
-                            break;
-                        }
-                        else {
-                            msg("Current stagnancy: %d, max: %d\n", stagnant_count, OPTIONS.ga_stop_stagnancy);
-                        }
-                    }
+                    bool should_break = false;
+                    collect_gen_data(
+                        gen_id,
+                        gen_start_time,
+                        tot_gen_time,
+                        stagnant_count,
+                        lastgen_best_score,
+                        best_sols_[wa_name],
+                        should_break);
+                    if (should_break) break;
 
                     swap_pop_buffs();
                 }
             }
         }
-
-        free(gen_msg_fmt);
-        free(avg_time_msg_fmt);
-
-        delete curr_pop_;
-        curr_pop_ = nullptr;
-        delete buff_pop_;
-        buff_pop_ = nullptr;
     }
 
     this->print_end_msg();

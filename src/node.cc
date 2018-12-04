@@ -7,33 +7,9 @@ namespace elfin {
 
 /* public */
 Node::Node(const Module * prototype, const Transform & tx) :
-    prototype_(prototype), tx_(tx) {
-    for (auto & chain : prototype_->chains()) {
-        const size_t chain_id = prototype_->chain_id_map().at(chain.name);
-
-        if (chain.n_term().links().size() > 0) {
-#ifdef NDEBUG
-            if (!term_tracker_.is_free(TerminusType::N, chain_id)) {
-                die(("Tried to add chain_id[%lu] that already "
-                     "exists in N terminus chain ID list of\n\t%s\n"),
-                    to_string().c_str());
-            }
-#endif  /* ifdef NDEBUG */
-
-            term_tracker_.get_free(TerminusType::N).push_back(chain_id);
-        }
-        if (chain.c_term().links().size() > 0) {
-#ifdef NDEBUG
-            if (!term_tracker_.is_free(TerminusType::C, chain_id)) {
-                die(("Tried to add chain_id[%lu] that already "
-                     "exists in C terminus chain ID list of\n\t%s\n"),
-                    to_string().c_str());
-            }
-#endif  /* ifdef NDEBUG */
-
-            term_tracker_.get_free(TerminusType::C).push_back(chain_id);
-        }
-    }
+    prototype_(prototype),
+    tx_(tx),
+    term_tracker_(prototype_->chains()) {
 }
 
 /*

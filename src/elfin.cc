@@ -15,6 +15,7 @@
 #include "jutil.h"
 #include "random_utils.h"
 #include "parallel_utils.h"
+#include "output_manager.h"
 
 #ifndef _NO_OMP
 #include <omp.h>
@@ -24,24 +25,6 @@ namespace elfin {
 
 std::vector<ElfinRunner *> ElfinRunner::instances_;
 bool interrupt_caught = false;
-
-// https://stackoverflow.com/questions/8520560/get-a-file-name-from-a-path
-std::string get_filename(const std::string & path) {
-    std::string filename = path;
-    // Remove directory if present.
-    // Do this before extension removal incase directory has a period character.
-    const size_t last_slash_idx = filename.find_last_of("\\/");
-    if (std::string::npos != last_slash_idx) {
-        filename.erase(0, last_slash_idx + 1);
-    }
-
-    // Remove extension if present.
-    const size_t period_idx = filename.rfind('.');
-    if (std::string::npos != period_idx) {
-        filename.erase(period_idx);
-    }
-    return filename;
-}
 
 void ElfinRunner::interrupt_handler(const int signal) {
     if (interrupt_caught) {
@@ -64,67 +47,11 @@ void ElfinRunner::interrupt_handler(const int signal) {
     }
 }
 
-void ElfinRunner::write_output(std::string alt_dir) const {
-    if (alt_dir.length() > 0) {
-        mkdir_ifn_exists(alt_dir.c_str());
-        alt_dir += "/";
-    }
-
-    JSON data;
-    for (auto & kv : SPEC.work_areas()) {
-        const std::string & wa_name = kv.first;
-        const WorkArea & wa = kv.second;
-        JSON waj;
-
-        try {
-            auto & candidates = es_->best_sols().at(wa_name);
-            for (size_t i = 0; i < candidates.size(); ++i)
-            {
-                JSON cand_json;
-                auto c = candidates.at(i);
-
-                if (c) {
-                    auto node_names = c->get_node_names();
-                    cand_json["nodes"] = node_names;
-                    wrn("Output format not complete\n");
-                    cand_json["score"] = c->get_score();
-                }
-                else {
-                    err("Null candidate in work area \"%s\"\n", wa_name.c_str());
-                }
-
-                waj[i] = cand_json;
-            }
-            data[wa_name] = waj;
-        }
-        catch (std::out_of_range& e)
-        {
-            wrn("WorkArea \"%s\" has no solutions\n", wa_name.c_str());
-        }
-    }
-
-    // format json output path
-    std::ostringstream json_output_path_ss;
-    json_output_path_ss << alt_dir
-                        << OPTIONS.output_dir << "/"
-                        << get_filename(OPTIONS.input_file)
-                        << ".json";
-
-    std::string json_out_path_str = json_output_path_ss.str();
-    const char * json_output_path = json_out_path_str.c_str();
-
-    // write json
-    std::string dump = data.dump();
-    write_binary(json_output_path,
-                 dump.c_str(),
-                 dump.size());
-}
-
 void ElfinRunner::crash_dump() const {
     if (es_started_) {
         wrn("Dumping latest results...\n");
-        write_output("crash_dump");
-        delete es_;
+        OutputManager::write_output(solver_, "crash_dump");
+        delete solver_;
     } else {
         wrn("GA did not get to start\n");
     }
@@ -141,7 +68,7 @@ int ElfinRunner::run_meta_tests() const {
     msg("Running meta tests...\n");
     int fail_count = 0;
 
-    for (auto & itr : SPEC.work_areas()) {
+    for (auto & itr : SPEC.work_area_map()) {
         const WorkArea & wa = itr.second;
         V3fList moved_spec = wa.to_V3fList();
 
@@ -254,12 +181,12 @@ void ElfinRunner::run() {
             msg("Passed!\n");
         }
     } else {
-        es_ = new EvolutionSolver();
+        solver_ = new EvolutionSolver();
         es_started_ = true;
-        es_->run();
-        write_output();
+        solver_->run();
+        OutputManager::write_output(solver_);
 
-        delete es_;
+        delete solver_;
     }
 }
 

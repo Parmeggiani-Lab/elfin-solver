@@ -19,11 +19,11 @@ void Spec::parse_from_json(const JSON & j) {
         dbg("Input spec has %d work areas\n", pg_networks.size());
         for (auto it = pg_networks.begin(); it != pg_networks.end(); ++it) {
             std::string jt_name = it.key();
-            auto wa_itr = work_areas_.emplace(jt_name, WorkArea(*it, jt_name));
+            auto wa_itr = work_area_map_.emplace(jt_name, WorkArea(*it, jt_name));
             auto & key_val = *wa_itr.first;
             const WorkArea & wa = key_val.second;
 
-            if (work_areas_[jt_name].joints().empty()) {
+            if (work_area_map_[jt_name].joints().empty()) {
                 throw ElfinException("Work area \"" + it.key() + "\" has no joints associated.");
             }
         }
@@ -41,7 +41,7 @@ void Spec::parse_from_json(const JSON & j) {
 }
 
 void Spec::map_joints() {
-    for (auto & itr : work_areas_) {
+    for (auto & itr : work_area_map_) {
         WorkArea & wa = itr.second;
         for (UIJoint * oj : wa.occupied_joints()) {
             auto & occ_triple = oj->occupant_triple_;

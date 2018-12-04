@@ -12,8 +12,8 @@ namespace elfin {
 class Spec
 {
 protected:
-    WorkAreas work_areas_;
-    FixedAreas fixed_areas_;
+    WorkAreaMap work_area_map_;
+    FixedAreaMap fixed_areas_;
 
     void map_joints();
 
@@ -26,7 +26,7 @@ public:
     virtual ~Spec() {};
 
     void parse_from_json(const JSON & j);
-    const WorkAreas & work_areas() const { return work_areas_; };
+    const WorkAreaMap & work_area_map() const { return work_area_map_; };
 };
 
 }  /* elfin */

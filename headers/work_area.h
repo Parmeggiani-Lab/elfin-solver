@@ -50,7 +50,7 @@ public:
     const std::vector<UIJoint *> & hinged_joints() const { return hinged_joints_; }
 };
 
-typedef std::unordered_map<std::string, WorkArea> WorkAreas;
+typedef std::unordered_map<std::string, WorkArea> WorkAreaMap;
 
 }  /* elfin */
 

@@ -5,12 +5,30 @@
 namespace elfin {
 
 /* private */
-IdList & TerminusTracker::FreeChainListPair::_get(const TerminusType term) {
+size_t TerminusTracker::FreeChainListPair::size(
+    const TerminusType term) const {
     if (term == TerminusType::N) {
-        return n_;
+        return n.size();
     }
     else if (term == TerminusType::C) {
-        return c_;
+        return c.size();
+    }
+    else if (term == TerminusType::ANY) {
+        return n.size() + c.size();
+    }
+    else {
+        death_by_bad_terminus(__PRETTY_FUNCTION__, term); // Aborts
+        exit(1); // To suppress warning
+    }
+}
+
+IdList & TerminusTracker::FreeChainListPair::get(
+    const TerminusType term) {
+    if (term == TerminusType::N) {
+        return n;
+    }
+    else if (term == TerminusType::C) {
+        return c;
     }
     else {
         death_by_bad_terminus(__PRETTY_FUNCTION__, term); // Aborts
@@ -19,20 +37,33 @@ IdList & TerminusTracker::FreeChainListPair::_get(const TerminusType term) {
 }
 
 /* public */
-size_t TerminusTracker::FreeChainListPair::size(
-    const TerminusType term) const {
-    if (term == TerminusType::N) {
-        return n_.size();
-    }
-    else if (term == TerminusType::C) {
-        return c_.size();
-    }
-    else if (term == TerminusType::ANY) {
-        return n_.size() + c_.size();
-    }
-    else {
-        death_by_bad_terminus(__PRETTY_FUNCTION__, term); // Aborts
-        exit(1); // To suppress warning
+TerminusTracker::TerminusTracker(const ChainList & chains) {
+
+    for (auto & chain : prototype_->chains()) {
+        const size_t chain_id = prototype_->chain_id_map().at(chain.name);
+
+        if (chain.n_term().links().size() > 0) {
+#ifdef NDEBUG
+            if (!term_tracker_.is_free(TerminusType::N, chain_id)) {
+                die(("Tried to add chain_id[%lu] that already "
+                     "exists in N terminus chain ID list of\n\t%s\n"),
+                    to_string().c_str());
+            }
+#endif  /* ifdef NDEBUG */
+
+            term_tracker_.get_free(TerminusType::N).push_back(chain_id);
+        }
+        if (chain.c_term().links().size() > 0) {
+#ifdef NDEBUG
+            if (!term_tracker_.is_free(TerminusType::C, chain_id)) {
+                die(("Tried to add chain_id[%lu] that already "
+                     "exists in C terminus chain ID list of\n\t%s\n"),
+                    to_string().c_str());
+            }
+#endif  /* ifdef NDEBUG */
+
+            term_tracker_.get_free(TerminusType::C).push_back(chain_id);
+        }
     }
 }
 

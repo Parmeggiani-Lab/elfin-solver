@@ -17,14 +17,27 @@ typedef std::unordered_map<std::string, size_t> StrIndexMap;
  * https://stackoverflow.com/questions/2342162/stdstring-formatting-like-sprintf
  * By iFreilicht
  */
-template<typename ... Args>
-std::string string_format( const std::string& format, Args ... args )
-{
-    size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
-    std::unique_ptr<char[]> buf(new char[size]);
-    snprintf(buf.get(), size, format.c_str(), args ...);
-    return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
-}
+// template<typename ... Args>
+// std::string string_format( const std::string& format, Args ... args )
+// {
+//     size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+//     std::unique_ptr<char[]> buf(new char[size]);
+//     snprintf(buf.get(), size, format.c_str(), args ...);
+//     return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+// }
+
+/*
+ * Lambda version so compiler does not complain about FMT not being a compile
+ * time literal.
+ */
+#define string_format(FMT, ...) \
+[&](){ \
+    const size_t size = snprintf(nullptr, 0, FMT, ##__VA_ARGS__) + 1; \
+    std::unique_ptr<char[]> buf(new char[size]); \
+    snprintf(buf.get(), size, FMT, ##__VA_ARGS__); \
+    return std::string(buf.get(), buf.get() + size - 1); \
+}()
+
 
 }  /* elfin */
 
