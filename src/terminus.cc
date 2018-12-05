@@ -5,7 +5,7 @@
 #include "module.h"
 #include "debug_utils.h"
 
-// #define PRINT_FINALIZE
+#define PRINT_FINALIZE
 
 namespace elfin {
 
@@ -63,19 +63,12 @@ void Terminus::finalize() {
             }
             basic_link_size_ = itr - links_.begin(); // Record last basic link
         }
-    }
-
 #ifdef PRINT_FINALIZE
-    wrn(("Terminus finalize:\n"
-         "\tn_rlt_.cml_sum size=%lu\n"
-         "\tn_rlt_.container size=%lu\n"
-         "\tc_rlt_.cml_sum size=%lu\n"
-         "\tc_rlt_.container size=%lu\n"),
-        n_rlt_.cml_sum().size(),
-        n_rlt_.container().size(),
-        c_rlt_.cml_sum().size(),
-        c_rlt_.container().size());
+        wrn("Link to %s with %lu interfaces\n",
+            link.mod->name.c_str(),
+            link.mod->counts.interface);
 #endif  /* ifdef PRINT_FINALIZE */
+    }
 
 #ifndef NDEBUG
     DEBUG(n_rlt_.cml_sum().size() != n_rlt_.container().size());

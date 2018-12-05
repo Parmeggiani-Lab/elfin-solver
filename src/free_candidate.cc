@@ -13,7 +13,7 @@
 #endif  /* ifndef NDEBUG */
 
 #define NO_POINT_MUTATE
-#define NO_LIMB_MUTATE
+// #define NO_LIMB_MUTATE
 #define NO_CROSS_MUTATE
 
 #if defined(NO_POINT_MUTATE) || \
@@ -240,62 +240,33 @@ bool FreeCandidate::point_mutate() {
     return mutate_success;
 }
 
-/*
- * Finds points at which a severance would allow a different limb to be grown.
- * (Modifies "id_out")
- */
-bool FreeCandidate::pick_sever_point(
-    size_t & id_out,
-    const TerminusType term) {
-
-    bool success = false;
-    std::vector<size_t> non_dead_end_ids;
-
-    for (size_t i = 0; i < nodes_.size(); ++i) {
-        const Module * proto = nodes_.at(i)->prototype();
-        if ((term == N and proto->counts.n_link > 1) or
-                (term == C and proto->counts.c_link > 1) or
-                (term == ANY and proto->counts.all_link() > 2)) {
-
-            non_dead_end_ids.push_back(i);
-
-        }
-    }
-
-    if (!non_dead_end_ids.empty()) {
-        id_out = pick_random(non_dead_end_ids);
-        success = true;
-    }
-
-    return success;
-}
-
 bool FreeCandidate::limb_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_LIMB_MUTATE
-    // Pick a node that can host an alternative limb
-    size_t sever_id = 0;
-    if (pick_sever_point(sever_id)) {
-        // Server the limb
+    // Pick a random node and a random busy term
+    const size_t sever_id = get_dice(nodes_.size);
+    TerminusType sever_term = TerminusType::NONE;
+
+    // Server the limb
+    if (mutate_left_limb)
+        nodes_.erase(nodes_.begin(), nodes_.begin() + sever_id);
+    else
+        nodes_.erase(nodes_.begin() + sever_id + 1, nodes_.end());
+
+    // Re-generate that whole limb
+    for (size_t i = 0; i < MAX_FREECANDIDATE_MUTATE_FAILS; i++) {
         if (mutate_left_limb)
-            nodes_.erase(nodes_.begin(), nodes_.begin() + sever_id);
+            gen_random_nodes_reverse(nodes_);
         else
-            nodes_.erase(nodes_.begin() + sever_id + 1, nodes_.end());
-
-        // Re-generate that whole limb
-        for (size_t i = 0; i < MAX_FREECANDIDATE_MUTATE_FAILS; i++) {
-            if (mutate_left_limb)
-                gen_random_nodes_reverse(nodes_);
-            else
-                gen_random_nodes(nodes_);
-        }
-
-        mutate_success = true;
+            gen_random_nodes(nodes_);
     }
+
+    mutate_success = true;
+}
 #endif // NO_LIMB_MUTATE
 
-    return mutate_success;
+return mutate_success;
 }
 
 void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
@@ -313,11 +284,12 @@ void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
     while (nodes_.size() < Candidate::MAX_LEN) {
 #ifndef NDEBUG
         // cry if no free term available
-        DEBUG(0 == tip_node->term_tracker().get_free_size(term));
+        DEBUG(0 == tip_node->term_tracker().count_free_chains(term));
 #endif  /* ifndef NDEBUG */
 
         // pick random chain and then random link
-        const Chain & chain = tip_node->pick_random_free_chain(term);
+        const size_t tip_chain_id = tip_node->term_tracker().pick_random_free_chain(term);
+        const Chain & chain = tip_node->prototype()->chains().at(tip_chain_id);
         const Link & link = chain.pick_random_link(term);
 
         Node * new_node = new Node(link.mod, tip_node->tx() * link.tx);
@@ -327,13 +299,13 @@ void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
         tip_node = new_node;
 
 #ifndef NDEBUG
-        DEBUG(0 == new_node->term_tracker().get_free_size(TerminusType::ANY));
+        DEBUG(0 == new_node->term_tracker().count_free_chains(TerminusType::ANY));
 #endif  /* ifndef NDEBUG */
 
-        if (new_node->term_tracker().get_free_size(TerminusType::N) == 0) {
+        if (new_node->term_tracker().count_free_chains(TerminusType::N) == 0) {
             term = TerminusType::C;
         }
-        else if (new_node->term_tracker().get_free_size(TerminusType::C) == 0) {
+        else if (new_node->term_tracker().count_free_chains(TerminusType::C) == 0) {
             term = TerminusType::N;
         }
         else {
@@ -355,10 +327,10 @@ void FreeCandidate::regrow() {
 
     // Pick random terminus
     TerminusType term;
-    if (new_node->term_tracker().get_free_size(TerminusType::N) == 0) {
+    if (new_node->term_tracker().count_free_chains(TerminusType::N) == 0) {
         term = TerminusType::C;
     }
-    else if (new_node->term_tracker().get_free_size(TerminusType::C) == 0) {
+    else if (new_node->term_tracker().count_free_chains(TerminusType::C) == 0) {
         term = TerminusType::N;
     }
     else {

@@ -9,7 +9,7 @@ namespace elfin {
 Node::Node(const Module * prototype, const Transform & tx) :
     prototype_(prototype),
     tx_(tx),
-    term_tracker_(prototype_->chains()) {
+    term_tracker_(prototype) {
 }
 
 /*

@@ -5,7 +5,7 @@
 namespace elfin {
 
 /* private */
-size_t TerminusTracker::FreeChainListPair::size(
+size_t TerminusTracker::FreeChainListPair::get_size(
     const TerminusType term) const {
     if (term == TerminusType::N) {
         return n.size();
@@ -39,27 +39,27 @@ IdList & TerminusTracker::FreeChainListPair::get(
 bool TerminusTracker::is_free(
     const TerminusType term,
     const size_t chain_id) const {
-    const IdList & chain_ids = get_free(term);
+    const IdList & chain_ids = free_chains_.get(term);
     auto itr = std::find(chain_ids.begin(), chain_ids.end(), chain_id);
     return itr == chain_ids.end();
 }
 
 /* public */
-TerminusTracker::TerminusTracker(const ChainList & chains) :
-    chains_(chains) {
-    for (auto & chain : prototype_->chains()) {
-        const size_t chain_id = prototype_->chain_id_map().at(chain.name);
+TerminusTracker::TerminusTracker(const Module * proto) :
+    prototype_(proto) {
+    for (auto & chain : proto->chains()) {
+        const size_t chain_id = proto->chain_id_map().at(chain.name);
 
         if (chain.n_term().links().size() > 0) {
-            term_tracker_.get_free(TerminusType::N).push_back(chain_id);
+            free_chains_.get(TerminusType::N).push_back(chain_id);
         }
         if (chain.c_term().links().size() > 0) {
-            term_tracker_.get_free(TerminusType::C).push_back(chain_id);
+            free_chains_.get(TerminusType::C).push_back(chain_id);
         }
     }
 }
 
-const Chain & TerminusTracker::pick_random_free_chain(
+size_t TerminusTracker::pick_random_free_chain(
     const TerminusType term) const {
     const IdList & chain_ids = free_chains_.get(term);
 
@@ -67,8 +67,7 @@ const Chain & TerminusTracker::pick_random_free_chain(
     DEBUG(0 == chain_ids.size());
 #endif  /* ifndef NDEBUG */
 
-    const size_t chain_id = pick_random(chain_ids);
-    return chains_.at(chain_id);
+    return pick_random(chain_ids);
 }
 
 void TerminusTracker::occupy_terminus(
@@ -89,7 +88,7 @@ void TerminusTracker::occupy_terminus(
 #endif  /* ifdef NDEBUG */
 
     // Move ID to busy
-    busy_chains_.push_back(chain_id);
+    busy_chains_.get(term).push_back(chain_id);
 
     // Delete ID from free
     *itr = fchain_ids.back();
@@ -114,7 +113,7 @@ void TerminusTracker::free_terminus(
 #endif  /* ifdef NDEBUG */
 
     // Move ID to free
-    free_chains_.push_back(chain_id);
+    free_chains_.get(term).push_back(chain_id);
 
     // Delete ID from busy
     *itr = bchain_ids.back();
