@@ -2,6 +2,7 @@
 #define FREE_CANDIDATE_H_
 
 #include "candidate.h"
+#include "chain_seeker.h"
 
 namespace elfin {
 
@@ -16,7 +17,7 @@ private:
         const Candidate * father);
     virtual bool point_mutate();
     virtual bool limb_mutate();
-    virtual void grow(const size_t tip_index, TerminusType term);
+    virtual void grow(ChainSeeker seeker);
     virtual void regrow();
     bool pick_sever_point(
         size_t & id_out,

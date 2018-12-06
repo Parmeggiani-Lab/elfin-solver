@@ -16,8 +16,11 @@ namespace elfin {
 
 GEN_ENUM_AND_STRING(TerminusType, TerminusTypeNames, FOREACH_TERMINUSTYPE);
 
-void death_by_bad_terminus(std::string func_name, TerminusType term);
+void death_by_bad_terminus(std::string func_name, const TerminusType term);
 
+/*
+ * Returns either N or C randomly.
+ */
 TerminusType random_term();
 
 const TerminusType OPPOSITE_TERM[2] = { TerminusType::C, TerminusType::N };

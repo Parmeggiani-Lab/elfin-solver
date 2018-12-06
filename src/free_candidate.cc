@@ -28,9 +28,11 @@ namespace elfin {
  * possible.
  */
 IdPairs get_crossing_ids(
-    const Nodes & mother,
-    const Nodes & father) {
+    const NodeTeam & mother,
+    const NodeTeam & father) {
     IdPairs crossing_ids;
+
+#ifndef NO_CROSS_MUTATE
     const size_t mn_len = mother.size();;
     const size_t fn_len = father.size();
 
@@ -42,6 +44,7 @@ IdPairs get_crossing_ids(
             }
         }
     }
+#endif // NO_CROSS_MUTATE
 
     return crossing_ids;
 }
@@ -228,7 +231,7 @@ bool FreeCandidate::point_mutate() {
             // Fell through all cases without mutating
             // Do nothing unless pm_mode is strange
             NICE_PANIC(pm_mode < 0 or pm_mode >= PointMutateMode::EnumSize,
-                     "Invalid pm_mode in Chromosome::pointMutate()\n");
+                       "Invalid pm_mode in Chromosome::pointMutate()\n");
         }
         } // end of pm_mode switch
     }
@@ -266,68 +269,42 @@ bool FreeCandidate::limb_mutate() {
 return mutate_success;
 }
 
-void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
-    // cry if nodes_ does not at least have the tip_index
-    DEBUG(tip_index >= nodes_.size());
+void FreeCandidate::grow(ChainSeeker seeker) {
+    do {
+        const Link & link = node_team_.random_link(seeker);
+        const Node * new_node = node_team_.invite_new_member(seeker, link);
 
-    Node * tip_node = nodes_.at(tip_index);
+        const bool n_busy = node_team_.free_seekers().get_vm(TerminusType::N).empty();
+        const bool c_busy = node_team_.free_seekers().get_vm(TerminusType::C).empty();
 
-    if (term == TerminusType::ANY) {
-        term = random_term();
-    }
+        DEBUG(n_busy and c_busy);
 
-    while (nodes_.size() < Candidate::MAX_LEN) {
-        // cry if no free term available
-        DEBUG(0 == tip_node->term_tracker().count_free_chains(term));
-
-        // pick random chain and then random link
-        const size_t tip_chain_id = tip_node->term_tracker().pick_random_free_chain(term);
-        const Chain & chain = tip_node->prototype()->chains().at(tip_chain_id);
-        const Link & link = chain.pick_random_link(term);
-
-        Node * new_node = new Node(link.mod, tip_node->tx() * link.tx);
-        Node::connect(tip_node, tip_chain_id, term, new_node, link.target_chain_id);
-        nodes_.push_back(new_node);
-
-        tip_node = new_node;
-        DEBUG(0 == new_node->term_tracker().count_free_chains(TerminusType::ANY));
-
-        if (new_node->term_tracker().count_free_chains(TerminusType::N) == 0) {
+        TerminusType term;
+        if (n_busy) {
             term = TerminusType::C;
         }
-        else if (new_node->term_tracker().count_free_chains(TerminusType::C) == 0) {
+        else if (c_busy) {
             term = TerminusType::N;
         }
         else {
-            wrn("Shouldn't reach here because we're only using basic modules!\n");
-            die("Node: %s\n", new_node->to_string().c_str());
-            // term = random_term();
+            // node_team_ has free seekers on both termini
+            term = random_term();
         }
-    }
+
+        if (node_team_.size() >= Candidate::MAX_LEN) {
+            break;
+        }
+
+        // Pick next tip chain
+        seeker = node_team_.random_free_seeker(term);
+    } while (1);
 }
 
 void FreeCandidate::regrow() {
-    nodes_.clear();
-
-    // Pick random starting node (basic module)
-    const Module * mod = XDB.basic_mods().draw();
-
-    Node * new_node = new Node(mod);
-    nodes_.push_back(new_node);
-
-    // Pick random terminus
-    TerminusType term;
-    if (new_node->term_tracker().count_free_chains(TerminusType::N) == 0) {
-        term = TerminusType::C;
-    }
-    else if (new_node->term_tracker().count_free_chains(TerminusType::C) == 0) {
-        term = TerminusType::N;
-    }
-    else {
-        term = TerminusType::ANY;
-    }
-
-    grow(0, term);
+    node_team_.remake();
+    const ChainSeeker & seeker =
+        node_team_.random_free_seeker(TerminusType::ANY);
+    grow(seeker);
 }
 
 /* public */
@@ -342,9 +319,11 @@ std::string FreeCandidate::to_string() const {
 
 void FreeCandidate::score(const WorkArea & wa) {
     V3fList points;
-    for (auto & n : nodes_) {
+    for (auto n : node_team_.nodes().items()) {
         points.emplace_back(n->tx().collapsed());
     }
+
+    die("New scoring method needed!\n");
     score_ = kabsch_score(points, wa);
 }
 

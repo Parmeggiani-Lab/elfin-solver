@@ -26,6 +26,7 @@ public:
     /* getters & setters */
     const Module * prototype() const { return prototype_; }
     Transform & tx() { return tx_; }
+    const Transform & tx() const { return const_cast<Node *>(this)->tx(); }
     const TerminusTracker & term_tracker() const {
         return term_tracker_;
     }

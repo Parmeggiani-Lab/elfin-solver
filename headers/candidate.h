@@ -11,7 +11,7 @@
 #include "work_area.h"
 #include "string_utils.h"
 #include "mutation_counters.h"
-#include "nodes.h"
+#include "node_team.h"
 #include "terminus_type.h"
 
 namespace elfin {
@@ -32,7 +32,7 @@ protected:
 
     /* data members */
     static size_t MAX_LEN_;
-    Nodes nodes_;
+    NodeTeam node_team_;
     float score_ = NAN;
 
     /* other methods */
@@ -68,7 +68,7 @@ protected:
     /*
      * Grows a selected tip until MAX_LEN is reached.
      */
-    virtual void grow(const size_t tip_index, TerminusType term) = 0;
+    virtual void grow(ChainSeeker seeker) = 0;
 
     /*
      * Removes all nodes and grow from nothing to MAX_LEN.
@@ -82,7 +82,8 @@ public:
 
     /* getters */
     float get_score() const { return score_; }
-    const Nodes & nodes() const { return nodes_; }
+    const NodeTeam & node_team() const { return node_team_; }
+    const std::vector<const Node *> & nodes() const { return node_team_.nodes().items(); }
     StrList get_node_names() const;
 
     /* strings */

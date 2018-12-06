@@ -10,7 +10,7 @@ protected:
     virtual bool cross_mutate(const Candidate * father) {}
     virtual bool point_mutate() {}
     virtual bool limb_mutate() {}
-    virtual void grow() = 0;
+    virtual void grow(ChainSeeker seeker) = 0;
 public:
     virtual void score(const WorkArea & wa) {}
     virtual TwoHingeCandidate * clone() const { return nullptr; }

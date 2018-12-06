@@ -19,10 +19,10 @@ bool Candidate::collides(
     const Vector3f & new_com,
     const float mod_radius) const {
 
-    for (const auto node : nodes_) {
-        const float sq_com_dist = node->tx().collapsed().sq_dist_to(new_com);
+    for (const auto node_ptr : node_team_.nodes().items()) {
+        const float sq_com_dist = node_ptr->tx().collapsed().sq_dist_to(new_com);
         const float required_com_dist = mod_radius +
-                                        node->prototype()->radius;
+                                        node_ptr->prototype()->radius;
         if (sq_com_dist < (required_com_dist * required_com_dist)) {
             return true;
         }
@@ -48,7 +48,7 @@ void Candidate::auto_mutate() {
 StrList Candidate::get_node_names() const {
     StrList res;
 
-    for (auto & n : nodes_) {
+    for (auto n : node_team_.nodes().items()) {
         res.emplace_back(n->prototype()->name);
     }
 
@@ -58,11 +58,12 @@ StrList Candidate::get_node_names() const {
 std::string Candidate::to_string() const {
     std::stringstream ss;
 
-    const size_t N = nodes_.size();
+    auto & nodes = node_team_.nodes().items();
+    const size_t N = nodes.size();
     for (size_t i = 0; i < N; ++i)
     {
         ss << "Nodes[#" << (i + 1) << " / " << N << "]: ";
-        ss << nodes_[i]->to_string() << std::endl;
+        ss << nodes[i]->to_string() << std::endl;
     }
 
     return ss.str();
@@ -71,7 +72,7 @@ std::string Candidate::to_string() const {
 std::string Candidate::to_csv_string() const {
     std::stringstream ss;
 
-    for (auto & n : nodes_) {
+    for (auto n : node_team_.nodes().items()) {
         ss << n->to_csv_string() << std::endl;
     }
 
@@ -82,7 +83,7 @@ Crc32 Candidate::checksum() const
 {
     // Compute checksum lazily because it's only used once per generation
     Crc32 crc = 0xffff;
-    for (auto & n : nodes_) {
+    for (auto n : node_team_.nodes().items()) {
         // Compute checksum based on prototype identity sequence
         const Module * prot = n->prototype();
         checksum_cascade(&crc, &prot, sizeof(prot));
