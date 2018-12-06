@@ -9,10 +9,7 @@
 #include "elfin_exception.h"
 #include "jutil.h"
 #include "string_utils.h"
-
-#ifndef NDEBUG
 #include "debug_utils.h"
-#endif  /* ifndef NDEBUG */
 
 namespace elfin
 {
@@ -50,17 +47,13 @@ struct Vector3f {
 	Vector3f & operator+=(const Vector3f & rhs);
 	Vector3f & operator-=(const Vector3f & rhs);
 	float operator[](const size_t idx) {
-#ifndef NDEBUG
 		DEBUG(idx > 2,
 		      string_format("Vector3f operator[] out of bound (max index is 2, but got %lu)", idx));
-#endif  /* ifndef NDEBUG */
 		return *(&x + idx);
 	}
 	float operator[](const size_t idx) const {
-#ifndef NDEBUG
 		DEBUG(idx > 2,
 		      string_format("Vector3f operator[] out of bound (max index is 2, but got %lu)", idx));
-#endif  /* ifndef NDEBUG */
 		return *(&x + idx);
 	}
 	float dot(const Vector3f & rhs) const;

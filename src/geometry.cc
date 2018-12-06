@@ -6,10 +6,6 @@
 #include "geometry.h"
 #include "jutil.h"
 
-#ifndef NDEBUG
-#include "debug_utils.h"
-#endif  /* ifndef NDEBUG */
-
 namespace elfin
 {
 
@@ -134,14 +130,10 @@ void Transform::parse_elements_from_json(const JSON & tx_json, ElementArrayRef e
 		for (auto f_json : row_json) {
 			ele[i][j] = f_json.get<float>();
 			++j;
-#ifndef NDEBUG
 			DEBUG(j > 4);
-#endif  /* ifndef NDEBUG */
 		}
 		++i;
-#ifndef NDEBUG
 		DEBUG(i > 4);
-#endif  /* ifndef NDEBUG */
 	}
 }
 

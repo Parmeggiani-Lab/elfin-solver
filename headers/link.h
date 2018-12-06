@@ -15,12 +15,15 @@ struct Link
     Module * mod;
     size_t target_chain_id;
 
-    /* ctors & dtors */
+    /* ctors */
     Link(const Transform & _tx, Module * _mod, const size_t chain_id) :
         tx(_tx), mod(_mod), target_chain_id(chain_id) {}
 
-    /* other methods */
-    static bool CompareByInterfaceCount(const Link & lhs, const Link & rhs);
+    /* dtors */
+    virtual ~Link() {}
+
+    /* operators  */
+    bool operator<(const Link & rhs) const;
 };
 
 typedef std::vector<Link> LinkList;

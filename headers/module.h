@@ -27,32 +27,34 @@ public:
     /* types */
     struct Counts {
         size_t n_link = 0, c_link = 0, interface = 0;
-        size_t all_link() const { return n_link + c_link; }
+        size_t all_links() const { return n_link + c_link; }
     };
 
 private:
-    /* data members */
+    /* data */
+    bool finalized_ = false;
     ChainList chains_;
     StrIndexMap chain_id_map_;
     Counts counts_ = {};
 
 public:
-    /* data members */
+    /* data */
     const std::string name;
     const ModuleType type;
     const float radius;
     const StrList chain_names;
-    const ChainList & chains() const { return chains_; };
-    const StrIndexMap & chain_id_map() const { return chain_id_map_; };
+    const ChainList & chains() const { return chains_; }
+    const StrIndexMap & chain_id_map() const { return chain_id_map_; }
+    const Counts & counts() const { return counts_; }
 
-    // finalizer fields
-    const Counts & counts = counts_;
-
-    /* ctors & dtors */
+    /* ctors */
     Module(const std::string & name,
            const ModuleType type,
            const float radius,
            const StrList & chain_names);
+
+    /* dtors */
+    virtual ~Module() {}
 
     /* other methods */
     void finalize();

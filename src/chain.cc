@@ -1,5 +1,7 @@
 #include "chain.h"
 
+#include "debug_utils.h"
+
 // #define PRINT_FINALIZE
 
 namespace elfin {
@@ -20,6 +22,10 @@ const Terminus & Chain::get_term(
 }
 
 void Chain::finalize() {
+    NICE_PANIC(finalized_,
+             string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
+    finalized_ = true;
+
 #ifdef PRINT_FINALIZE
     wrn("Finalizing chain %s N term\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
@@ -29,7 +35,7 @@ void Chain::finalize() {
 #ifdef PRINT_FINALIZE
     wrn("Finalizing chain %s C term\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
-    
+
     c_term_.finalize();
 }
 

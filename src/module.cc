@@ -2,6 +2,8 @@
 
 #include <sstream>
 
+#include "debug_utils.h"
+
 // #define PRINT_CREATE_LINK
 // #define PRINT_FINALIZE
 
@@ -44,10 +46,14 @@ Module::Module(const std::string & _name,
 void Module::finalize() {
     // Chain finalize() relies on Terminus finalize(), which assumes that
     // all Module counts are calculated
+    NICE_PANIC(finalized_,
+             string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
+    finalized_ = true;
+
 #ifdef PRINT_FINALIZE
     wrn("Finalizing module %s\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
-    
+
     for (Chain & chain : chains_) {
         chain.finalize();
     }
@@ -60,8 +66,8 @@ std::string Module::to_string() const {
     ss << "\tName: " << name << std::endl;
     ss << "\tType: " << ModuleTypeNames[type] << std::endl;
     ss << "\tRadius: " << radius << std::endl;
-    ss << "\tn_link_count: " << counts.n_link << std::endl;
-    ss << "\tc_link_count: " << counts.c_link << std::endl;
+    ss << "\tn_link_count: " << counts().n_link << std::endl;
+    ss << "\tc_link_count: " << counts().c_link << std::endl;
     ss << "  ]" << std::endl;
 
     return ss.str();
@@ -97,9 +103,9 @@ void Module::create_link(
         &a_chain,
         a_chain.name.c_str(),
         a_chain_id,
-        mod_a->counts.n_link,
-        mod_a->counts.c_link,
-        mod_a->counts.interface);
+        mod_a->counts().n_link,
+        mod_a->counts().c_link,
+        mod_a->counts().interface);
     wrn("a_chain: 0x%x, 0x%x, 0x%x, 0x%x\n",
         &a_chain.c_term_,
         &a_chain.c_term_.links,
@@ -119,9 +125,9 @@ void Module::create_link(
         &b_chain,
         b_chain.name.c_str(),
         b_chain_id,
-        mod_b->counts.n_link,
-        mod_b->counts.c_link,
-        mod_b->counts.interface);
+        mod_b->counts().n_link,
+        mod_b->counts().c_link,
+        mod_b->counts().interface);
     wrn("b_chain: 0x%x, 0x%x, 0x%x, 0x%x\n",
         &b_chain.c_term_,
         &b_chain.c_term_.links,

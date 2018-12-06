@@ -8,6 +8,7 @@
 #include "input_manager.h"
 #include "json.h"
 #include "jutil.h"
+#include "debug_utils.h"
 
 namespace elfin {
 
@@ -436,7 +437,7 @@ float kabsch_score(V3fList mobile, V3fList ref) {
 
 	const bool ret_val = kabsch(mobile, ref, rot, tran, rms, 0);
 
-	panic_if(!ret_val, "Kabsch failed!\n");
+	NICE_PANIC(!ret_val, "Kabsch failed!\n");
 
 	return rms;
 }

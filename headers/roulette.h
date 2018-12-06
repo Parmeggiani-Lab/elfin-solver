@@ -2,7 +2,7 @@
 #define ROULETTE_H_
 
 #include <vector>
-#include <type_traits>
+#include <sstream>
 
 #include "jutil.h"
 #include "random_utils.h"
@@ -11,54 +11,73 @@
 
 namespace elfin {
 
-template<class Container, typename ItemType>
+/*
+ * A vector wrapper that also stores a probability distribution from which
+ * random items are drawn.
+ */
+template<typename ItemType>
 class Roulette {
-private:
-    /* data members */
-    Container & container_;
-    std::vector<size_t> cml_sum_;
-    size_t total_ = 0;
+protected:
+    /* types */
+    typedef std::vector<ItemType> ItemList;
+    typedef std::vector<float> CummProbDist;
+    /* data */
+    ItemList items_;
+    CummProbDist cpd_;
+    float total_ = 0;
+
+    /* modifiers */
+    void accumulate_prob(const float prob) {
+        total_ += prob;
+        cpd_.push_back(total_);
+    }
 public:
-    /* ctors & dtors */
-    Roulette(Container & container) :
-        container_(container) {}
+    /* ctors */
+    Roulette() {}
+    Roulette(const ItemList & items, const CummProbDist & cpd) :
+        items_(items) {
+        for (float prob : cpd) {
+            accumulate_prob(prob);
+        }
+        NICE_PANIC(items.size() != cpd.size());
+    }
 
-    /* getters & setters */
-    const std::vector<size_t> & cml_sum() const { return cml_sum_; }
-    const Container & container() const { return container_; }
+    /* dtors */
+    virtual ~Roulette() {}
+
+    /* getters */
+    const ItemList & items() const { return items_; }
+    const CummProbDist & cpd() const { return cpd_; }
     size_t total() const { return total_; }
-
-    ItemType & rand_item() {
-#ifndef NDEBUG
-        DEBUG(cml_sum_.size() != container_.size(),
+    const ItemType & draw() const {
+        NICE_PANIC(cpd_.empty());
+        DEBUG(cpd_.size() != items_.size(),
               string_format("cml_sum size=%lu but container size=%lu\n",
-                            cml_sum_.size(), container_.size()));
-#endif  /* ifndef NDEBUG */
+                            cpd_.size(), items_.size()));
         auto itr = std::upper_bound(
-                       cml_sum_.begin(),
-                       cml_sum_.end(),
+                       cpd_.begin(),
+                       cpd_.end(),
                        get_dice(total_)
                    );
-        return container_.at(itr - cml_sum_.begin());
+        return items_.at(itr - cpd_.begin());
     }
 
-    const ItemType & rand_item() const {
-#ifndef NDEBUG
-        DEBUG(cml_sum_.size() != container_.size(),
-              string_format("cml_sum size=%lu but container size=%lu\n",
-                            cml_sum_.size(), container_.size()));
-#endif  /* ifndef NDEBUG */
-        auto itr = std::upper_bound(
-                       cml_sum_.begin(),
-                       cml_sum_.end(),
-                       get_dice(total_)
-                   );
-        return container_.at(itr - cml_sum_.begin());
+    /* modifiers */
+    void push_back(const float prob, const ItemType & item) {
+        accumulate_prob(prob);
+        items_.push_back(item);
     }
 
-    void cumulate(const size_t cs) {
-        total_ += cs;
-        cml_sum_.push_back(total_);
+    template <class ... Args>
+    void emplace_back(const float prob, Args &&... args) {
+        accumulate_prob(prob);
+        items_.emplace_back(std::forward<Args>(args)...);
+    }
+
+    void pop_back() {
+        cpd_.pop_back();
+        total_ = cpd_.back();
+        items_.pop_back();
     }
 };
 

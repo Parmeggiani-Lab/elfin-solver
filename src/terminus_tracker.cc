@@ -1,6 +1,9 @@
 #include "terminus_tracker.h"
 
 #include <algorithm>
+#include <sstream>
+
+#include "string_utils.h"
 
 namespace elfin {
 
@@ -62,12 +65,36 @@ TerminusTracker::TerminusTracker(const Module * proto) :
 size_t TerminusTracker::pick_random_free_chain(
     const TerminusType term) const {
     const IdList & chain_ids = free_chains_.get(term);
-
-#ifndef NDEBUG
     DEBUG(0 == chain_ids.size());
-#endif  /* ifndef NDEBUG */
-
     return pick_random(chain_ids);
+}
+
+std::string TerminusTracker::to_string() const {
+    std::ostringstream ss;
+
+    ss << "Terminus[\n";
+    ss << "\t Prototype: " << prototype_->name.c_str() << std::endl;
+
+    auto print_chain_lists = [&](const IdList & chain_ids) {
+        for (const size_t id : chain_ids) {
+            ss << "\t\t#" << id << " : ";
+            ss << prototype_->chains().at(id).name.c_str() << std::endl;
+        }
+    };
+
+    ss << "\tChain free on N-term:" << std::endl;
+    print_chain_lists(free_chains_.n);
+
+    ss << "\tChain free on C-term:" << std::endl;
+    print_chain_lists(free_chains_.c);
+
+    ss << "\tChain busy on N-term:" << std::endl;
+    print_chain_lists(busy_chains_.n);
+
+    ss << "\tChain busy on C-term:" << std::endl;
+    print_chain_lists(busy_chains_.c);
+
+    return ss.str();
 }
 
 void TerminusTracker::occupy_terminus(
@@ -76,16 +103,14 @@ void TerminusTracker::occupy_terminus(
     IdList & fchain_ids = free_chains_.get(term);
     auto itr = std::find(fchain_ids.begin(), fchain_ids.end(), chain_id);
 
-#ifdef NDEBUG
     if (itr == fchain_ids.end()) {
         die(("Tried to occupy Terminus[%s] on Chain[%s] "
              "but terminus is already busy.\n"
              "\t%s\n"),
             TerminusTypeNames[term],
-            prototype_->chain_names().at(chain_id).c_str(),
+            prototype_->chain_names.at(chain_id).c_str(),
             to_string().c_str());
     }
-#endif  /* ifdef NDEBUG */
 
     // Move ID to busy
     busy_chains_.get(term).push_back(chain_id);
@@ -101,16 +126,14 @@ void TerminusTracker::free_terminus(
     auto & bchain_ids = busy_chains_.get(term);
     auto itr = std::find(bchain_ids.begin(), bchain_ids.end(), chain_id);
 
-#ifdef NDEBUG
     if (itr != bchain_ids.end()) {
         die(("Tried to free Terminus[%s] on Chain[%s] "
              "but terminus was not occupied in the first place.\n"
              "\t%s\n"),
             TerminusTypeNames[term],
-            prototype_->chain_names().at(chain_id).c_str(),
+            prototype_->chain_names.at(chain_id).c_str(),
             to_string().c_str());
     }
-#endif  /* ifdef NDEBUG */
 
     // Move ID to free
     free_chains_.get(term).push_back(chain_id);

@@ -35,13 +35,14 @@ public:
     /* ctors & dtors */
     TerminusTracker(const Module * proto);
 
-    /* getters & setters */
-
-    /* other methods */
+    /* getters */
     size_t count_free_chains(const TerminusType term) const {
         return free_chains_.get_size(term);
     }
     size_t pick_random_free_chain(const TerminusType term) const;
+    std::string to_string() const;
+
+    /* modifiers */
     void occupy_terminus(const TerminusType term, const size_t chain_id);
     void free_terminus(const TerminusType term, const size_t chain_id);
 };

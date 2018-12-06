@@ -7,13 +7,10 @@
 #include "kabsch.h"
 #include "input_manager.h"
 #include "id_types.h"
-
-#ifndef NDEBUG
 #include "debug_utils.h"
-#endif  /* ifndef NDEBUG */
 
 #define NO_POINT_MUTATE
-// #define NO_LIMB_MUTATE
+#define NO_LIMB_MUTATE
 #define NO_CROSS_MUTATE
 
 #if defined(NO_POINT_MUTATE) || \
@@ -230,7 +227,7 @@ bool FreeCandidate::point_mutate() {
         default: {
             // Fell through all cases without mutating
             // Do nothing unless pm_mode is strange
-            panic_if(pm_mode < 0 or pm_mode >= PointMutateMode::EnumSize,
+            NICE_PANIC(pm_mode < 0 or pm_mode >= PointMutateMode::EnumSize,
                      "Invalid pm_mode in Chromosome::pointMutate()\n");
         }
         } // end of pm_mode switch
@@ -247,12 +244,12 @@ bool FreeCandidate::limb_mutate() {
     // Pick a random node and a random busy term
     const size_t sever_id = get_dice(nodes_.size);
     TerminusType sever_term = TerminusType::NONE;
-
-    // Server the limb
-    if (mutate_left_limb)
-        nodes_.erase(nodes_.begin(), nodes_.begin() + sever_id);
-    else
-        nodes_.erase(nodes_.begin() + sever_id + 1, nodes_.end());
+    if ()
+        // Server the limb
+        if (mutate_left_limb)
+            nodes_.erase(nodes_.begin(), nodes_.begin() + sever_id);
+        else
+            nodes_.erase(nodes_.begin() + sever_id + 1, nodes_.end());
 
     // Re-generate that whole limb
     for (size_t i = 0; i < MAX_FREECANDIDATE_MUTATE_FAILS; i++) {
@@ -270,10 +267,8 @@ return mutate_success;
 }
 
 void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
-#ifndef NDEBUG
     // cry if nodes_ does not at least have the tip_index
     DEBUG(tip_index >= nodes_.size());
-#endif  /* ifndef NDEBUG */
 
     Node * tip_node = nodes_.at(tip_index);
 
@@ -282,10 +277,8 @@ void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
     }
 
     while (nodes_.size() < Candidate::MAX_LEN) {
-#ifndef NDEBUG
         // cry if no free term available
         DEBUG(0 == tip_node->term_tracker().count_free_chains(term));
-#endif  /* ifndef NDEBUG */
 
         // pick random chain and then random link
         const size_t tip_chain_id = tip_node->term_tracker().pick_random_free_chain(term);
@@ -297,10 +290,7 @@ void FreeCandidate::grow(const size_t tip_index, TerminusType term) {
         nodes_.push_back(new_node);
 
         tip_node = new_node;
-
-#ifndef NDEBUG
         DEBUG(0 == new_node->term_tracker().count_free_chains(TerminusType::ANY));
-#endif  /* ifndef NDEBUG */
 
         if (new_node->term_tracker().count_free_chains(TerminusType::N) == 0) {
             term = TerminusType::C;
@@ -320,7 +310,7 @@ void FreeCandidate::regrow() {
     nodes_.clear();
 
     // Pick random starting node (basic module)
-    const Module * mod = XDB.get_drawables().basic.all.rand_item();
+    const Module * mod = XDB.basic_mods().draw();
 
     Node * new_node = new Node(mod);
     nodes_.push_back(new_node);

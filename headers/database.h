@@ -12,6 +12,8 @@
 #include "roulette.h"
 #include "jutil.h"
 
+#include <string>
+
 namespace elfin {
 
 // singleton class
@@ -19,51 +21,35 @@ class Database
 {
 protected:
     /* types */
-    typedef std::vector<Module *> ModPtrList;
-    typedef Roulette<ModPtrList, Module *> ModPtrRoulette;
-    struct Drawable {
-        ModPtrList mod_list;
-        ModPtrRoulette all, n, c;
+    struct ModPtrRoulette : public Roulette<Module *> {
         std::string to_string() const;
-        void init_cml_sums();
-        Drawable() : all(mod_list), n(mod_list), c(mod_list) {}
-        Drawable & operator=(const Drawable & other) {
-            mod_list = other.mod_list; // copy mod_list
-            // Don't copy Rouletes because they rely on ref to this->mod_list
-            return *this;
-        }
-    };
-    struct Drawables {
-        /*
-         * Basic: mods with 2 termini
-         * Complex: mods with > 2 termini
-         */
-        Drawable all_mods; // This keeps the pointers to be freed
-        Drawable singles, hubs, basic, complex;
-        void categorize();
-        void init_cml_sums() {
-            all_mods.init_cml_sums();
-            singles.init_cml_sums();
-            hubs.init_cml_sums();
-            basic.init_cml_sums();
-            complex.init_cml_sums();
-        }
     };
 
-    /* data members */
-    Drawables drawables_;
+    /* data */
+    ModPtrRoulette all_mods_; // This keeps the pointers to be freed
+    ModPtrRoulette singles_, hubs_, basic_mods_, complex_mods_;
 
-    /* other methods */
-    void print_drawables();
+    /* modifiers */
+    void categorize();
+
+    /* printers */
+    void print_roulettes();
     void print_db();
 public:
-    /* ctors & dtors */
+    /* ctors */
     Database() {}
+
+    /* dtors */
     virtual ~Database();
 
-    const Drawables & get_drawables() const { return drawables_; }
+    /* getters */
+    const ModPtrRoulette & all_mods() const { return all_mods_; }
+    const ModPtrRoulette & singles() const { return singles_; }
+    const ModPtrRoulette & hubs() const { return hubs_; }
+    const ModPtrRoulette & basic_mods() const { return basic_mods_; }
+    const ModPtrRoulette & complex_mods() const { return complex_mods_; }
 
-    /* other methods */
+    /* modifiers */
     void parse_from_json(const JSON & xdb);
 };
 

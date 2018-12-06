@@ -1,8 +1,9 @@
 #include "arg_parser.h"
 
-#include "json.h"
-
 #include <sstream>
+
+#include "json.h"
+#include "debug_utils.h"
 
 namespace elfin {
 
@@ -26,9 +27,9 @@ ARG_PARSER_CALLBACK(failure_callback) {
 ARG_PARSER_CALLBACK(parse_config) {
     options_.config_file = arg_in;
 
-    panic_if(!file_exists(options_.config_file.c_str()),
-             "Settings file does not exist: \"%s\"\n",
-             options_.config_file.c_str());
+    NICE_PANIC(!file_exists(options_.config_file.c_str()),
+               string_format("Settings file does not exist: \"%s\"\n",
+                             options_.config_file.c_str()));
 
     const JSON j = parse_json(options_.config_file);
 
@@ -101,27 +102,27 @@ void ArgParser::parse_options(const int argc, char const *argv[]) {
 
 void ArgParser::check_options() const {
     // Files
-    panic_if(options_.xdb == "",
-             "No xdb file given. Check your settings.json\n");
+    NICE_PANIC(options_.xdb == "",
+               "No xdb file given. Check your settings.json\n");
 
-    panic_if(!file_exists(options_.xdb.c_str()),
-             "xdb file could not be found\n");
+    NICE_PANIC(!file_exists(options_.xdb.c_str()),
+               "xdb file could not be found\n");
 
-    panic_if(options_.input_file == "",
-             "No input spec file given.\n");
+    NICE_PANIC(options_.input_file == "",
+               "No input spec file given.\n");
 
-    panic_if(!file_exists(options_.input_file.c_str()),
-             "Input file could not be found\n");
+    NICE_PANIC(!file_exists(options_.input_file.c_str()),
+               "Input file could not be found\n");
 
-    panic_if(options_.config_file == "",
-             "No settings file file given.\n");
+    NICE_PANIC(options_.config_file == "",
+               "No settings file file given.\n");
 
-    panic_if(!file_exists(options_.config_file.c_str()),
-             "Settings file \"%s\" could not be found\n",
-             options_.config_file.c_str());
+    NICE_PANIC(!file_exists(options_.config_file.c_str()),
+               string_format("Settings file \"%s\" could not be found\n",
+                             options_.config_file.c_str()));
 
-    panic_if(options_.output_dir == "",
-             "No output directory given.\n");
+    NICE_PANIC(options_.output_dir == "",
+               "No output directory given.\n");
 
     if (!file_exists(options_.output_dir.c_str())) {
         wrn("Output directory does not exist; creating...\n");
@@ -130,32 +131,32 @@ void ArgParser::check_options() const {
 
     // Settings
 
-    panic_if(options_.ga_pop_size < 0, "Population size cannot be < 0\n");
+    NICE_PANIC(options_.ga_pop_size < 0, "Population size cannot be < 0\n");
 
-    panic_if(options_.ga_iters < 0, "Number of iterations cannot be < 0\n");
+    NICE_PANIC(options_.ga_iters < 0, "Number of iterations cannot be < 0\n");
 
-    panic_if(options_.len_dev_alw < 0,
-             "Gene length deviation must be an integer > 0\n");
+    NICE_PANIC(options_.len_dev_alw < 0,
+               "Gene length deviation must be an integer > 0\n");
 
     // GA params
-    panic_if(options_.ga_survive_rate < 0.0 ||
-             options_.ga_survive_rate > 1.0,
-             "GA survive rate must be between 0 and 1 inclusive\n");
-    panic_if(options_.ga_cross_rate < 0.0 ||
-             options_.ga_cross_rate > 1.0,
-             "GA cross rate must be between 0 and 1 inclusive\n");
-    panic_if(options_.ga_point_mutate_rate < 0.0 ||
-             options_.ga_point_mutate_rate > 1.0,
-             "GA point mutate rate must be between 0 and 1 inclusive\n");
-    panic_if(options_.ga_limb_mutate_rate < 0.0 ||
-             options_.ga_limb_mutate_rate > 1.0,
-             "GA limb mutate rate must be between 0 and 1 inclusive\n");
+    NICE_PANIC(options_.ga_survive_rate < 0.0 ||
+               options_.ga_survive_rate > 1.0,
+               "GA survive rate must be between 0 and 1 inclusive\n");
+    NICE_PANIC(options_.ga_cross_rate < 0.0 ||
+               options_.ga_cross_rate > 1.0,
+               "GA cross rate must be between 0 and 1 inclusive\n");
+    NICE_PANIC(options_.ga_point_mutate_rate < 0.0 ||
+               options_.ga_point_mutate_rate > 1.0,
+               "GA point mutate rate must be between 0 and 1 inclusive\n");
+    NICE_PANIC(options_.ga_limb_mutate_rate < 0.0 ||
+               options_.ga_limb_mutate_rate > 1.0,
+               "GA limb mutate rate must be between 0 and 1 inclusive\n");
 
-    panic_if(options_.avg_pair_dist < 0, "Average CoM distance must be > 0\n");
+    NICE_PANIC(options_.avg_pair_dist < 0, "Average CoM distance must be > 0\n");
 
-    panic_if(options_.keep_n < 0 ||
-             options_.keep_n > options_.ga_pop_size,
-             "Number of best solutions to output must be > 0 and < ga_pop_size\n");
+    NICE_PANIC(options_.keep_n < 0 ||
+               options_.keep_n > options_.ga_pop_size,
+               "Number of best solutions to output must be > 0 and < ga_pop_size\n");
 }
 
 void ArgParser::correct_rates() {

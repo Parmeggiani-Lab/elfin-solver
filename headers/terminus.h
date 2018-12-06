@@ -12,22 +12,22 @@ struct Module;
 class Terminus {
     friend Module;
 private:
-    /* types */
-    typedef Roulette<LinkList, Link> LinkListRoulette;
-
     /* data members */
+    bool finalized_ = false;
     LinkList links_;
-    LinkListRoulette n_rlt_ = LinkListRoulette(links_);
-    LinkListRoulette c_rlt_ = LinkListRoulette(links_);
+    Roulette<Link *> n_rlt_;
+    Roulette<Link *> c_rlt_;
     size_t basic_link_size_;
 
 public:
-    /* data members */
+    /* data */
     const LinkList & links() const { return links_; }
 
-    /* other mehotds */
-    void finalize();
+    /* getters */
     const Link & pick_random_link(const TerminusType term) const;
+
+    /* modifiers */
+    void finalize();
 };
 
 }  /* elfin */

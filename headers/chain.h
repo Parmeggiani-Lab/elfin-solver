@@ -14,6 +14,7 @@ class Chain {
     friend Module;
 private:
     /* data members */
+    bool finalized_ = false;
     Terminus n_term_;
     Terminus c_term_;
 
