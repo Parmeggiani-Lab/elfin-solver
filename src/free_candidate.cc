@@ -271,8 +271,8 @@ return mutate_success;
 
 void FreeCandidate::grow(ChainSeeker seeker) {
     do {
-        const Link & link = node_team_.random_link(seeker);
-        const Node * new_node = node_team_.invite_new_member(seeker, link);
+        const ProtoLink & pt_link = node_team_.random_proto_link(seeker);
+        const Node * new_node = node_team_.invite_new_member(seeker, pt_link);
 
         const bool n_busy = node_team_.free_seekers().get_vm(TerminusType::N).empty();
         const bool c_busy = node_team_.free_seekers().get_vm(TerminusType::C).empty();

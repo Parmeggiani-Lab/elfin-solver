@@ -31,7 +31,7 @@ public:
     /* dtors */
     virtual ~VectorMap() {}
 
-    /* getters */
+    /* accessors */
     const ItemList & items() const { return items_; }
     bool empty() const { return items_.empty(); }
     size_t size() const { return items_.size(); }

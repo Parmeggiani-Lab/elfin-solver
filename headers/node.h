@@ -3,45 +3,43 @@
 
 #include <unordered_set>
 
-#include "module.h"
+#include "proto_module.h"
 #include "geometry.h"
 #include "terminus_type.h"
-#include "terminus_tracker.h"
 
 namespace elfin {
 
 class Node
 {
 protected:
-    /* data members */
-    const Module * prototype_ = nullptr;
+    /* types */
+    struct Neighbor {
+        size_t chain_id;
+        const ProtoLink * proto_link = nullptr;
+    };
+    typedef std::vector<Neighbor> NeighborList;
+
+    /* data */
+    const ProtoModule * prototype_ = nullptr;
     Transform tx_ = {};
-    TerminusTracker term_tracker_;
+    NeighborList n_neighbors_, c_neighbors_;
 public:
-    /* ctors & dtors */
-    Node(const Module * prototype, const Transform & tx);
-    Node(const Module * prototype) : Node(prototype, Transform()) {}
+    /* ctors */
+    Node(const ProtoModule * prototype, const Transform & tx);
+    Node(const ProtoModule * prototype) : Node(prototype, Transform()) {}
     virtual Node * clone() const { return new Node(*this); }
 
-    /* getters & setters */
-    const Module * prototype() const { return prototype_; }
-    Transform & tx() { return tx_; }
-    const Transform & tx() const { return const_cast<Node *>(this)->tx(); }
-    const TerminusTracker & term_tracker() const {
-        return term_tracker_;
-    }
-    static void connect(
-        Node * node_a,
-        const size_t a_chain_id,
-        const TerminusType a_term,
-        Node * node_b,
-        const size_t b_chain_id);
-    // static void disconnect(
-    //     Node * node_a,
-    //     ?,
-    //     Node * node_b);
+    /* dtors */
+    virtual ~Node() {}
 
-    /* other methods */
+    /* accessors */
+    const ProtoModule * prototype() const { return prototype_; }
+    const Transform & tx() const { return const_cast<Node *>(this)->tx(); }
+
+    /* modifiers */
+    Transform & tx() { return tx_; }
+
+    /* printers */
     virtual std::string to_string() const;
     virtual std::string to_csv_string() const;
 };

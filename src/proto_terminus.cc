@@ -1,8 +1,8 @@
-#include "terminus.h"
+#include "proto_terminus.h"
 
 #include <algorithm>
 
-#include "module.h"
+#include "proto_module.h"
 #include "debug_utils.h"
 
 // #define PRINT_FINALIZE
@@ -11,37 +11,36 @@ namespace elfin {
 
 /* public */
 
-void Terminus::finalize() {
+void ProtoTerminus::finalize() {
     NICE_PANIC(finalized_,
                string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
     finalized_ = true;
 
 #ifdef PRINT_FINALIZE
-    wrn("Finalizing term with %lu links\n", links_.size());
+    wrn("Finalizing term with %lu links\n", proto_links_.size());
 #endif  /* ifdef PRINT_FINALIZE */
     /*
      * Sort links by interface count in ascending order to facilitate fast
      * pick_random() that support partitioning by interface count.
      */
-    std::sort(links_.begin(), links_.end());
+    std::sort(proto_links_.begin(), proto_links_.end());
 
     std::vector<float> n_cpd, c_cpd;
-    std::vector<Link *> ptrs;
-    for (auto itr = links_.begin();
-            itr != links_.end();
+    std::vector<ProtoLink *> ptrs;
+    for (auto itr = proto_links_.begin();
+            itr != proto_links_.end();
             itr++) {
-        Link & link = *itr;
-        DEBUG(nullptr == link.mod);
+        ProtoLink & proto_link = *itr;
+        DEBUG(nullptr == proto_link.mod);
 
-        const Module * target_prot = link.mod;
-        if (target_prot->counts().interface > 2) {
+        const ProtoModule * target_prot = proto_link.mod;
+        if (target_prot->counts().all_interfaces() > 2) {
             // Fill the rest of the roulette with total probability (can't be
             // picked by rand_item())
             n_cpd.push_back(0);
             c_cpd.push_back(0);
         }
         else {
-            // First check that prototype has at least 2 interfaces
             const size_t ncount = target_prot->counts().n_link;
             const size_t ccount = target_prot->counts().c_link;
             if (ncount == 0)
@@ -60,22 +59,21 @@ void Terminus::finalize() {
                 n_cpd.push_back(ncount);
                 c_cpd.push_back(ccount);
             }
-            basic_link_size_ = itr - links_.begin(); // Record last basic link
         }
 
-        ptrs.push_back(&link);
+        ptrs.push_back(&proto_link);
 #ifdef PRINT_FINALIZE
-        wrn("Link to %s with %lu interfaces\n",
-            link.mod->name.c_str(),
-            link.mod->counts().interface);
+        wrn("ProtoLink to %s with %lu interfaces\n",
+            proto_link.mod->name.c_str(),
+            proto_link.mod->counts().all_interfaces());
 #endif  /* ifdef PRINT_FINALIZE */
     }
 
-    n_rlt_ = Roulette<Link *>(ptrs, n_cpd);
-    c_rlt_ = Roulette<Link *>(ptrs, c_cpd);
+    n_rlt_ = Roulette<ProtoLink *>(ptrs, n_cpd);
+    c_rlt_ = Roulette<ProtoLink *>(ptrs, c_cpd);
 }
 
-const Link & Terminus::pick_random_link(
+const ProtoLink & ProtoTerminus::pick_random_proto_link(
     const TerminusType term) const {
     if (term == TerminusType::N) {
         return *n_rlt_.draw();

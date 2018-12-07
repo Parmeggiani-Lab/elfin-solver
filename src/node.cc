@@ -6,24 +6,9 @@
 namespace elfin {
 
 /* public */
-Node::Node(const Module * prototype, const Transform & tx) :
+Node::Node(const ProtoModule * prototype, const Transform & tx) :
     prototype_(prototype),
-    tx_(tx),
-    term_tracker_(prototype) {
-}
-
-/*
- * Occupy specified termini on specified chains of a pair of nodes.
- * (static)
- */
-void Node::connect(
-    Node * node_a,
-    const size_t a_chain_id,
-    const TerminusType a_term,
-    Node * node_b,
-    const size_t b_chain_id) {
-    node_a->term_tracker_.occupy_terminus(a_term, a_chain_id);
-    node_b->term_tracker_.occupy_terminus(OPPOSITE_TERM[a_term], b_chain_id);
+    tx_(tx) {
 }
 
 std::string Node::to_string() const {

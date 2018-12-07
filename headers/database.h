@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "json.h"
-#include "module.h"
+#include "proto_module.h"
 #include "roulette.h"
 #include "jutil.h"
 
@@ -21,7 +21,7 @@ class Database
 {
 protected:
     /* types */
-    struct ModPtrRoulette : public Roulette<Module *> {
+    struct ModPtrRoulette : public Roulette<ProtoModule *> {
         std::string to_string() const;
     };
 

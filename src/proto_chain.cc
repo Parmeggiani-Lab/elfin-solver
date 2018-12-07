@@ -1,4 +1,4 @@
-#include "chain.h"
+#include "proto_chain.h"
 
 #include "debug_utils.h"
 
@@ -7,7 +7,7 @@
 namespace elfin {
 
 /* public */
-const Terminus & Chain::get_term(
+const ProtoTerminus & ProtoChain::get_term(
     const TerminusType term) const {
     if (term == TerminusType::N) {
         return n_term_;
@@ -21,27 +21,27 @@ const Terminus & Chain::get_term(
     }
 }
 
-void Chain::finalize() {
+void ProtoChain::finalize() {
     NICE_PANIC(finalized_,
              string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
     finalized_ = true;
 
 #ifdef PRINT_FINALIZE
-    wrn("Finalizing chain %s N term\n", name.c_str());
+    wrn("Finalizing proto_chain %s N term\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
 
     n_term_.finalize();
 
 #ifdef PRINT_FINALIZE
-    wrn("Finalizing chain %s C term\n", name.c_str());
+    wrn("Finalizing proto_chain %s C term\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
 
     c_term_.finalize();
 }
 
-const Link & Chain::pick_random_link(
+const ProtoLink & ProtoChain::pick_random_proto_link(
     const TerminusType term) const {
-    return get_term(term).pick_random_link(term);
+    return get_term(term).pick_random_proto_link(term);
 }
 
 }  /* elfin */

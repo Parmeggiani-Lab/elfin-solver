@@ -85,7 +85,7 @@ Crc32 Candidate::checksum() const
     Crc32 crc = 0xffff;
     for (auto n : node_team_.nodes().items()) {
         // Compute checksum based on prototype identity sequence
-        const Module * prot = n->prototype();
+        const ProtoModule * prot = n->prototype();
         checksum_cascade(&crc, &prot, sizeof(prot));
     }
 

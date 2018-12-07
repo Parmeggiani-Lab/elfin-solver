@@ -39,7 +39,7 @@ std::string Database::ModPtrRoulette::to_string() const {
  */
 void Database::categorize() {
     for (auto mod : all_mods_.items()) {
-        const size_t n_itf = mod->counts().interface;
+        const size_t n_itf = mod->counts().all_interfaces();
         if (n_itf < 2) {
             die("mod[%s] has fewer interfaces(%lu) than expected(2)\n",
                 mod->name.c_str(), n_itf);
@@ -61,7 +61,7 @@ void Database::categorize() {
 }
 
 void Database::print_roulettes() {
-    wrn("---Module Roulettes Debug---\n");
+    wrn("---ProtoModule Roulettes Debug---\n");
     wrn("All:\n%s", all_mods_.to_string().c_str());
     wrn("Singles:\n%s", singles_.to_string().c_str());
     wrn("Hubs:\n%s", hubs_.to_string().c_str());
@@ -70,7 +70,7 @@ void Database::print_roulettes() {
 }
 
 void Database::print_db() {
-    wrn("---DB Link Parse Debug---\n");
+    wrn("---DB Proto Link Parse Debug---\n");
     const size_t n_mods = all_mods_.items().size();
     wrn("Database has %lu mods, of which...\n", n_mods);
     wrn("%lu are singles\n", singles_.items().size());
@@ -80,23 +80,26 @@ void Database::print_db() {
 
     for (size_t i = 0; i < n_mods; ++i)
     {
-        const Module * mod = all_mods_.items().at(i);
-        const size_t n_chains = mod->chains().size();
+        const ProtoModule * mod = all_mods_.items().at(i);
+        const size_t n_chains = mod->proto_chains().size();
         wrn("xdb_[#%lu:%s] has %lu chains\n",
             i, mod->name.c_str(), n_chains);
 
-        for (auto & chain : mod->chains()) {
+        for (auto & proto_chain : mod->proto_chains()) {
             wrn("\tchain[#%lu:%s]:\n",
-                mod->chain_id_map().at(chain.name),
-                chain.name.c_str());
+                mod->chain_id_map().at(proto_chain.name),
+                proto_chain.name.c_str());
 
-            const LinkList & n_links = chain.n_term().links();
+            const ProtoLinkList & n_links =
+                proto_chain.n_term().proto_links();
             for (size_t k = 0; k < n_links.size(); ++k)
             {
                 wrn("\t\tn_links[%lu] -> xdb_[%s]\n",
                     k, n_links[k].mod->name.c_str());
             }
-            const LinkList & c_links = chain.c_term().links();
+            
+            const ProtoLinkList & c_links =
+                proto_chain.c_term().proto_links();
             for (size_t k = 0; k < c_links.size(); ++k)
             {
                 wrn("\t\tc_links[%lu] -> xdb_[%s]\n",
@@ -113,7 +116,7 @@ typedef std::function<void(JSON_MOD_PARAMS)> JsonModTypeLambda;
 void Database::parse_from_json(const JSON & xdb) {
     // Define lambas for code reuse
     const JSON & singles = xdb["modules"]["singles"];
-    auto for_each_double = [&](JsonModTypeLambda const & lambda) {
+    auto for_each_double_json = [&](JsonModTypeLambda const & lambda) {
         for (JSON::const_iterator jit = singles.begin();
                 jit != singles.end();
                 ++jit) {
@@ -122,7 +125,7 @@ void Database::parse_from_json(const JSON & xdb) {
     };
 
     const JSON & hubs = xdb["modules"]["hubs"];
-    auto for_each_hub = [&](JsonModTypeLambda const & lambda) {
+    auto for_each_hub_json = [&](JsonModTypeLambda const & lambda) {
         for (JSON::const_iterator jit = hubs.begin();
                 jit != hubs.end();
                 ++jit) {
@@ -130,13 +133,13 @@ void Database::parse_from_json(const JSON & xdb) {
         }
     };
 
-    auto for_each_module = [&](JsonModTypeLambda const & lambda) {
-        for_each_double(lambda);
-        for_each_hub(lambda);
+    auto for_each_module_json = [&](JsonModTypeLambda const & lambda) {
+        for_each_double_json(lambda);
+        for_each_hub_json(lambda);
     };
 
     // Non-finalized module list
-    std::vector<Module *> nf_mod_list;
+    std::vector<ProtoModule *> nf_mod_list;
 
     // Build mapping between name and id
     std::unordered_map<std::string, size_t> name_id_map;
@@ -158,13 +161,13 @@ void Database::parse_from_json(const JSON & xdb) {
         }
 
         const float radius = (*jit)["radii"][OPTIONS.radius_type];
-        nf_mod_list.push_back(new Module(name, mod_type, radius, chain_names));
+        nf_mod_list.push_back(new ProtoModule(name, mod_type, radius, chain_names));
     };
-    for_each_module(init_module);
+    for_each_module_json(init_module);
 
     auto parse_link = [&](JSON_MOD_PARAMS) {
         const size_t mod_a_id = name_id_map[jit.key()];
-        Module * const mod_a =
+        ProtoModule * const mod_a =
             nf_mod_list.at(mod_a_id);
 
         const JSON & chains_json = (*jit)["chains"];
@@ -181,7 +184,7 @@ void Database::parse_from_json(const JSON & xdb) {
                     c_it != c_json.end();
                     ++c_it) {
                 const size_t mod_b_id = name_id_map[c_it.key()];
-                Module * const mod_b =
+                ProtoModule * const mod_b =
                     nf_mod_list.at(mod_b_id);
 
                 const JSON & b_chains_json = (*c_it);
@@ -195,7 +198,7 @@ void Database::parse_from_json(const JSON & xdb) {
                                 "there is an error in dbgen.py.\n"));
 
                     const JSON & tx_json = xdb["n_to_c_tx"][tx_id]["tx"];
-                    Module::create_link(
+                    ProtoModule::create_proto_link(
                         tx_json,
                         mod_a,
                         a_chain_id,
@@ -205,7 +208,7 @@ void Database::parse_from_json(const JSON & xdb) {
             }
         }
     };
-    for_each_module(parse_link);
+    for_each_module_json(parse_link);
 
     // Finalize modules and add to all_mods_
     for (auto mod : nf_mod_list) {

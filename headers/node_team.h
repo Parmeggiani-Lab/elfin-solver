@@ -39,7 +39,7 @@ protected:
     /* modifiers */
     void copy_nodes_from(const NodeVM & other);
     const Node * add_member(
-        const Module * prot,
+        const ProtoModule * prot,
         const Transform & tx = Transform());
 public:
     /* ctors */
@@ -50,19 +50,19 @@ public:
     /* dtors */
     virtual ~NodeTeam();
 
-    /* getters */
+    /* accessors */
     const NodeVM & nodes() const { return nodes_; }
     const SeekerPair & free_seekers() const { return free_seekers_; }
     const ChainSeeker & random_free_seeker(TerminusType term) const;
-    const Link & random_link(const ChainSeeker & seeker) const;
+    const ProtoLink & random_proto_link(const ChainSeeker & seeker) const;
     size_t size() const { return nodes_.items().size(); }
 
     /* modifiers */
     NodeTeam & operator=(const NodeTeam & other);
     NodeTeam & operator=(NodeTeam && other);
     void disperse();
-    void remake(const Roulette<Module *> & mod_list = XDB.basic_mods());
-    const Node * invite_new_member(const ChainSeeker & seeker, const Link & link);
+    void remake(const Roulette<ProtoModule *> & mod_list = XDB.basic_mods());
+    const Node * invite_new_member(const ChainSeeker & seeker, const ProtoLink & proto_link);
 
 };  /* class NodeTeam*/
 
