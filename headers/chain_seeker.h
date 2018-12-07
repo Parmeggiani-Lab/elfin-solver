@@ -3,6 +3,10 @@
 
 #include <functional>
 #include <sstream>
+#include <vector>
+
+#include "terminus_type.h"
+#include "vector_map.h"
 
 namespace elfin {
 
@@ -10,26 +14,21 @@ class Node;
 
 struct ChainSeeker {
     /* data */
-    const Node * node;
+    Node * node;
     size_t chain_id;
 
     /* ctors */
-    ChainSeeker(const Node * _node, const size_t _chain_id) :
-        node(_node), chain_id(_chain_id) {}
+    ChainSeeker(Node * _node, const size_t _chain_id);
 
     /* getters */
-    bool operator==(const ChainSeeker & other) const {
-        return node == other.node && chain_id == other.chain_id;
-    }
+    bool operator==(const ChainSeeker & other) const;
+    bool operator!=(const ChainSeeker & other) const { return not (*this == other); }
 
     /* printers */
-    std::string to_string() const {
-        std::ostringstream ss;
-        ss << "ChainSeeker[Node: 0x" << std::hex << node << std::dec;
-        ss << ", Chain Id: " << chain_id << "]\n";
-        return ss.str();
-    }
+    std::string to_string() const;
 };
+
+typedef std::vector<ChainSeeker> ChainSeekerList;
 
 }  /* elfin */
 

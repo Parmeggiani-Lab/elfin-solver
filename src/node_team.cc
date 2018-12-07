@@ -2,11 +2,39 @@
 
 #include <sstream>
 
+#define SEEKER_VM_RESERVE_SIZE 16
+
 namespace elfin {
 
 /* protected */
+std::string NodeTeam::SeekerVectorMap::to_string() const {
+    std::ostringstream ss;
+    for (auto & sk : items_) ss << sk.to_string();
+    return ss.str();
+}
 
-NodeTeam::SeekerVM & NodeTeam::SeekerPair::get_vm(
+TerminusType NodeTeam::SeekerVMPair::get_term(
+    const ChainSeeker & seeker) const {
+    // Could store this as a 3rd field in ChainSeeker, but that requires one
+    // extra byte per seeker... The following is O(1).
+    TerminusType term = TerminusType::NONE;
+    if (n.has(seeker))  {
+        term = TerminusType::N;
+    }
+    else if (c.has(seeker))  {
+        term = TerminusType::C;
+    }
+    else {
+        err("Seeker does not belong to any SeekerVectorMap!\n");
+        err("Seeker: %s\n", seeker.to_string().c_str());
+        err(to_string().c_str());
+        NICE_PANIC(true, string_format("%s failed\n", __PRETTY_FUNCTION__));
+    }
+
+    return term;
+}
+
+NodeTeam::SeekerVectorMap & NodeTeam::SeekerVMPair::get_vm(
     const TerminusType term) {
     if (term == TerminusType::N) {
         return n;
@@ -20,46 +48,30 @@ NodeTeam::SeekerVM & NodeTeam::SeekerPair::get_vm(
     exit(1); // Suppress warning
 }
 
-TerminusType NodeTeam::SeekerPair::get_term(
-    const ChainSeeker & seeker) const {
-    // Could store this as a 3rd field in ChainSeeker, but that requires one
-    // extra byte per seeker... The following is O(1).
-    TerminusType term = TerminusType::NONE;
-    if (n.has(seeker))  {
-        term = TerminusType::N;
-    }
-    else if (c.has(seeker))  {
-        term = TerminusType::C;
-    }
-    else {
-        err("Seeker does not belong to any SeekerVM!\n");
-        err("Seeker: %s\n", seeker.to_string().c_str());
-        err(to_string().c_str());
-        NICE_PANIC(true, string_format("%s failed\n", __PRETTY_FUNCTION__));
-    }
-
-    return term;
-}
-
-std::string NodeTeam::SeekerPair::to_string() const {
+std::string NodeTeam::SeekerVMPair::to_string() const {
     std::ostringstream ss;
-    ss << "SeekerPair[\n";
+    ss << "SeekerVMPair[\n";
     ss << "\tN-term:\n" << n.to_string();
     ss << "\tC-term:\n" << c.to_string();
     return ss.str();
 }
 
-void NodeTeam::copy_nodes_from(const NodeVM & other) {
+// static
+NodeTeam::NodeVM NodeTeam::copy_nodes_from(const NodeTeam::NodeVM & other) {
+    NodeTeam::NodeVM new_nodes;
+
     // Need to make clones of nodes from other NodeTeam
     for (auto node_ptr : other.items()) {
-        nodes_.push_back(node_ptr->clone());
+        new_nodes.push_back(node_ptr->clone());
     }
+
+    return new_nodes;
 }
 
-const Node * NodeTeam::add_member(
+Node * NodeTeam::add_member(
     const ProtoModule * prot,
     const Transform & tx) {
-    const Node * new_node = new Node(prot, tx);
+    Node * new_node = new Node(prot, tx);
     nodes_.push_back(new_node);
 
     for (auto & proto_chain : new_node->prototype()->proto_chains()) {
@@ -79,11 +91,18 @@ const Node * NodeTeam::add_member(
 }
 
 /* public */
-NodeTeam::NodeTeam(const NodeTeam & other) {
-    copy_nodes_from(other.nodes_);
+NodeTeam::NodeTeam() {
+    free_seekers_.n.reserve(SEEKER_VM_RESERVE_SIZE);
+    free_seekers_.c.reserve(SEEKER_VM_RESERVE_SIZE);
 }
 
-NodeTeam::NodeTeam(NodeTeam && other) {
+NodeTeam::NodeTeam(const NodeTeam & other) :
+    nodes_(copy_nodes_from(other.nodes_)),
+    free_seekers_(other.free_seekers_) {
+}
+
+NodeTeam::NodeTeam(NodeTeam && other) :
+    free_seekers_(other.free_seekers_) {
     // Take over the already allocated nodes
     nodes_ = other.nodes_;
     other.nodes_.clear();
@@ -132,16 +151,19 @@ const ProtoLink & NodeTeam::random_proto_link(
 NodeTeam & NodeTeam::operator=(const NodeTeam & other) {
     if (this != &other) {
         disperse();
-        copy_nodes_from(other.nodes_);
+        nodes_ = copy_nodes_from(other.nodes_);
+        free_seekers_ = other.free_seekers_;
     }
     return *this;
 }
 
 NodeTeam & NodeTeam::operator=(NodeTeam && other) {
     if (this == &other) {
+        disperse();
         // Take over the already allocated nodes
         nodes_ = other.nodes_;
         other.nodes_.clear();
+        free_seekers_ = other.free_seekers_;
     };
     return *this;
 }
@@ -156,6 +178,8 @@ void NodeTeam::disperse() {
     }
 
     nodes_.clear();
+    free_seekers_.n.clear();
+    free_seekers_.c.clear();
 }
 
 void NodeTeam::remake(const Roulette<ProtoModule *> & mod_list) {
@@ -166,16 +190,32 @@ void NodeTeam::remake(const Roulette<ProtoModule *> & mod_list) {
     add_member(prot);
 }
 
-const Node * NodeTeam::invite_new_member(const ChainSeeker & seeker, const ProtoLink & proto_link) {
-    const Node * node_a = seeker.node;
-    const Node * node_b = add_member(proto_link.mod, node_a->tx() * proto_link.tx);
+const Node * NodeTeam::invite_new_member(
+    const ChainSeeker seeker_a,
+    const ProtoLink & proto_link) {
 
-    const TerminusType term_a = free_seekers_.get_term(seeker);
-    const TerminusType term_b = OPPOSITE_TERM[term_a];
+    Node * node_a = seeker_a.node;
+    Node * node_b = add_member(proto_link.mod, node_a->tx() * proto_link.tx);
 
-    free_seekers_.get_vm(term_a).erase(seeker); // invalidates seeker
+    DEBUG(node_a == node_b);
 
     const ChainSeeker seeker_b = ChainSeeker(node_b, proto_link.target_chain_id);
+    const TerminusType term_a = free_seekers_.get_term(seeker_a);
+    const TerminusType term_b = OPPOSITE_TERM[term_a];
+
+    wrn("node_a[%p] adding seeker %s",
+        node_a, seeker_b.to_string().c_str());
+    node_a->store_seeker(seeker_b, term_a);
+    wrn("now %lu neighbors\n\n", node_a->n_neighbors().size() +
+        node_a->c_neighbors().size());
+
+    wrn("node_b[%p] adding seeker %s",
+        node_b, seeker_a.to_string().c_str());
+    node_b->store_seeker(seeker_a, term_b);
+    wrn("now %lu neighbors\n\n", node_b->n_neighbors().size() +
+        node_b->c_neighbors().size());
+
+    free_seekers_.get_vm(term_a).erase(seeker_a);
     free_seekers_.get_vm(term_b).erase(seeker_b);
 
     return node_b;

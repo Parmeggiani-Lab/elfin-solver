@@ -12,7 +12,6 @@
 #include "string_utils.h"
 #include "mutation_counters.h"
 #include "node_team.h"
-#include "terminus_type.h"
 
 namespace elfin {
 
@@ -27,18 +26,23 @@ enum PointMutateMode {
 
 class Candidate {
 protected:
-    /* types */
-    enum Direction { LEFT, RIGHT };
-
-    /* data members */
+    /* data */
     static size_t MAX_LEN_;
-    NodeTeam node_team_;
+    NodeTeam * node_team_;
     float score_ = NAN;
 
-    /* other methods */
+    /* ctors */
+    Candidate() {}
+
+    /* accessors */
     bool collides(
         const Vector3f & new_com,
         const float mod_radius) const;
+
+    /* modifiers */
+    /*
+     * Tries point mutate, limb mutate, then regrow in order.
+     */
     void auto_mutate();
 
     /*
@@ -76,15 +80,9 @@ protected:
     virtual void regrow() = 0;
 
 public:
-    /* data memebers */
+    /* data */
     static const size_t & MAX_LEN; // refers to MAX_LEN_ (private static)
     static void set_max_len(const size_t l) { MAX_LEN_ = l; }
-
-    /* getters */
-    float get_score() const { return score_; }
-    const NodeTeam & node_team() const { return node_team_; }
-    const std::vector<const Node *> & nodes() const { return node_team_.nodes().items(); }
-    StrList get_node_names() const;
 
     /* strings */
     virtual std::string to_string() const;
@@ -97,14 +95,25 @@ public:
         MutationCounters & mt_counters,
         const CandidateList & candidates);
 
-    /* ctors & dtors */
-    Candidate() {}
+    /* ctors */
+    Candidate(NodeTeam * node_team);
+    Candidate(const Candidate & other);
+    Candidate(Candidate && other);
+    Candidate & operator=(const Candidate & other);
     virtual Candidate * clone() const = 0;
     virtual void copy_from(const Candidate * other);
 
-    /* other methods */
+    /* dtors */
+    virtual ~Candidate() {}
+
+    /* accessors */
+    float get_score() const { return score_; }
+    size_t size() const { return node_team_->size(); }
     bool operator<(const Candidate & rhs) const { return score_ < rhs.score_; }
     static bool PtrComparator(const Candidate *, const Candidate *);
+
+    /* printers */
+    virtual StrList get_node_names() const { return node_team_->get_node_names(); }
 };
 
 

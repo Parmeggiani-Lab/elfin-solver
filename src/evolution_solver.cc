@@ -64,7 +64,7 @@ EvolutionSolver::collect_gen_data(
         curr_pop_->candidates().front();
 
     const float gen_best_score = best_candidate->get_score();
-    const size_t gen_best_len = best_candidate->nodes().size();
+    const size_t gen_best_len = best_candidate->size();
     const float gen_worst_score = worst_candidate->get_score();
     const double gen_time = ((get_timestamp_us() - gen_start_time) / 1e3);
 
@@ -132,7 +132,7 @@ EvolutionSolver::print_start_msg(const V3fList & shape) const {
     for (auto & p : shape)
         dbg("Work Area Point: %s\n", p.to_string().c_str());
 
-    msg("Length guess: <%lu\nSpec has %d points\n",
+    msg("Length guess: < %lu; Spec has %d points\n",
         Candidate::MAX_LEN,
         shape.size());
     msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
@@ -200,8 +200,8 @@ void
 EvolutionSolver::debug_print_pop(size_t cutoff) const {
     size_t count = 0;
     for (auto & c : curr_pop_->candidates()) {
-        wrn("c  [#%lu] [cksm:%x] [score:%.2f] [len:%lu]\n",
-            count, c->checksum(), c->get_score(), c->nodes().size());
+        wrn("c  [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
+            count, c, c->checksum(), c->get_score(), c->size());
         count++;
         if (count >= cutoff)
             break;
@@ -209,8 +209,8 @@ EvolutionSolver::debug_print_pop(size_t cutoff) const {
 
     count = 0;
     for (auto & c : buff_pop_->candidates()) {
-        wrn("bc [#%lu] [cksm:%x] [score:%.2f] [len:%lu]\n",
-            count, c->checksum(), c->get_score(), c->nodes().size());
+        wrn("bc [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
+            count, c, c->checksum(), c->get_score(), c->size());
         count++;
         if (count >= cutoff)
             break;

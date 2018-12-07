@@ -271,11 +271,11 @@ return mutate_success;
 
 void FreeCandidate::grow(ChainSeeker seeker) {
     do {
-        const ProtoLink & pt_link = node_team_.random_proto_link(seeker);
-        const Node * new_node = node_team_.invite_new_member(seeker, pt_link);
+        const ProtoLink & pt_link = node_team_->random_proto_link(seeker);
+        node_team_->invite_new_member(seeker, pt_link);
 
-        const bool n_busy = node_team_.free_seekers().get_vm(TerminusType::N).empty();
-        const bool c_busy = node_team_.free_seekers().get_vm(TerminusType::C).empty();
+        const bool n_busy = node_team_->free_seekers().get_vm(TerminusType::N).empty();
+        const bool c_busy = node_team_->free_seekers().get_vm(TerminusType::C).empty();
 
         DEBUG(n_busy and c_busy);
 
@@ -291,19 +291,19 @@ void FreeCandidate::grow(ChainSeeker seeker) {
             term = random_term();
         }
 
-        if (node_team_.size() >= Candidate::MAX_LEN) {
+        if (node_team_->size() >= Candidate::MAX_LEN) {
             break;
         }
 
         // Pick next tip chain
-        seeker = node_team_.random_free_seeker(term);
+        seeker = node_team_->random_free_seeker(term);
     } while (1);
 }
 
 void FreeCandidate::regrow() {
-    node_team_.remake();
+    node_team_->remake();
     const ChainSeeker & seeker =
-        node_team_.random_free_seeker(TerminusType::ANY);
+        node_team_->random_free_seeker(TerminusType::ANY);
     grow(seeker);
 }
 
@@ -318,13 +318,7 @@ std::string FreeCandidate::to_string() const {
 }
 
 void FreeCandidate::score(const WorkArea & wa) {
-    V3fList points;
-    for (auto n : node_team_.nodes().items()) {
-        points.emplace_back(n->tx().collapsed());
-    }
-
-    die("New scoring method needed!\n");
-    score_ = kabsch_score(points, wa);
+    score_ = node_team_->score(wa);
 }
 
 FreeCandidate * FreeCandidate::clone() const {

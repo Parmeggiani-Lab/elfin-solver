@@ -7,7 +7,8 @@
 
     "len_dev_alw": 1,
 
-    "ga_pop_size": 65535,
+    "keep_n": 1,
+    "ga_pop_size": 2,
     "ga_iters": 1000,
 
     "ga_survive_rate": 0.02,

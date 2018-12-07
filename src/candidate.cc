@@ -19,7 +19,7 @@ bool Candidate::collides(
     const Vector3f & new_com,
     const float mod_radius) const {
 
-    for (const auto node_ptr : node_team_.nodes().items()) {
+    for (const auto node_ptr : node_team_->nodes().items()) {
         const float sq_com_dist = node_ptr->tx().collapsed().sq_dist_to(new_com);
         const float required_com_dist = mod_radius +
                                         node_ptr->prototype()->radius;
@@ -45,20 +45,10 @@ void Candidate::auto_mutate() {
 
 /* public */
 
-StrList Candidate::get_node_names() const {
-    StrList res;
-
-    for (auto n : node_team_.nodes().items()) {
-        res.emplace_back(n->prototype()->name);
-    }
-
-    return res;
-}
-
 std::string Candidate::to_string() const {
     std::stringstream ss;
 
-    auto & nodes = node_team_.nodes().items();
+    auto & nodes = node_team_->nodes().items();
     const size_t N = nodes.size();
     for (size_t i = 0; i < N; ++i)
     {
@@ -72,7 +62,7 @@ std::string Candidate::to_string() const {
 std::string Candidate::to_csv_string() const {
     std::stringstream ss;
 
-    for (auto n : node_team_.nodes().items()) {
+    for (auto n : node_team_->nodes().items()) {
         ss << n->to_csv_string() << std::endl;
     }
 
@@ -83,7 +73,7 @@ Crc32 Candidate::checksum() const
 {
     // Compute checksum lazily because it's only used once per generation
     Crc32 crc = 0xffff;
-    for (auto n : node_team_.nodes().items()) {
+    for (auto n : node_team_->nodes().items()) {
         // Compute checksum based on prototype identity sequence
         const ProtoModule * prot = n->prototype();
         checksum_cascade(&crc, &prot, sizeof(prot));
@@ -148,6 +138,26 @@ void Candidate::mutate(
             mt_counters.rand++;
         }
     }
+}
+
+Candidate::Candidate(NodeTeam * node_team) :
+    node_team_(node_team) {
+    DEBUG(nullptr == node_team);
+}
+
+Candidate::Candidate(const Candidate & other) {
+    *this = other;
+}
+
+Candidate::Candidate(Candidate && other) :
+    node_team_(other.node_team_),
+    score_(other.score_) {
+    other.node_team_ = nullptr;
+}
+
+Candidate & Candidate::operator=(const Candidate & other) {
+    *this = other;
+    return *this;
 }
 
 void Candidate::copy_from(const Candidate * other) {

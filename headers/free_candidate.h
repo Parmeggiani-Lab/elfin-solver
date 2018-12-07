@@ -3,6 +3,7 @@
 
 #include "candidate.h"
 #include "chain_seeker.h"
+#include "basic_node_team.h"
 
 namespace elfin {
 
@@ -21,18 +22,25 @@ private:
     virtual void regrow();
     bool pick_sever_point(
         size_t & id_out,
-        const TerminusType term=TerminusType::ANY);
+        const TerminusType term = TerminusType::ANY);
 
 public:
     /* strings */
     virtual std::string to_string() const;
 
-    /* ctors & dtors */
+    /* ctors */
+    FreeCandidate() : Candidate(new BasicNodeTeam()) {}
+    FreeCandidate(const FreeCandidate & other) : Candidate(other) {}
+    FreeCandidate(FreeCandidate && other) : Candidate(other) {}
     virtual FreeCandidate * clone() const;
+
+    /* dtors */
     virtual ~FreeCandidate() {}
 
-    /* other methods */
+    /* modifiers */
     virtual void score(const WorkArea & wa);
+
+    /* printers */
 };
 
 }  /* elfin */

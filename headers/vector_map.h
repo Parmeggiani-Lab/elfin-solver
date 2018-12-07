@@ -6,8 +6,6 @@
 
 #include "random_utils.h"
 
-#define VECTOR_MAP_RESERVE_N 16
-
 namespace elfin {
 
 template<typename ItemType>
@@ -24,9 +22,7 @@ protected:
 
 public:
     /* ctors */
-    VectorMap() {
-        items_.reserve(VECTOR_MAP_RESERVE_N);
-    }
+    VectorMap() {}
 
     /* dtors */
     virtual ~VectorMap() {}
@@ -53,6 +49,10 @@ public:
     }
 
     /* modifiers */
+    void reserve(const size_t size) {
+        items_.reserve(size);
+    }
+    
     void push_back(const ItemType & item) {
         item_to_id_map_[item] = items_.size();
         items_.push_back(item);

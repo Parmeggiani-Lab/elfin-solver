@@ -19,7 +19,7 @@ ProtoModule::ProtoModule(const std::string & _name,
     radius(_radius),
     chain_names(_chain_names) {
 #ifdef PRINT_INIT
-    wrn("New ProtoModule at 0x%x\n", this);
+    wrn("New ProtoModule at %p\n", this);
 #endif  /* ifdef PRINT_INIT */
 
     for (const std::string & cn : chain_names) {
@@ -27,7 +27,7 @@ ProtoModule::ProtoModule(const std::string & _name,
         chains_.emplace_back(cn);
 #ifdef PRINT_INIT
         Chain & actual = chains_.back();
-        wrn("Created chain[%s] chains_.size()=%lu at 0x%x; actual: 0x%x, 0x%x, 0x%x, 0x%x\n",
+        wrn("Created chain[%s] chains_.size()=%lu at %p; actual: %p, %p, %p, %p\n",
             cn.c_str(),
             chains_.size(),
             &actual,
@@ -39,7 +39,7 @@ ProtoModule::ProtoModule(const std::string & _name,
     }
 
 #ifdef PRINT_INIT
-    wrn("First chain: 0x%x ? 0x%x\n", &chains_.at(0), &(chains_[0]));
+    wrn("First chain: %p ? %p\n", &chains_.at(0), &(chains_[0]));
 #endif  /* ifdef PRINT_INIT */
 }
 
@@ -66,8 +66,8 @@ std::string ProtoModule::to_string() const {
     ss << "\tName: " << name << std::endl;
     ss << "\tType: " << ModuleTypeNames[type] << std::endl;
     ss << "\tRadius: " << radius << std::endl;
-    ss << "\tn_link_count: " << counts().n_link << std::endl;
-    ss << "\tc_link_count: " << counts().c_link << std::endl;
+    ss << "\tn_link_count: " << counts().n_links << std::endl;
+    ss << "\tc_link_count: " << counts().c_links << std::endl;
     ss << "  ]" << std::endl;
 
     return ss.str();
@@ -96,7 +96,7 @@ void ProtoModule::create_proto_link(
     ProtoChain & a_chain = a_chains.at(a_chain_id);
 
 #ifdef PRINT_CREATE_PROTO_LINK
-    wrn(("mod_a[0x%x:%s] size: %lu, proto_chain[0x%x:%s:%lu], "
+    wrn(("mod_a[%p:%s] size: %lu, proto_chain[%p:%s:%lu], "
          "counts: links(%lu, %lu), interface(%lu, %lu)\n"),
         mod_a,
         mod_a->name.c_str(),
@@ -106,9 +106,9 @@ void ProtoModule::create_proto_link(
         a_chain_id,
         mod_a->counts().n_link,
         mod_a->counts().c_link,
-        mod_a->counts().n_interface,
-        mod_a->counts().c_interface);
-    wrn("a_chain: 0x%x, 0x%x, 0x%x, 0x%x\n",
+        mod_a->counts().n_interfaces,
+        mod_a->counts().c_interfaces);
+    wrn("a_chain: %p, %p, %p, %p\n",
         &a_chain.c_term_,
         &a_chain.c_term_.proto_links_,
         &a_chain.n_term_,
@@ -120,7 +120,7 @@ void ProtoModule::create_proto_link(
     ProtoChain & b_chain = b_chains.at(b_chain_id);
 
 #ifdef PRINT_CREATE_PROTO_LINK
-    wrn("mod_b[0x%x:%s] size: %lu, proto_chain[0x%x:%s:%lu], "
+    wrn("mod_b[%p:%s] size: %lu, proto_chain[%p:%s:%lu], "
         "counts: links(%lu, %lu), interface(%lu, %lu)\n",
         mod_b,
         mod_b->name.c_str(),
@@ -130,9 +130,9 @@ void ProtoModule::create_proto_link(
         b_chain_id,
         mod_b->counts().n_link,
         mod_b->counts().c_link,
-        mod_b->counts().n_interface,
-        mod_b->counts().c_interface);
-    wrn("b_chain: 0x%x, 0x%x, 0x%x, 0x%x\n",
+        mod_b->counts().n_interfaces,
+        mod_b->counts().c_interfaces);
+    wrn("b_chain: %p, %p, %p, %p\n",
         &b_chain.c_term_,
         &b_chain.c_term_.proto_links_,
         &b_chain.n_term_,
@@ -141,14 +141,14 @@ void ProtoModule::create_proto_link(
 
     // Create links and count
     a_chain.c_term_.proto_links_.emplace_back(tx, mod_b, b_chain_id);
-    mod_a->counts_.c_link++;
+    mod_a->counts_.c_links++;
     if (a_chain.c_term_.proto_links().size() == 1) { // 0 -> 1 indicates a new interface
-        mod_a->counts_.c_interface++;
+        mod_a->counts_.c_interfaces++;
     }
     b_chain.n_term_.proto_links_.emplace_back(tx_inv, mod_a, a_chain_id);
-    mod_b->counts_.n_link++;
+    mod_b->counts_.n_links++;
     if (b_chain.n_term_.proto_links().size() == 1) { // 0 -> 1 indicates a new interface
-        mod_b->counts_.n_interface++;
+        mod_b->counts_.n_interfaces++;
     }
 }
 

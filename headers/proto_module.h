@@ -25,10 +25,10 @@ class ProtoModule {
 public:
     /* types */
     struct Counts {
-        size_t n_link = 0, c_link = 0;
-        size_t n_interface = 0, c_interface = 0;
-        size_t all_links() const { return n_link + c_link; }
-        size_t all_interfaces() const { return n_interface + c_interface; }
+        size_t n_links = 0, c_links = 0;
+        size_t n_interfaces = 0, c_interfaces = 0;
+        size_t all_links() const { return n_links + c_links; }
+        size_t all_interfaces() const { return n_interfaces + c_interfaces; }
     };
 
 private:
