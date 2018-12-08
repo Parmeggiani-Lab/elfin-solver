@@ -21,6 +21,16 @@ void Node::update_neighbor_ptrs(const NodeAddrMap & nam) {
     }
 }
 
+void Node::liberate_neighbor(const Node * node) {
+    for (size_t i = 0; i < neighbors_.size(); ++i) {
+        if (neighbors_.at(i).dst().node == node) {
+            neighbors_.at(i) = std::move(neighbors_.back());
+            neighbors_.pop_back();
+            i--; // need to check same index again
+        }
+    }
+}
+
 std::string Node::to_string() const {
     return string_format("Node[%s]\nTx: %s\n",
                          prototype_->name.c_str(),

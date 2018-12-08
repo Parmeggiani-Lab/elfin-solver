@@ -39,6 +39,34 @@ void BasicNodeTeam::deep_copy_from(
     }
 }
 
+void BasicNodeTeam::remove_leaf_member(Node * side_member) {
+    NICE_PANIC(side_member->neighbors().size() != 1);
+    const Link & link = side_member->neighbors().at(0);
+
+    // Copy FreeChain for restore later
+    FreeChain chain_to_restore = link.dst();
+
+    // Remove any FreeChain originating from side_member
+    for (size_t i = 0; i < free_chains_.size(); ++i) {
+        if (free_chains_.at(i).node == side_member) {
+            free_chains_.at(i) = std::move(free_chains_.back());
+            free_chains_.pop_back();
+            i--; // need to check same index again
+        }
+    }
+
+    Node * new_tip = link.dst().node;
+    new_tip->liberate_neighbor(side_member);
+
+    // Remove node from team
+    nodes_.erase(side_member);
+
+    // Restore FreeChain
+    free_chains_.push_back(chain_to_restore);
+
+    delete side_member;
+}
+
 /* public */
 /* ctors */
 BasicNodeTeam::BasicNodeTeam(const BasicNodeTeam & other) {
@@ -148,7 +176,21 @@ bool BasicNodeTeam::limb_mutate() {
 
 #ifndef NO_LIMB_MUTATE
     // Server limb
-    UNIMPLEMENTED();
+    Node * sever_point = nodes_.rand_item();
+
+    const size_t neighbor_size = sever_point->neighbors().size();
+    if (neighbor_size == 1) {
+        // Never try to delete the whole team! Instead, delete this side node.
+        remove_leaf_member(sever_point);
+    }
+    else if (neighbor_size == 2) {
+
+    }
+    else {
+        NICE_PANIC(neighbor_size < 2);
+    }
+
+    // UNIMPLEMENTED();
 
     // Re-generate
     grow(random_free_chain());
@@ -369,7 +411,7 @@ void BasicNodeTeam::regrow() {
     grow(random_free_chain());
 }
 
-    /* printers */
+/* printers */
 std::string BasicNodeTeam::to_string() const {
     std::ostringstream ss;
 

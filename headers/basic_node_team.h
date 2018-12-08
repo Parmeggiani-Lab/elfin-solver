@@ -9,7 +9,7 @@ class BasicNodeTeam : public NodeTeam {
 protected:
     /* modifiers */
     void deep_copy_from(const NodeTeam * other);
-
+    void remove_leaf_member(Node * node);
 public:
     /* ctors */
     BasicNodeTeam() : NodeTeam() {}
