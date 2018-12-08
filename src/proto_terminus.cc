@@ -33,9 +33,9 @@ void ProtoTerminus::finalize() {
             itr++) {
         
         ProtoLink & proto_link = *itr;
-        DEBUG(nullptr == proto_link.mod);
+        DEBUG(nullptr == proto_link.target_mod);
 
-        const ProtoModule * target_prot = proto_link.mod;
+        const ProtoModule * target_prot = proto_link.target_mod;
 
         /*
          * Note: assigning 0 probability for ProtoLinks that have more than 2
@@ -84,8 +84,8 @@ void ProtoTerminus::finalize() {
         ptrs.push_back(&proto_link);
 #ifdef PRINT_FINALIZE
         wrn("ProtoLink to %s with %lu interfaces\n",
-            proto_link.mod->name.c_str(),
-            proto_link.mod->counts().all_interfaces());
+            proto_link.target_mod->name.c_str(),
+            proto_link.target_mod->counts().all_interfaces());
 #endif  /* ifdef PRINT_FINALIZE */
     }
 

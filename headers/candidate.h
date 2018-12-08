@@ -72,7 +72,7 @@ protected:
     /*
      * Grows a selected tip until MAX_LEN is reached.
      */
-    virtual void grow(ChainSeeker seeker) = 0;
+    virtual void grow(FreeChain free_chain) = 0;
 
     /*
      * Removes all nodes and grow from nothing to MAX_LEN.

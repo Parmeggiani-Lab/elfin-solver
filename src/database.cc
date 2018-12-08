@@ -95,7 +95,7 @@ void Database::print_db() {
             for (size_t k = 0; k < n_links.size(); ++k)
             {
                 wrn("\t\tn_links[%lu] -> xdb_[%s]\n",
-                    k, n_links[k].mod->name.c_str());
+                    k, n_links[k].target_mod->name.c_str());
             }
             
             const ProtoLinkList & c_links =
@@ -103,7 +103,7 @@ void Database::print_db() {
             for (size_t k = 0; k < c_links.size(); ++k)
             {
                 wrn("\t\tc_links[%lu] -> xdb_[%s]\n",
-                    k, c_links[k].mod->name.c_str());
+                    k, c_links[k].target_mod->name.c_str());
             }
         }
     }

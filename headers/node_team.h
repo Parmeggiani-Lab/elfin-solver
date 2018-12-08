@@ -4,7 +4,6 @@
 #include <deque>
 
 #include "node.h"
-#include "chain_seeker.h"
 #include "vector_map.h"
 #include "input_manager.h"
 #include "string_utils.h"
@@ -17,30 +16,12 @@ protected:
     /* types */
     typedef VectorMap<const Node *> NodeVM;
 
-    struct SeekerVectorMap : public VectorMap<ChainSeeker> {
-        std::string to_string() const;
-    };
-
-    struct SeekerVMPair {
-        /* data */
-        SeekerVectorMap n, c;
-
-        /* accessor */
-        const SeekerVectorMap & get_vm(const TerminusType term) const {
-            return const_cast<SeekerVMPair *>(this)->get_vm(term);
-        }
-        TerminusType get_term(const ChainSeeker & seeker) const;
-
-        /* modifiers */
-        SeekerVectorMap & get_vm(const TerminusType term);
-
-        /* printers */
-        std::string to_string() const;
-    };
-
     /* data */
     NodeVM nodes_;
-    SeekerVMPair free_seekers_;
+    FreeChainVM free_chains_;
+
+    /* ctors */
+    NodeTeam(const NodeTeam & other);
 
     /* modifiers */
     static NodeVM copy_nodes_from(const NodeVM & other);
@@ -50,7 +31,6 @@ protected:
 public:
     /* ctors */
     NodeTeam();
-    NodeTeam(const NodeTeam & other);
     NodeTeam(NodeTeam && other);
     virtual NodeTeam * clone() const = 0;
 
@@ -59,9 +39,11 @@ public:
 
     /* accessors */
     const NodeVM & nodes() const { return nodes_; }
-    const SeekerVMPair & free_seekers() const { return free_seekers_; }
-    const ChainSeeker & random_free_seeker(TerminusType term) const;
-    const ProtoLink & random_proto_link(const ChainSeeker & seeker) const;
+    const FreeChainVM & free_chains() const { return free_chains_; }
+    const FreeChain & random_free_chain() const {
+        return free_chains_.rand_item();
+    }
+    const ProtoLink & random_proto_link(const FreeChain & free_chain) const;
     size_t size() const { return nodes_.items().size(); }
     virtual float score(const WorkArea & wa) const = 0;
 
@@ -71,7 +53,7 @@ public:
     void disperse();
     void remake(const Roulette<ProtoModule *> & mod_list = XDB.basic_mods());
     const Node * invite_new_member(
-        const ChainSeeker seeker_a, // Use a copy so deleting it won't invalid later access
+        const FreeChain free_chain_a, // Use a copy so deleting it won't invalid later access
         const ProtoLink & proto_link);
 
     /* printers */

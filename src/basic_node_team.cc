@@ -7,11 +7,8 @@
 namespace elfin {
 
 BasicNodeTeam::BasicNodeTeam(
-    const BasicNodeTeam & other) : NodeTeam(other) {
-}
-
-BasicNodeTeam::BasicNodeTeam(
-    BasicNodeTeam && other) : NodeTeam(other) {
+    const BasicNodeTeam & other) {
+    UNIMPLEMENTED(); // Need to fix pointers.
 }
 
 BasicNodeTeam * BasicNodeTeam::clone() const {
@@ -25,7 +22,7 @@ float BasicNodeTeam::score(const WorkArea & wa) const {
      * points in order.
      */
 
-    Node * rand_tip = random_free_seeker(TerminusType::ANY).node;
+    Node * rand_tip = random_free_chain().node;
     BasicNodeGenerator<Node> bng = BasicNodeGenerator<Node>(rand_tip);
 
     V3fList points;
@@ -43,7 +40,7 @@ float BasicNodeTeam::score(const WorkArea & wa) const {
 StrList BasicNodeTeam::get_node_names() const {
     StrList res;
 
-    Node * rand_tip = random_free_seeker(TerminusType::ANY).node;
+    Node * rand_tip = random_free_chain().node;
     BasicNodeGenerator<Node> bng = BasicNodeGenerator<Node>(rand_tip);
 
     while (not bng.is_done()) {

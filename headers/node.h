@@ -6,7 +6,7 @@
 #include "proto_module.h"
 #include "geometry.h"
 #include "terminus_type.h"
-#include "chain_seeker.h"
+#include "link.h"
 
 namespace elfin {
 
@@ -14,11 +14,11 @@ class Node
 {
 protected:
     /*
-     * Note: Use of vector as container for neighbors (ChainSeekerList)
+     * Note: Use of vector as container for neighbors (LinkList)
      *
      * I chose to use vector because as far as we are concerned now, modules
      * have very small number of termini e.g. max 4 at the time of writing.
-     * Although it's O(n) to access the wanted ChainSeeker, using more complex
+     * Although it's O(n) to access the wanted FreeChain, using more complex
      * structure to support O(1) operations is probably not worth the
      * memory/dev time due to how tiny the vectors are.
      *
@@ -29,7 +29,7 @@ protected:
     /* data */
     const ProtoModule * prototype_ = nullptr;
     Transform tx_;
-    ChainSeekerList n_neighbors_, c_neighbors_;
+    LinkVM neighbors_;
 public:
     /* ctors */
     Node(const ProtoModule * prototype, const Transform & tx);
@@ -41,15 +41,16 @@ public:
 
     /* accessors */
     const ProtoModule * prototype() const { return prototype_; }
-    const ChainSeekerList & n_neighbors() const { return n_neighbors_; }
-    const ChainSeekerList & c_neighbors() const { return c_neighbors_; }
+    const LinkVM & neighbors() const { return neighbors_; }
     const Transform & tx() const { return const_cast<Node *>(this)->tx(); }
 
     /* modifiers */
     Transform & tx() { return tx_; }
-    void store_seeker(
-        const ChainSeeker & seeker,
-        const TerminusType term);
+    void add_link(
+        const FreeChain & src,
+        const FreeChain & dst) {
+        neighbors_.emplace_back(src, dst);
+    }
 
     /* printers */
     virtual std::string to_string() const;

@@ -269,42 +269,23 @@ bool FreeCandidate::limb_mutate() {
 return mutate_success;
 }
 
-void FreeCandidate::grow(ChainSeeker seeker) {
+void FreeCandidate::grow(FreeChain free_chain) {
     do {
-        const ProtoLink & pt_link = node_team_->random_proto_link(seeker);
-        node_team_->invite_new_member(seeker, pt_link);
-
-        const bool n_busy = node_team_->free_seekers().get_vm(TerminusType::N).empty();
-        const bool c_busy = node_team_->free_seekers().get_vm(TerminusType::C).empty();
-
-        DEBUG(n_busy and c_busy);
-
-        TerminusType term;
-        if (n_busy) {
-            term = TerminusType::C;
-        }
-        else if (c_busy) {
-            term = TerminusType::N;
-        }
-        else {
-            // node_team_ has free seekers on both termini
-            term = random_term();
-        }
+        const ProtoLink & pt_link = node_team_->random_proto_link(free_chain);
+        node_team_->invite_new_member(free_chain, pt_link);
 
         if (node_team_->size() >= Candidate::MAX_LEN) {
             break;
         }
 
         // Pick next tip chain
-        seeker = node_team_->random_free_seeker(term);
+        free_chain = node_team_->random_free_chain();
     } while (1);
 }
 
 void FreeCandidate::regrow() {
     node_team_->remake();
-    const ChainSeeker & seeker =
-        node_team_->random_free_seeker(TerminusType::ANY);
-    grow(seeker);
+    grow(node_team_->random_free_chain());
 }
 
 /* public */

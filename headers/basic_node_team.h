@@ -12,8 +12,8 @@ private:
 public:
     /* ctors */
     BasicNodeTeam() : NodeTeam() {}
+    BasicNodeTeam(BasicNodeTeam && other) : NodeTeam(other) {}
     BasicNodeTeam(const BasicNodeTeam & other);
-    BasicNodeTeam(BasicNodeTeam && other);
     virtual BasicNodeTeam * clone() const;
 
     /* dtors */
