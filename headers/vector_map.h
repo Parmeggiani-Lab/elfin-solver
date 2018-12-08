@@ -13,6 +13,8 @@ class VectorMap {
 protected:
     /* types */
     typedef std::vector<ItemType> ItemList;
+    typedef typename ItemList::iterator ItemListItr;
+    typedef typename ItemList::const_iterator ItemListCItr;
     typedef std::unordered_map<ItemType, size_t> ItemMap;
     typedef typename ItemMap::iterator ItemMapIterator;
 
@@ -29,6 +31,14 @@ public:
 
     /* accessors */
     const ItemList & items() const { return items_; }
+    ItemListCItr find(const ItemType & item) const {
+        DEBUG(items_.size() == 0);
+
+        auto map_itr = item_to_id_map_.find(item);
+        DEBUG(map_itr == item_to_id_map_.end());
+        
+        return items_.begin() + map_itr.second;
+    }
     bool empty() const { return items_.empty(); }
     size_t size() const { return items_.size(); }
     bool has(const ItemType & item) const {
@@ -52,7 +62,7 @@ public:
     void reserve(const size_t size) {
         items_.reserve(size);
     }
-    
+
     void push_back(const ItemType & item) {
         item_to_id_map_[item] = items_.size();
         items_.push_back(item);
@@ -68,7 +78,7 @@ public:
         // itr->second is value, which is index to items_
         const ItemType & back_val = items_.back();
         item_to_id_map_[back_val] = itr->second;
-        
+
         items_[itr->second] = back_val;
         items_.pop_back();
 

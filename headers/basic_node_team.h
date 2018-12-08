@@ -6,13 +6,13 @@
 namespace elfin {
 
 class BasicNodeTeam : public NodeTeam {
-private:
-    /* data */
+protected:
+    /* modifiers */
+    void deep_copy_from(const NodeTeam * other);
 
 public:
     /* ctors */
     BasicNodeTeam() : NodeTeam() {}
-    BasicNodeTeam(BasicNodeTeam && other) : NodeTeam(other) {}
     BasicNodeTeam(const BasicNodeTeam & other);
     virtual BasicNodeTeam * clone() const;
 
@@ -23,6 +23,7 @@ public:
     virtual float score(const WorkArea & wa) const;
 
     /* modifiers */
+    BasicNodeTeam & operator=(const BasicNodeTeam & other);
 
     /* printers */
     virtual StrList get_node_names() const;

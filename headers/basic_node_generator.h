@@ -33,46 +33,23 @@ public:
 
     /* modifiers */
     NodeType * next() {
-        if (next_node_ != nullptr) {
-            UNIMPLEMENTED();
-            // if (next_node_->neighbors().size() == 1) {
-            //     NodeType * tmp = curr_node_;
-            //     curr_node_ = next_node_;
+        NodeType * prev_node = curr_node_;
+        curr_node_ = next_node_;
 
-            //     const FreeChain & free_chain =
-            //         next_node_->neighbors().at(0);
-            //     next_node_ = tmp == nullptr ? // was curr_node_ the beginning?
-            //                  seeker.node :
-            //                  nullptr;
+        // Look for next node
+        if (not is_done()) {
+            DEBUG(curr_node_ == nullptr);
 
-            //     if (tmp == nullptr)
-            //         wrn("Walked first node %p, next %p\n", curr_node_, next_node_);
-            //     else
-            //         wrn("Walked last node %p\n", tmp);
-            // }
-            // else {
-            //     bool found_seeker = false;
-            //     auto find_seeker = [&](const ChainSeekerList & csl) {
-            //         if (not found_seeker) {
-            //             for (const ChainSeeker & seeker : csl) {
-            //                 if (seeker.node != curr_node_) {
-            //                     curr_node_ = next_node_;
-            //                     next_node_ = seeker.node;
-            //                     found_seeker = true;
-            //                     break;
-            //                 }
-            //             }
-            //         }
-            //     };
-            //     find_seeker(next_node_->n_neighbors());
-            //     find_seeker(next_node_->c_neighbors());
+            const size_t neighbor_size = curr_node_->neighbors().size();
+            NICE_PANIC(neighbor_size > 2);
 
-            //     DEBUG(not found_seeker,
-            //           string_format(("Next seeker not found!\n"
-            //                          "next_node_: %p\n%s\n"),
-            //                         next_node_, next_node_->to_string().c_str()));
-
-            // }
+            next_node_ = nullptr;
+            for (auto & link : curr_node_->neighbors()) {
+                if (link.dst().node != prev_node) {
+                    next_node_ = link.dst().node;
+                    break;
+                }
+            }
         }
 
         return curr_node_;

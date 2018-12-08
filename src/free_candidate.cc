@@ -284,7 +284,7 @@ void FreeCandidate::grow(FreeChain free_chain) {
 }
 
 void FreeCandidate::regrow() {
-    node_team_->remake();
+    node_team_->remake(XDB.basic_mods());
     grow(node_team_->random_free_chain());
 }
 

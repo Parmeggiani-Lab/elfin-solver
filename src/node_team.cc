@@ -8,18 +8,6 @@ namespace elfin {
 
 /* protected */
 
-// static
-NodeTeam::NodeVM NodeTeam::copy_nodes_from(const NodeTeam::NodeVM & other) {
-    NodeTeam::NodeVM new_nodes;
-
-    // Need to make clones of nodes from other NodeTeam
-    for (auto node_ptr : other.items()) {
-        new_nodes.push_back(node_ptr->clone());
-    }
-
-    return new_nodes;
-}
-
 Node * NodeTeam::add_member(
     const ProtoModule * prot,
     const Transform & tx) {
@@ -48,13 +36,8 @@ NodeTeam::NodeTeam() {
 }
 
 NodeTeam::NodeTeam(
-    NodeTeam && other) :
-    free_chains_(other.free_chains_),
-    nodes_(other.nodes_) {
-    // Take over the already allocated nodes
-    other.free_chains_.clear();
-    other.nodes_.clear();
-    UNIMPLEMENTED(); // Need to fix pointers or not?
+    NodeTeam && other) {
+    *this = other; // Call operator=(T&&)
 }
 
 const ProtoLink & NodeTeam::random_proto_link(
@@ -66,25 +49,15 @@ const ProtoLink & NodeTeam::random_proto_link(
     return proto_chain.pick_random_proto_link(free_chain.term);
 }
 
-NodeTeam & NodeTeam::operator=(const NodeTeam & other) {
-    if (this != &other) {
-        disperse();
-        nodes_ = copy_nodes_from(other.nodes_);
-        free_chains_ = other.free_chains_;
-        UNIMPLEMENTED();
-    }
-    return *this;
-}
-
 NodeTeam & NodeTeam::operator=(NodeTeam && other) {
-    if (this == &other) {
+    if (this != &other) {
         disperse();
         // Take over the already allocated nodes
         nodes_ = other.nodes_;
-        other.nodes_.clear();
         free_chains_ = other.free_chains_;
-        UNIMPLEMENTED();
-    };
+        other.nodes_.clear();
+        other.free_chains_.clear();
+    }
     return *this;
 }
 
@@ -93,7 +66,7 @@ NodeTeam::~NodeTeam() {
 }
 
 void NodeTeam::disperse() {
-    for (auto node_ptr : nodes_.items()) {
+    for (auto node_ptr : nodes_) {
         delete node_ptr;
     }
 
@@ -127,10 +100,10 @@ const Node * NodeTeam::invite_new_member(
                                        proto_link.target_chain_id);
 
     node_a->add_link(free_chain_a, free_chain_b);
-    node_b->add_link(free_chain_b, free_chain_b);
+    node_b->add_link(free_chain_b, free_chain_a);
 
-    free_chains_.erase(free_chain_a);
-    free_chains_.erase(free_chain_b);
+    free_chains_.lift_erase(free_chain_a);
+    free_chains_.lift_erase(free_chain_b);
 
     return node_b;
 }

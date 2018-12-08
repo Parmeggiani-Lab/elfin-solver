@@ -108,11 +108,30 @@ bool rosetta_kabsch(
     double *rms,
     std::vector<double>& t,
     std::vector<std::vector<double>> & u ) {
-	int i, j, m, m1, l, k;
-	double e0, rms1, d, h, g;
-	double cth, sth, sqrth, p, det, sigma;
+	int i = 0;
+	int j = 0;
+	int m = 0;
+	int m1 = 0;
+	int l = 0;
+	int k = 0;
+	double e0 = 0.0f;
+	double rms1 = 0.0f;
+	double d = 0.0f;
+	double h = 0.0f;
+	double g = 0.0f;
+	double cth = 0.0f;
+	double sth = 0.0f;
+	double sqrth = 0.0f;
+	double p = 0.0f;
+	double det = 0.0f;
+	double sigma = 0.0f;
 	double xc[3], yc[3];
-	double a[3][3], b[3][3], r[3][3], e[3], rr[6], ss[6];
+	double a[3][3] = {0};
+	double b[3][3] = {0};
+	double r[3][3] = {0};
+	double e[3] = {0};
+	double rr[6] = {0};
+	double ss[6] = {0};
 	double sqrt3 = 1.73205080756888, tol = 0.01;
 	int ip[] = {0, 1, 3, 1, 2, 4, 3, 4, 5};
 	int ip2312[] = {1, 2, 0, 1};
@@ -389,7 +408,7 @@ bool rosetta_kabsch(
 	return true;
 }
 
-// A Wrapper to call the a bit more complicated Rosetta version
+// A Wrapper to call the unreadable Rosetta version
 bool kabsch(
     const V3fList & mobile,
     const V3fList & ref,
@@ -417,11 +436,11 @@ bool kabsch(
 }
 
 float kabsch_score(const V3fList & points, const WorkArea & wa) {
-	return kabsch_score(points, wa.to_V3fList());
+	return kabsch_score(points, wa.to_points());
 }
 
 float kabsch_score(V3fList mobile, V3fList ref) {
-	if (mobile.empty())
+	if (mobile.empty() or ref.empty())
 		return std::numeric_limits<float>::infinity();
 
 	if (ref.size() != mobile.size())

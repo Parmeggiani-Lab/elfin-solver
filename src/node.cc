@@ -15,6 +15,12 @@ Node::Node(
     neighbors_.reserve(prototype_->counts().all_interfaces());
 }
 
+void Node::update_neighbor_ptrs(const NodeAddrMap & nam) {
+    for (Link & link : neighbors_) {
+        link.update_node_ptrs(nam);
+    }
+}
+
 std::string Node::to_string() const {
     return string_format("Node[%s]\nTx: %s\n",
                          prototype_->name.c_str(),

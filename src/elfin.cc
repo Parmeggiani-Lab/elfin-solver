@@ -70,7 +70,7 @@ int ElfinRunner::run_meta_tests() const {
 
     for (auto & itr : SPEC.work_area_map()) {
         const WorkArea & wa = itr.second;
-        V3fList moved_spec = wa.to_V3fList();
+        V3fList moved_spec = wa.to_points();
 
         // It seems that Kabsch cannot handle very large
         // translations, but in the scale we're working
@@ -90,7 +90,7 @@ int ElfinRunner::run_meta_tests() const {
         }
 
         // Test scoring a transformed version of spec
-        const float trx_score = kabsch_score(moved_spec, wa.to_V3fList());
+        const float trx_score = kabsch_score(moved_spec, wa.to_points());
         if (!float_approximates(trx_score, 0)) {
             fail_count++;
             wrn("Self score test failed: self score should be 0\n");

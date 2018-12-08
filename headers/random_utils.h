@@ -38,7 +38,14 @@ inline T pop_random(std::vector<T> & v) {
 }
 
 template <typename T>
-inline T pick_random(const std::vector<T> & v) {
+inline const T & pick_random(const std::vector<T> & v) {
+    DEBUG(v.empty());
+    const size_t idx = get_dice(v.size());
+    return v.at(idx);
+}
+
+template <typename T>
+inline T & pick_random(std::vector<T> & v) {
     DEBUG(v.empty());
     const size_t idx = get_dice(v.size());
     return v.at(idx);

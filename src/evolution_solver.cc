@@ -249,7 +249,7 @@ EvolutionSolver::run() {
         Population::setup(wa);
         init_pop_buffs(wa);
 
-        const V3fList shape = itr.second.to_V3fList();
+        const V3fList shape = itr.second.to_points();
         this->print_start_msg(shape);
 
         best_sols_[wa_name] = CandidateSharedPtrs();

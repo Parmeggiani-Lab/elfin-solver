@@ -23,13 +23,13 @@ std::string FreeChain::to_string() const {
                          chain_id);
 }
 
-std::string FreeChainVM::to_string() const {
-    std::ostringstream ss;
-    for (auto & sk : items_) {
-        ss << sk.to_string();
-    }
-    return ss.str();
-}
+// std::string FreeChainVM::to_string() const {
+//     std::ostringstream ss;
+//     for (auto & sk : items_) {
+//         ss << sk.to_string();
+//     }
+//     return ss.str();
+// }
 
 
 }  /* elfin */

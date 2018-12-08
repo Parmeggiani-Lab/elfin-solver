@@ -28,7 +28,7 @@ class Candidate {
 protected:
     /* data */
     static size_t MAX_LEN_;
-    NodeTeam * node_team_;
+    NodeTeam * node_team_ = nullptr;
     float score_ = NAN;
 
     /* ctors */
@@ -101,10 +101,9 @@ public:
     Candidate(Candidate && other);
     Candidate & operator=(const Candidate & other);
     virtual Candidate * clone() const = 0;
-    virtual void copy_from(const Candidate * other);
 
     /* dtors */
-    virtual ~Candidate() {}
+    virtual ~Candidate();
 
     /* accessors */
     float get_score() const { return score_; }

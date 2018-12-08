@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "elfin_exception.h"
+#include "debug_utils.h"
 
 namespace elfin {
 
@@ -63,10 +64,10 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
     }
 }
 
-V3fList WorkArea::to_V3fList() const {
+V3fList WorkArea::to_points() const {
     V3fList res;
-    if (leaf_joints_.size() != 2)
-        die("Size of leaf_joints_ not exactly 2 in work_area: %s\n", name_.c_str());
+    NICE_PANIC(leaf_joints_.size() != 2,
+               string_format("Size of leaf_joints_ not exactly 2 in work_area: %s\n", name_.c_str()));
 
     UIJoint const * prev = nullptr, * tmp = nullptr;
     UIJoint const * j = leaf_joints_.at(0);

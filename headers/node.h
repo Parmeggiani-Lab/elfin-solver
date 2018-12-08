@@ -29,7 +29,7 @@ protected:
     /* data */
     const ProtoModule * prototype_ = nullptr;
     Transform tx_;
-    LinkVM neighbors_;
+    LinkList neighbors_;
 public:
     /* ctors */
     Node(const ProtoModule * prototype, const Transform & tx);
@@ -41,8 +41,8 @@ public:
 
     /* accessors */
     const ProtoModule * prototype() const { return prototype_; }
-    const LinkVM & neighbors() const { return neighbors_; }
-    const Transform & tx() const { return const_cast<Node *>(this)->tx(); }
+    const LinkList & neighbors() const { return neighbors_; }
+    const Transform & tx() const { return tx_; }
 
     /* modifiers */
     Transform & tx() { return tx_; }
@@ -50,7 +50,9 @@ public:
         const FreeChain & src,
         const FreeChain & dst) {
         neighbors_.emplace_back(src, dst);
+        const Link & l = neighbors_.back();
     }
+    void update_neighbor_ptrs(const NodeAddrMap & nam);
 
     /* printers */
     virtual std::string to_string() const;

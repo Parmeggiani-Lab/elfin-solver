@@ -19,7 +19,7 @@ void Population::setup(const WorkArea & wa) {
      * displacements over avg pair module distance
      */
     float sum_dist = 0.0f;
-    const V3fList shape = wa.to_V3fList();
+    const V3fList shape = wa.to_points();
     for (auto i = shape.begin() + 1; i != shape.end(); ++i)
         sum_dist += (i - 1)->dist_to(*i);
 

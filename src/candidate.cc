@@ -19,7 +19,7 @@ bool Candidate::collides(
     const Vector3f & new_com,
     const float mod_radius) const {
 
-    for (const auto node_ptr : node_team_->nodes().items()) {
+    for (const auto node_ptr : node_team_->nodes()) {
         const float sq_com_dist = node_ptr->tx().collapsed().sq_dist_to(new_com);
         const float required_com_dist = mod_radius +
                                         node_ptr->prototype()->radius;
@@ -48,7 +48,7 @@ void Candidate::auto_mutate() {
 std::string Candidate::to_string() const {
     std::stringstream ss;
 
-    auto & nodes = node_team_->nodes().items();
+    auto & nodes = node_team_->nodes();
     const size_t N = nodes.size();
     for (size_t i = 0; i < N; ++i)
     {
@@ -62,7 +62,7 @@ std::string Candidate::to_string() const {
 std::string Candidate::to_csv_string() const {
     std::stringstream ss;
 
-    for (auto n : node_team_->nodes().items()) {
+    for (auto n : node_team_->nodes()) {
         ss << n->to_csv_string() << std::endl;
     }
 
@@ -73,7 +73,7 @@ Crc32 Candidate::checksum() const
 {
     // Compute checksum lazily because it's only used once per generation
     Crc32 crc = 0xffff;
-    for (auto n : node_team_->nodes().items()) {
+    for (auto n : node_team_->nodes()) {
         // Compute checksum based on prototype identity sequence
         const ProtoModule * prot = n->prototype();
         checksum_cascade(&crc, &prot, sizeof(prot));
@@ -92,13 +92,13 @@ void Candidate::mutate(
         regrow();
     }
     else if (rank <= CUTOFFS.survivors) {
-        this->copy_from(candidates.at(rank));
+        *this = *(candidates.at(rank));
     }
     else {
         // Replicate mother
         const size_t mother_id = get_dice(CUTOFFS.survivors);
         const Candidate * mother = candidates.at(mother_id);
-        this->copy_from(mother);
+        *this = *(mother);
 
         const size_t mutation_dice =
             CUTOFFS.survivors +
@@ -156,12 +156,16 @@ Candidate::Candidate(Candidate && other) :
 }
 
 Candidate & Candidate::operator=(const Candidate & other) {
-    *this = other;
+    delete node_team_;
+    node_team_ = other.node_team_->clone();
+    score_ = other.score_;
     return *this;
 }
 
-void Candidate::copy_from(const Candidate * other) {
-    *this = *other;
+
+// virtual
+Candidate::~Candidate() {
+    delete node_team_;
 }
 
 bool Candidate::PtrComparator(const Candidate * lhs, const Candidate * rhs) {

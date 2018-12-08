@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "terminus_type.h"
-#include "vector_map.h"
+#include "vector_utils.h"
 
 namespace elfin {
 
@@ -33,6 +33,8 @@ struct FreeChain {
     std::string to_string() const;
 };
 
+typedef Vector<FreeChain> FreeChainList;
+
 }  /* elfin */
 
 namespace std {
@@ -49,9 +51,9 @@ template <> struct hash<elfin::FreeChain> {
 
 namespace elfin {
 
-struct FreeChainVM : public VectorMap<FreeChain> {
-    std::string to_string() const;
-};
+// struct FreeChainVM : public VectorMap<FreeChain> {
+//     std::string to_string() const;
+// };
 
 }  /* elfin */
 
