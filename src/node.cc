@@ -21,9 +21,9 @@ void Node::update_neighbor_ptrs(const NodeAddrMap & nam) {
     }
 }
 
-void Node::liberate_neighbor(const Node * node) {
+void Node::remove_link(const Link link) {
     for (size_t i = 0; i < neighbors_.size(); ++i) {
-        if (neighbors_.at(i).dst().node == node) {
+        if (neighbors_.at(i) == link) {
             neighbors_.at(i) = std::move(neighbors_.back());
             neighbors_.pop_back();
             i--; // need to check same index again

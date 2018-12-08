@@ -22,6 +22,9 @@ public:
     Link(
         const FreeChain & src,
         const FreeChain & dst) : src_chain_(src), dst_chain_(dst) {}
+    static Link reverse(const Link & link) {
+        return Link(link.dst_chain_, link.src_chain_);
+    }
 
     /* dtors */
     virtual ~Link() {}
@@ -33,12 +36,12 @@ public:
         return std::hash<FreeChain>()(src_chain_) ^
                std::hash<FreeChain>()(dst_chain_);
     }
-    /* getters */
     bool operator==(const Link & other) const;
     bool operator!=(const Link & other) const { return not this->operator==(other); }
 
     /* modifiers */
     void update_node_ptrs(const NodeAddrMap & nam);
+    static void sever(const Link link);
 
     /* printers */
 

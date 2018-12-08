@@ -44,27 +44,33 @@ void BasicNodeTeam::remove_leaf_member(Node * side_member) {
     const Link & link = side_member->neighbors().at(0);
 
     // Copy FreeChain for restore later
-    FreeChain chain_to_restore = link.dst();
+    const FreeChain chain_to_restore = link.dst();
 
-    // Remove any FreeChain originating from side_member
-    for (size_t i = 0; i < free_chains_.size(); ++i) {
-        if (free_chains_.at(i).node == side_member) {
-            free_chains_.at(i) = std::move(free_chains_.back());
-            free_chains_.pop_back();
-            i--; // need to check same index again
-        }
-    }
-
-    Node * new_tip = link.dst().node;
-    new_tip->liberate_neighbor(side_member);
-
-    // Remove node from team
-    nodes_.erase(side_member);
+    // Remove link to sever_point from the new tip node
+    Node * new_tip = chain_to_restore.node;
+    new_tip->remove_link(Link::reverse(link));
 
     // Restore FreeChain
     free_chains_.push_back(chain_to_restore);
 
-    delete side_member;
+    remove_member(side_member);
+}
+
+void BasicNodeTeam::destroy_limb(const Link arrow) {
+    // Copy FreeChain for restore later
+    const FreeChain chain_to_restore = arrow.dst();
+
+    // Disconnect sever_point and new tip
+    Link::sever(arrow);
+
+    // Destroy limb
+    BasicNodeGenerator<Node> bng = BasicNodeGenerator<Node>(arrow.src().node);
+    while (not bng.is_done()) {
+        remove_member(bng.next());
+    }
+
+    // Restore FreeChain
+    free_chains_.push_back(chain_to_restore);
 }
 
 /* public */
@@ -184,13 +190,14 @@ bool BasicNodeTeam::limb_mutate() {
         remove_leaf_member(sever_point);
     }
     else if (neighbor_size == 2) {
-
+        // Pick surviving limb
+        destroy_limb(sever_point->neighbors().rand_item());
     }
     else {
-        NICE_PANIC(neighbor_size < 2);
+        NICE_PANIC(
+            "neighbor_size",
+            string_format("Strange neighbor size: %lu\n", neighbor_size));
     }
-
-    // UNIMPLEMENTED();
 
     // Re-generate
     grow(random_free_chain());
@@ -393,17 +400,13 @@ bool BasicNodeTeam::cross_mutate(
 }
 
 void BasicNodeTeam::grow(FreeChain free_chain) {
-    do {
+    while (size() < Candidate::MAX_LEN) {
         const ProtoLink & pt_link = random_proto_link(free_chain);
         invite_new_member(free_chain, pt_link);
 
-        if (size() >= Candidate::MAX_LEN) {
-            break;
-        }
-
         // Pick next tip chain
         free_chain = random_free_chain();
-    } while (1);
+    }
 }
 
 void BasicNodeTeam::regrow() {

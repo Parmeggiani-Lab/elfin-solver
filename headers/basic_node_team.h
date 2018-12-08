@@ -10,6 +10,7 @@ protected:
     /* modifiers */
     void deep_copy_from(const NodeTeam * other);
     void remove_leaf_member(Node * node);
+    void destroy_limb(const Link arrow);
 public:
     /* ctors */
     BasicNodeTeam() : NodeTeam() {}

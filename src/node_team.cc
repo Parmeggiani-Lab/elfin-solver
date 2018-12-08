@@ -6,8 +6,14 @@
 
 namespace elfin {
 
-/* protected */
+/* free methods */
+bool compare_free_chain_nodes(
+    const FreeChain & a,
+    const FreeChain & b) {
+    return a.node == b.node;
+}
 
+/* protected */
 Node * NodeTeam::add_member(
     const ProtoModule * prot,
     const Transform & tx) {
@@ -28,6 +34,17 @@ Node * NodeTeam::add_member(
     }
 
     return new_node;
+}
+
+void NodeTeam::remove_member(Node * node) {
+    nodes_.erase(node);
+
+    // Remove any FreeChain originating from sever_point
+    free_chains_.lift_erase_all(
+        FreeChain(node, TerminusType::NONE, 0),
+        compare_free_chain_nodes);
+
+    delete node;
 }
 
 /* public */

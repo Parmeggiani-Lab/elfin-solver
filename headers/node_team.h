@@ -38,6 +38,7 @@ protected:
     Node * add_member(
         const ProtoModule * prot,
         const Transform & tx = Transform());
+    void remove_member(Node * node);
 public:
     /* ctors */
     NodeTeam();

@@ -19,7 +19,7 @@ private:
 
 public:
     /* ctors */
-    
+
     /* dtors */
 
     /* accessors */
@@ -51,6 +51,18 @@ public:
     void lift_erase(const T & item) {
         ItrType itr = find(item);
         lift_erase(itr);
+    }
+
+    void lift_erase_all(
+        const T & item,
+        bool (*item_comparator)(const T &, const T &) = T::operator=) {
+        for (size_t i = 0; i < this->size(); ++i) {
+            if (item_comparator(this->at(i), item)) {
+                this->at(i) = std::move(this->back());
+                this->pop_back();
+                i--; // need to check same index again
+            }
+        }
     }
 
     T & rand_item() {

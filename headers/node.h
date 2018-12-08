@@ -53,7 +53,7 @@ public:
         const Link & l = neighbors_.back();
     }
     void update_neighbor_ptrs(const NodeAddrMap & nam);
-    void liberate_neighbor(const Node * node);
+    void remove_link(const Link link);
 
     /* printers */
     virtual std::string to_string() const;
