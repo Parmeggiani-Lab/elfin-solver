@@ -13,32 +13,11 @@
 
 namespace elfin {
 
-void Population::setup(const WorkArea & wa) {
-    /*
-     * Calculate expected length as sum of point
-     * displacements over avg pair module distance
-     */
-    float sum_dist = 0.0f;
-    const V3fList shape = wa.to_points();
-    for (auto i = shape.begin() + 1; i != shape.end(); ++i)
-        sum_dist += (i - 1)->dist_to(*i);
-
-    // Add one because division counts segments. We want number of points.
-    const size_t expected_len = 1 + round(sum_dist / OPTIONS.avg_pair_dist);
-    Candidate::set_max_len(expected_len + OPTIONS.len_dev_alw);
-}
-
-Population::~Population() {
-    for (auto & c : candidates_) {
-        delete c;
-    }
-    candidates_.clear();
-}
-
-Candidate * Population::new_candidate() const {
+/* free functions */
+Candidate * new_candidate(const WorkType work_type) {
     Candidate * c = nullptr;
 
-    switch (work_area_.type()) {
+    switch (work_type) {
     case FREE:
         c = new FreeCandidate();
         break;
@@ -51,7 +30,7 @@ Candidate * Population::new_candidate() const {
     default:
         std::stringstream ss;
         ss << "Unimplemented WorkArea type: ";
-        ss << WorkTypeNames[work_area_.type()] << std::endl;
+        ss << WorkTypeNames[work_type] << std::endl;
         throw ElfinException(ss.str());
     }
 
@@ -61,23 +40,57 @@ Candidate * Population::new_candidate() const {
     return c;
 }
 
-Population::Population(const WorkArea & work_area) :
+/* protected */
+/* modifiers */
+void Population::release_resources() {
+    delete front_buffer_;
+    delete back_buffer_;
+}
+
+// static
+void Population::copy_buffer(const Buffer * src, Buffer * dst) {
+    dst->clear();
+
+    const size_t src_size = src->size();
+    dst->reserve(src_size);
+
+    OMP_PAR_FOR
+    for (size_t i = 0; i < src_size; i++) {
+        dst->push_back(src->at(i)->clone());
+    }
+}
+
+/* public */
+/* ctors */
+Population::Population(const WorkArea * work_area) :
     work_area_(work_area) {
     TIMING_START(init_start_time);
     {
-        const size_t size = OPTIONS.ga_pop_size;
-        msg("Initializing population of %u...", size);
+        const size_t pop_size = OPTIONS.ga_pop_size;
+        msg("Initializing population of %u...", pop_size);
 
-        candidates_.clear();
-        candidates_.resize(size);
+        Candidate::setup(*work_area);
+
+        front_buffer_ = new Buffer();
+        front_buffer_->clear();
+        front_buffer_->reserve(pop_size);
 
         OMP_PAR_FOR
-        for (size_t i = 0; i < size; i++) {
-            candidates_[i] = new_candidate();
+        for (size_t i = 0; i < pop_size; i++) {
+            front_buffer_->push_back(new_candidate(work_area_->type()));
         }
 
-        // Scoring last candidate tests length, correct init and score func
-        candidates_[size - 1]->score(work_area_);
+        // Scoring last candidate tests initialization and score func
+        front_buffer_->at(pop_size - 1)->score(*work_area_);
+
+        // Now initialize second buffer_
+        swap_buffer();
+
+        // front_buffer_ now points to nullptr
+        // back_buffer_ points to the initialized const Buffer *
+        // Hence we copy from back to front.
+        front_buffer_ = new Buffer();
+        copy_buffer(back_buffer_, front_buffer_);
 
         ERASE_LINE();
         msg("Initialization done\n");
@@ -85,31 +98,42 @@ Population::Population(const WorkArea & work_area) :
     TIMING_END("init", init_start_time);
 }
 
-Population::Population(const Population & other) :
-    work_area_(other.work_area_) {
-    TIMING_START(copy_start_time);
-    {
-        const size_t size = other.candidates_.size();
-        msg("Copying population of %u...", size);
-
-        candidates_.clear();
-        candidates_.resize(size);
-
-        OMP_PAR_FOR
-        for (size_t i = 0; i < size; i++) {
-            candidates_[i] = other.candidates_[i]->clone();
-        }
-
-        // Scoring last candidate tests length, correct init and score func
-        candidates_[size - 1]->score(work_area_);
-
-        ERASE_LINE();
-        msg("Copying done\n");
-    }
-    TIMING_END("copy", copy_start_time);
+Population::Population(const Population & other) {
+    *this = other; // calls operator=(const T&)
 }
 
-void Population::evolve(const Population * prev_gen) {
+Population::Population(Population && other) {
+    *this = other; // calls operator=(T&&)
+}
+
+/* dtors */
+Population::~Population() {
+    release_resources();
+}
+
+/* modifiers */
+Population & Population::operator=(const Population & other) {
+    release_resources();
+    front_buffer_ = new Buffer();
+    copy_buffer(other.front_buffer_, front_buffer_);
+    swap_buffer();
+    front_buffer_ = new Buffer();
+    copy_buffer(other.back_buffer_, front_buffer_);
+    swap_buffer();
+    return *this;
+}
+
+Population & Population::operator=(Population && other) {
+    release_resources();
+    front_buffer_ = other.front_buffer_;
+    other.front_buffer_ = nullptr;
+    back_buffer_ = other.back_buffer_;
+    other.back_buffer_ = nullptr;
+    work_area_ = other.work_area_;
+    return *this;
+}
+
+void Population::evolve() {
     TIMING_START(evolve_start_time);
     {
         msg("Evolving population...");
@@ -118,7 +142,7 @@ void Population::evolve(const Population * prev_gen) {
 
         OMP_PAR_FOR
         for (size_t i = 0; i < CUTOFFS.pop_size; i++) {
-            candidates_[i]->mutate(i, mc, prev_gen->candidates());
+            front_buffer_->at(i)->mutate(i, mc, back_buffer_);
         }
 
         ERASE_LINE();
@@ -147,11 +171,11 @@ void Population::score() {
     {
         msg("Scoring population...");
 
-        const size_t size = candidates_.size();
+        const size_t size = front_buffer_->size();
 
         OMP_PAR_FOR
         for (size_t i = 0; i < size; i++) {
-            candidates_[i]->score(work_area_);
+            front_buffer_->at(i)->score(*work_area_);
         }
 
         ERASE_LINE();
@@ -166,8 +190,8 @@ void Population::rank() {
     {
         msg("Ranking population...");
 
-        std::sort(candidates_.begin(),
-                  candidates_.end(),
+        std::sort(front_buffer_->begin(),
+                  front_buffer_->end(),
                   Candidate::PtrComparator);
 
         ERASE_LINE();
@@ -189,11 +213,11 @@ void Population::select() {
 
         // We don't want parallelism here because
         // the loop must priotise low indexes
-        for (auto c : candidates_) {
-            const Crc32 crc = c->checksum();
+        for (auto cand_ptr : *front_buffer_) {
+            const Crc32 crc = cand_ptr->checksum();
             if (crc_map.find(crc) == crc_map.end()) {
                 // Record a new candidate
-                crc_map[crc] = c->clone();
+                crc_map[crc] = cand_ptr->clone();
                 unique_count++;
 
                 if (unique_count >= CUTOFFS.survivors)
@@ -204,14 +228,14 @@ void Population::select() {
         // Insert map-value-indexed individual back into population
         size_t pop_index = 0;
         for (auto & kv : crc_map) {
-            delete candidates_[pop_index]; // free candidate memory
-            candidates_[pop_index] = kv.second;
+            delete front_buffer_->at(pop_index); // free candidate memory
+            front_buffer_->at(pop_index) = kv.second;
             pop_index++;
         }
 
         // Sort survivors
-        std::sort(candidates_.begin(),
-                  candidates_.begin() + unique_count,
+        std::sort(front_buffer_->begin(),
+                  front_buffer_->begin() + unique_count,
                   Candidate::PtrComparator);
 
         ERASE_LINE();
@@ -219,6 +243,12 @@ void Population::select() {
     }
     InputManager::ga_times().select_time +=
         TIMING_END("selecting", start_time_select);
+}
+
+void Population::swap_buffer() {
+    const Buffer * tmp = front_buffer_;
+    back_buffer_ = front_buffer_;
+    front_buffer_ = const_cast<Buffer *>(tmp);
 }
 
 }  /* elfin */

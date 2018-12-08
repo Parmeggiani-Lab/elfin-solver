@@ -441,13 +441,13 @@ float kabsch_score(const V3fList & points, const WorkArea & wa) {
 
 float kabsch_score(V3fList mobile, V3fList ref) {
 	if (mobile.empty() or ref.empty())
-		return std::numeric_limits<float>::infinity();
+		return INFINITY;
 
 	if (ref.size() != mobile.size())
 		resample(ref, mobile);
 
 	if (ref.size() != mobile.size())
-		return std::numeric_limits<float>::infinity();
+		return INFINITY;
 
 	// Run Kabsch to get RMS
 	Matrix<double> rot;

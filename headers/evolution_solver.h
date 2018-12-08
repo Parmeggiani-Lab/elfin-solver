@@ -5,6 +5,8 @@
 
 #include "population.h"
 
+#define DEBUG_PRINT_POP 4
+
 namespace elfin
 {
 
@@ -15,19 +17,13 @@ typedef std::unordered_map<std::string,
 class EvolutionSolver
 {
 protected:
-	/* data members */
+	/* data */
 	SolutionMap best_sols_;
 	double start_time_in_us_ = 0;
-	Population * curr_pop_;
-	const Population * buff_pop_;
 
-	/* other methods */
-	void set_length_guesses(const V3fList & shape);
-
-	void init_pop_buffs(const WorkArea & wa);
-	void swap_pop_buffs();
-
+	/* modifiers */
 	void collect_gen_data(
+	    const Population & pop,
 	    const size_t gen_id,
 	    const double gen_start_time,
 	    double & tot_gen_time,
@@ -36,24 +32,24 @@ protected:
 	    CandidateSharedPtrs & best_sols,
 	    bool & should_break);
 
+	/* printers */
 	void print_start_msg(const V3fList & shape) const;
 	void print_end_msg() const;
 	void print_timing() const;
-
-	void debug_print_pop(const size_t cutoff = 0) const;
+	void debug_print_pop(
+	    const Population & pop,
+	    const size_t cutoff = DEBUG_PRINT_POP) const;
 
 public:
-	/* ctors & dtors */
-	// EvolutionSolver();
-	virtual ~EvolutionSolver();
+	/* ctors */
+	EvolutionSolver() {}
 
-	/* getters & setters */
+	/* dtors */
+
+	/* accessors */
 	const SolutionMap & best_sols() const { return best_sols_; }
 
-	/* other methods */
-	/*
-	 * Executes the genetic algorithm solver.
-	 */
+	/* modifiers */
 	void run();
 };
 

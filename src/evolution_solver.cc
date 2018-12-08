@@ -11,8 +11,6 @@
 #include "input_manager.h"
 #include "parallel_utils.h"
 
-#define DEBUG_PRINT_POP 4
-
 namespace elfin {
 
 auto get_score_msg_format = []() {
@@ -35,20 +33,8 @@ std::string timing_msg_format =
 #endif
 
 void
-EvolutionSolver::init_pop_buffs(const WorkArea & wa) {
-    curr_pop_ = new Population(wa);
-    buff_pop_ = new Population(*curr_pop_);
-}
-
-void
-EvolutionSolver::swap_pop_buffs() {
-    const Population * tmp = buff_pop_;
-    buff_pop_ = curr_pop_;
-    curr_pop_ = const_cast<Population *>(tmp);
-}
-
-void
 EvolutionSolver::collect_gen_data(
+    const Population & pop,
     const size_t gen_id,
     const double gen_start_time,
     double & tot_gen_time,
@@ -58,9 +44,9 @@ EvolutionSolver::collect_gen_data(
     bool & should_break) {
     // Stat collection
     const Candidate * best_candidate =
-        curr_pop_->candidates().front();
+        pop.front_buffer()->front();
     const Candidate * worst_candidate =
-        curr_pop_->candidates().front();
+        pop.front_buffer()->front();
 
     const float gen_best_score = best_candidate->get_score();
     const size_t gen_best_len = best_candidate->size();
@@ -83,7 +69,7 @@ EvolutionSolver::collect_gen_data(
     }
     else if (gen_best_score > lastgen_best_score) {
         err("Best score is worse than last gen!\n");
-        debug_print_pop(16);
+        debug_print_pop(pop, 16);
         NICE_PANIC("Score ranking bug?");
     }
     else {
@@ -103,9 +89,10 @@ EvolutionSolver::collect_gen_data(
 
     // update best sols
     for (size_t j = 0; j < OPTIONS.keep_n; j++) {
+        Candidate * best_cand_clone =
+            pop.front_buffer()->at(j)->clone();
         best_sols[j] =
-            std::shared_ptr<Candidate>(
-                curr_pop_->candidates().at(j)->clone());
+            std::shared_ptr<Candidate>(best_cand_clone);
     }
 
     // Check stop conditions
@@ -196,33 +183,28 @@ EvolutionSolver::print_timing() const {
 }
 
 void
-EvolutionSolver::debug_print_pop(const size_t cutoff) const {
+EvolutionSolver::debug_print_pop(
+    const Population & pop,
+    const size_t cutoff) const {
     const size_t i_max =
-        std::min(cutoff, curr_pop_->candidates().size());
-        
+        std::min(cutoff, pop.front_buffer()->size());
+
     for (size_t i = 0; i < i_max; ++i)
     {
-        auto & c = curr_pop_->candidates().at(i);
+        auto & c = pop.front_buffer()->at(i);
         wrn("curr  [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
             i, c, c->checksum(), c->get_score(), c->size());
     }
 
     for (size_t i = 0; i < i_max; ++i)
     {
-        auto & c = buff_pop_->candidates().at(i);
+        auto & c = pop.back_buffer()->at(i);
         wrn("buff  [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
             i, c, c->checksum(), c->get_score(), c->size());
     }
 }
 
 /* Public Methods */
-
-EvolutionSolver::~EvolutionSolver() {
-    delete curr_pop_;
-    curr_pop_ = nullptr;
-    delete buff_pop_;
-    buff_pop_ = nullptr;
-}
 
 void
 EvolutionSolver::run() {
@@ -244,8 +226,7 @@ EvolutionSolver::run() {
             continue;
         }
 
-        Population::setup(wa);
-        init_pop_buffs(wa);
+        Population population = Population(&wa);
 
         const V3fList shape = itr.second.to_points();
         this->print_start_msg(shape);
@@ -255,7 +236,7 @@ EvolutionSolver::run() {
 
         double tot_gen_time = 0.0f;
         size_t stagnant_count = 0;
-        float lastgen_best_score = std::numeric_limits<float>::infinity();
+        float lastgen_best_score = INFINITY;
 
         if (!OPTIONS.dry_run) {
             MAP_DATA() {
@@ -263,22 +244,23 @@ EvolutionSolver::run() {
                     const double gen_start_time = get_timestamp_us();
 
                     wrn("Before evolve\n");
-                    debug_print_pop(DEBUG_PRINT_POP);
-                    curr_pop_->evolve(buff_pop_);
+                    debug_print_pop(population);
+                    population.evolve();
 
                     wrn("After evolve\n");
-                    debug_print_pop(DEBUG_PRINT_POP);
-                    curr_pop_->score();
-                    curr_pop_->rank();
+                    debug_print_pop(population);
+                    population.score();
+                    population.rank();
 
                     wrn("Post rank\n");
-                    debug_print_pop(DEBUG_PRINT_POP);
-                    curr_pop_->select();
+                    debug_print_pop(population);
+                    population.select();
 
                     wrn("Post select\n");
-                    debug_print_pop(DEBUG_PRINT_POP);
+                    debug_print_pop(population);
                     bool should_break = false;
                     collect_gen_data(
+                        population,
                         gen_id,
                         gen_start_time,
                         tot_gen_time,
@@ -288,7 +270,7 @@ EvolutionSolver::run() {
                         should_break);
                     if (should_break) break;
 
-                    swap_pop_buffs();
+                    population.swap_buffer();
                 }
             }
         }

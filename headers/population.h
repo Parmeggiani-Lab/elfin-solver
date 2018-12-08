@@ -12,33 +12,48 @@ namespace elfin {
 class Population
 {
 protected:
-    CandidateList candidates_;
-    const WorkArea & work_area_;
+    /* type */
+    struct Buffer : public CandidateList {
+        ~Buffer() {
+            for (auto cand_ptr : *this) {
+                delete cand_ptr;
+            }
+            this->clear();
+        }
+    };
+    /* data */
+    Buffer * front_buffer_ = nullptr;
+    const Buffer * back_buffer_ = nullptr;
+    const WorkArea * work_area_ = nullptr;
 
-    struct {
-        double evolve_time = 0.0f;
-        double score_time = 0.0f;
-        double rank_time = 0.0f;
-        double select_time = 0.0f;
-    } ga_times_;
+    /* modifiers */
+    void release_resources();
 
-    Candidate * new_candidate() const;
-
+    /* static */
+    static void copy_buffer(
+        const Buffer * src,
+        Buffer * dst);
 public:
-    Population(const WorkArea & work_area);
+    /* ctors */
+    Population(const WorkArea * work_area);
     Population(const Population & other);
+    Population(Population && other);
+
+    /* dtors */
     virtual ~Population();
 
-    /* getters */
-    const CandidateList & candidates() const { return candidates_; }
-    void resize(size_t size) { candidates_.resize(size); }
+    /* accessors */
+    const Buffer * front_buffer() const { return front_buffer_; }
+    const Buffer * back_buffer() const { return back_buffer_; }
 
-    void evolve(const Population * prev_gen);
+    /* modifiers */
+    Population & operator=(const Population & other);
+    Population & operator=(Population && other);
+    void evolve();
     void score();
     void rank();
     void select();
-
-    static void setup(const WorkArea & wa);
+    void swap_buffer();
 };
 
 }  /* elfin */

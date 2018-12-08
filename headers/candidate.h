@@ -5,11 +5,9 @@
 #include <string>
 #include <deque>
 
-#include "input_manager.h"
 #include "geometry.h"
 #include "checksum.h"
 #include "work_area.h"
-#include "string_utils.h"
 #include "mutation_counters.h"
 #include "node_team.h"
 
@@ -46,8 +44,8 @@ protected:
     void auto_mutate();
 
     /*
-     * Pick a valid cross-mutate point in both mother and father, then join each
-     * side to form the child.
+     * Pick a valid cross-mutate point in both mother and father, then join
+     * each side to form the child.
      */
     virtual bool cross_mutate(
         const Candidate * mother,
@@ -82,19 +80,6 @@ protected:
 public:
     /* data */
     static const size_t & MAX_LEN; // refers to MAX_LEN_ (private static)
-    static void set_max_len(const size_t l) { MAX_LEN_ = l; }
-
-    /* strings */
-    virtual std::string to_string() const;
-    virtual std::string to_csv_string() const;
-
-    virtual Crc32 checksum() const = 0;
-    virtual void score(const WorkArea & wa) = 0;
-    void randomize() { regrow(); }
-    void mutate(
-        size_t rank,
-        MutationCounters & mt_counters,
-        const CandidateList & candidates);
 
     /* ctors */
     Candidate(NodeTeam * node_team);
@@ -107,13 +92,31 @@ public:
     virtual ~Candidate();
 
     /* accessors */
+    static void setup(const WorkArea & wa);
+    virtual Crc32 checksum() const = 0;
+    virtual void score(const WorkArea & wa) = 0;
+    void randomize() { regrow(); }
+    void mutate(
+        size_t rank,
+        MutationCounters & mt_counters,
+        const CandidateList * candidates);
+
+    /* accessors */
     float get_score() const { return score_; }
     size_t size() const { return node_team_->size(); }
-    bool operator<(const Candidate & rhs) const { return score_ < rhs.score_; }
-    static bool PtrComparator(const Candidate *, const Candidate *);
+    bool operator<(const Candidate & rhs) const {
+        return score_ < rhs.score_;
+    }
+    static bool PtrComparator(
+        const Candidate *,
+        const Candidate *);
 
     /* printers */
-    virtual StrList get_node_names() const { return node_team_->get_node_names(); }
+    virtual std::string to_string() const;
+    virtual std::string to_csv_string() const;
+    virtual StrList get_node_names() const {
+        return node_team_->get_node_names();
+    }
 };
 
 
