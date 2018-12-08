@@ -67,34 +67,47 @@ typedef std::vector<Vector3f> V3fList;
 
 class Transform
 {
-public:
-	/* types */
-	typedef float ElementArray[4][4];
-	typedef ElementArray & ElementArrayRef;
 private:
-	/* data members */
-	ElementArray elements_ = {
-		{1, 0, 0, 0},
-		{0, 1, 0, 0},
-		{0, 0, 1, 0},
-		{0, 0, 0, 0}
+	/* types */
+	struct Data {
+		float data[4][4] = {
+			{1, 0, 0, 0},
+			{0, 1, 0, 0},
+			{0, 0, 1, 0},
+			{0, 0, 0, 0}
+		};
+		float * operator[](const size_t i) { return data[i]; } 
+		const float * operator[](const size_t i) const { return data[i]; } 
 	};
-public:
-	/* ctors & dtors */
-	Transform() {}
-	Transform(const JSON & j);
-	void parse_elements_from_json(const JSON & tx_json, ElementArrayRef ele) const;
-	Transform(const ElementArrayRef ele);
-	void init_with_elements(const ElementArrayRef ele);
 
-	/* other methods */
-	std::string to_string() const;
-	std::string to_csv_string() const;
-	Transform operator*(const Transform & tx) const;
-	Transform & operator*=(const Transform & tx);
+	/* data */
+	Data data_;
+
+	/* modifiers */
+	void parse_from_json(const JSON & tx_json);
+public:
+	/* ctors */
+	Transform() {}
+	Transform(const Transform & other);
+	Transform(Transform && other);
+	Transform(const JSON & j);
+	Transform(const Data & data);
+
+	/* accessors */
+	Transform operator*(const Transform & rhs) const;
 	Vector3f operator*(const Vector3f & vec) const;
 	Transform inversed() const;
 	Vector3f collapsed() const;
+
+	/* modifiers */
+	Transform & operator=(const Transform & other);
+	Transform & operator=(Transform && other);
+	Transform & operator*=(const Transform & rhs);
+
+	/* printers */
+
+	std::string to_string() const;
+	std::string to_csv_string() const;
 };
 
 } // namespace elfin
