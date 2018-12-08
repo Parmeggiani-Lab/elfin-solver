@@ -14,7 +14,7 @@ class Population
 protected:
     /* type */
     struct Buffer : public CandidateList {
-        ~Buffer() {
+        virtual ~Buffer() {
             for (auto cand_ptr : *this) {
                 delete cand_ptr;
             }

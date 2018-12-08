@@ -38,6 +38,8 @@ protected:
         const float mod_radius) const;
 
     /* modifiers */
+    void release_resources();
+
     /*
      * Tries point mutate, limb mutate, then regrow in order.
      */
@@ -92,24 +94,24 @@ public:
     virtual ~Candidate();
 
     /* accessors */
-    static void setup(const WorkArea & wa);
     virtual Crc32 checksum() const = 0;
-    virtual void score(const WorkArea & wa) = 0;
-    void randomize() { regrow(); }
-    void mutate(
-        size_t rank,
-        MutationCounters & mt_counters,
-        const CandidateList * candidates);
-
-    /* accessors */
-    float get_score() const { return score_; }
     size_t size() const { return node_team_->size(); }
+    float get_score() const { return score_; }
     bool operator<(const Candidate & rhs) const {
         return score_ < rhs.score_;
     }
     static bool PtrComparator(
         const Candidate *,
         const Candidate *);
+
+    /* modifiers */
+    static void setup(const WorkArea & wa);
+    virtual void score(const WorkArea * wa) = 0;
+    void randomize() { regrow(); }
+    void mutate(
+        size_t rank,
+        MutationCounters & mt_counters,
+        const CandidateList * candidates);
 
     /* printers */
     virtual std::string to_string() const;

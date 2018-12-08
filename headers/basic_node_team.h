@@ -20,7 +20,7 @@ public:
     virtual ~BasicNodeTeam() {}
 
     /* accessors */
-    virtual float score(const WorkArea & wa) const;
+    virtual float score(const WorkArea * wa) const;
     virtual Crc32 checksum() const;
 
     /* modifiers */

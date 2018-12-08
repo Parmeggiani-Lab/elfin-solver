@@ -36,11 +36,12 @@ BasicNodeTeam::BasicNodeTeam(const BasicNodeTeam & other) {
     *this = other;
 }
 
+// virtual
 BasicNodeTeam * BasicNodeTeam::clone() const {
     return new BasicNodeTeam(*this);
 }
 
-float BasicNodeTeam::score(const WorkArea & wa) const {
+float BasicNodeTeam::score(const WorkArea * wa) const {
     /*
      * In a BasicNodeTeam there are 2 and only 2 tips at all times. The nodes
      * network is thus a simple path. We walk the path to collect the 3D
@@ -67,7 +68,7 @@ float BasicNodeTeam::score(const WorkArea & wa) const {
                             points.size(), this->size()));
 
         const float new_score = kabsch_score(points, wa);
-        score = std::min(score, new_score);
+        score = new_score < score ? new_score : score;
     }
 
     return score;

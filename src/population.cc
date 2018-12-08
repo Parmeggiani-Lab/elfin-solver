@@ -49,14 +49,16 @@ void Population::release_resources() {
 
 // static
 void Population::copy_buffer(const Buffer * src, Buffer * dst) {
+    NICE_PANIC(src == dst);
+
     dst->clear();
 
     const size_t src_size = src->size();
-    dst->reserve(src_size);
+    dst->resize(src_size);
 
     OMP_PAR_FOR
     for (size_t i = 0; i < src_size; i++) {
-        dst->push_back(src->at(i)->clone());
+        dst->at(i) = src->at(i)->clone();
     }
 }
 
@@ -73,15 +75,15 @@ Population::Population(const WorkArea * work_area) :
 
         front_buffer_ = new Buffer();
         front_buffer_->clear();
-        front_buffer_->reserve(pop_size);
+        front_buffer_->resize(pop_size); // Must pre allocate for parallel assignment
 
         OMP_PAR_FOR
         for (size_t i = 0; i < pop_size; i++) {
-            front_buffer_->push_back(new_candidate(work_area_->type()));
+            front_buffer_->at(i) = new_candidate(work_area_->type());
         }
 
         // Scoring last candidate tests initialization and score func
-        front_buffer_->at(pop_size - 1)->score(*work_area_);
+        front_buffer_->at(pop_size - 1)->score(work_area_);
 
         // Now initialize second buffer_
         swap_buffer();
@@ -115,7 +117,7 @@ Population::~Population() {
 Population & Population::operator=(const Population & other) {
     release_resources();
     front_buffer_ = new Buffer();
-    copy_buffer(other.front_buffer_, front_buffer_);
+    copy_buffer(other.back_buffer_, front_buffer_);
     swap_buffer();
     front_buffer_ = new Buffer();
     copy_buffer(other.back_buffer_, front_buffer_);
@@ -175,7 +177,7 @@ void Population::score() {
 
         OMP_PAR_FOR
         for (size_t i = 0; i < size; i++) {
-            front_buffer_->at(i)->score(*work_area_);
+            front_buffer_->at(i)->score(work_area_);
         }
 
         ERASE_LINE();
@@ -206,13 +208,13 @@ void Population::select() {
     {
         msg("Selecting population...");
 
-        // Ensure variety within survivors using hashmap
-        // where crc is key and cloned pointer is value.
+        // Ensure variety within survivors using hashmap where crc is key and
+        // cloned pointer is value.
         std::unordered_map<Crc32, Candidate *> crc_map;
         size_t unique_count = 0;
 
-        // We don't want parallelism here because
-        // the loop must priotise low indexes
+        // We don't want parallelism here because the loop must prioritise low
+        // indexes
         for (auto cand_ptr : *front_buffer_) {
             const Crc32 crc = cand_ptr->checksum();
             if (crc_map.find(crc) == crc_map.end()) {
@@ -246,7 +248,7 @@ void Population::select() {
 }
 
 void Population::swap_buffer() {
-    const Buffer * tmp = front_buffer_;
+    const Buffer * tmp = back_buffer_;
     back_buffer_ = front_buffer_;
     front_buffer_ = const_cast<Buffer *>(tmp);
 }

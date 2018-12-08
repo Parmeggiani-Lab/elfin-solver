@@ -32,6 +32,10 @@ bool Candidate::collides(
     return false;
 }
 
+void Candidate::release_resources() {
+    delete node_team_;
+}
+
 /*
  * Try point mutate first, if not possible then do limb mutate. If still not
  * possible, create a new chromosome.
@@ -62,7 +66,8 @@ Candidate::Candidate(Candidate && other) :
 }
 
 Candidate & Candidate::operator=(const Candidate & other) {
-    delete node_team_;
+    release_resources();
+    DEBUG(nullptr == other.node_team_);
     node_team_ = other.node_team_->clone();
     score_ = other.score_;
     return *this;
@@ -70,8 +75,15 @@ Candidate & Candidate::operator=(const Candidate & other) {
 
 // virtual
 Candidate::~Candidate() {
-    delete node_team_;
+    release_resources();
 }
+
+bool Candidate::PtrComparator(
+    const Candidate * lhs,
+    const Candidate * rhs) {
+    return lhs->get_score() < rhs->get_score();
+}
+
 // static
 void Candidate::setup(const WorkArea & wa) {
     /*
@@ -141,12 +153,6 @@ void Candidate::mutate(
             mt_counters.rand++;
         }
     }
-}
-
-bool Candidate::PtrComparator(
-    const Candidate * lhs,
-    const Candidate * rhs) {
-    return lhs->get_score() < rhs->get_score();
 }
 
 std::string Candidate::to_string() const {

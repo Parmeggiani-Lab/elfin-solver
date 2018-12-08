@@ -435,8 +435,8 @@ bool kabsch(
 	return ret_val;
 }
 
-float kabsch_score(const V3fList & points, const WorkArea & wa) {
-	return kabsch_score(points, wa.to_points());
+float kabsch_score(const V3fList & points, const WorkArea * wa) {
+	return kabsch_score(points, wa->to_points());
 }
 
 float kabsch_score(V3fList mobile, V3fList ref) {

@@ -246,18 +246,19 @@ EvolutionSolver::run() {
                     wrn("Before evolve\n");
                     debug_print_pop(population);
                     population.evolve();
-
                     wrn("After evolve\n");
                     debug_print_pop(population);
+                    
                     population.score();
-                    population.rank();
 
+                    population.rank();
                     wrn("Post rank\n");
                     debug_print_pop(population);
-                    population.select();
 
-                    wrn("Post select\n");
-                    debug_print_pop(population);
+                    // population.select();
+                    // wrn("Post select\n");
+                    // debug_print_pop(population);
+
                     bool should_break = false;
                     collect_gen_data(
                         population,

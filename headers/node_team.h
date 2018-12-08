@@ -55,7 +55,7 @@ public:
     }
     const ProtoLink & random_proto_link(const FreeChain & free_chain) const;
     size_t size() const { return nodes_.size(); }
-    virtual float score(const WorkArea & wa) const = 0;
+    virtual float score(const WorkArea * wa) const = 0;
     virtual Crc32 checksum() const = 0;
 
     /* modifiers */

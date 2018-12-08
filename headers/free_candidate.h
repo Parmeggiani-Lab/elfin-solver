@@ -39,7 +39,7 @@ public:
     }
 
     /* modifiers */
-    virtual void score(const WorkArea & wa) {
+    virtual void score(const WorkArea * wa) {
         score_ = node_team_->score(wa);
     }
 
