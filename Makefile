@@ -121,10 +121,10 @@ dry: $(EXE)
 	$(BIN_DIR)/$(EXE) -c config/test.json -dry
 
 valgrind: $(EXE)
-	valgrind --track-origins=yes --leak-check=full $(BIN_DIR)/$(EXE) -c config/test.json
+	valgrind --track-origins=yes --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$(EXE) -c config/test.json
 
 valgrind_dry: $(EXE)
-	valgrind --track-origins=yes --leak-check=full $(BIN_DIR)/$(EXE) -c config/test.json -dry
+	valgrind --track-origins=yes --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$(EXE) -c config/test.json -dry
 
 FORCE:
 .PHONY: all clean
