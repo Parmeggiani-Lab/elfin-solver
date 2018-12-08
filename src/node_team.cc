@@ -36,7 +36,8 @@ Node * NodeTeam::add_member(
     return new_node;
 }
 
-void NodeTeam::remove_member(Node * node) {
+void NodeTeam::remove_member(const Node * const_node) {
+    Node * node =  const_cast<Node *>(const_node);
     nodes_.erase(node);
 
     // Remove any FreeChain originating from sever_point
@@ -123,14 +124,6 @@ const Node * NodeTeam::invite_new_member(
     free_chains_.lift_erase(free_chain_b);
 
     return node_b;
-}
-
-void NodeTeam::auto_mutate() {
-    if (!point_mutate()) {
-        if (!limb_mutate()) {
-            regrow();
-        }
-    }
 }
 
 }  /* elfin */

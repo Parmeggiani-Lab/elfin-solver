@@ -9,8 +9,6 @@ class BasicNodeTeam : public NodeTeam {
 protected:
     /* modifiers */
     void deep_copy_from(const NodeTeam * other);
-    void remove_leaf_member(Node * node);
-    void destroy_limb(const Link arrow);
 public:
     /* ctors */
     BasicNodeTeam() : NodeTeam() {}
@@ -26,13 +24,8 @@ public:
 
     /* modifiers */
     BasicNodeTeam & operator=(const BasicNodeTeam & other);
-    virtual bool limb_mutate();
-    virtual bool point_mutate();
-    virtual bool cross_mutate(
-        const NodeTeam * mother,
-        const NodeTeam * father);
-    virtual void grow(FreeChain free_chain);
-    virtual void regrow();
+    void remove_leaf_member(const Node * leaf_member);
+    void destroy_limb(const Link arrow);
 
     /* printers */
     virtual std::string to_string() const;

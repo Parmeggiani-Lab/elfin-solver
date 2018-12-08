@@ -38,7 +38,7 @@ protected:
     Node * add_member(
         const ProtoModule * prot,
         const Transform & tx = Transform());
-    void remove_member(Node * node);
+    void remove_member(const Node * const_node);
 public:
     /* ctors */
     NodeTeam();
@@ -66,45 +66,6 @@ public:
     const Node * invite_new_member(
         const FreeChain free_chain_a, // Use a copy so deleting it won't invalid later access
         const ProtoLink & proto_link);
-    
-    /*
-     * Tries point mutate, limb mutate, then regrow in order.
-     */
-    void auto_mutate();
-
-    /*
-     * Cut off one side of the strand and grow a new "limb".
-     * (virtual)
-     */
-    virtual bool limb_mutate() = 0;
-
-    /*
-     * Point Mutation tries the following modifications:
-     *   1. Swap with another node
-     *   2. Insert a node
-     *   3. Delete the node
-     *
-     * The selection is uniform probability without replacement.
-     */
-    virtual bool point_mutate() = 0;
-
-    /*
-     * Pick a valid cross-mutate point in both mother and father, then join
-     * each side to form the child.
-     */
-    virtual bool cross_mutate(
-        const NodeTeam * mother,
-        const NodeTeam * father) = 0;
-
-    /*
-     * Grows a selected tip until MAX_LEN is reached.
-     */
-    virtual void grow(FreeChain free_chain) = 0;
-
-    /*
-     * Removes all nodes and grow from nothing to MAX_LEN.
-     */
-    virtual void regrow() = 0;
 
     /* printers */
     virtual std::string to_string() const = 0;

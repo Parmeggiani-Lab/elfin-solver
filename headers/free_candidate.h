@@ -11,9 +11,19 @@ namespace elfin {
 #define MAX_FREECANDIDATE_MUTATE_FAILS 10
 
 class FreeCandidate : public Candidate {
+protected:
+    /* modifiers */
+    virtual bool limb_mutate();
+    virtual bool point_mutate();
+    virtual bool cross_mutate(
+        const NodeTeam * mother,
+        const NodeTeam * father);
+    virtual void grow(FreeChain free_chain);
+    virtual void regrow();
+
 public:
     /* ctors */
-    FreeCandidate() : Candidate(new BasicNodeTeam()) {}
+    using Candidate::Candidate;
     virtual FreeCandidate * clone() const;
 
     /* dtors */

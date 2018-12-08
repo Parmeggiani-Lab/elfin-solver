@@ -21,7 +21,6 @@ protected:
     /* data members*/
     ItemList items_;
     ItemMap item_to_id_map_;
-
 public:
     /* ctors */
     VectorMap() {}
@@ -88,7 +87,7 @@ public:
         item_to_id_map_.erase(itr->first);
     }
 
-    void erase(const ItemType & item) {
+    void erase(ItemType & item) {
         erase(item_to_id_map_.find(item));
     }
 

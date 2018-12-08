@@ -13,6 +13,7 @@ const size_t & Candidate::MAX_LEN = Candidate::MAX_LEN_;
 
 /* protected */
 
+/* accessors */
 /*
  * Checks whether new_com is too close to any other com.
  */
@@ -32,13 +33,22 @@ bool Candidate::collides(
     return false;
 }
 
+/* modifiers */
 void Candidate::release_resources() {
     delete node_team_;
 }
 
+void Candidate::auto_mutate() {
+    if (!point_mutate()) {
+        if (!limb_mutate()) {
+            regrow();
+        }
+    }
+}
+
 /* public */
 
-Candidate::Candidate(NodeTeam * node_team) :
+Candidate::Candidate(BasicNodeTeam * node_team) :
     node_team_(node_team) {
     DEBUG(nullptr == node_team);
 }
@@ -112,24 +122,24 @@ void Candidate::mutate(
             const NodeTeam * mother_team = mother->node_team();
 
             // Fall back to auto mutate if cross fails
-            if (!node_team_->cross_mutate(mother_team, father_team)) {
+            if (!cross_mutate(mother_team, father_team)) {
                 // Pick a random parent to inherit from and then mutate
-                node_team_->auto_mutate();
+                auto_mutate();
                 mt_counters.cross_fail++;
             }
 
             mt_counters.cross++;
         }
         else if (mutation_dice <= CUTOFFS.point) {
-            if (!node_team_->point_mutate()) {
-                node_team_->regrow();
+            if (!point_mutate()) {
+                regrow();
                 mt_counters.point_fail++;
             }
             mt_counters.point++;
         }
         else if (mutation_dice <= CUTOFFS.limb) {
-            if (!node_team_->limb_mutate()) {
-                node_team_->regrow();
+            if (!limb_mutate()) {
+                regrow();
                 mt_counters.limb_fail++;
             }
             mt_counters.limb++;
@@ -137,7 +147,7 @@ void Candidate::mutate(
         else {
             // Individuals not covered by specified mutation
             // rates undergo random destructive mutation
-            node_team_->regrow();
+            regrow();
             mt_counters.rand++;
         }
     }

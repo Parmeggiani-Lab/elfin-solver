@@ -34,7 +34,6 @@ Candidate * new_candidate(const WorkType work_type) {
         throw ElfinException(ss.str());
     }
 
-    MutationCounters dummy_mt_counters;
     c->randomize();
 
     return c;

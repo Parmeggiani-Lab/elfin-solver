@@ -9,7 +9,7 @@
 #include "checksum.h"
 #include "work_area.h"
 #include "mutation_counters.h"
-#include "node_team.h"
+#include "basic_node_team.h"
 
 namespace elfin {
 
@@ -26,11 +26,10 @@ class Candidate {
 protected:
     /* data */
     static size_t MAX_LEN_;
-    NodeTeam * node_team_ = nullptr;
+    BasicNodeTeam * node_team_ = nullptr;
     float score_ = NAN;
 
     /* ctors */
-    Candidate() {}
 
     /* accessors */
     bool collides(
@@ -39,13 +38,53 @@ protected:
 
     /* modifiers */
     void release_resources();
+    
+    /*
+     * Tries point mutate, limb mutate, then regrow in order.
+     */
+    virtual void auto_mutate();
+
+    /*
+     * Cut off one side of the strand and grow a new "limb".
+     * (virtual)
+     */
+    virtual bool limb_mutate() = 0;
+
+    /*
+     * Point Mutation tries the following modifications:
+     *   1. Swap with another node
+     *   2. Insert a node
+     *   3. Delete the node
+     *
+     * The selection is uniform probability without replacement.
+     */
+    virtual bool point_mutate() = 0;
+
+    /*
+     * Pick a valid cross-mutate point in both mother and father, then join
+     * each side to form the child.
+     */
+    virtual bool cross_mutate(
+        const NodeTeam * mother,
+        const NodeTeam * father) = 0;
+
+    /*
+     * Grows a selected tip until MAX_LEN is reached.
+     */
+    virtual void grow(FreeChain free_chain) = 0;
+
+    /*
+     * Removes all nodes and grow from nothing to MAX_LEN.
+     */
+    virtual void regrow() = 0;
 
 public:
     /* data */
     static const size_t & MAX_LEN; // refers to MAX_LEN_ (private static)
 
     /* ctors */
-    Candidate(NodeTeam * node_team);
+    Candidate() : node_team_(new BasicNodeTeam()) {}
+    Candidate(BasicNodeTeam * node_team);
     Candidate(const Candidate & other);
     Candidate(Candidate && other);
     Candidate & operator=(const Candidate & other);
@@ -55,7 +94,7 @@ public:
     virtual ~Candidate();
 
     /* accessors */
-    const NodeTeam * node_team() const { return node_team_; }
+    const BasicNodeTeam * node_team() const { return node_team_; }
     virtual Crc32 checksum() const = 0;
     size_t size() const { return node_team_->size(); }
     float get_score() const { return score_; }
@@ -69,7 +108,7 @@ public:
     /* modifiers */
     static void setup(const WorkArea & wa);
     virtual void score(const WorkArea * wa) = 0;
-    void randomize() { node_team_->regrow(); }
+    void randomize() { regrow(); }
     void mutate(
         size_t rank,
         MutationCounters & mt_counters,
