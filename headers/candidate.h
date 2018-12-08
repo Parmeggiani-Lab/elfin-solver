@@ -88,10 +88,11 @@ public:
     virtual std::string to_string() const;
     virtual std::string to_csv_string() const;
 
-    virtual Crc32 checksum() const;
+    virtual Crc32 checksum() const = 0;
     virtual void score(const WorkArea & wa) = 0;
+    void randomize() { regrow(); }
     void mutate(
-        long rank,
+        size_t rank,
         MutationCounters & mt_counters,
         const CandidateList & candidates);
 

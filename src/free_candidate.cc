@@ -298,10 +298,6 @@ std::string FreeCandidate::to_string() const {
     return ss.str();
 }
 
-void FreeCandidate::score(const WorkArea & wa) {
-    score_ = node_team_->score(wa);
-}
-
 FreeCandidate * FreeCandidate::clone() const {
     return new FreeCandidate(*this);
 }

@@ -21,6 +21,7 @@ public:
 
     /* accessors */
     virtual float score(const WorkArea & wa) const;
+    virtual Crc32 checksum() const;
 
     /* modifiers */
     BasicNodeTeam & operator=(const BasicNodeTeam & other);

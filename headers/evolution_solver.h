@@ -40,7 +40,7 @@ protected:
 	void print_end_msg() const;
 	void print_timing() const;
 
-	void debug_print_pop(size_t cutoff = -1) const;
+	void debug_print_pop(const size_t cutoff = 0) const;
 
 public:
 	/* ctors & dtors */

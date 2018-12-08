@@ -24,9 +24,6 @@ private:
         const TerminusType term = TerminusType::ANY);
 
 public:
-    /* strings */
-    virtual std::string to_string() const;
-
     /* ctors */
     FreeCandidate() : Candidate(new BasicNodeTeam()) {}
     FreeCandidate(const FreeCandidate & other) : Candidate(other) {}
@@ -36,10 +33,18 @@ public:
     /* dtors */
     virtual ~FreeCandidate() {}
 
+    /* accessors */
+    virtual Crc32 checksum() const {
+        return node_team_->checksum();
+    }
+
     /* modifiers */
-    virtual void score(const WorkArea & wa);
+    virtual void score(const WorkArea & wa) {
+        score_ = node_team_->score(wa);
+    }
 
     /* printers */
+    virtual std::string to_string() const;
 };
 
 }  /* elfin */

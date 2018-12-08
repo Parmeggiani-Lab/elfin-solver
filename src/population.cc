@@ -56,7 +56,7 @@ Candidate * Population::new_candidate() const {
     }
 
     MutationCounters dummy_mt_counters;
-    c->mutate(-1, dummy_mt_counters, candidates_);
+    c->randomize();
 
     return c;
 }
@@ -117,7 +117,7 @@ void Population::evolve(const Population * prev_gen) {
         MutationCounters mc = {};
 
         OMP_PAR_FOR
-        for (long i = 0; i < CUTOFFS.pop_size; i++) {
+        for (size_t i = 0; i < CUTOFFS.pop_size; i++) {
             candidates_[i]->mutate(i, mc, prev_gen->candidates());
         }
 

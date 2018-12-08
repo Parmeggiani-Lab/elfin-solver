@@ -6,6 +6,7 @@
 #include "node.h"
 #include "work_area.h"
 #include "vector_utils.h"
+#include "checksum.h"
 
 namespace elfin {
 
@@ -55,6 +56,7 @@ public:
     const ProtoLink & random_proto_link(const FreeChain & free_chain) const;
     size_t size() const { return nodes_.size(); }
     virtual float score(const WorkArea & wa) const = 0;
+    virtual Crc32 checksum() const = 0;
 
     /* modifiers */
     NodeTeam & operator=(NodeTeam && other);

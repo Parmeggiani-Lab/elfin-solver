@@ -27,8 +27,10 @@ void InputManager::setup_cutoffs() {
     cutoffs.pop_size =
         OPTIONS.ga_pop_size;
 
+    // Force survivors > 0
     cutoffs.survivors =
-        std::round(OPTIONS.ga_survive_rate * OPTIONS.ga_pop_size);
+        std::max((size_t) 1,
+                 (size_t) std::round(OPTIONS.ga_survive_rate * OPTIONS.ga_pop_size));
 
     cutoffs.non_survivors =
         (OPTIONS.ga_pop_size - cutoffs.survivors);

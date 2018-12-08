@@ -69,29 +69,12 @@ std::string Candidate::to_csv_string() const {
     return ss.str();
 }
 
-Crc32 Candidate::checksum() const
-{
-    // Compute checksum lazily because it's only used once per generation
-    Crc32 crc = 0xffff;
-    for (auto n : node_team_->nodes()) {
-        // Compute checksum based on prototype identity sequence
-        const ProtoModule * prot = n->prototype();
-        checksum_cascade(&crc, &prot, sizeof(prot));
-    }
-
-    return crc;
-}
-
 void Candidate::mutate(
-    long rank,
+    size_t rank,
     MutationCounters & mt_counters,
     const CandidateList & candidates) {
 
-    if (rank == -1) {
-        // rank -1 is code for destructive randomize
-        regrow();
-    }
-    else if (rank <= CUTOFFS.survivors) {
+    if (rank <= CUTOFFS.survivors) {
         *this = *(candidates.at(rank));
     }
     else {
