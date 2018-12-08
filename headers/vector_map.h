@@ -36,7 +36,7 @@ public:
 
         auto map_itr = item_to_id_map_.find(item);
         DEBUG(map_itr == item_to_id_map_.end());
-        
+
         return items_.begin() + map_itr.second;
     }
     bool empty() const { return items_.empty(); }
@@ -44,6 +44,8 @@ public:
     bool has(const ItemType & item) const {
         return item_to_id_map_.find(item) != item_to_id_map_.end();
     }
+    ItemListCItr begin() const { return items_.begin(); }
+    ItemListCItr end() const { return items_.end(); }
 
     /*
      * Returns a random item based on uniform probability.

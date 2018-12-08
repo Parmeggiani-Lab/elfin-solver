@@ -108,4 +108,12 @@ const Node * NodeTeam::invite_new_member(
     return node_b;
 }
 
+void NodeTeam::auto_mutate() {
+    if (!point_mutate()) {
+        if (!limb_mutate()) {
+            regrow();
+        }
+    }
+}
+
 }  /* elfin */

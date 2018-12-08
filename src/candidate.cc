@@ -36,18 +36,6 @@ void Candidate::release_resources() {
     delete node_team_;
 }
 
-/*
- * Try point mutate first, if not possible then do limb mutate. If still not
- * possible, create a new chromosome.
- */
-void Candidate::auto_mutate() {
-    if (!point_mutate()) {
-        if (!limb_mutate()) {
-            regrow();
-        }
-    }
-}
-
 /* public */
 
 Candidate::Candidate(NodeTeam * node_team) :
@@ -73,7 +61,6 @@ Candidate & Candidate::operator=(const Candidate & other) {
     return *this;
 }
 
-// virtual
 Candidate::~Candidate() {
     release_resources();
 }
@@ -121,27 +108,28 @@ void Candidate::mutate(
         if (mutation_dice <= CUTOFFS.cross) {
             // Pick father
             const size_t father_id = get_dice(CUTOFFS.pop_size);
-            const Candidate * father = candidates->at(father_id);
+            const NodeTeam * father_team = candidates->at(father_id)->node_team();
+            const NodeTeam * mother_team = mother->node_team();
 
             // Fall back to auto mutate if cross fails
-            if (!cross_mutate(mother, father)) {
+            if (!node_team_->cross_mutate(mother_team, father_team)) {
                 // Pick a random parent to inherit from and then mutate
-                auto_mutate();
+                node_team_->auto_mutate();
                 mt_counters.cross_fail++;
             }
 
             mt_counters.cross++;
         }
         else if (mutation_dice <= CUTOFFS.point) {
-            if (!point_mutate()) {
-                regrow();
+            if (!node_team_->point_mutate()) {
+                node_team_->regrow();
                 mt_counters.point_fail++;
             }
             mt_counters.point++;
         }
         else if (mutation_dice <= CUTOFFS.limb) {
-            if (!limb_mutate()) {
-                regrow();
+            if (!node_team_->limb_mutate()) {
+                node_team_->regrow();
                 mt_counters.limb_fail++;
             }
             mt_counters.limb++;
@@ -149,24 +137,14 @@ void Candidate::mutate(
         else {
             // Individuals not covered by specified mutation
             // rates undergo random destructive mutation
-            regrow();
+            node_team_->regrow();
             mt_counters.rand++;
         }
     }
 }
 
 std::string Candidate::to_string() const {
-    std::stringstream ss;
-
-    auto & nodes = node_team_->nodes();
-    const size_t N = nodes.size();
-    for (size_t i = 0; i < N; ++i)
-    {
-        ss << "Nodes[#" << (i + 1) << " / " << N << "]: ";
-        ss << nodes[i]->to_string() << std::endl;
-    }
-
-    return ss.str();
+    return string_format("Candidate[%s]", node_team_->to_string().c_str());
 }
 
 std::string Candidate::to_csv_string() const {

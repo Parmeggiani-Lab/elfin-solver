@@ -25,8 +25,16 @@ public:
 
     /* modifiers */
     BasicNodeTeam & operator=(const BasicNodeTeam & other);
+    virtual bool limb_mutate();
+    virtual bool point_mutate();
+    virtual bool cross_mutate(
+        const NodeTeam * mother,
+        const NodeTeam * father);
+    virtual void grow(FreeChain free_chain);
+    virtual void regrow();
 
     /* printers */
+    virtual std::string to_string() const;
     virtual StrList get_node_names() const;
 
 };  /* class BasicNodeTeam*/

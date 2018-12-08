@@ -40,45 +40,6 @@ protected:
     /* modifiers */
     void release_resources();
 
-    /*
-     * Tries point mutate, limb mutate, then regrow in order.
-     */
-    void auto_mutate();
-
-    /*
-     * Pick a valid cross-mutate point in both mother and father, then join
-     * each side to form the child.
-     */
-    virtual bool cross_mutate(
-        const Candidate * mother,
-        const Candidate * father) = 0;
-
-    /*
-     * Point Mutation tries the following modifications:
-     *   1. Swap with another node
-     *   2. Insert a node
-     *   3. Delete the node
-     *
-     * The selection is uniform probability without replacement.
-     */
-    virtual bool point_mutate() = 0;
-
-    /*
-     * Cut off one side of the strand and grow a new "limb".
-     * (virtual)
-     */
-    virtual bool limb_mutate() = 0;
-
-    /*
-     * Grows a selected tip until MAX_LEN is reached.
-     */
-    virtual void grow(FreeChain free_chain) = 0;
-
-    /*
-     * Removes all nodes and grow from nothing to MAX_LEN.
-     */
-    virtual void regrow() = 0;
-
 public:
     /* data */
     static const size_t & MAX_LEN; // refers to MAX_LEN_ (private static)
@@ -94,6 +55,7 @@ public:
     virtual ~Candidate();
 
     /* accessors */
+    const NodeTeam * node_team() const { return node_team_; }
     virtual Crc32 checksum() const = 0;
     size_t size() const { return node_team_->size(); }
     float get_score() const { return score_; }
@@ -107,7 +69,7 @@ public:
     /* modifiers */
     static void setup(const WorkArea & wa);
     virtual void score(const WorkArea * wa) = 0;
-    void randomize() { regrow(); }
+    void randomize() { node_team_->regrow(); }
     void mutate(
         size_t rank,
         MutationCounters & mt_counters,

@@ -19,10 +19,8 @@ private:
 
 public:
     /* ctors */
-    // Vector() {}
-
+    
     /* dtors */
-    // virtual ~Vector() {}
 
     /* accessors */
     CItrType find(const T & item) const {
