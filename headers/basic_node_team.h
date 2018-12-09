@@ -6,11 +6,9 @@
 namespace elfin {
 
 class BasicNodeTeam : public NodeTeam {
-protected:
-    /* modifiers */
-    void deep_copy_from(const NodeTeam * other);
 public:
     /* ctors */
+    using NodeTeam::NodeTeam;
     BasicNodeTeam() : NodeTeam() {}
     BasicNodeTeam(const BasicNodeTeam & other);
     virtual BasicNodeTeam * clone() const;
@@ -23,9 +21,14 @@ public:
     virtual Crc32 checksum() const;
 
     /* modifiers */
-    BasicNodeTeam & operator=(const BasicNodeTeam & other);
-    void remove_leaf_member(const Node * leaf_member);
-    void destroy_limb(const Link arrow);
+    virtual void deep_copy_from(const NodeTeam * other);
+    virtual bool limb_mutate();
+    virtual bool point_mutate();
+    virtual bool cross_mutate(
+        const NodeTeam * mother,
+        const NodeTeam * father);
+    virtual void grow(FreeChain free_chain);
+    virtual void randomize();
 
     /* printers */
     virtual std::string to_string() const;

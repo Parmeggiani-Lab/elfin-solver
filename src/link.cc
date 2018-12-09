@@ -18,7 +18,7 @@ void Link::update_node_ptrs(const NodeAddrMap & nam) {
 
 void Link::sever(const Link link) {
     link.src_chain_.node->remove_link(link);
-    link.dst_chain_.node->remove_link(Link::reverse(link));
+    link.dst_chain_.node->remove_link(link.reversed());
 }
 
 }  /* elfin */

@@ -2,6 +2,8 @@
 
 #include <sstream>
 
+#include "candidate.h"
+
 #define FREE_CHAIN_VM_RESERVE_SIZE 16
 
 namespace elfin {
@@ -14,6 +16,51 @@ bool compare_free_chain_nodes(
 }
 
 /* protected */
+
+/* accessors */
+const ProtoLink & NodeTeam::random_proto_link(
+    const FreeChain & free_chain) const {
+    const ProtoChain & proto_chain =
+        free_chain.node->prototype()->
+        proto_chains().at(free_chain.chain_id);
+
+    return proto_chain.pick_random_proto_link(free_chain.term);
+}
+
+bool NodeTeam::collides(
+    const Vector3f & new_com,
+    const float mod_radius) const {
+
+    for (const auto node_ptr : nodes_) {
+        const float sq_com_dist = node_ptr->tx().collapsed().sq_dist_to(new_com);
+        const float required_com_dist = mod_radius +
+                                        node_ptr->prototype()->radius;
+        if (sq_com_dist < (required_com_dist * required_com_dist)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/* modifiers */
+void NodeTeam::disperse() {
+    for (auto node_ptr : nodes_) {
+        delete node_ptr;
+    }
+
+    nodes_.clear();
+    free_chains_.clear();
+}
+
+void NodeTeam::remake(const Roulette<ProtoModule *> & mod_list) {
+    disperse();
+
+    // Pick random initial member
+    const ProtoModule * prot = mod_list.draw();
+    add_member(prot);
+}
+
 Node * NodeTeam::add_member(
     const ProtoModule * prot,
     const Transform & tx) {
@@ -34,70 +81,6 @@ Node * NodeTeam::add_member(
     }
 
     return new_node;
-}
-
-void NodeTeam::remove_member(const Node * const_node) {
-    Node * node =  const_cast<Node *>(const_node);
-    nodes_.erase(node);
-
-    // Remove any FreeChain originating from sever_point
-    free_chains_.lift_erase_all(
-        FreeChain(node, TerminusType::NONE, 0),
-        compare_free_chain_nodes);
-
-    delete node;
-}
-
-/* public */
-NodeTeam::NodeTeam() {
-    free_chains_.reserve(FREE_CHAIN_VM_RESERVE_SIZE);
-}
-
-NodeTeam::NodeTeam(
-    NodeTeam && other) {
-    *this = other; // Call operator=(T&&)
-}
-
-const ProtoLink & NodeTeam::random_proto_link(
-    const FreeChain & free_chain) const {
-    const ProtoChain & proto_chain =
-        free_chain.node->prototype()->
-        proto_chains().at(free_chain.chain_id);
-
-    return proto_chain.pick_random_proto_link(free_chain.term);
-}
-
-NodeTeam & NodeTeam::operator=(NodeTeam && other) {
-    if (this != &other) {
-        disperse();
-        // Take over the already allocated nodes
-        nodes_ = other.nodes_;
-        free_chains_ = other.free_chains_;
-        other.nodes_.clear();
-        other.free_chains_.clear();
-    }
-    return *this;
-}
-
-NodeTeam::~NodeTeam() {
-    disperse();
-}
-
-void NodeTeam::disperse() {
-    for (auto node_ptr : nodes_) {
-        delete node_ptr;
-    }
-
-    nodes_.clear();
-    free_chains_.clear();
-}
-
-void NodeTeam::remake(const Roulette<ProtoModule *> & mod_list) {
-    disperse();
-
-    // Pick random initial member
-    const ProtoModule * prot = mod_list.draw();
-    add_member(prot);
 }
 
 const Node * NodeTeam::invite_new_member(
@@ -124,6 +107,62 @@ const Node * NodeTeam::invite_new_member(
     free_chains_.lift_erase(free_chain_b);
 
     return node_b;
+}
+
+void NodeTeam::remove_member(const Node * const_node) {
+    Node * node =  const_cast<Node *>(const_node);
+    nodes_.erase(node);
+    delete node;
+}
+
+void NodeTeam::remove_member_chains(const Node * const_node) {
+    // Remove any FreeChain originating from const_node
+    Node * node =  const_cast<Node *>(const_node);
+    free_chains_.lift_erase_all(
+        FreeChain(node, TerminusType::NONE, 0),
+        compare_free_chain_nodes);
+}
+
+/* public */
+/* ctors */
+NodeTeam::NodeTeam() {
+    nodes_.reserve(Candidate::MAX_LEN);
+    free_chains_.reserve(FREE_CHAIN_VM_RESERVE_SIZE);
+}
+
+NodeTeam::NodeTeam(NodeTeam && other) {
+    *this = other; // Call operator=(T&&)
+}
+
+/* dtors */
+NodeTeam::~NodeTeam() {
+    disperse();
+}
+
+/* accessors */
+
+/* modifiers */
+NodeTeam & NodeTeam::operator=(NodeTeam && other) {
+    if (this != &other) {
+        disperse();
+
+        // Take over the already allocated resourcse
+        nodes_ = other.nodes_;
+        free_chains_ = other.free_chains_;
+
+        other.nodes_.clear();
+        other.free_chains_.clear();
+    }
+
+    return *this;
+}
+
+void NodeTeam::auto_mutate() {
+    if (!point_mutate()) {
+        if (!limb_mutate()) {
+            randomize();
+        }
+    }
 }
 
 }  /* elfin */

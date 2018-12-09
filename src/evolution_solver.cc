@@ -219,7 +219,7 @@ EvolutionSolver::run() {
         const std::string wa_name = itr.first;
         const WorkArea & wa = itr.second;
         if (wa.type() != FREE) {
-            std::stringstream ss;
+            std::ostringstream ss;
             ss << "Skipping work_area: ";
             ss << WorkTypeNames[wa.type()] << std::endl;
             wrn(ss.str().c_str());

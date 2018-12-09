@@ -6,37 +6,36 @@
 #include "jutil.h"
 #include "input_manager.h"
 #include "mutation_counters.h"
-#include "free_candidate.h"
-// #include "one_hinge_candidate.h"
-// #include "two_hinge_candidate.h"
+#include "basic_node_team.h"
 #include "parallel_utils.h"
 
 namespace elfin {
 
 /* free functions */
 Candidate * new_candidate(const WorkType work_type) {
-    Candidate * c = nullptr;
+    NodeTeam * node_team = nullptr;
 
     switch (work_type) {
     case FREE:
-        c = new FreeCandidate();
+        node_team = new BasicNodeTeam();
         break;
     // case ONE_HINGE:
-    //     c = new OneHingeCandidate();
+    //     node_team = new OneHingeNodeTeam();
     //     break;
     // case TWO_HINGE:
-    //     c = new TwoHingeCandidate();
+    //     node_team = new TwoHingeNodeTeam();
     //     break;
     default:
-        std::stringstream ss;
+        std::ostringstream ss;
         ss << "Unimplemented WorkArea type: ";
         ss << WorkTypeNames[work_type] << std::endl;
         throw ElfinException(ss.str());
     }
 
-    c->randomize();
-
-    return c;
+    Candidate * candidate = new Candidate(node_team);
+    candidate->randomize();
+    
+    return candidate;
 }
 
 /* protected */
@@ -82,7 +81,7 @@ Population::Population(const WorkArea * work_area) :
         }
 
         // Scoring last candidate tests initialization and score func
-        front_buffer_->at(pop_size - 1)->score(work_area_);
+        front_buffer_->at(pop_size - 1)->calc_score(work_area_);
 
         // Now initialize second buffer_
         swap_buffer();
@@ -176,7 +175,7 @@ void Population::score() {
 
         OMP_PAR_FOR
         for (size_t i = 0; i < size; i++) {
-            front_buffer_->at(i)->score(work_area_);
+            front_buffer_->at(i)->calc_score(work_area_);
         }
 
         ERASE_LINE();

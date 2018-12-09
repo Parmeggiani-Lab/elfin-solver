@@ -14,41 +14,16 @@ const size_t & Candidate::MAX_LEN = Candidate::MAX_LEN_;
 /* protected */
 
 /* accessors */
-/*
- * Checks whether new_com is too close to any other com.
- */
-bool Candidate::collides(
-    const Vector3f & new_com,
-    const float mod_radius) const {
-
-    for (const auto node_ptr : node_team_->nodes()) {
-        const float sq_com_dist = node_ptr->tx().collapsed().sq_dist_to(new_com);
-        const float required_com_dist = mod_radius +
-                                        node_ptr->prototype()->radius;
-        if (sq_com_dist < (required_com_dist * required_com_dist)) {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 /* modifiers */
 void Candidate::release_resources() {
     delete node_team_;
 }
 
-void Candidate::auto_mutate() {
-    if (!point_mutate()) {
-        if (!limb_mutate()) {
-            regrow();
-        }
-    }
-}
-
 /* public */
 
-Candidate::Candidate(BasicNodeTeam * node_team) :
+/* ctors */
+Candidate::Candidate(NodeTeam * node_team) :
     node_team_(node_team) {
     DEBUG(nullptr == node_team);
 }
@@ -63,22 +38,30 @@ Candidate::Candidate(Candidate && other) :
     other.node_team_ = nullptr;
 }
 
+Candidate * Candidate::clone() const {
+    NodeTeam * node_team_clone = node_team_->clone();
+    return new Candidate(node_team_clone);
+}
+
+/* dtors */
+Candidate::~Candidate() {
+    release_resources();
+}
+
+/* accessors */
+bool Candidate::PtrComparator(
+    const Candidate * lhs,
+    const Candidate * rhs) {
+    return lhs->get_score() < rhs->get_score();
+}
+
+/* modifiesr */
 Candidate & Candidate::operator=(const Candidate & other) {
     release_resources();
     DEBUG(nullptr == other.node_team_);
     node_team_ = other.node_team_->clone();
     score_ = other.score_;
     return *this;
-}
-
-Candidate::~Candidate() {
-    release_resources();
-}
-
-bool Candidate::PtrComparator(
-    const Candidate * lhs,
-    const Candidate * rhs) {
-    return lhs->get_score() < rhs->get_score();
 }
 
 // static
@@ -94,12 +77,13 @@ void Candidate::setup(const WorkArea & wa) {
     }
 
     // Add one because division counts segments. We want number of points.
-    const size_t expected_len = 1 + round(sum_dist / OPTIONS.avg_pair_dist);
+    const size_t expected_len =
+        1 + round(sum_dist / OPTIONS.avg_pair_dist);
     MAX_LEN_ = expected_len + OPTIONS.len_dev_alw;
 }
 
 void Candidate::mutate(
-    size_t rank,
+    const size_t rank,
     MutationCounters & mt_counters,
     const CandidateList * candidates) {
 
@@ -122,24 +106,24 @@ void Candidate::mutate(
             const NodeTeam * mother_team = mother->node_team();
 
             // Fall back to auto mutate if cross fails
-            if (!cross_mutate(mother_team, father_team)) {
+            if (!node_team_->cross_mutate(mother_team, father_team)) {
                 // Pick a random parent to inherit from and then mutate
-                auto_mutate();
+                node_team_->auto_mutate();
                 mt_counters.cross_fail++;
             }
 
             mt_counters.cross++;
         }
         else if (mutation_dice <= CUTOFFS.point) {
-            if (!point_mutate()) {
-                regrow();
+            if (!node_team_->point_mutate()) {
+                node_team_->randomize();
                 mt_counters.point_fail++;
             }
             mt_counters.point++;
         }
         else if (mutation_dice <= CUTOFFS.limb) {
-            if (!limb_mutate()) {
-                regrow();
+            if (!node_team_->limb_mutate()) {
+                node_team_->randomize();
                 mt_counters.limb_fail++;
             }
             mt_counters.limb++;
@@ -147,18 +131,21 @@ void Candidate::mutate(
         else {
             // Individuals not covered by specified mutation
             // rates undergo random destructive mutation
-            regrow();
+            node_team_->randomize();
             mt_counters.rand++;
         }
     }
 }
 
+/* printers */
 std::string Candidate::to_string() const {
-    return string_format("Candidate[%s]", node_team_->to_string().c_str());
+    return string_format(
+               "Candidate[\n%s\n]",
+               node_team_->to_string().c_str());
 }
 
 std::string Candidate::to_csv_string() const {
-    std::stringstream ss;
+    std::ostringstream ss;
 
     for (auto n : node_team_->nodes()) {
         ss << n->to_csv_string() << std::endl;

@@ -22,9 +22,7 @@ public:
     Link(
         const FreeChain & src,
         const FreeChain & dst) : src_chain_(src), dst_chain_(dst) {}
-    static Link reverse(const Link & link) {
-        return Link(link.dst_chain_, link.src_chain_);
-    }
+    Link reversed() const { return Link(dst_chain_, src_chain_); }
 
     /* dtors */
     virtual ~Link() {}
