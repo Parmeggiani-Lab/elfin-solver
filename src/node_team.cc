@@ -109,15 +109,13 @@ const Node * NodeTeam::invite_new_member(
     return node_b;
 }
 
-void NodeTeam::remove_member(const Node * const_node) {
-    Node * node =  const_cast<Node *>(const_node);
+void NodeTeam::remove_member(Node * node) {
     nodes_.erase(node);
     delete node;
 }
 
-void NodeTeam::remove_member_chains(const Node * const_node) {
-    // Remove any FreeChain originating from const_node
-    Node * node =  const_cast<Node *>(const_node);
+void NodeTeam::remove_member_chains(Node * node) {
+    // Remove any FreeChain originating from node
     free_chains_.lift_erase_all(
         FreeChain(node, TerminusType::NONE, 0),
         compare_free_chain_nodes);

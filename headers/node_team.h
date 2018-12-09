@@ -55,9 +55,8 @@ protected:
     const Node * invite_new_member(
         const FreeChain free_chain_a, // Use a copy so deleting it won't invalid later access
         const ProtoLink & proto_link);
-    void remove_member(const Node * const_node);
-    void remove_member_chains(const Node * const_node);
-    void restore_chain(const FreeChain & chain);
+    void remove_member(Node *  node);
+    void remove_member_chains(Node *  node);
 
 public:
     /* ctors */

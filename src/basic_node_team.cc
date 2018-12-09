@@ -18,12 +18,8 @@
 
 namespace elfin {
 
-/* protected */
-/* modifiers */
-
 /* public */
 /* ctors */
-
 BasicNodeTeam::BasicNodeTeam(const BasicNodeTeam & other) {
     deep_copy_from(&other);
 }
@@ -120,40 +116,6 @@ void BasicNodeTeam::deep_copy_from(
     }
 }
 
-// void BasicNodeTeam::remove_leaf_member(const Node * leaf_member) {
-//     NICE_PANIC(leaf_member->neighbors().size() != 1);
-//     const Link & link = leaf_member->neighbors().at(0);
-
-//     // Copy FreeChain for restore later
-//     const FreeChain chain_to_restore = link.dst();
-
-//     // Remove link to sever_point from the new tip node
-//     Node * new_tip = chain_to_restore.node;
-//     new_tip->remove_link(link.reversed());
-
-//     // Restore FreeChain
-//     free_chains_.push_back(chain_to_restore);
-
-//     remove_member(leaf_member);
-// }
-
-// void BasicNodeTeam::destroy_limb(const Link arrow) {
-//     // Copy FreeChain for restore later
-//     const FreeChain chain_to_restore = arrow.dst();
-
-//     // Disconnect sever_point and new tip
-//     Link::sever(arrow);
-
-//     // Destroy limb
-//     BasicNodeGenerator<Node> bng = BasicNodeGenerator<Node>(arrow.src().node);
-//     while (not bng.is_done()) {
-//         remove_member(bng.next());
-//     }
-
-//     // Restore FreeChain
-//     free_chains_.push_back(chain_to_restore);
-// }
-
 /*
  * Compute index pairs of mother and father nodes at which cross mutation is
  * possible.
@@ -185,7 +147,7 @@ bool BasicNodeTeam::limb_mutate() {
 
 #ifndef NO_LIMB_MUTATE
     // Pick random tip node
-    const Node * tip_node = free_chains_.rand_item().node;
+    Node * tip_node = free_chains_.rand_item().node;
 
     // Remove all free chains originating from tip_node
     remove_member_chains(tip_node);
