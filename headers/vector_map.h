@@ -31,7 +31,7 @@ public:
     /* accessors */
     const ItemList & items() const { return items_; }
     ItemListCItr find(const ItemType & item) const {
-        DEBUG(items_.size() == 0);
+        DEBUG(items_.empty());
 
         auto map_itr = item_to_id_map_.find(item);
         DEBUG(map_itr == item_to_id_map_.end());

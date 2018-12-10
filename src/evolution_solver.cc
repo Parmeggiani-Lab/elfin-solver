@@ -123,7 +123,7 @@ EvolutionSolver::print_start_msg(const V3fList & shape) const {
         shape.size());
     msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
 
-    // Want auto significant figure detection with streams
+    // Format big numbers nicely
     std::string pop_size_str;
     const size_t pop_size = OPTIONS.ga_pop_size;
     if (pop_size >= 1e6) {
@@ -217,10 +217,10 @@ EvolutionSolver::run() {
         */
         const std::string wa_name = itr.first;
         const WorkArea & wa = itr.second;
-        if (wa.type() != FREE) {
+        if (wa.type() != WorkType::FREE) {
             std::ostringstream ss;
             ss << "Skipping work_area: ";
-            ss << WorkTypeNames[wa.type()] << std::endl;
+            ss << WorkTypeToCStr(wa.type()) << std::endl;
             wrn(ss.str().c_str());
             continue;
         }

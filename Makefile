@@ -26,9 +26,9 @@ MAX_ERRORS=1
 ASAN=no
 
 ifeq ($(DEBUG), yes)
-	DEBUG_FLAGS=-ggdb3 -rdynamic
+	DEBUG_FLAGS+=-ggdb3 -rdynamic
 else
-	DEBUG_FLAGS=-DNDBUG
+	DEBUG_FLAGS+=-DNDBUG
 endif
 
 ifeq ($(ASAN), yes)
@@ -84,7 +84,7 @@ ifeq ($(CXX), clang++)
 	endif
 
 	ERR_FLAGS 	:=
-	CC_FLAGS 	+= -stdlib=libstdc++ 
+	CC_FLAGS 	+= -stdlib=libstdc++
 else ifeq ($(CXX), g++)
 	ERR_FLAGS	:= -fdiagnostics-color=always -fmax-errors=1
 endif

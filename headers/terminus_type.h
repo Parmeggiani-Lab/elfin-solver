@@ -13,7 +13,7 @@ namespace elfin {
     MACRO(C) \
     MACRO(ANY) \
     MACRO(NONE) \
-    MACRO(ENUM_COUNT) \
+    MACRO(_ENUM_COUNT) \
 
 GEN_ENUM_AND_STRING(TerminusType, TerminusTypeNames, FOREACH_TERMINUSTYPE);
 
@@ -26,7 +26,7 @@ inline TerminusType random_termius() {
 
 inline void bad_terminus(TerminusType term) {
     NICE_PANIC(term == term, string_format("Bad TerminusType: %s\n",
-                                           TerminusTypeNames[term]));
+                                           TerminusTypeToCStr(term)));
 }
 
 const TerminusType OPPOSITE_TERM[2] = { TerminusType::C, TerminusType::N };

@@ -16,19 +16,19 @@ Candidate * new_candidate(const WorkType work_type) {
     NodeTeam * node_team = nullptr;
 
     switch (work_type) {
-    case FREE:
+    case WorkType::FREE:
         node_team = new BasicNodeTeam();
         break;
-    // case ONE_HINGE:
+    // case WorkType::ONE_HINGE:
     //     node_team = new OneHingeNodeTeam();
     //     break;
-    // case TWO_HINGE:
+    // case WorkType::TWO_HINGE:
     //     node_team = new TwoHingeNodeTeam();
     //     break;
     default:
         std::ostringstream ss;
         ss << "Unimplemented WorkArea type: ";
-        ss << WorkTypeNames[work_type] << std::endl;
+        ss << WorkTypeToCStr(work_type) << std::endl;
         throw ElfinException(ss.str());
     }
 
@@ -138,14 +138,18 @@ void Population::evolve() {
     {
         msg("Evolving population...");
 
-        MutationCounter mc;
+        MutationMode mutation_mode_tally[CUTOFFS.pop_size] = {};
 
         OMP_PAR_FOR
         for (size_t i = 0; i < CUTOFFS.pop_size; i++) {
-            front_buffer_->at(i)->mutate(
-                i,
-                mc,
-                back_buffer_);
+            mutation_mode_tally[i] = front_buffer_->at(i)->mutate(
+                                    i,
+                                    back_buffer_);
+        }
+
+        MutationCounter mc;
+        for(const MutationMode & mode : mutation_mode_tally) {
+            mc[mode]++;
         }
 
         ERASE_LINE();
@@ -156,7 +160,7 @@ void Population::evolve() {
         std::ostringstream mutation_ss;
         mutation_ss << "Mutation Ratios (out of " << CUTOFFS.survivors << " non-survivors):\n";
         for (MutationMode mode : mutation_modes) {
-            mutation_ss << "    " << MutationModeNames[mode] << ':';
+            mutation_ss << "    " << MutationModeToCStr(mode) << ':';
 
             const float mode_ratio = 100.f * mc[mode] / CUTOFFS.non_survivors;
             mutation_ss << " " << string_format("%.1f", mode_ratio) << "% ";

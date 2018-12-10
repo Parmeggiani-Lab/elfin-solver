@@ -8,32 +8,33 @@
 // #define PRINT_FINALIZE
 
 namespace elfin {
-
 /* public */
-
 void ProtoTerminus::finalize() {
     NICE_PANIC(finalized_,
                string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
     finalized_ = true;
 
 #ifdef PRINT_FINALIZE
-    wrn("Finalizing term with %lu links\n", proto_links_.size());
+    wrn("Finalizing proto terminus with %lu links\n", proto_link_list_.size());
 #endif  /* ifdef PRINT_FINALIZE */
+
     /*
      * Sort links by interface count in ascending order to facilitate fast
      * pick_random() that support partitioning by interface count.
      */
-    std::sort(proto_links_.begin(), proto_links_.end());
+    std::sort(proto_link_list_.begin(), proto_link_list_.end());
 
     std::vector<float> n_cpd, c_cpd;
-    std::vector<ProtoLink *> ptrs;
+    std::vector<ProtoLink *> proto_link_ptrs;
 
-    for (auto itr = proto_links_.begin();
-            itr != proto_links_.end();
+    for (auto itr = proto_link_list_.begin();
+            itr != proto_link_list_.end();
             itr++) {
 
         ProtoLink & proto_link = *itr;
         DEBUG(nullptr == proto_link.target_mod);
+
+        proto_link_set_.insert(&proto_link);
 
         const ProtoModule * target_prot = proto_link.target_mod;
 
@@ -81,30 +82,50 @@ void ProtoTerminus::finalize() {
             }
         }
 
-        ptrs.push_back(&proto_link);
+        proto_link_ptrs.push_back(&proto_link);
 #ifdef PRINT_FINALIZE
-        wrn("ProtoLink to %s with %lu interfaces\n",
+        wrn("ProtoLink to %s into chain %lu with %lu interfaces\n",
             proto_link.target_mod->name.c_str(),
+            proto_link.target_chain_id,
             proto_link.target_mod->counts().all_interfaces());
 #endif  /* ifdef PRINT_FINALIZE */
     }
 
-    n_rlt_ = Roulette<ProtoLink *>(ptrs, n_cpd);
-    c_rlt_ = Roulette<ProtoLink *>(ptrs, c_cpd);
+    n_roulette_ = Roulette<ProtoLink *>(proto_link_ptrs, n_cpd);
+    c_roulette_ = Roulette<ProtoLink *>(proto_link_ptrs, c_cpd);
+
+    if (not proto_link_ptrs.empty()) {
+        const ProtoLink * test_link = proto_link_ptrs.at(0);
+        NICE_PANIC(not has_link_to(test_link->target_mod,
+                                   test_link->target_chain_id));
+    }
 }
 
 const ProtoLink & ProtoTerminus::pick_random_proto_link(
     const TerminusType term) const {
     if (term == TerminusType::N) {
-        return *n_rlt_.draw();
+        return *n_roulette_.draw();
     }
     else if (term == TerminusType::C) {
-        return *c_rlt_.draw();
+        return *c_roulette_.draw();
     }
     else {
         bad_terminus(term);
     }
 }
 
+ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
+    ConstProtoModulePtr module,
+    const size_t chain_id) const {
+    /*
+     * Note:
+     *  - assumes that links are identical as long as their
+     * target_mod and target_chain_id are identical.
+     *  - assumes that there is only one ProtoLink that will meet the search
+     *    criteria, which is true for the state of XDB at the time of writing.
+     */
+    const ProtoLink key_link(Transform(), module, chain_id);
+    return proto_link_set_.find(&key_link);
+}
 
 }  /* elfin */

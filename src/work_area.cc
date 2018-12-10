@@ -43,24 +43,24 @@ WorkArea::WorkArea(const JSON & j, const std::string & name) :
     if (n_branches == 0) {
         switch (occupied_joints_.size()) {
         case 0: {
-            type_ = FREE;
+            type_ = WorkType::FREE;
             break;
         }
         case 1: {
-            type_ = ONE_HINGE;
+            type_ = WorkType::ONE_HINGE;
             break;
         }
         case 2: {
-            type_ = TWO_HINGE;
+            type_ = WorkType::TWO_HINGE;
             break;
         }
         default:
         {
-            type_ = COMPLEX;
+            type_ = WorkType::COMPLEX;
         }
         }
     } else {
-        type_ = COMPLEX;
+        type_ = WorkType::COMPLEX;
     }
 }
 

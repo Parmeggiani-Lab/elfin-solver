@@ -61,9 +61,8 @@ public:
     static void setup(const WorkArea & wa);
     void calc_score(const WorkArea * wa) { score_ = node_team_->score(wa); }
     void randomize() { node_team_->randomize(); }
-    void mutate(
+    MutationMode mutate(
         const size_t rank,
-        MutationCounter & mt_counter,
         const CandidateList * candidates);
 
     /* printers */

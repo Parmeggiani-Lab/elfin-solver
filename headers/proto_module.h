@@ -6,11 +6,10 @@
 #include <string>
 #include <tuple>
 
-#include "jutil.h"
 #include "json.h"
-#include "string_utils.h"
 #include "proto_chain.h"
 #include "debug_utils.h"
+#include "vector_utils.h"
 
 namespace elfin {
 
@@ -35,7 +34,6 @@ private:
     /* data */
     bool finalized_ = false;
     ProtoChainList chains_;
-    StrIndexMap chain_id_map_;
     Counts counts_ = {};
 
 public:
@@ -43,19 +41,33 @@ public:
     const std::string name;
     const ModuleType type;
     const float radius;
-    const StrList chain_names;
     const ProtoChainList & proto_chains() const { return chains_; }
-    const StrIndexMap & chain_id_map() const { return chain_id_map_; }
     const Counts & counts() const { return counts_; }
 
     /* ctors */
     ProtoModule(const std::string & name,
-           const ModuleType type,
-           const float radius,
-           const StrList & chain_names);
+                const ModuleType type,
+                const float radius,
+                const StrList & chain_names);
 
     /* dtors */
     virtual ~ProtoModule() {}
+
+    /* accessors */
+    size_t find_chain_id(const std::string & chain_name) const;
+    Vector<const ProtoLink *> find_all_links_to(
+        const TerminusType term,
+        const ProtoModule * module,
+        const size_t chain_id) const;
+    const ProtoLink * find_link_to(
+        const size_t src_chain_id,
+        const TerminusType src_term,
+        const ProtoModule * dst_module,
+        const size_t dst_chain_id) const;
+    bool has_link_to(
+        const TerminusType src_term,
+        ConstProtoModulePtr src_module,
+        const size_t dst_chain_id) const;
 
     /* modifiers */
     void finalize();

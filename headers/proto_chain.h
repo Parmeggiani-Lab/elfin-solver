@@ -20,12 +20,13 @@ private:
 public:
     /* data members */
     const std::string name;
+    const size_t id;
 
     /* ctors */
-    ProtoChain(const std::string & _name = "unamed") :
-        name(_name) {}
+    ProtoChain(const std::string & _name, const size_t _id) :
+        name(_name), id(_id) {}
     ProtoChain(const ProtoChain & other) :
-        ProtoChain(other.name) {}
+        ProtoChain(other.name, other.id) {}
 
     /* dtors */
     virtual ~ProtoChain() {}

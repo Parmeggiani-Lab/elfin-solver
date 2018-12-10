@@ -1,27 +1,41 @@
 #ifndef BASIC_NODE_GENERATOR_H_
 #define BASIC_NODE_GENERATOR_H_
 
+#include "node.h"
 #include "vector_map.h"
-#include "free_chain.h"
 
 namespace elfin {
 
-template <class NodeType>
 class BasicNodeGenerator {
 private:
     /* data */
-    NodeType * curr_node_ = nullptr;
-    NodeType * next_node_ = nullptr;
+    Node * curr_node_ = nullptr;
+    const Link * curr_link_ = nullptr;
+    Node * next_node_ = nullptr;
 public:
     /* ctors */
     BasicNodeGenerator(
-        NodeType * start_node) :
+        Node * start_node) :
         next_node_(start_node) {
         DEBUG(next_node_ == nullptr);
         DEBUG(next_node_->neighbors().size() != 1,
               string_format("Starting node neighbors size = %lu\n",
                             next_node_->neighbors().size()));
     }
+
+    /*
+     * Constructor for starting mid-way in a basic node team.
+     *
+     * Note:
+     *  - curr_node_ i.e. arrow source node is not included.
+     *  - arrow must be a valid pointer that lives longer than the genereator
+     *    itself.
+     *
+     */
+    BasicNodeGenerator(const Link * arrow) :
+        curr_node_(arrow->src().node),
+        curr_link_(arrow),
+        next_node_(arrow->dst().node) {}
 
     /* dtors */
     virtual ~BasicNodeGenerator() {}
@@ -31,21 +45,24 @@ public:
         return next_node_ == nullptr;
     }
 
+    Node * curr_node() const { return curr_node_; }
+    const Link * curr_link() const { return curr_link_; }
+
     /* modifiers */
-    NodeType * next() {
-        NodeType * prev_node = curr_node_;
+    Node * next() {
+        Node * prev_node = curr_node_;
         curr_node_ = next_node_;
 
-        // Look for next node
-        if (not is_done()) {
-            DEBUG(curr_node_ == nullptr);
+        next_node_ = nullptr;
+        curr_link_ = nullptr;
 
+        // Look for next node
+        if (curr_node_) {
             const size_t neighbor_size = curr_node_->neighbors().size();
             NICE_PANIC(neighbor_size > 2);
-
-            next_node_ = nullptr;
             for (auto & link : curr_node_->neighbors()) {
                 if (link.dst().node != prev_node) {
+                    curr_link_ = &link;
                     next_node_ = link.dst().node;
                     break;
                 }

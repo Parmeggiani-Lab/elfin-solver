@@ -9,14 +9,14 @@ namespace elfin {
 
 /* types */
 #define FOREACH_MUTATION_MODES(MACRO) \
-    MACRO(_ENUM_START) \
+    MACRO(NONE) \
     MACRO(ERODE) \
     MACRO(DELETE) \
     MACRO(INSERT) \
     MACRO(SWAP) \
     MACRO(CROSS) \
     MACRO(RANDOMIZE) \
-    MACRO(_ENUM_SIZE_PLUS_ONE) \
+    MACRO(_ENUM_SIZE) \
 
 GEN_ENUM_AND_STRING(MutationMode, MutationModeNames, FOREACH_MUTATION_MODES);
 
@@ -29,7 +29,7 @@ MutationCounter gen_mutation_counter();
 
 inline void bad_mutation_mode(MutationMode mode) {
     NICE_PANIC(mode == mode, string_format("Bad MutationMode: %s\n",
-                                           MutationModeNames[mode]));
+                                           MutationModeToCStr(mode)));
 }
 
 }  /* elfin */

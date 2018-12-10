@@ -32,7 +32,7 @@ bool NodeTeam::collides(
     const float mod_radius) const {
 
     for (const auto node_ptr : nodes_) {
-        const float sq_com_dist = node_ptr->tx().collapsed().sq_dist_to(new_com);
+        const float sq_com_dist = node_ptr->tx_.collapsed().sq_dist_to(new_com);
         const float required_com_dist = mod_radius +
                                         node_ptr->prototype()->radius;
         if (sq_com_dist < (required_com_dist * required_com_dist)) {
@@ -68,15 +68,12 @@ Node * NodeTeam::add_member(
     nodes_.push_back(new_node);
 
     for (auto & proto_chain : new_node->prototype()->proto_chains()) {
-        const size_t chain_id =
-            new_node->prototype()->chain_id_map().at(proto_chain.name);
-
-        if (proto_chain.n_term().proto_links().size() > 0) {
-            free_chains_.emplace_back(new_node, TerminusType::N, chain_id);
+        if (not proto_chain.n_term().proto_links().empty()) {
+            free_chains_.emplace_back(new_node, TerminusType::N, proto_chain.id);
         }
 
-        if (proto_chain.c_term().proto_links().size() > 0) {
-            free_chains_.emplace_back(new_node, TerminusType::C, chain_id);
+        if (not proto_chain.c_term().proto_links().empty()) {
+            free_chains_.emplace_back(new_node, TerminusType::C, proto_chain.id);
         }
     }
 
@@ -88,13 +85,12 @@ const Node * NodeTeam::invite_new_member(
     const ProtoLink & proto_link) {
 
     const TerminusType term_a = free_chain_a.term;
-    const TerminusType term_b = OPPOSITE_TERM[term_a];
+    const TerminusType term_b = OPPOSITE_TERM[static_cast<int>(term_a)];
 
     Node * node_a = free_chain_a.node;
     Node * node_b = add_member(
                         proto_link.target_mod,
-                        node_a->tx() * proto_link.tx);
-
+                        node_a->tx_ * proto_link.tx);
     const FreeChain free_chain_b = FreeChain(
                                        node_b,
                                        term_b,

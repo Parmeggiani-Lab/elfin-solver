@@ -43,11 +43,10 @@ public:
     }
 
     void lift_erase(ItrType & itr) {
-        DEBUG(itr == this->end());
-        DEBUG(this->empty());
-
-        *itr = std::move(this->back());
-        this->pop_back();
+        if (itr != this->end()) {
+            *itr = std::move(this->back());
+            this->pop_back();
+        }
     }
 
     void lift_erase(const T & item) {

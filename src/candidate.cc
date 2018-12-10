@@ -82,13 +82,14 @@ void Candidate::setup(const WorkArea & wa) {
     MAX_LEN_ = expected_len + OPTIONS.len_dev_alw;
 }
 
-void Candidate::mutate(
+MutationMode Candidate::mutate(
     const size_t rank,
-    MutationCounter & mt_counter,
     const CandidateList * candidates) {
 
+    MutationMode mode = MutationMode::NONE;
     if (rank < CUTOFFS.survivors) { // use < because rank is 0-indexed
         *this = *(candidates->at(rank));
+        mode = MutationMode::NONE;
     }
     else {
         // Replicate mother
@@ -100,8 +101,10 @@ void Candidate::mutate(
             random::get_dice(CUTOFFS.pop_size); // include all candidates
         const NodeTeam * father_team = candidates->at(father_id)->node_team();
 
-        node_team_->mutate(mt_counter, mother_team, father_team);
+        mode = node_team_->mutate(mother_team, father_team);
     }
+
+    return mode;
 }
 
 /* printers */

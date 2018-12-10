@@ -21,4 +21,11 @@ void Link::sever(const Link link) {
     link.dst_chain_.node->remove_link(link.reversed());
 }
 
+/* printers */
+std::string Link::to_string() const {
+    return string_format("Link[\n%s\n%s]",
+                         src_chain_.to_string().c_str(),
+                         dst_chain_.to_string().c_str());
+}
+
 }  /* elfin */

@@ -52,8 +52,7 @@ inline long TIMING_END(const char * section_name, const double start_time) {
 #endif //ifdef _DO_TIMING
 
 
-namespace elfin
-{
+namespace elfin {
 
 void set_thread_seeds(uint32_t global_seed);
 

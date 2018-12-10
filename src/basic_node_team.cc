@@ -7,7 +7,7 @@
 #include "id_types.h"
 
 // #define NO_ERODE
-#define NO_DELETE
+// #define NO_DELETE
 #define NO_INSERT
 #define NO_SWAP
 #define NO_CROSS
@@ -22,18 +22,43 @@ defined(NO_RANDOMIZE)
 #warning "At least one mutation function is DISABLED!!"
 #endif
 
+// #define SHOW_UNDELETABLE
+
 namespace elfin {
 
 /* private */
 /*modifiers */
 
 void BasicNodeTeam::grow(FreeChain free_chain) {
+    NICE_PANIC(nodes_.empty());
+
     while (size() < Candidate::MAX_LEN) {
         const ProtoLink & pt_link = random_proto_link(free_chain);
         invite_new_member(free_chain, pt_link);
 
         // Pick next tip chain
         free_chain = free_chains_.pick_random();
+    }
+}
+
+void BasicNodeTeam::fix_limb_transforms(const Link & arrow) {
+    BasicNodeGenerator limb_gtor(&arrow);
+    while (not limb_gtor.is_done()) {
+        Node * prev_node = limb_gtor.curr_node();
+
+        const Link * link = limb_gtor.curr_link();
+        DEBUG(link == nullptr);
+
+        Node * curr_node = limb_gtor.next(); // This modifies limb_gtor.curr_link()
+        const ProtoLink * proto_link =
+            prev_node->prototype()->find_link_to(
+                link->src().chain_id,
+                link->src().term,
+                link->dst().node->prototype(),
+                link->dst().chain_id);
+
+        DEBUG(proto_link == nullptr);
+        curr_node->tx_ =  proto_link->tx * curr_node->tx_;
     }
 }
 
@@ -109,39 +134,89 @@ bool BasicNodeTeam::delete_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_DELETE
-    std::vector<size_t> deletable_ids;
-    if (n_nodes > 0) {
-        deletable_ids.push_back(0);
-        deletable_ids.push_back(n_nodes - 1);
+    // Collect deletable nodes
+    Vector<Node *> deletable_nodes;
 
-        for (long i = 1; i < (long) n_nodes - 1; ++i) {
-            // Check whether i can be deleted
-            const Node & lhs_node = nodes_.at(i - 1);
-            const Node & rhs_node = nodes_.at(i + 1);
-            if (REL_MAT.at(lhs_node.id).at(rhs_node.id)) {
-                // Make sure resultant shape won't collide with itself
-                Nodes test_nodes(
-                    nodes_.begin(),
-                    nodes_.begin() + i);
-                test_nodes.insert(
-                    test_nodes.end(),
-                    nodes_.begin() + i + 1,
-                    nodes_.end());
+    Node * tip = free_chains_[0].node; // starting at either end is fine
+    BasicNodeGenerator node_gtor(tip);
+    node_gtor.next(); // skip start tip
 
-                // dbg("checking deletion at %d/%d of %s\n",
-                //     i, n_nodes, to_string().c_str());
-                if (synthesise(test_nodes)) {
-                    deletable_ids.push_back((size_t) i);
-                }
-            }
+    Node * curr_node = node_gtor.next();
+    Node * next_node = node_gtor.next();
+    while (next_node) { // skip end tip too
+        DEBUG(curr_node->neighbors().size() != 2);
+
+        const FreeChain & fchain1 = curr_node->neighbors().at(0).dst();
+        const FreeChain & fchain2 = curr_node->neighbors().at(1).dst();
+
+        // X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
+        //              (fchain1)                         (fchain2)
+        //                 vvv                               vvv
+        //                 dst->-<-src--[curr_node]--src->-<-dst
+        const bool deletable =
+            fchain1.node->prototype()->has_link_to(
+                fchain1.term,
+                fchain2.node->prototype(),
+                fchain2.chain_id);
+        // The reverse doesn't need to be checked, because all links have
+        // a reverse
+
+        if (deletable) {
+            deletable_nodes.push_back(curr_node);
         }
-        // Pick a random one, or report impossible
-        if (!deletable_ids.empty()) {
-            const size_t delete_idx = pick_random(deletable_ids);
-            nodes_.erase(nodes_.begin() + delete_idx);
-            synthesise(nodes_); // This is guaranteed to succeed
-            mutate_success = true;
-        }
+
+        curr_node = next_node;
+        next_node = node_gtor.next();
+    }
+
+    if (not deletable_nodes.empty()) {
+        // Delete a random one
+        Node * to_delete = deletable_nodes.pick_random();
+
+        // Link up neighbor1 and neighbor2
+        // X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
+        //                 (  link1  )               (  link2  )
+        //                 vvvvvvvvvvv               vvvvvvvvvvv
+        //                 dst->-<-src--[curr_node]--src->-<-dst
+        const Link & link1 = to_delete->neighbors().at(0);
+        const Link & link2 = to_delete->neighbors().at(1);
+
+        Node * neighbor1 = link1.dst().node;
+        Node * neighbor2 = link2.dst().node;
+
+        neighbor1->remove_link(link1.reversed());
+        neighbor2->remove_link(link2.reversed());
+        // X--[neighbor1]--X                                   X--[neighbor2]--...
+        //                 (  link1  )               (  link2  )
+        //                 vvvvvvvvvvv               vvvvvvvvvvv
+        //                 dst->-<-src--[curr_node]--src->-<-dst
+
+        // Create links between neighbor1 and neighbor2
+        const Link arrow1(link1.dst(), link2.dst());
+        neighbor1->add_link(arrow1.src(), arrow1.dst());
+        neighbor2->add_link(link2.dst(), link1.dst());
+        //           link1.dst(), link2.dst()
+        //                 vvv     vvv
+        // X--[neighbor1]--src->-<-dst
+        //                 dst->-<-src--[neighbor2]--...
+        //                 ^^^     ^^^
+        //           link1.dst(), link2.dst()
+
+        // From this point on, memory of link1 and link2 are invalid!!!
+        remove_member(to_delete);
+
+        // to_delete is guranteed to not be a tip so no need to clean up free_chains_
+
+        fix_limb_transforms(arrow1);
+
+        mutate_success = true;
+    }
+    else {
+#ifdef SHOW_UNDELETABLE
+        wrn("\nNo deletable nodes! checksum=%x\n%s\n",
+            checksum(),
+            to_string().c_str());
+#endif  /* ifdef SHOW_UNDELETABLE */
     }
 #endif
 
@@ -313,7 +388,12 @@ bool BasicNodeTeam::randomize_mutate() {
 
 #ifndef NO_RANDOMIZE
     remake(XDB.basic_mods());
-    grow(free_chains_.pick_random());
+
+    const FreeChain & random_free_chain =
+        free_chains_.pick_random();
+    grow(random_free_chain);
+
+    mutate_success = true;
 #endif
 
     return mutate_success;
@@ -346,11 +426,11 @@ float BasicNodeTeam::score(const WorkArea * wa) const {
     float score = INFINITY;
     for (auto & free_chain : free_chains_) {
         Node * tip = free_chain.node;
-        BasicNodeGenerator<Node> bng = BasicNodeGenerator<Node>(tip);
+        BasicNodeGenerator node_gtor(tip);
 
         V3fList points;
-        while (not bng.is_done()) {
-            points.push_back(bng.next()->tx().collapsed());
+        while (not node_gtor.is_done()) {
+            points.push_back(node_gtor.next()->tx_.collapsed());
         }
 
         DEBUG(points.size() != size(),
@@ -375,11 +455,11 @@ Crc32 BasicNodeTeam::checksum() const {
     Crc32 crc = 0x0000;
     for (auto & free_chain : free_chains_) {
         Node * tip = free_chain.node;
-        BasicNodeGenerator<Node> bng = BasicNodeGenerator<Node>(tip);
+        BasicNodeGenerator node_gtor(tip);
 
         Crc32 crc_half = 0xffff;
-        while (not bng.is_done()) {
-            const Node * node = bng.next();
+        while (not node_gtor.is_done()) {
+            const Node * node = node_gtor.next();
             const ProtoModule * prot = node->prototype();
             checksum_cascade(&crc_half, &prot, sizeof(prot));
         }
@@ -418,8 +498,7 @@ void BasicNodeTeam::deep_copy_from(
     }
 }
 
-void BasicNodeTeam::mutate(
-    MutationCounter & mt_counter,
+MutationMode BasicNodeTeam::mutate(
     const NodeTeam * mother,
     const NodeTeam * father) {
     // Inherit from mother
@@ -433,22 +512,22 @@ void BasicNodeTeam::mutate(
     while (not mutation_ok and not modes.empty()) {
         mode = modes.pop_random();
         switch (mode) {
-        case ERODE:
+        case MutationMode::ERODE:
             mutation_ok = erode_mutate();
             break;
-        case DELETE:
+        case MutationMode::DELETE:
             mutation_ok = delete_mutate();
             break;
-        case INSERT:
+        case MutationMode::INSERT:
             mutation_ok = insert_mutate();
             break;
-        case SWAP:
+        case MutationMode::SWAP:
             mutation_ok = swap_mutate();
             break;
-        case CROSS:
+        case MutationMode::CROSS:
             mutation_ok = cross_mutate(father);
             break;
-        case RANDOMIZE:
+        case MutationMode::RANDOMIZE:
             mutation_ok = randomize_mutate();
             break;
         default:
@@ -456,8 +535,7 @@ void BasicNodeTeam::mutate(
         }
     }
 
-    // Record success mode
-    mt_counter[mode]++;
+    return mode;
 }
 
 /* printers */
@@ -466,10 +544,17 @@ std::string BasicNodeTeam::to_string() const {
 
     NICE_PANIC(free_chains_.empty());
     Node * start_node = free_chains_.at(0).node;
-    BasicNodeGenerator<Node> bng = BasicNodeGenerator<Node>(start_node);
+    BasicNodeGenerator node_gtor(start_node);
 
-    while (not bng.is_done()) {
-        ss << bng.next()->to_string() << '\n';
+    while (not node_gtor.is_done()) {
+        ss << node_gtor.next()->to_string();
+        const Link * link_ptr = node_gtor.curr_link();
+        if (link_ptr) {
+            const TerminusType src_term = link_ptr->src().term;
+            const TerminusType dst_term = link_ptr->dst().term;
+            ss << "\n(" << TerminusTypeToCStr(src_term) << ", ";
+            ss << TerminusTypeToCStr(dst_term) << ")\n";
+        }
     }
 
     return ss.str();
@@ -480,10 +565,10 @@ StrList BasicNodeTeam::get_node_names() const {
 
     NICE_PANIC(free_chains_.empty());
     Node * start_node = free_chains_.at(0).node;
-    BasicNodeGenerator<Node> bng = BasicNodeGenerator<Node>(start_node);
+    BasicNodeGenerator node_gtor(start_node);
 
-    while (not bng.is_done()) {
-        res.emplace_back(bng.next()->prototype()->name);
+    while (not node_gtor.is_done()) {
+        res.emplace_back(node_gtor.next()->prototype()->name);
     }
 
     DEBUG(res.size() != size(),

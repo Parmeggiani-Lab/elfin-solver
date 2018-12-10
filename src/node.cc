@@ -32,7 +32,7 @@ void Node::remove_link(const Link link) {
 }
 
 std::string Node::to_string() const {
-    return string_format("Node[%s]\nTx: %s\n",
+    return string_format("Node[%s]\nTx: %s",
                          prototype_->name.c_str(),
                          tx_.to_string().c_str());
 }

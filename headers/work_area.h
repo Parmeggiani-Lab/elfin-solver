@@ -31,7 +31,7 @@ class WorkArea
 {
 protected:
     std::string name_ = "unamed_area";
-    WorkType type_ = FREE;
+    WorkType type_ = WorkType::FREE;
     UIJointMap joints_;
     std::vector<UIJoint *> occupied_joints_;
     std::vector<UIJoint *> hinged_joints_;

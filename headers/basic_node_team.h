@@ -9,6 +9,7 @@ class BasicNodeTeam : public NodeTeam {
 private:
     /*modifiers */
     void grow(FreeChain free_chain);
+    void fix_limb_transforms(const Link & arrow);
 
     bool erode_mutate();
     bool delete_mutate();
@@ -34,8 +35,7 @@ public:
 
     /* modifiers */
     virtual void deep_copy_from(const NodeTeam * other);
-    virtual void mutate(
-        MutationCounter & mt_counters,
+    virtual MutationMode mutate(
         const NodeTeam * mother,
         const NodeTeam * father);
     virtual void randomize() { randomize_mutate(); }

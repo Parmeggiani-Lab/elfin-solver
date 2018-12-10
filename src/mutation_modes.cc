@@ -5,21 +5,24 @@
 namespace elfin {
 
 MutationModeList gen_mutation_mode_list() {
-    Vector<MutationMode> res(MutationMode::_ENUM_SIZE_PLUS_ONE - 1);
+    // NONE is excluded, hence the -1 and pre-increment of int_mode
+    Vector<MutationMode> res(
+        static_cast<int>(MutationMode::_ENUM_SIZE) - 1);
 
-    int int_mode = MutationMode::_ENUM_START;
+    int int_mode = static_cast<int>(MutationMode::NONE);
     std::generate(res.begin(), res.end(), [&] {
         return static_cast<MutationMode>(++int_mode);
     });
-    
+
     return res;
 }
 
 MutationCounter gen_mutation_counter() {
+    // NONE is excluded, hence the < and pre-increment of int_mode
     MutationCounter res;
 
-    int int_mode = MutationMode::_ENUM_START;
-    while (int_mode < MutationMode::_ENUM_SIZE_PLUS_ONE) {
+    int int_mode = static_cast<int>(MutationMode::NONE);
+    while (int_mode < static_cast<int>(MutationMode::_ENUM_SIZE)) {
         res[static_cast<MutationMode>(++int_mode)] = 0;
     }
 

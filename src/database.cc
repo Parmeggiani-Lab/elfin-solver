@@ -55,7 +55,7 @@ void Database::categorize() {
             hubs_.push_back(mod->counts().all_links(), mod);
         } else {
             die("mod[%s] has unknown ModuleType: %s\n",
-                mod->name.c_str(), ModuleTypeNames[mod->type]);
+                mod->name.c_str(), ModuleTypeToCStr(mod->type));
         }
     }
 }
@@ -87,7 +87,7 @@ void Database::print_db() {
 
         for (auto & proto_chain : mod->proto_chains()) {
             wrn("\tchain[#%lu:%s]:\n",
-                mod->chain_id_map().at(proto_chain.name),
+                proto_chain.id,
                 proto_chain.name.c_str());
 
             const ProtoLinkList & n_links =
@@ -174,7 +174,7 @@ void Database::parse_from_json(const JSON & xdb) {
         for (auto a_chain_it = chains_json.begin();
                 a_chain_it != chains_json.end();
                 ++a_chain_it) {
-            const std::string & a_chain_id = a_chain_it.key();
+            const std::string & a_chain_name = a_chain_it.key();
 
             // No need to run through "n" because xdb contains only n-c
             // transforms. In create_link(), an inversed version for c-n
@@ -201,7 +201,7 @@ void Database::parse_from_json(const JSON & xdb) {
                     ProtoModule::create_proto_link(
                         tx_json,
                         mod_a,
-                        a_chain_id,
+                        a_chain_name,
                         mod_b,
                         b_chain_it.key());
                 }

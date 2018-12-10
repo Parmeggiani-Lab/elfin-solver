@@ -80,8 +80,7 @@ public:
     NodeTeam & operator=(NodeTeam && other);
 
     virtual void deep_copy_from(const NodeTeam * other) = 0;
-    virtual void mutate(
-        MutationCounter & mt_counter,
+    virtual MutationMode mutate(
         const NodeTeam * mother,
         const NodeTeam * father) = 0;
     virtual void randomize() = 0;

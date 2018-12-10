@@ -42,7 +42,7 @@ public:
     static void sever(const Link link);
 
     /* printers */
-
+    std::string to_string() const;
 };  /* class Link*/
 
 typedef Vector<Link> LinkList;

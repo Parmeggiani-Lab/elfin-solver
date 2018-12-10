@@ -28,9 +28,11 @@ protected:
 
     /* data */
     const ProtoModule * prototype_ = nullptr;
-    Transform tx_;
     LinkList neighbors_;
 public:
+    /* data */
+    Transform tx_;
+    
     /* ctors */
     Node(const ProtoModule * prototype, const Transform & tx);
     Node(const ProtoModule * prototype) : Node(prototype, Transform()) {}
@@ -42,15 +44,12 @@ public:
     /* accessors */
     const ProtoModule * prototype() const { return prototype_; }
     const LinkList & neighbors() const { return neighbors_; }
-    const Transform & tx() const { return tx_; }
 
     /* modifiers */
-    Transform & tx() { return tx_; }
     void add_link(
         const FreeChain & src,
         const FreeChain & dst) {
         neighbors_.emplace_back(src, dst);
-        const Link & l = neighbors_.back();
     }
     void update_neighbor_ptrs(const NodeAddrMap & nam);
     void remove_link(const Link link);

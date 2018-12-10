@@ -42,7 +42,7 @@ namespace std {
 template <> struct hash<elfin::FreeChain> {
     size_t operator()(const elfin::FreeChain & x) const {
         return hash<void*>()((void*) x.node) ^
-               hash<size_t>()(x.term) ^
+               hash<size_t>()(static_cast<int>(x.term)) ^
                hash<size_t>()(x.chain_id);
     }
 };

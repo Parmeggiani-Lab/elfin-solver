@@ -1,5 +1,7 @@
 #include "free_chain.h"
 
+#include "node.h"
+
 namespace elfin {
 
 FreeChain::FreeChain(
@@ -13,23 +15,17 @@ FreeChain::FreeChain(
 }
 
 bool FreeChain::operator==(const FreeChain & other) const {
-    return node == other.node and chain_id == other.chain_id;
+    return node == other.node and
+           term == other.term and
+           chain_id == other.chain_id;
 }
 
 std::string FreeChain::to_string() const {
-    return string_format("FreeChain[node: %p, term: %s, chain: %lu\n",
+    return string_format("FreeChain[node: %s (%p), term: %s, chain: %lu]",
+                         node->prototype()->name.c_str(),
                          node,
-                         TerminusTypeNames[term],
+                         TerminusTypeToCStr(term),
                          chain_id);
 }
-
-// std::string FreeChainVM::to_string() const {
-//     std::ostringstream ss;
-//     for (auto & sk : items_) {
-//         ss << sk.to_string();
-//     }
-//     return ss.str();
-// }
-
 
 }  /* elfin */
