@@ -4,7 +4,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "random_utils.h"
+#include "vector_utils.h"
 
 namespace elfin {
 
@@ -12,7 +12,7 @@ template<typename ItemType>
 class VectorMap {
 protected:
     /* types */
-    typedef std::vector<ItemType> ItemList;
+    typedef Vector<ItemType> ItemList;
     typedef typename ItemList::iterator ItemListItr;
     typedef typename ItemList::const_iterator ItemListCItr;
     typedef std::unordered_map<ItemType, size_t> ItemMap;
@@ -49,13 +49,11 @@ public:
     /*
      * Returns a random item based on uniform probability.
      */
-    ItemType & rand_item() {
-        DEBUG(items_.size() == 0);
-        const size_t rand_idx = get_dice(items_.size());
-        return items_.at(rand_idx);
+    ItemType & pick_random() {
+        return items_.pick_random();
     }
 
-    const ItemType & rand_item() const {
+    const ItemType & pick_random() const {
         return const_cast<VectorMap<ItemType> *>(this)->rand_item();
     }
 

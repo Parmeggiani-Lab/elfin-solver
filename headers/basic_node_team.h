@@ -6,6 +6,18 @@
 namespace elfin {
 
 class BasicNodeTeam : public NodeTeam {
+private:
+    /*modifiers */
+    void grow(FreeChain free_chain);
+
+    bool erode_mutate();
+    bool delete_mutate();
+    bool insert_mutate();
+    bool swap_mutate();
+    bool cross_mutate(
+        const NodeTeam * father);
+    bool randomize_mutate();
+
 public:
     /* ctors */
     using NodeTeam::NodeTeam;
@@ -22,13 +34,11 @@ public:
 
     /* modifiers */
     virtual void deep_copy_from(const NodeTeam * other);
-    virtual bool limb_mutate();
-    virtual bool point_mutate();
-    virtual bool cross_mutate(
+    virtual void mutate(
+        MutationCounter & mt_counters,
         const NodeTeam * mother,
         const NodeTeam * father);
-    virtual void grow(FreeChain free_chain);
-    virtual void randomize();
+    virtual void randomize() { randomize_mutate(); }
 
     /* printers */
     virtual std::string to_string() const;

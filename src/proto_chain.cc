@@ -16,14 +16,13 @@ const ProtoTerminus & ProtoChain::get_term(
         return c_term_;
     }
     else {
-        death_by_bad_terminus(__PRETTY_FUNCTION__, term); // Aborts
-        exit(1); // To suppress warning
+        bad_terminus(term);
     }
 }
 
 void ProtoChain::finalize() {
     NICE_PANIC(finalized_,
-             string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
+               string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
     finalized_ = true;
 
 #ifdef PRINT_FINALIZE

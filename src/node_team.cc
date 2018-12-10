@@ -155,12 +155,4 @@ NodeTeam & NodeTeam::operator=(NodeTeam && other) {
     return *this;
 }
 
-void NodeTeam::auto_mutate() {
-    if (!point_mutate()) {
-        if (!limb_mutate()) {
-            randomize();
-        }
-    }
-}
-
 }  /* elfin */

@@ -12,6 +12,7 @@ template <typename T>
 class Vector : public std::vector<T> {
 private:
     /* types */
+    typedef typename std::vector<T> ContainerType;
     typedef typename std::vector<T>::iterator ItrType;
     typedef typename std::vector<T>::const_iterator CItrType;
 
@@ -19,6 +20,7 @@ private:
 
 public:
     /* ctors */
+    using ContainerType::ContainerType;
 
     /* dtors */
 
@@ -65,8 +67,12 @@ public:
         }
     }
 
-    T & rand_item() {
-        return pick_random(*this);
+    T & pick_random() {
+        return random::pick(*this);
+    }
+
+    T pop_random() {
+        return random::pop(*this);
     }
 
     /* printers */

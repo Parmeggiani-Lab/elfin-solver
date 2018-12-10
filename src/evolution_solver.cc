@@ -124,39 +124,38 @@ EvolutionSolver::print_start_msg(const V3fList & shape) const {
     msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
 
     // Want auto significant figure detection with streams
-    std::ostringstream popsize_ss;
+    std::string pop_size_str;
     const size_t pop_size = OPTIONS.ga_pop_size;
-    if (pop_size > 1000)
-        popsize_ss << (float) (pop_size / 1000.0f) << "k";
-    else
-        popsize_ss << pop_size;
+    if (pop_size >= 1e6) {
+        pop_size_str = string_format("%.1fM", (float) (pop_size / 1e6));
+    }
+    else if (pop_size >= 1e3) {
+        pop_size_str = string_format("%.1fK", (float) (pop_size / 1e3));
+    }
+    else {
+        pop_size_str = string_format("%lu", pop_size);
+    }
 
-    std::ostringstream nitr_ss;
-    if (OPTIONS.ga_iters > 1000)
-        nitr_ss << (float) (OPTIONS.ga_iters / 1000.0f) << "k";
-    else
-        nitr_ss << OPTIONS.ga_iters;
+    std::string max_iters_str;
+    if (OPTIONS.ga_iters >= 1e3) {
+        max_iters_str = string_format("%.1fK", (float) (OPTIONS.ga_iters / 1e3));
+    }
+    else {
+        max_iters_str = string_format("%lu", OPTIONS.ga_iters);
+    }
 
 
-    msg("EvolutionSolver starting with following settings:\n"
-        "Population size:            %s\n"
-        "Iterations:                 %s\n"
-        "Survive cutoff:             %u\n"
-        "Cross cutoff:               %u\n"
-        "Point Mutate cutoff:        %u\n"
-        "Limb Mutate cutoff:         %u\n"
-        "New species:                %u\n",
-        popsize_ss.str().c_str(),
-        nitr_ss.str().c_str(),
-        CUTOFFS.survivors,
-        CUTOFFS.cross,
-        CUTOFFS.point,
-        CUTOFFS.limb,
-        pop_size - CUTOFFS.limb);
+    msg(("Elfin will run with:\n"
+         "  Population size:  %s\n"
+         "  Max Iterations:   %s\n"
+         "  Surviors:         %u\n"),
+        pop_size_str.c_str(),
+        max_iters_str.c_str(),
+        CUTOFFS.survivors);
 
     const int n_omp_devices = omp_get_num_devices();
     const int host_device_id = omp_get_initial_device();
-    msg("There are %d devices. Host is #%d; currently using #%d\n", n_omp_devices, host_device_id, OPTIONS.device);
+    msg("There are %d devices. Host ID=%d; currently using #%d\n", n_omp_devices, host_device_id, OPTIONS.device);
     omp_set_default_device(OPTIONS.device);
 
     #pragma omp parallel
@@ -248,7 +247,7 @@ EvolutionSolver::run() {
                     population.evolve();
                     wrn("After evolve\n");
                     debug_print_pop(population);
-                    
+
                     population.score();
 
                     population.rank();

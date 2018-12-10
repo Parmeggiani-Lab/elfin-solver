@@ -57,7 +57,7 @@ public:
         auto itr = std::upper_bound(
                        cpd_.begin(),
                        cpd_.end(),
-                       get_dice(total_)
+                       random::get_dice(total_)
                    );
         return items_.at(itr - cpd_.begin());
     }

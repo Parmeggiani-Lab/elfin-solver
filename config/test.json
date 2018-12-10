@@ -12,10 +12,6 @@
     "ga_iters": 1000,
 
     "ga_survive_rate": 0.02,
-    
-    "ga_cross_rate": 0.3,
-    "ga_point_mutate_rate": 0.4,
-    "ga_limb_mutate_rate": 0.3,
 
     "ga_stop_stagnancy": 10
 }

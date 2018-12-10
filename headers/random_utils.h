@@ -9,6 +9,8 @@
 
 namespace elfin {
 
+namespace random {
+
 inline float get_dice_0to1()
 {
     uint32_t & thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
@@ -29,7 +31,7 @@ inline void remove_at(std::vector<T> & v, typename std::vector<T>::size_type n) 
 }
 
 template <typename T>
-inline T pop_random(std::vector<T> & v) {
+inline T pop(std::vector<T> & v) {
     DEBUG(v.empty());
     const size_t idx = get_dice(v.size());
     T ret = v.at(idx);
@@ -38,17 +40,19 @@ inline T pop_random(std::vector<T> & v) {
 }
 
 template <typename T>
-inline const T & pick_random(const std::vector<T> & v) {
+inline const T & pick(const std::vector<T> & v) {
     DEBUG(v.empty());
     const size_t idx = get_dice(v.size());
     return v.at(idx);
 }
 
 template <typename T>
-inline T & pick_random(std::vector<T> & v) {
+inline T & pick(std::vector<T> & v) {
     DEBUG(v.empty());
     const size_t idx = get_dice(v.size());
     return v.at(idx);
+}
+
 }
 
 }  /* elfin */

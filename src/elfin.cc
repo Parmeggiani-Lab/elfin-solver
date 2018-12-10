@@ -104,10 +104,10 @@ int ElfinRunner::run_meta_tests() const {
 
         int rand_count[N] = {0};
         for (size_t i = 0; i < rand_trials; i++) {
-            const size_t dice = get_dice(N);
+            const size_t dice = random::get_dice(N);
             if (dice >= N) {
                 fail_count++;
-                err("Failed to produce correct dice: get_dice() "
+                err("Failed to produce correct dice: random::get_dice() "
                     "produced %d for [0-%d)",
                     dice, N);
                 break;
@@ -135,13 +135,13 @@ int ElfinRunner::run_meta_tests() const {
         std::vector<uint32_t> rands1(para_rand_n);
         #pragma omp parallel for
         for (size_t i = 0; i < para_rand_n; i++)
-            rands1.at(i) = get_dice(dice_lim);
+            rands1.at(i) = random::get_dice(dice_lim);
 
         get_para_rand_seeds() = para_rand_seeds;
         std::vector<uint32_t> rands2(para_rand_n);
         #pragma omp parallel for
         for (size_t i = 0; i < para_rand_n; i++)
-            rands2.at(i) = get_dice(dice_lim);
+            rands2.at(i) = random::get_dice(dice_lim);
 
         for (size_t i = 0; i < para_rand_n; i++) {
             if (rands1.at(i) != rands2.at(i)) {

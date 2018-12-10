@@ -24,9 +24,6 @@ struct Options {
     size_t ga_pop_size = 10000;
     size_t ga_iters = 1000;
     float ga_survive_rate = 0.05f;
-    float ga_cross_rate = 0.5f;
-    float ga_point_mutate_rate = 0.3f;
-    float ga_limb_mutate_rate = 0.3f;
 
     // Use a small number but not exactly 0.0 because of imprecise float
     // comparison

@@ -5,7 +5,7 @@
 
 #include "jutil.h"
 #include "input_manager.h"
-#include "mutation_counters.h"
+#include "mutation_modes.h"
 #include "basic_node_team.h"
 #include "parallel_utils.h"
 
@@ -34,7 +34,7 @@ Candidate * new_candidate(const WorkType work_type) {
 
     Candidate * candidate = new Candidate(node_team);
     candidate->randomize();
-    
+
     return candidate;
 }
 
@@ -138,29 +138,32 @@ void Population::evolve() {
     {
         msg("Evolving population...");
 
-        MutationCounters mc = {};
+        MutationCounter mc;
 
         OMP_PAR_FOR
         for (size_t i = 0; i < CUTOFFS.pop_size; i++) {
-            front_buffer_->at(i)->mutate(i, mc, back_buffer_);
+            front_buffer_->at(i)->mutate(
+                i,
+                mc,
+                back_buffer_);
         }
 
         ERASE_LINE();
         msg("Evolution done\n");
 
         // RNG instrumentation
-        wrn(("Mutation rates:\n"
-             "\tCross %.2f (fail=%.2f), Point %.2f (fail=%.2f)\n"
-             "\tLimb %.2f (fail=%.2f), Rand %.2f\n"
-             "\tSurvivors: %lu\n"),
-            (float) mc.cross / CUTOFFS.non_survivors,
-            (float) mc.cross_fail / mc.cross,
-            (float) mc.point / CUTOFFS.non_survivors,
-            (float) mc.point_fail / mc.point,
-            (float) mc.limb / CUTOFFS.non_survivors,
-            (float) mc.limb_fail / mc.limb,
-            (float) mc.rand / CUTOFFS.non_survivors,
-            CUTOFFS.survivors);
+        MutationModeList mutation_modes = gen_mutation_mode_list();
+        std::ostringstream mutation_ss;
+        mutation_ss << "Mutation Ratios (out of " << CUTOFFS.survivors << " non-survivors):\n";
+        for (MutationMode mode : mutation_modes) {
+            mutation_ss << "    " << MutationModeNames[mode] << ':';
+
+            const float mode_ratio = 100.f * mc[mode] / CUTOFFS.non_survivors;
+            mutation_ss << " " << string_format("%.1f", mode_ratio) << "% ";
+            mutation_ss << "(" << mc[mode] << "/" << CUTOFFS.non_survivors << ")\n";
+        }
+
+        msg("%s\n", mutation_ss.str().c_str());
     }
     InputManager::ga_times().evolve_time +=
         TIMING_END("evolving", evolve_start_time);

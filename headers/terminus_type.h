@@ -3,7 +3,8 @@
 
 #include <string>
 
-#include "jutil.h"
+#include "random_utils.h"
+#include "debug_utils.h"
 
 namespace elfin {
 
@@ -16,12 +17,17 @@ namespace elfin {
 
 GEN_ENUM_AND_STRING(TerminusType, TerminusTypeNames, FOREACH_TERMINUSTYPE);
 
-void death_by_bad_terminus(std::string func_name, const TerminusType term);
-
 /*
  * Returns either N or C randomly.
  */
-TerminusType random_term();
+inline TerminusType random_termius() {
+    return random::get_dice(2) == 0 ? TerminusType::N : TerminusType::C;
+}
+
+inline void bad_terminus(TerminusType term) {
+    NICE_PANIC(term == term, string_format("Bad TerminusType: %s\n",
+                                           TerminusTypeNames[term]));
+}
 
 const TerminusType OPPOSITE_TERM[2] = { TerminusType::C, TerminusType::N };
 

@@ -50,9 +50,6 @@ private:
     ARG_PARSER_CALLBACK_IN_HEADER(set_ga_pop_size) { options_.ga_pop_size = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_ga_iters) { options_.ga_iters = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_ga_survive_rate) { options_.ga_survive_rate = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_cross_rate) { options_.ga_cross_rate = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_point_mutate_rate) { options_.ga_point_mutate_rate = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_limb_mutate_rate) { options_.ga_limb_mutate_rate = parse_float(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_ga_stop_score) { options_.ga_stop_score = parse_float(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_ga_stop_stagnancy) { options_.ga_stop_stagnancy = parse_long(arg_in.c_str()); }
     ARG_PARSER_CALLBACK_IN_HEADER(set_log_level) { ::set_log_level((Log_Level) parse_long(arg_in.c_str())); }
@@ -136,24 +133,6 @@ private:
             true,
             &ArgParser::set_ga_survive_rate
         },
-        {   "gcr",
-            "ga_cross_rate",
-            "Set GA surviver cross rate (default=0.60)",
-            true,
-            &ArgParser::set_ga_cross_rate
-        },
-        {   "gmr",
-            "ga_point_mutate_rate",
-            "Set GA surviver point mutation rate (default=0.3)",
-            true,
-            &ArgParser::set_ga_point_mutate_rate
-        },
-        {   "gmr",
-            "ga_limb_mutate_rate",
-            "Set GA surviver limb mutation rate (default=0.3)",
-            true,
-            &ArgParser::set_ga_limb_mutate_rate
-        },
         {   "stt",
             "ga_stop_score",
             "Set GA exit score threshold (default=0.001)",
@@ -207,7 +186,6 @@ private:
     };
 
     void check_options() const;
-    void correct_rates();
 
 public:
     ArgParser(const int argc, char const *argv[]);

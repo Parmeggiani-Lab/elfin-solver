@@ -84,56 +84,23 @@ void Candidate::setup(const WorkArea & wa) {
 
 void Candidate::mutate(
     const size_t rank,
-    MutationCounters & mt_counters,
+    MutationCounter & mt_counter,
     const CandidateList * candidates) {
 
-    if (rank <= CUTOFFS.survivors) {
+    if (rank < CUTOFFS.survivors) { // use < because rank is 0-indexed
         *this = *(candidates->at(rank));
     }
     else {
         // Replicate mother
-        const size_t mother_id = get_dice(CUTOFFS.survivors);
-        const Candidate * mother = candidates->at(mother_id);
-        *this = *(mother);
+        const size_t mother_id =
+            random::get_dice(CUTOFFS.survivors); // only elites
+        const NodeTeam * mother_team = candidates->at(mother_id)->node_team();
 
-        const size_t mutation_dice =
-            CUTOFFS.survivors +
-            get_dice(CUTOFFS.non_survivors);
-        if (mutation_dice <= CUTOFFS.cross) {
-            // Pick father
-            const size_t father_id = get_dice(CUTOFFS.pop_size);
-            const NodeTeam * father_team = candidates->at(father_id)->node_team();
-            const NodeTeam * mother_team = mother->node_team();
+        const size_t father_id =
+            random::get_dice(CUTOFFS.pop_size); // include all candidates
+        const NodeTeam * father_team = candidates->at(father_id)->node_team();
 
-            // Fall back to auto mutate if cross fails
-            if (!node_team_->cross_mutate(mother_team, father_team)) {
-                // Pick a random parent to inherit from and then mutate
-                node_team_->auto_mutate();
-                mt_counters.cross_fail++;
-            }
-
-            mt_counters.cross++;
-        }
-        else if (mutation_dice <= CUTOFFS.point) {
-            if (!node_team_->point_mutate()) {
-                node_team_->randomize();
-                mt_counters.point_fail++;
-            }
-            mt_counters.point++;
-        }
-        else if (mutation_dice <= CUTOFFS.limb) {
-            if (!node_team_->limb_mutate()) {
-                node_team_->randomize();
-                mt_counters.limb_fail++;
-            }
-            mt_counters.limb++;
-        }
-        else {
-            // Individuals not covered by specified mutation
-            // rates undergo random destructive mutation
-            node_team_->randomize();
-            mt_counters.rand++;
-        }
+        node_team_->mutate(mt_counter, mother_team, father_team);
     }
 }
 

@@ -31,7 +31,7 @@ void ProtoTerminus::finalize() {
     for (auto itr = proto_links_.begin();
             itr != proto_links_.end();
             itr++) {
-        
+
         ProtoLink & proto_link = *itr;
         DEBUG(nullptr == proto_link.target_mod);
 
@@ -62,7 +62,7 @@ void ProtoTerminus::finalize() {
         else {
             const size_t ncount = target_prot->counts().n_links;
             const size_t ccount = target_prot->counts().c_links;
-            
+
             if (ncount == 0)
             {
                 // zero N-count means all interfaces are C type
@@ -102,8 +102,7 @@ const ProtoLink & ProtoTerminus::pick_random_proto_link(
         return *c_rlt_.draw();
     }
     else {
-        death_by_bad_terminus(__PRETTY_FUNCTION__, term); // Aborts
-        exit(1); // To suppress warning
+        bad_terminus(term);
     }
 }
 

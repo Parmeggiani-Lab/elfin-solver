@@ -34,20 +34,6 @@ void InputManager::setup_cutoffs() {
 
     cutoffs.non_survivors =
         (OPTIONS.ga_pop_size - cutoffs.survivors);
-
-    cutoffs.cross =
-        cutoffs.survivors +
-        std::round(OPTIONS.ga_cross_rate * cutoffs.non_survivors);
-
-    cutoffs.point =
-        cutoffs.cross +
-        std::round(OPTIONS.ga_point_mutate_rate * cutoffs.non_survivors);
-
-    cutoffs.limb =
-        std::min(
-            (size_t) (cutoffs.point +
-                      std::round(OPTIONS.ga_limb_mutate_rate * cutoffs.non_survivors)),
-            cutoffs.pop_size);
 }
 
 /* public */

@@ -11,9 +11,6 @@ struct Cutoffs {
     size_t pop_size = 0;
     size_t survivors = 0;
     size_t non_survivors = 0;
-    size_t cross = 0;
-    size_t point = 0;
-    size_t limb = 0;
 };
 
 struct GATimes {

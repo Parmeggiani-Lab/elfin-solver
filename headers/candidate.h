@@ -8,7 +8,7 @@
 #include "geometry.h"
 #include "checksum.h"
 #include "work_area.h"
-#include "mutation_counters.h"
+#include "mutation_modes.h"
 #include "node_team.h"
 
 namespace elfin {
@@ -63,7 +63,7 @@ public:
     void randomize() { node_team_->randomize(); }
     void mutate(
         const size_t rank,
-        MutationCounters & mt_counters,
+        MutationCounter & mt_counter,
         const CandidateList * candidates);
 
     /* printers */

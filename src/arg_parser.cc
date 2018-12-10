@@ -139,47 +139,15 @@ void ArgParser::check_options() const {
                "Gene length deviation must be an integer > 0\n");
 
     // GA params
-    NICE_PANIC(options_.ga_survive_rate < 0.0 ||
-               options_.ga_survive_rate > 1.0,
-               "GA survive rate must be between 0 and 1 inclusive\n");
-    NICE_PANIC(options_.ga_cross_rate < 0.0 ||
-               options_.ga_cross_rate > 1.0,
-               "GA cross rate must be between 0 and 1 inclusive\n");
-    NICE_PANIC(options_.ga_point_mutate_rate < 0.0 ||
-               options_.ga_point_mutate_rate > 1.0,
-               "GA point mutate rate must be between 0 and 1 inclusive\n");
-    NICE_PANIC(options_.ga_limb_mutate_rate < 0.0 ||
-               options_.ga_limb_mutate_rate > 1.0,
-               "GA limb mutate rate must be between 0 and 1 inclusive\n");
+    NICE_PANIC(options_.ga_survive_rate <= 0.0 ||
+               options_.ga_survive_rate >= 1.0,
+               "GA survive rate must be between 0 and 1 exclusive\n");
 
     NICE_PANIC(options_.avg_pair_dist < 0, "Average CoM distance must be > 0\n");
 
     NICE_PANIC(options_.keep_n < 0 ||
                options_.keep_n > options_.ga_pop_size,
                "Number of best solutions to output must be > 0 and < ga_pop_size\n");
-}
-
-void ArgParser::correct_rates() {
-    bool rateCorrected = false;
-    float sumRates = options_.ga_cross_rate +
-                     options_.ga_point_mutate_rate +
-                     options_.ga_limb_mutate_rate;
-    if ((rateCorrected = (sumRates > 1.0))) {
-        options_.ga_cross_rate         /= sumRates;
-        options_.ga_point_mutate_rate   /= sumRates;
-        options_.ga_limb_mutate_rate    /= sumRates;
-        sumRates = options_.ga_cross_rate +
-                   options_.ga_point_mutate_rate +
-                   options_.ga_limb_mutate_rate;
-    }
-
-    if (rateCorrected) {
-        wrn("Sum of GA cross + point mutate + limb mutate rates must be <= 1\n");
-        wrn("Rates corrected to: %.2f, %.2f, %.2f\n",
-            options_.ga_cross_rate,
-            options_.ga_point_mutate_rate,
-            options_.ga_limb_mutate_rate);
-    }
 }
 
 /* Public Methods */
