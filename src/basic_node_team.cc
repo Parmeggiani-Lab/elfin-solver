@@ -29,18 +29,6 @@ namespace elfin {
 /* private */
 /*modifiers */
 
-void BasicNodeTeam::grow(FreeChain free_chain) {
-    NICE_PANIC(nodes_.empty());
-
-    while (size() < Candidate::MAX_LEN) {
-        const ProtoLink & pt_link = random_proto_link(free_chain);
-        invite_new_member(free_chain, pt_link);
-
-        // Pick next tip chain
-        free_chain = free_chains_.pick_random();
-    }
-}
-
 void BasicNodeTeam::fix_limb_transforms(const Link & arrow) {
     BasicNodeGenerator limb_gtor(&arrow);
     while (not limb_gtor.is_done()) {
@@ -66,65 +54,66 @@ bool BasicNodeTeam::erode_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_ERODE
-    // Pick random tip node
-    Node * tip_node = free_chains_.pick_random().node;
+    if (not free_chains_.empty()) {
+        // Pick random tip node
+        Node * tip_node = free_chains_.pick_random().node;
 
-    // Remove all free chains originating from tip_node
-    remove_member_chains(tip_node);
+        // Remove all free chains originating from tip_node
+        remove_member_chains(tip_node);
 
-    float p = 1.0f; // probability
-    FreeChain chain_to_restore;
+        float p = 1.0f; // probability
+        FreeChain chain_to_restore;
 
-    // Loop condition is always true on first entrance, hence do-while.
-    do {
-        // Make new tip node state consistent
-        NICE_PANIC(tip_node->neighbors().size() != 1);
-        const Link tip_link = tip_node->neighbors().at(0);
+        // Loop condition is always true on first entrance, hence do-while.
+        do {
+            // Make new tip node state consistent
+            NICE_PANIC(tip_node->neighbors().size() != 1);
+            const Link tip_link = tip_node->neighbors().at(0);
 
-        chain_to_restore = tip_link.dst();
-        Node * new_tip = chain_to_restore.node;
-        //               (  tip_link  )
-        // X--[tip_node]--src->-<-dst
-        // chain_to_restore:      ^^^
-        //
-        //                dst->-<-src--[new_tip]--[]--[]--...
+            chain_to_restore = tip_link.dst();
+            Node * new_tip = chain_to_restore.node;
+            //               (  tip_link  )
+            // X--[tip_node]--src->-<-dst
+            // chain_to_restore:      ^^^
+            //
+            //                dst->-<-src--[new_tip]--[]--[]--...
 
-        remove_member(tip_node);
-        //               (  tip_link  )
-        // {          freed          }
-        //
-        //                dst->-<-src--[new_tip]--[]--[]--...
+            remove_member(tip_node);
+            //               (  tip_link  )
+            // {          freed          }
+            //
+            //                dst->-<-src--[new_tip]--[]--[]--...
 
-        // Remove tip_link to tip_node from the new_tip
-        new_tip->remove_link(tip_link.reversed());
-        //               (  tip_link  )
-        // {          freed          }
-        //
-        //                          X--[new_tip]--[]--[]--...
+            // Remove tip_link to tip_node from the new_tip
+            new_tip->remove_link(tip_link.reversed());
+            //               (  tip_link  )
+            // {          freed          }
+            //
+            //                          X--[new_tip]--[]--[]--...
 
-        // Update tip node ptr
-        tip_node = new_tip;
+            // Update tip node ptr
+            tip_node = new_tip;
 
-        /*
-         * Calculate next probability. The following formula gives:
-         * remaining size / original size; p
-         * 6/6; p=0.8333333333333334
-         * 5/6; p=0.6666666666666667
-         * 4/6; p=0.5
-         * 3/6; p=0.3333333333333333
-         * 2/6; p=0.16666666666666666
-         * 1/6; p=0.0
-         */
-        p = p * (size() - 1) / size();
-    } while (random::get_dice_0to1() <= p);
+            /*
+             * Calculate next probability. The following formula gives:
+             * remaining size / original size; p
+             * 6/6; p=0.8333333333333334
+             * 5/6; p=0.6666666666666667
+             * 4/6; p=0.5
+             * 3/6; p=0.3333333333333333
+             * 2/6; p=0.16666666666666666
+             * 1/6; p=0.0
+             */
+            p = p * (size() - 1) / size();
+        } while (random::get_dice_0to1() <= p);
 
-    // Restore FreeChain
-    free_chains_.push_back(chain_to_restore);
+        // Restore FreeChain
+        free_chains_.push_back(chain_to_restore);
 
-    // Re-generate
-    grow(free_chains_.pick_random());
+        regenerate();
 
-    mutate_success = true;
+        mutate_success = true;
+    }
 #endif // NO_ERODE
 
     return mutate_success;
@@ -134,89 +123,91 @@ bool BasicNodeTeam::delete_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_DELETE
-    // Collect deletable nodes
-    Vector<Node *> deletable_nodes;
+    if (not free_chains_.empty()) {
+        // Collect deletable nodes
+        Vector<Node *> deletable_nodes;
 
-    Node * tip = free_chains_[0].node; // starting at either end is fine
-    BasicNodeGenerator node_gtor(tip);
-    node_gtor.next(); // skip start tip
+        Node * tip = free_chains_[0].node; // starting at either end is fine
+        BasicNodeGenerator node_gtor(tip);
+        node_gtor.next(); // skip start tip
 
-    Node * curr_node = node_gtor.next();
-    Node * next_node = node_gtor.next();
-    while (next_node) { // skip end tip too
-        DEBUG(curr_node->neighbors().size() != 2);
+        Node * curr_node = node_gtor.next();
+        Node * next_node = node_gtor.next();
+        while (next_node) { // skip end tip too
+            DEBUG(curr_node->neighbors().size() != 2);
 
-        const FreeChain & fchain1 = curr_node->neighbors().at(0).dst();
-        const FreeChain & fchain2 = curr_node->neighbors().at(1).dst();
+            const FreeChain & fchain1 = curr_node->neighbors().at(0).dst();
+            const FreeChain & fchain2 = curr_node->neighbors().at(1).dst();
 
-        // X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
-        //              (fchain1)                         (fchain2)
-        //                 vvv                               vvv
-        //                 dst->-<-src--[curr_node]--src->-<-dst
-        const bool deletable =
-            fchain1.node->prototype()->has_link_to(
-                fchain1.term,
-                fchain2.node->prototype(),
-                fchain2.chain_id);
-        // The reverse doesn't need to be checked, because all links have
-        // a reverse
+            // X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
+            //              (fchain1)                         (fchain2)
+            //                 vvv                               vvv
+            //                 dst->-<-src--[curr_node]--src->-<-dst
+            const bool deletable =
+                fchain1.node->prototype()->has_link_to(
+                    fchain1.term,
+                    fchain2.node->prototype(),
+                    fchain2.chain_id);
+            // The reverse doesn't need to be checked, because all links have
+            // a reverse
 
-        if (deletable) {
-            deletable_nodes.push_back(curr_node);
+            if (deletable) {
+                deletable_nodes.push_back(curr_node);
+            }
+
+            curr_node = next_node;
+            next_node = node_gtor.next();
         }
 
-        curr_node = next_node;
-        next_node = node_gtor.next();
-    }
+        if (not deletable_nodes.empty()) {
+            // Delete a random one
+            Node * to_delete = deletable_nodes.pick_random();
 
-    if (not deletable_nodes.empty()) {
-        // Delete a random one
-        Node * to_delete = deletable_nodes.pick_random();
+            // Link up neighbor1 and neighbor2
+            // X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
+            //                 (  link1  )               (  link2  )
+            //                 vvvvvvvvvvv               vvvvvvvvvvv
+            //                 dst->-<-src--[curr_node]--src->-<-dst
+            const Link & link1 = to_delete->neighbors().at(0);
+            const Link & link2 = to_delete->neighbors().at(1);
 
-        // Link up neighbor1 and neighbor2
-        // X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
-        //                 (  link1  )               (  link2  )
-        //                 vvvvvvvvvvv               vvvvvvvvvvv
-        //                 dst->-<-src--[curr_node]--src->-<-dst
-        const Link & link1 = to_delete->neighbors().at(0);
-        const Link & link2 = to_delete->neighbors().at(1);
+            Node * neighbor1 = link1.dst().node;
+            Node * neighbor2 = link2.dst().node;
 
-        Node * neighbor1 = link1.dst().node;
-        Node * neighbor2 = link2.dst().node;
+            neighbor1->remove_link(link1.reversed());
+            neighbor2->remove_link(link2.reversed());
+            // X--[neighbor1]--X                                   X--[neighbor2]--...
+            //                 (  link1  )               (  link2  )
+            //                 vvvvvvvvvvv               vvvvvvvvvvv
+            //                 dst->-<-src--[curr_node]--src->-<-dst
 
-        neighbor1->remove_link(link1.reversed());
-        neighbor2->remove_link(link2.reversed());
-        // X--[neighbor1]--X                                   X--[neighbor2]--...
-        //                 (  link1  )               (  link2  )
-        //                 vvvvvvvvvvv               vvvvvvvvvvv
-        //                 dst->-<-src--[curr_node]--src->-<-dst
+            // Create links between neighbor1 and neighbor2
+            const Link arrow1(link1.dst(), link2.dst());
+            neighbor1->add_link(arrow1.src(), arrow1.dst());
+            neighbor2->add_link(link2.dst(), link1.dst());
+            //           link1.dst(), link2.dst()
+            //                 vvv     vvv
+            // X--[neighbor1]--src->-<-dst
+            //                 dst->-<-src--[neighbor2]--...
+            //                 ^^^     ^^^
+            //           link1.dst(), link2.dst()
 
-        // Create links between neighbor1 and neighbor2
-        const Link arrow1(link1.dst(), link2.dst());
-        neighbor1->add_link(arrow1.src(), arrow1.dst());
-        neighbor2->add_link(link2.dst(), link1.dst());
-        //           link1.dst(), link2.dst()
-        //                 vvv     vvv
-        // X--[neighbor1]--src->-<-dst
-        //                 dst->-<-src--[neighbor2]--...
-        //                 ^^^     ^^^
-        //           link1.dst(), link2.dst()
+            // From this point on, memory of link1 and link2 are invalid!!!
+            remove_member(to_delete);
 
-        // From this point on, memory of link1 and link2 are invalid!!!
-        remove_member(to_delete);
+            // to_delete is guranteed to not be a tip so no need to clean up free_chains_
 
-        // to_delete is guranteed to not be a tip so no need to clean up free_chains_
+            fix_limb_transforms(arrow1);
 
-        fix_limb_transforms(arrow1);
-
-        mutate_success = true;
-    }
-    else {
+            mutate_success = true;
+        }
+        else {
 #ifdef SHOW_UNDELETABLE
-        wrn("\nNo deletable nodes! checksum=%x\n%s\n",
-            checksum(),
-            to_string().c_str());
+            wrn("\nNo deletable nodes! checksum=%x\n%s\n",
+                checksum(),
+                to_string().c_str());
 #endif  /* ifdef SHOW_UNDELETABLE */
+        }
     }
 #endif
 
@@ -227,42 +218,48 @@ bool BasicNodeTeam::insert_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_INSERT
-    IdPairs insertable_ids;
-    for (size_t i = 0; i < n_nodes; i++) {
-        for (size_t j = 0; j < rm_dim; j++) {
-            // Check whether j can be inserted before i
-            if (
-                (i == 0 or // Pass if inserting at the left end
-                 REL_MAT.at(nodes_.at(i - 1).id).at(j))
-                and
-                (i == n_nodes or // Pass if appending at the right end
-                 REL_MAT.at(j).at(nodes_.at(i).id))
-            ) {
-                // Make sure resultant shape won't collide with itself
-                Nodes test_nodes(nodes_);
-                Node new_node;
-                new_node.id = j;
-                test_nodes.insert(test_nodes.begin() + i, //This is insertion before i
-                                  new_node);
+    if (not free_chains_.empty()) {
+        // TODO
 
-                // dbg("checking insertion at %d/%d of %s\n",
-                //     i, n_nodes, to_string().c_str());
-                if (synthesise(test_nodes))
-                    insertable_ids.push_back(IdPair(i, j));
+        IdPairs insertable_ids;
+        for (size_t i = 0; i < n_nodes; i++) {
+            for (size_t j = 0; j < rm_dim; j++) {
+                // Check whether j can be inserted before i
+                if (
+                    (i == 0 or // Pass if inserting at the left end
+                     REL_MAT.at(nodes_.at(i - 1).id).at(j))
+                    and
+                    (i == n_nodes or // Pass if appending at the right end
+                     REL_MAT.at(j).at(nodes_.at(i).id))
+                ) {
+                    // Make sure resultant shape won't collide with itself
+                    Nodes test_nodes(nodes_);
+                    Node new_node;
+                    new_node.id = j;
+                    test_nodes.insert(test_nodes.begin() + i, //This is insertion before i
+                                      new_node);
+
+                    // dbg("checking insertion at %d/%d of %s\n",
+                    //     i, n_nodes, to_string().c_str());
+                    if (synthesise(test_nodes))
+                        insertable_ids.push_back(IdPair(i, j));
+                }
             }
         }
-    }
 
-    // Pick a random one, or fall through to next case
-    if (insertable_ids.size() > 0) {
-        const IdPair & ids = pick_random(insertable_ids);
-        Node new_node;
-        new_node.id = ids.y;
-        nodes_.insert(nodes_.begin() + ids.x, //This is insertion before i
-                      new_node);
+        // Pick a random one, or fall through to next case
+        if (insertable_ids.size() > 0) {
+            const IdPair & ids = pick_random(insertable_ids);
+            Node new_node;
+            new_node.id = ids.y;
+            nodes_.insert(nodes_.begin() + ids.x, //This is insertion before i
+                          new_node);
 
-        synthesise(nodes_); // This is guaranteed to succeed
-        mutate_success = true;
+            synthesise(nodes_); // This is guaranteed to succeed
+            mutate_success = true;
+        }
+
+        //
     }
 #endif
 
@@ -273,41 +270,47 @@ bool BasicNodeTeam::swap_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_SWAP
-    // First int is index from nodes_
-    // Second int is ido swap to
-    IdPairs swappable_ids;
-    for (size_t i = 0; i < n_nodes; i++) {
-        // For all neighbours of previous node
-        // find those that has nodes[i+1] as
-        // one of their RHS neighbours
-        for (size_t j = 0; j < rm_dim; j++) {
-            // Make sure it's not the original one
-            if (j != nodes_.at(i).id) {
-                // Check whether i can be exchanged for j
-                if ((i == 0 or REL_MAT.at(nodes_.at(i - 1).id).at(j))
-                        and
-                        (i == n_nodes - 1 or REL_MAT.at(j).at(nodes_.at(i + 1).id))
-                   ) {
-                    // Make sure resultant shape won't collide with itself
-                    Nodes test_nodes(nodes_);
-                    test_nodes.at(i).id = j;
+    if (not free_chains_.empty()) {
+        // TODO
 
-                    // dbg("checking swap at %d/%d of %s\n",
-                    //     i, n_nodes, to_string().c_str());
-                    if (synthesise(test_nodes))
-                        swappable_ids.push_back(IdPair(i, j));
+        // First int is index from nodes_
+        // Second int is ido swap to
+        IdPairs swappable_ids;
+        for (size_t i = 0; i < n_nodes; i++) {
+            // For all neighbours of previous node
+            // find those that has nodes[i+1] as
+            // one of their RHS neighbours
+            for (size_t j = 0; j < rm_dim; j++) {
+                // Make sure it's not the original one
+                if (j != nodes_.at(i).id) {
+                    // Check whether i can be exchanged for j
+                    if ((i == 0 or REL_MAT.at(nodes_.at(i - 1).id).at(j))
+                            and
+                            (i == n_nodes - 1 or REL_MAT.at(j).at(nodes_.at(i + 1).id))
+                       ) {
+                        // Make sure resultant shape won't collide with itself
+                        Nodes test_nodes(nodes_);
+                        test_nodes.at(i).id = j;
+
+                        // dbg("checking swap at %d/%d of %s\n",
+                        //     i, n_nodes, to_string().c_str());
+                        if (synthesise(test_nodes))
+                            swappable_ids.push_back(IdPair(i, j));
+                    }
                 }
             }
         }
-    }
 
-    // // Pick a random one, or fall through to next case
-    if (swappable_ids.size() > 0) {
-        const IdPair & ids = pick_random(swappable_ids);
-        nodes_.at(ids.x).id = ids.y;
+        // // Pick a random one, or fall through to next case
+        if (swappable_ids.size() > 0) {
+            const IdPair & ids = pick_random(swappable_ids);
+            nodes_.at(ids.x).id = ids.y;
 
-        synthesise(nodes_); // This is guaranteed to succeed
-        mutate_success = true;
+            synthesise(nodes_); // This is guaranteed to succeed
+            mutate_success = true;
+        }
+
+        //
     }
 #endif
 
@@ -346,6 +349,8 @@ bool BasicNodeTeam::cross_mutate(
     bool mutate_success = false;
 
 #ifndef NO_CROSS
+    DEBUG(size() == 0);
+
     const Nodes & mother_nodes = nodes_; // Self has already inherited mother
     const Nodes & father_nodes = father->nodes_;
     IdPairs crossing_ids = get_crossing_ids(mother_nodes, father_nodes);
@@ -383,15 +388,33 @@ bool BasicNodeTeam::cross_mutate(
     return mutate_success;
 }
 
+bool BasicNodeTeam::regenerate() {
+    if (nodes_.empty()) {
+        // Pick random initial member
+        add_member(XDB.basic_mods().draw());
+    }
+
+    DEBUG(free_chains_.empty());
+
+    FreeChain free_chain = free_chains_.pick_random();
+    while (size() < Candidate::MAX_LEN) {
+        const ProtoLink & pt_link = random_proto_link(free_chain);
+        invite_new_member(free_chain, pt_link);
+
+        // Pick next tip chain
+        free_chain = free_chains_.pick_random();
+    }
+
+    return true;
+}
+
 bool BasicNodeTeam::randomize_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_RANDOMIZE
-    remake(XDB.basic_mods());
-
-    const FreeChain & random_free_chain =
-        free_chains_.pick_random();
-    grow(random_free_chain);
+    disperse();
+    add_member(XDB.basic_mods().draw());
+    regenerate();
 
     mutate_success = true;
 #endif
@@ -413,15 +436,15 @@ BasicNodeTeam * BasicNodeTeam::clone() const {
 /* accessors */
 float BasicNodeTeam::score(const WorkArea * wa) const {
     /*
-     * In a BasicNodeTeam there are 2 and only 2 tips at all times. The nodes
-     * network is thus a simple path. We walk the path to collect the 3D
+     * In a BasicNodeTeam there are either 0 or 2 tips at any given time. The
+     * nodes network is thus a simple path. We walk the path to collect the 3D
      * points in order.
      *
      * In addition, we walk the path forward and backward, because the Kabsch
      * algorithm relies on point-wise correspondance. Different ordering can
      * yield different RMSD scores.
      */
-    DEBUG(free_chains_.size() != 2);
+    DEBUG(free_chains_.size() != 2 and size() != 0);
 
     float score = INFINITY;
     for (auto & free_chain : free_chains_) {
@@ -450,7 +473,7 @@ Crc32 BasicNodeTeam::checksum() const {
      * sequence of nodes even if they are in reverse order. This can be
      * achieved by XOR'ing the forward and backward checksums.
      */
-    DEBUG(free_chains_.size() != 2);
+    DEBUG(free_chains_.size() != 2 and size() != 0);
 
     Crc32 crc = 0x0000;
     for (auto & free_chain : free_chains_) {
@@ -526,6 +549,9 @@ MutationMode BasicNodeTeam::mutate(
             break;
         case MutationMode::CROSS:
             mutation_ok = cross_mutate(father);
+            break;
+        case MutationMode::REGENERATE:
+            mutation_ok = regenerate();
             break;
         case MutationMode::RANDOMIZE:
             mutation_ok = randomize_mutate();

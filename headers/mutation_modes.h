@@ -15,6 +15,7 @@ namespace elfin {
     MACRO(INSERT) \
     MACRO(SWAP) \
     MACRO(CROSS) \
+    MACRO(REGENERATE) \
     MACRO(RANDOMIZE) \
     MACRO(_ENUM_SIZE) \
 

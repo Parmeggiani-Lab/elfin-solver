@@ -3,40 +3,11 @@
 #include <unordered_map>
 #include <sstream>
 
-#include "jutil.h"
 #include "input_manager.h"
 #include "mutation_modes.h"
-#include "basic_node_team.h"
 #include "parallel_utils.h"
 
 namespace elfin {
-
-/* free functions */
-Candidate * new_candidate(const WorkType work_type) {
-    NodeTeam * node_team = nullptr;
-
-    switch (work_type) {
-    case WorkType::FREE:
-        node_team = new BasicNodeTeam();
-        break;
-    // case WorkType::ONE_HINGE:
-    //     node_team = new OneHingeNodeTeam();
-    //     break;
-    // case WorkType::TWO_HINGE:
-    //     node_team = new TwoHingeNodeTeam();
-    //     break;
-    default:
-        std::ostringstream ss;
-        ss << "Unimplemented WorkArea type: ";
-        ss << WorkTypeToCStr(work_type) << std::endl;
-        throw ElfinException(ss.str());
-    }
-
-    Candidate * candidate = new Candidate(node_team);
-    candidate->randomize();
-
-    return candidate;
-}
 
 /* protected */
 /* modifiers */
@@ -71,26 +42,27 @@ Population::Population(const WorkArea * work_area) :
 
         Candidate::setup(*work_area);
 
-        front_buffer_ = new Buffer();
-        front_buffer_->clear();
-        front_buffer_->resize(pop_size); // Must pre allocate for parallel assignment
+        // Initialize for front_buffer_
+        Buffer * new_front_buffer = new Buffer();
+        Buffer * new_back_buffer = new Buffer();
+
+        // Must pre allocate for parallel assignment
+        new_front_buffer->resize(pop_size);
+        new_back_buffer->resize(pop_size);
 
         OMP_PAR_FOR
         for (size_t i = 0; i < pop_size; i++) {
-            front_buffer_->at(i) = new_candidate(work_area_->type());
+            new_front_buffer->at(i) = new Candidate(work_area_->type());
+            new_front_buffer->at(i)->randomize();
+            new_back_buffer->at(i) = new Candidate(work_area_->type());
         }
 
         // Scoring last candidate tests initialization and score func
-        front_buffer_->at(pop_size - 1)->calc_score(work_area_);
+        new_front_buffer->at(pop_size - 1)->calc_score(work_area_);
+        new_back_buffer->at(pop_size - 1)->calc_score(work_area_);
 
-        // Now initialize second buffer_
-        swap_buffer();
-
-        // front_buffer_ now points to nullptr
-        // back_buffer_ points to the initialized const Buffer *
-        // Hence we copy from back to front.
-        front_buffer_ = new Buffer();
-        copy_buffer(back_buffer_, front_buffer_);
+        front_buffer_ = new_front_buffer;
+        back_buffer_ = new_back_buffer;
 
         ERASE_LINE();
         msg("Initialization done\n");
@@ -143,12 +115,12 @@ void Population::evolve() {
         OMP_PAR_FOR
         for (size_t i = 0; i < CUTOFFS.pop_size; i++) {
             mutation_mode_tally[i] = front_buffer_->at(i)->mutate(
-                                    i,
-                                    back_buffer_);
+                                         i,
+                                         back_buffer_);
         }
 
         MutationCounter mc;
-        for(const MutationMode & mode : mutation_mode_tally) {
+        for (const MutationMode & mode : mutation_mode_tally) {
             mc[mode]++;
         }
 
@@ -158,7 +130,7 @@ void Population::evolve() {
         // RNG instrumentation
         MutationModeList mutation_modes = gen_mutation_mode_list();
         std::ostringstream mutation_ss;
-        mutation_ss << "Mutation Ratios (out of " << CUTOFFS.survivors << " non-survivors):\n";
+        mutation_ss << "Mutation Ratios:\n";
         for (MutationMode mode : mutation_modes) {
             mutation_ss << "    " << MutationModeToCStr(mode) << ':';
 
@@ -209,17 +181,20 @@ void Population::rank() {
 }
 
 void Population::select() {
+    /*
+     * Minimize same-ness within survivors by using hashmap where crc is key
+     * and cloned pointer is value.
+     */
+
     TIMING_START(start_time_select);
     {
         msg("Selecting population...");
 
-        // Ensure variety within survivors using hashmap where crc is key and
-        // cloned pointer is value.
         std::unordered_map<Crc32, Candidate *> crc_map;
         size_t unique_count = 0;
 
-        // We don't want parallelism here because the loop must prioritise low
-        // indexes
+        // We don't want parallelism here because the low indexes must be
+        // prioritized.
         for (auto cand_ptr : *front_buffer_) {
             const Crc32 crc = cand_ptr->checksum();
             if (crc_map.find(crc) == crc_map.end()) {
@@ -227,8 +202,7 @@ void Population::select() {
                 crc_map[crc] = cand_ptr->clone();
                 unique_count++;
 
-                if (unique_count >= CUTOFFS.survivors)
-                    break;
+                if (unique_count >= CUTOFFS.survivors) break;
             }
         }
 

@@ -6,7 +6,6 @@
 #include <memory>
 
 #include "json.h"
-#include "elfin_exception.h"
 #include "jutil.h"
 #include "string_utils.h"
 #include "debug_utils.h"
@@ -28,8 +27,8 @@ struct Vector3f {
 		Vector3f(itb.begin(), itb.begin() + 3) {}
 	template <typename ItrBegin, typename ItrEnd>
 	Vector3f(ItrBegin begin, ItrEnd end) {
-		if ((end - begin) < 3)
-			throw InvalidArgumentSize;
+		NICE_PANIC((end - begin) < 3,
+		           string_format("Invalid Argument Size: %lu, should be <3\n", end - begin));
 
 		auto itr = begin;
 		x = *itr++;
@@ -76,8 +75,8 @@ private:
 			{0, 0, 1, 0},
 			{0, 0, 0, 0}
 		};
-		float * operator[](const size_t i) { return data[i]; } 
-		const float * operator[](const size_t i) const { return data[i]; } 
+		float * operator[](const size_t i) { return data[i]; }
+		const float * operator[](const size_t i) const { return data[i]; }
 	};
 
 	/* data */

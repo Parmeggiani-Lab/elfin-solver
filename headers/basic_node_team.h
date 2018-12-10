@@ -8,7 +8,6 @@ namespace elfin {
 class BasicNodeTeam : public NodeTeam {
 private:
     /*modifiers */
-    void grow(FreeChain free_chain);
     void fix_limb_transforms(const Link & arrow);
 
     bool erode_mutate();
@@ -17,6 +16,7 @@ private:
     bool swap_mutate();
     bool cross_mutate(
         const NodeTeam * father);
+    bool regenerate();
     bool randomize_mutate();
 
 public:

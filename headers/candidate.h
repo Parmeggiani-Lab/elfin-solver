@@ -23,10 +23,6 @@ protected:
     NodeTeam * node_team_ = nullptr;
     float score_ = NAN;
 
-    /* ctors */
-
-    /* accessors */
-
     /* modifiers */
     void release_resources();
 
@@ -36,7 +32,7 @@ public:
 
     /* ctors */
     Candidate() {} // needed in order to support vector.resize()
-    Candidate(NodeTeam * node_team);
+    Candidate(const WorkType work_type);
     Candidate(const Candidate & other);
     Candidate(Candidate && other);
     Candidate * clone() const;

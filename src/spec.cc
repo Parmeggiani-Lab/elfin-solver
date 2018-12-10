@@ -1,6 +1,6 @@
 #include "spec.h"
 
-#include "jutil.h"
+#include "debug_utils.h"
 
 namespace elfin {
 
@@ -23,9 +23,9 @@ void Spec::parse_from_json(const JSON & j) {
             auto & key_val = *wa_itr.first;
             const WorkArea & wa = key_val.second;
 
-            if (work_area_map_[jt_name].joints().empty()) {
-                throw ElfinException("Work area \"" + it.key() + "\" has no joints associated.");
-            }
+            NICE_PANIC(work_area_map_[jt_name].joints().empty(),
+                       string_format("Work area \"%s\" has no joints associated.",
+                                     it.key().c_str()));
         }
 
         for (auto it = networks.begin(); it != networks.end(); ++it) {

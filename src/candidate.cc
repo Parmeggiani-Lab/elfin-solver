@@ -4,6 +4,7 @@
 
 #include "random_utils.h"
 #include "input_manager.h"
+#include "basic_node_team.h"
 
 namespace elfin {
 
@@ -23,9 +24,22 @@ void Candidate::release_resources() {
 /* public */
 
 /* ctors */
-Candidate::Candidate(NodeTeam * node_team) :
-    node_team_(node_team) {
-    DEBUG(nullptr == node_team);
+Candidate::Candidate(const WorkType work_type) {
+    switch (work_type) {
+    case WorkType::FREE:
+        node_team_ = new BasicNodeTeam();
+        break;
+    // case WorkType::ONE_HINGE:
+    //     node_team_ = new OneHingeNodeTeam();
+    //     break;
+    // case WorkType::TWO_HINGE:
+    //     node_team_ = new TwoHingeNodeTeam();
+    //     break;
+    default:
+        bad_work_type(work_type);
+    }
+
+    DEBUG(node_team_ == nullptr);
 }
 
 Candidate::Candidate(const Candidate & other) {
@@ -39,8 +53,10 @@ Candidate::Candidate(Candidate && other) :
 }
 
 Candidate * Candidate::clone() const {
-    NodeTeam * node_team_clone = node_team_->clone();
-    return new Candidate(node_team_clone);
+    Candidate * new_cand = new Candidate();
+    new_cand->node_team_ = node_team_->clone();
+    new_cand->score_ = score_;
+    return new_cand;
 }
 
 /* dtors */

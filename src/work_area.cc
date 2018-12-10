@@ -4,7 +4,6 @@
 #include <sstream>
 #include <iostream>
 
-#include "elfin_exception.h"
 #include "debug_utils.h"
 
 namespace elfin {

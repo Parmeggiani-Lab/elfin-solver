@@ -254,9 +254,9 @@ EvolutionSolver::run() {
                     wrn("Post rank\n");
                     debug_print_pop(population);
 
-                    // population.select();
-                    // wrn("Post select\n");
-                    // debug_print_pop(population);
+                    population.select();
+                    wrn("Post select\n");
+                    debug_print_pop(population);
 
                     bool should_break = false;
                     collect_gen_data(

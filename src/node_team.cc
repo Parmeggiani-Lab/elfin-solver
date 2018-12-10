@@ -53,14 +53,6 @@ void NodeTeam::disperse() {
     free_chains_.clear();
 }
 
-void NodeTeam::remake(const Roulette<ProtoModule *> & mod_list) {
-    disperse();
-
-    // Pick random initial member
-    const ProtoModule * prot = mod_list.draw();
-    add_member(prot);
-}
-
 Node * NodeTeam::add_member(
     const ProtoModule * prot,
     const Transform & tx) {

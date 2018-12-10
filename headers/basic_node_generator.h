@@ -16,12 +16,7 @@ public:
     /* ctors */
     BasicNodeGenerator(
         Node * start_node) :
-        next_node_(start_node) {
-        DEBUG(next_node_ == nullptr);
-        DEBUG(next_node_->neighbors().size() != 1,
-              string_format("Starting node neighbors size = %lu\n",
-                            next_node_->neighbors().size()));
-    }
+        next_node_(start_node) { }
 
     /*
      * Constructor for starting mid-way in a basic node team.

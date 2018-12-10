@@ -6,7 +6,6 @@
 
 #include "ui_joint.h"
 #include "geometry.h"
-#include "jutil.h"
 
 namespace elfin {
 
@@ -26,6 +25,11 @@ namespace elfin {
     MACRO(COMPLEX) \
 
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
+
+inline void bad_work_type(WorkType type) {
+    NICE_PANIC(type == type, string_format("Bad WorkType: %s\n",
+                                           WorkTypeToCStr(type)));
+}
 
 class WorkArea
 {

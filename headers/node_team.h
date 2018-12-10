@@ -49,7 +49,6 @@ protected:
 
     /* modifiers */
     void disperse();
-    void remake(const Roulette<ProtoModule *> & mod_list);
     Node * add_member(
         const ProtoModule * prot,
         const Transform & tx = Transform());
