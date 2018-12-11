@@ -99,21 +99,6 @@ const ProtoLink * ProtoModule::find_link_to(
     return nullptr;
 }
 
-const ProtoLink * ProtoModule::find_link_to(
-    const TerminusType src_term,
-    const ProtoModule * dst_module,
-    const size_t dst_chain_id) const {
-    for (size_t i = 0; i < chains_.size(); ++i) {
-        const ProtoLink * link_ptr =
-            find_link_to(i, src_term, dst_module, dst_chain_id);
-        if (link_ptr) {
-            return link_ptr;
-        }
-    }
-
-    return nullptr;
-}
-
 bool ProtoModule::has_link_to(
     const TerminusType src_term,
     ConstProtoModulePtr dst_module,

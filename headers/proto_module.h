@@ -65,10 +65,6 @@ public:
         const TerminusType src_term,
         const ProtoModule * dst_module,
         const size_t dst_chain_id) const;
-    const ProtoLink * find_link_to(
-        const TerminusType src_term,
-        const ProtoModule * dst_module,
-        const size_t dst_chain_id) const;
     bool has_link_to(
         const TerminusType src_term,
         ConstProtoModulePtr dst_module,

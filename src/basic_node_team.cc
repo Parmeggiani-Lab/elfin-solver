@@ -134,6 +134,7 @@ bool BasicNodeTeam::delete_mutate() {
             //                 dst->-<-src--[curr_node]--src->-<-dst
             ProtoLink const* const proto_link_ptr =
                 fchain1.node->prototype()->find_link_to(
+                    fchain1.chain_id,
                     fchain1.term,
                     fchain2.node->prototype(),
                     fchain2.chain_id);
