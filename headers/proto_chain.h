@@ -19,23 +19,24 @@ private:
 
 public:
     /* data members */
-    const std::string name;
-    const size_t id;
+    std::string const name;
+    size_t const id;
 
     /* ctors */
-    ProtoChain(const std::string & _name, const size_t _id) :
+    ProtoChain(std::string const& _name, size_t const _id) :
         name(_name), id(_id) {}
-    ProtoChain(const ProtoChain & other) :
+    ProtoChain(ProtoChain const& other) :
         ProtoChain(other.name, other.id) {}
 
     /* dtors */
     virtual ~ProtoChain() {}
 
     /* accessors */
-    const ProtoTerminus & get_term(const TerminusType term) const;
-    const ProtoTerminus & n_term() const { return n_term_; }
-    const ProtoTerminus & c_term() const { return c_term_; }
-    const ProtoLink & pick_random_proto_link(const TerminusType term) const;
+    ProtoTerminus const& get_term(TerminusType const term) const;
+    ProtoTerminus const& n_term() const { return n_term_; }
+    ProtoTerminus const& c_term() const { return c_term_; }
+    ProtoLink const& pick_random_proto_link(
+        TerminusType const term) const;
 
     /* modifiers */
     void finalize();

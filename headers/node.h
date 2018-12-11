@@ -27,32 +27,39 @@ protected:
      */
 
     /* data */
-    const ProtoModule * prototype_ = nullptr;
+    ProtoModule const* prototype_ = nullptr;
     LinkList neighbors_;
+
 public:
     /* data */
     Transform tx_;
     
     /* ctors */
-    Node(const ProtoModule * prototype, const Transform & tx);
-    Node(const ProtoModule * prototype) : Node(prototype, Transform()) {}
+    Node(ProtoModule const* prototype, const Transform & tx);
+    Node(ProtoModule const* prototype) : Node(prototype, Transform()) {}
+    Node(ProtoModule const& other) = delete;
+    Node & operator=(ProtoModule const& other) = delete;
     virtual Node * clone() const { return new Node(*this); }
 
     /* dtors */
     virtual ~Node() {}
 
     /* accessors */
-    const ProtoModule * prototype() const { return prototype_; }
-    const LinkList & neighbors() const { return neighbors_; }
+    ProtoModule const* prototype() const { return prototype_; }
+    LinkList const& neighbors() const { return neighbors_; }
 
     /* modifiers */
     void add_link(
-        const FreeChain & src,
-        const FreeChain & dst) {
-        neighbors_.emplace_back(src, dst);
+        FreeChain const& src,
+        ProtoLink const* proto_link,
+        FreeChain const& dst) {
+        neighbors_.emplace_back(src, proto_link, dst);
     }
-    void update_neighbor_ptrs(const NodeAddrMap & nam);
-    void remove_link(const Link link);
+    void add_link(Link const& link) {
+        neighbors_.emplace_back(link);
+    }
+    void update_neighbor_ptrs(NodeAddrMap const& nam);
+    void remove_link(Link const link);
 
     /* printers */
     virtual std::string to_string() const;

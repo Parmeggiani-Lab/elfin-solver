@@ -7,8 +7,8 @@
 namespace elfin {
 
 /* public */
-const ProtoTerminus & ProtoChain::get_term(
-    const TerminusType term) const {
+ProtoTerminus const& ProtoChain::get_term(
+    TerminusType const term) const {
     if (term == TerminusType::N) {
         return n_term_;
     }
@@ -38,8 +38,8 @@ void ProtoChain::finalize() {
     c_term_.finalize();
 }
 
-const ProtoLink & ProtoChain::pick_random_proto_link(
-    const TerminusType term) const {
+ProtoLink const& ProtoChain::pick_random_proto_link(
+    TerminusType const term) const {
     return get_term(term).pick_random_proto_link(term);
 }
 

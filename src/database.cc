@@ -95,7 +95,7 @@ void Database::print_db() {
             for (size_t k = 0; k < n_links.size(); ++k)
             {
                 wrn("\t\tn_links[%lu] -> xdb_[%s]\n",
-                    k, n_links[k].target_mod->name.c_str());
+                    k, n_links[k].module()->name.c_str());
             }
             
             const ProtoLinkList & c_links =
@@ -103,7 +103,7 @@ void Database::print_db() {
             for (size_t k = 0; k < c_links.size(); ++k)
             {
                 wrn("\t\tc_links[%lu] -> xdb_[%s]\n",
-                    k, c_links[k].target_mod->name.c_str());
+                    k, c_links[k].module()->name.c_str());
             }
         }
     }
@@ -177,7 +177,7 @@ void Database::parse_from_json(const JSON & xdb) {
             const std::string & a_chain_name = a_chain_it.key();
 
             // No need to run through "n" because xdb contains only n-c
-            // transforms. In create_link(), an inversed version for c-n
+            // transforms. In create_proto_link(), an inversed version for c-n
             // transform is created.
             const JSON & c_json = (*a_chain_it)["c"];
             for (auto c_it = c_json.begin();
@@ -198,7 +198,7 @@ void Database::parse_from_json(const JSON & xdb) {
                                 "there is an error in dbgen.py.\n"));
 
                     const JSON & tx_json = xdb["n_to_c_tx"][tx_id]["tx"];
-                    ProtoModule::create_proto_link(
+                    ProtoModule::create_proto_link_pair(
                         tx_json,
                         mod_a,
                         a_chain_name,

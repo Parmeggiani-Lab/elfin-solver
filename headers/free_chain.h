@@ -7,6 +7,7 @@
 
 #include "terminus_type.h"
 #include "vector_utils.h"
+#include "proto_link.h"
 
 namespace elfin {
 
@@ -22,12 +23,12 @@ struct FreeChain {
     FreeChain() : FreeChain(nullptr, TerminusType::NONE, 0) {}
     FreeChain(
         Node * _node,
-        const TerminusType _term,
-        const size_t _chain_id);
+        TerminusType const _term,
+        size_t const _chain_id);
 
     /* accessors */
-    bool operator==(const FreeChain & other) const;
-    bool operator!=(const FreeChain & other) const { return not this->operator==(other); }
+    bool operator==(FreeChain const& other) const;
+    ProtoLink const& random_proto_link() const;
 
     /* printers */
     std::string to_string() const;
@@ -40,7 +41,7 @@ typedef Vector<FreeChain> FreeChainList;
 namespace std {
 
 template <> struct hash<elfin::FreeChain> {
-    size_t operator()(const elfin::FreeChain & x) const {
+    size_t operator()(elfin::FreeChain const& x) const {
         return hash<void*>()((void*) x.node) ^
                hash<size_t>()(static_cast<int>(x.term)) ^
                hash<size_t>()(x.chain_id);

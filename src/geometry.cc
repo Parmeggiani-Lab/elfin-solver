@@ -9,23 +9,8 @@
 namespace elfin
 {
 
-typedef uint32_t uint;
-
-std::string Vector3f::to_string() const
-{
-	std::ostringstream ss;
-	ss << "v3f[" << std::setprecision(10) << x << ", " << y << ", " << z << ']';
-	return ss.str();
-}
-
-std::string Vector3f::to_csv_string() const
-{
-	std::ostringstream ss;
-	ss << std::setprecision(10) << x << ", " << y << ", " << z;
-	return ss.str();
-}
-
-Vector3f Vector3f::operator+(const Vector3f & rhs) const
+/* Vector3f accessors */
+Vector3f Vector3f::operator+(Vector3f const& rhs) const
 {
 	return Vector3f(
 	           rhs.x + this->x,
@@ -33,7 +18,7 @@ Vector3f Vector3f::operator+(const Vector3f & rhs) const
 	           rhs.z + this->z);
 }
 
-Vector3f Vector3f::operator-(const Vector3f & rhs) const
+Vector3f Vector3f::operator-(Vector3f const& rhs) const
 {
 	return Vector3f(
 	           this->x - rhs.x,
@@ -41,7 +26,7 @@ Vector3f Vector3f::operator-(const Vector3f & rhs) const
 	           this->z - rhs.z);
 }
 
-Vector3f Vector3f::operator*(const float f) const
+Vector3f Vector3f::operator*(float const f) const
 {
 	return Vector3f(
 	           f * this->x,
@@ -49,51 +34,35 @@ Vector3f Vector3f::operator*(const float f) const
 	           f * this->z);
 }
 
-Vector3f & Vector3f::operator+=(const Vector3f& rhs)
-{
-	this->x += rhs.x;
-	this->y += rhs.y;
-	this->z += rhs.z;
-
-	return *this;
-}
-
-Vector3f & Vector3f::operator-=(const Vector3f& rhs)
-{
-	this->x -= rhs.x;
-	this->y -= rhs.y;
-	this->z -= rhs.z;
-
-	return *this;
-}
-
-float Vector3f::dot(const Vector3f & rhs) const
+float Vector3f::dot(Vector3f const& rhs) const
 {
 	return this->x * rhs.x + this->y * rhs.y + this->z * rhs.z;
 }
 
-float Vector3f::dist_to(const Vector3f & rhs) const
+float Vector3f::dist_to(Vector3f const& rhs) const
 {
 	return sqrt(sq_dist_to(rhs));
 }
 
-float Vector3f::sq_dist_to(const Vector3f & rhs) const
+float Vector3f::sq_dist_to(Vector3f const& rhs) const
 {
-	const float dx = (this->x - rhs.x);
-	const float dy = (this->y - rhs.y);
-	const float dz = (this->z - rhs.z);
+	float const dx = (this->x - rhs.x);
+	float const dy = (this->y - rhs.y);
+	float const dz = (this->z - rhs.z);
 	return dx * dx + dy * dy + dz * dz;
 }
 
-bool Vector3f::approximates(const Vector3f & ref, const double tolerance)
+bool Vector3f::approximates(
+    Vector3f const& ref,
+    const double tolerance) const
 {
 	if (this->x != ref.x ||
 	        this->y != ref.y ||
 	        this->z != ref.z)
 	{
-		const float dx = this->x - ref.x;
-		const float dy = this->y - ref.y;
-		const float dz = this->z - ref.z;
+		float const dx = this->x - ref.x;
+		float const dy = this->y - ref.y;
+		float const dz = this->z - ref.z;
 
 		wrn("Vector3f ref: %s\ntest: %s\ndiffs: %.8f, %.8f, %.8f\n",
 		    ref.to_string().c_str(),
@@ -114,10 +83,59 @@ bool Vector3f::approximates(const Vector3f & ref, const double tolerance)
 	return true;
 }
 
-/* Transform */
+/* Vector3f modifiers */
+Vector3f & Vector3f::operator+=(Vector3f const& rhs)
+{
+	this->x += rhs.x;
+	this->y += rhs.y;
+	this->z += rhs.z;
 
-/* private */
-void Transform::parse_from_json(const JSON & tx_json) {
+	return *this;
+}
+
+Vector3f & Vector3f::operator-=(Vector3f const& rhs)
+{
+	this->x -= rhs.x;
+	this->y -= rhs.y;
+	this->z -= rhs.z;
+
+	return *this;
+}
+
+/* Vector3f printers */
+std::string Vector3f::to_string() const
+{
+	std::ostringstream ss;
+	ss << "v3f[" << std::setprecision(10) << x << ", " << y << ", " << z << ']';
+	return ss.str();
+}
+
+std::string Vector3f::to_csv_string() const
+{
+	std::ostringstream ss;
+	ss << std::setprecision(10) << x << ", " << y << ", " << z;
+	return ss.str();
+}
+
+/* Vector3f tests */
+// static
+size_t Vector3f::test() {
+	UNIMPLEMENTED();
+
+	// Test ctors, accessors and modifiers
+}
+
+/* Transform public */
+/* Transform ctors */
+Transform::Transform(Transform const& other) {
+	*this = other; // call operator=(const T&)
+}
+
+Transform::Transform(Transform && other) {
+	*this = other; // call operator=(T&&)
+}
+
+Transform::Transform(JSON const& tx_json) {
 	size_t i = 0;
 	for (auto row_json : tx_json) {
 		size_t j = 0;
@@ -131,57 +149,40 @@ void Transform::parse_from_json(const JSON & tx_json) {
 	}
 }
 
-/* public */
-/* ctors */
-Transform::Transform(const Transform & other) {
-	*this = other; // call operator=(const T&)
-}
-
-Transform::Transform(Transform && other) {
-	*this = other; // call operator=(T&&)
-}
-
-Transform::Transform(const JSON & j) {
-	parse_from_json(j);
-}
-
-Transform::Transform(const Data & data) : data_(data) {
-}
-
-/* accessors */
-Transform Transform::operator*(const Transform & rhs) const {
+/* Transform accessors */
+Transform Transform::operator*(Transform const& rhs) const {
 	/*
 	 * In A * B = C, A is this current Transform.
 	 */
-	Data data;
+	Transform new_tx;
 	for (size_t i = 0; i < 4; ++i) {
 		for (size_t j = 0; j < 4; ++j) {
-			data[i][j] = data_[i][0] * rhs.data_[0][j] +
-			            data_[i][1] * rhs.data_[1][j] +
-			            data_[i][2] * rhs.data_[2][j] +
-			            data_[i][3] * rhs.data_[3][j];
+			new_tx.data_[i][j] = data_[i][0] * rhs.data_[0][j] +
+			                     data_[i][1] * rhs.data_[1][j] +
+			                     data_[i][2] * rhs.data_[2][j] +
+			                     data_[i][3] * rhs.data_[3][j];
 		}
 	}
 
-	return Transform(data);
+	return new_tx;
 }
 
-Vector3f Transform::operator*(const Vector3f & vec) const {
-	const float x = vec[0] + data_[3][0];
-	const float y = vec[1] + data_[3][1];
-	const float z = vec[2] + data_[3][2];
+Vector3f Transform::operator*(Vector3f const& vec) const {
+	float const x = vec[0] + data_[3][0];
+	float const y = vec[1] + data_[3][1];
+	float const z = vec[2] + data_[3][2];
 
-	const float rx = data_[0][0] * x +
+	float const rx = data_[0][0] * x +
 	                 data_[0][1] * y +
 	                 data_[0][2] * z +
 	                 data_[0][3];
 
-	const float ry = data_[1][0] * x +
+	float const ry = data_[1][0] * x +
 	                 data_[1][1] * y +
 	                 data_[1][2] * z +
 	                 data_[1][3];
 
-	const float rz = data_[2][0] * x +
+	float const rz = data_[2][0] * x +
 	                 data_[2][1] * y +
 	                 data_[2][2] * z +
 	                 data_[2][3];
@@ -190,21 +191,22 @@ Vector3f Transform::operator*(const Vector3f & vec) const {
 }
 
 Transform Transform::inversed() const {
-	Data data;
+	Transform new_tx;
 	for (size_t i = 0; i < 4; ++i) {
-		for (size_t j = i + 1; j < 4; ++j) {
-			data[i][j] = data_[j][i];
+		for (size_t j = i; j < 4; ++j) {
+			new_tx.data_[i][j] = data_[j][i];
+			new_tx.data_[j][i] = data_[i][j];
 		}
 	}
-	return Transform(data);
+	return new_tx;
 }
 
 Vector3f Transform::collapsed() const {
 	return this->operator*(Vector3f());
 }
 
-/* modifiers */
-Transform & Transform::operator=(const Transform & other) {
+/* Transform modifiers */
+Transform & Transform::operator=(Transform const& other) {
 	data_ = other.data_;
 	return *this;
 }
@@ -214,7 +216,7 @@ Transform & Transform::operator=(Transform && other) {
 	return *this;
 }
 
-Transform & Transform::operator*=(const Transform & rhs) {
+Transform & Transform::operator*=(Transform const& rhs) {
 	/*
 	 * A *= B => A = B * A
 	 * A is this current Transform.
@@ -222,16 +224,20 @@ Transform & Transform::operator*=(const Transform & rhs) {
 	for (size_t i = 0; i < 4; ++i) {
 		for (size_t j = 0; j < 4; ++j) {
 			data_[i][j] = rhs.data_[i][0] * data_[0][j] +
-			                  rhs.data_[i][1] * data_[1][j] +
-			                  rhs.data_[i][2] * data_[2][j] +
-			                  rhs.data_[i][3] * data_[3][j];
+			              rhs.data_[i][1] * data_[1][j] +
+			              rhs.data_[i][2] * data_[2][j] +
+			              rhs.data_[i][3] * data_[3][j];
 		}
 	}
 
 	return *this;
 }
 
-/* printers */
+bool Transform::operator==(Transform const& other) const {
+	return data_ == other.data_;
+}
+
+/* Transform printers */
 std::string Transform::to_string() const {
 	std::ostringstream ss;
 
@@ -254,6 +260,14 @@ std::string Transform::to_string() const {
 std::string Transform::to_csv_string() const
 {
 	return collapsed().to_csv_string();
+}
+
+/* Transform tests */
+// static
+size_t Transform::test() {
+	UNIMPLEMENTED();
+
+	// Test ctors, accessors and modifiers
 }
 
 } // namespace elfin

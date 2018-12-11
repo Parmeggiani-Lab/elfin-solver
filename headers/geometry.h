@@ -14,11 +14,12 @@ namespace elfin
 {
 
 struct Vector3f {
+	/* data */
 	float x, y, z;
 
-	/* ctors & dtors */
+	/* ctors */
 	Vector3f() : Vector3f(0, 0, 0) {}
-	Vector3f(const Vector3f & rhs) :
+	Vector3f(Vector3f const& rhs) :
 		x(rhs.x), y(rhs.y), z(rhs.z) {}
 	Vector3f(float _x, float _y, float _z) :
 		x(_x), y(_y), z(_z) {}
@@ -28,7 +29,9 @@ struct Vector3f {
 	template <typename ItrBegin, typename ItrEnd>
 	Vector3f(ItrBegin begin, ItrEnd end) {
 		NICE_PANIC((end - begin) < 3,
-		           string_format("Invalid Argument Size: %lu, should be <3\n", end - begin));
+		           string_format(
+		               "Invalid Argument Size: %lu, should be <3\n",
+		               end - begin));
 
 		auto itr = begin;
 		x = *itr++;
@@ -36,31 +39,38 @@ struct Vector3f {
 		z = *itr++;
 	}
 
-	/* other methods */
+	/* accessors */
+	Vector3f operator+(Vector3f const& rhs) const;
+	Vector3f operator-(Vector3f const& rhs) const;
+	Vector3f operator*(float const f) const;
+	float operator[](size_t const idx) const {
+		DEBUG(idx > 2,
+		      string_format(
+		          ("Vector3f operator[] out of bound "
+		           "(max index is 2, but got %lu)"),
+		          idx));
+		return *(&x + idx);
+	}
+	float dot(Vector3f const& rhs) const;
+	float dist_to(Vector3f const& rhs) const;
+	float sq_dist_to(Vector3f const& rhs) const;
+
+	// Default tolerance is 1e-4 because PDBs have only 4 decimals of
+	// precision
+	bool approximates(
+	    Vector3f const& ref,
+	    double const tolerance = 1e-4) const;
+
+	/* modifiers */
+	Vector3f & operator+=(Vector3f const& rhs);
+	Vector3f & operator-=(Vector3f const& rhs);
+
+	/* printers */
 	std::string to_string() const;
 	std::string to_csv_string() const;
 
-	Vector3f operator+(const Vector3f & rhs) const;
-	Vector3f operator-(const Vector3f & rhs) const;
-	Vector3f operator*(const float f) const;
-	Vector3f & operator+=(const Vector3f & rhs);
-	Vector3f & operator-=(const Vector3f & rhs);
-	float operator[](const size_t idx) {
-		DEBUG(idx > 2,
-		      string_format("Vector3f operator[] out of bound (max index is 2, but got %lu)", idx));
-		return *(&x + idx);
-	}
-	float operator[](const size_t idx) const {
-		DEBUG(idx > 2,
-		      string_format("Vector3f operator[] out of bound (max index is 2, but got %lu)", idx));
-		return *(&x + idx);
-	}
-	float dot(const Vector3f & rhs) const;
-	float dist_to(const Vector3f & rhs) const;
-	float sq_dist_to(const Vector3f & rhs) const;
-
-	// We use 1e-4 because PDBs have only 4 decimals of precision
-	bool approximates(const Vector3f & ref, const double tolerance = 1e-4);
+	/* tests */
+	static size_t test();
 };
 typedef std::vector<Vector3f> V3fList;
 
@@ -75,38 +85,42 @@ private:
 			{0, 0, 1, 0},
 			{0, 0, 0, 0}
 		};
-		float * operator[](const size_t i) { return data[i]; }
-		const float * operator[](const size_t i) const { return data[i]; }
+		float * operator[](size_t const i) { return data[i]; }
+		float const* operator[](size_t const i) const { return data[i]; }
+		bool operator==(Data const& other) const {
+			return memcmp(data, other.data, sizeof(data)) == 0;
+		}
 	};
 
 	/* data */
 	Data data_;
 
-	/* modifiers */
-	void parse_from_json(const JSON & tx_json);
 public:
 	/* ctors */
 	Transform() {}
-	Transform(const Transform & other);
+	Transform(Transform const& other);
 	Transform(Transform && other);
-	Transform(const JSON & j);
-	Transform(const Data & data);
+	Transform(JSON const& tx_json);
 
 	/* accessors */
-	Transform operator*(const Transform & rhs) const;
-	Vector3f operator*(const Vector3f & vec) const;
+	Transform operator*(Transform const& rhs) const;
+	Vector3f operator*(Vector3f const& vec) const;
 	Transform inversed() const;
 	Vector3f collapsed() const;
+	bool operator==(Transform const& other) const;
+	bool operator!=(Transform const& other) const { return not this->operator==(other); }
 
 	/* modifiers */
-	Transform & operator=(const Transform & other);
+	Transform & operator=(Transform const& other);
 	Transform & operator=(Transform && other);
-	Transform & operator*=(const Transform & rhs);
+	Transform & operator*=(Transform const& rhs);
 
 	/* printers */
-
 	std::string to_string() const;
 	std::string to_csv_string() const;
+
+	/* tests */
+	static size_t test();
 };
 
 } // namespace elfin

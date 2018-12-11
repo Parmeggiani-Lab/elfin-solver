@@ -57,6 +57,7 @@ public:
             NICE_PANIC(neighbor_size > 2);
             for (auto & link : curr_node_->neighbors()) {
                 if (link.dst().node != prev_node) {
+                    // curr_link links curr_node to next_node
                     curr_link_ = &link;
                     next_node_ = link.dst().node;
                     break;

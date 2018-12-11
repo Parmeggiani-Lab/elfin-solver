@@ -10,30 +10,20 @@ namespace elfin {
 
 /* free methods */
 bool compare_free_chain_nodes(
-    const FreeChain & a,
-    const FreeChain & b) {
+    FreeChain const& a,
+    FreeChain const& b) {
     return a.node == b.node;
 }
 
 /* protected */
-
 /* accessors */
-const ProtoLink & NodeTeam::random_proto_link(
-    const FreeChain & free_chain) const {
-    const ProtoChain & proto_chain =
-        free_chain.node->prototype()->
-        proto_chains().at(free_chain.chain_id);
-
-    return proto_chain.pick_random_proto_link(free_chain.term);
-}
-
 bool NodeTeam::collides(
-    const Vector3f & new_com,
-    const float mod_radius) const {
+    Vector3f const& new_com,
+    float const mod_radius) const {
 
-    for (const auto node_ptr : nodes_) {
-        const float sq_com_dist = node_ptr->tx_.collapsed().sq_dist_to(new_com);
-        const float required_com_dist = mod_radius +
+    for (auto const node_ptr : nodes_) {
+        float const sq_com_dist = node_ptr->tx_.collapsed().sq_dist_to(new_com);
+        float const required_com_dist = mod_radius +
                                         node_ptr->prototype()->radius;
         if (sq_com_dist < (required_com_dist * required_com_dist)) {
             return true;
@@ -54,8 +44,8 @@ void NodeTeam::disperse() {
 }
 
 Node * NodeTeam::add_member(
-    const ProtoModule * prot,
-    const Transform & tx) {
+    ProtoModule const* prot,
+    Transform const& tx) {
     Node * new_node = new Node(prot, tx);
     nodes_.push_back(new_node);
 
@@ -70,31 +60,6 @@ Node * NodeTeam::add_member(
     }
 
     return new_node;
-}
-
-const Node * NodeTeam::invite_new_member(
-    const FreeChain free_chain_a,
-    const ProtoLink & proto_link) {
-
-    const TerminusType term_a = free_chain_a.term;
-    const TerminusType term_b = OPPOSITE_TERM[static_cast<int>(term_a)];
-
-    Node * node_a = free_chain_a.node;
-    Node * node_b = add_member(
-                        proto_link.target_mod,
-                        node_a->tx_ * proto_link.tx);
-    const FreeChain free_chain_b = FreeChain(
-                                       node_b,
-                                       term_b,
-                                       proto_link.target_chain_id);
-
-    node_a->add_link(free_chain_a, free_chain_b);
-    node_b->add_link(free_chain_b, free_chain_a);
-
-    free_chains_.lift_erase(free_chain_a);
-    free_chains_.lift_erase(free_chain_b);
-
-    return node_b;
 }
 
 void NodeTeam::remove_member(Node * node) {
@@ -117,7 +82,7 @@ NodeTeam::NodeTeam() {
 }
 
 NodeTeam::NodeTeam(NodeTeam && other) {
-    *this = other; // Call operator=(T&&)
+    *this = std::move(other); // Call operator=(T&&)
 }
 
 /* dtors */

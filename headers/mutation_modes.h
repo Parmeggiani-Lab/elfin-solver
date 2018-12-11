@@ -16,7 +16,6 @@ namespace elfin {
     MACRO(SWAP) \
     MACRO(CROSS) \
     MACRO(REGENERATE) \
-    MACRO(RANDOMIZE) \
     MACRO(_ENUM_SIZE) \
 
 GEN_ENUM_AND_STRING(MutationMode, MutationModeNames, FOREACH_MUTATION_MODES);

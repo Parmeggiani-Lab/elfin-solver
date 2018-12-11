@@ -43,7 +43,8 @@ ProtoModule::ProtoModule(const std::string & _name,
 }
 
 /* accessors */
-size_t ProtoModule::find_chain_id(const std::string & chain_name) const {
+size_t ProtoModule::find_chain_id(
+    const std::string & chain_name) const {
     for (auto & chain : chains_) {
         if (chain.name == chain_name) {
             return chain.id;
@@ -61,23 +62,24 @@ size_t ProtoModule::find_chain_id(const std::string & chain_name) const {
     NICE_PANIC("Chain Not Found");
 }
 
-Vector<const ProtoLink *> ProtoModule::find_all_links_to(
-    const TerminusType src_term,
-    const ProtoModule * src_module,
-    const size_t dst_chain_id) const {
-    Vector<const ProtoLink *> res;
+// Vector<const ProtoLink *>
+// ProtoModule::find_all_links_to(
+//     const TerminusType src_term,
+//     const ProtoModule * dst_module,
+//     const size_t dst_chain_id) const {
+//     Vector<const ProtoLink *> res;
 
-    // Collect links from each chain
-    for (size_t i = 0; i < chains_.size(); ++i) {
-        const ProtoLink * link_ptr =
-            find_link_to(i, src_term, src_module, dst_chain_id);
-        if (link_ptr) {
-            res.push_back(link_ptr);
-        }
-    }
+//     // Collect links from each chain
+//     for (size_t i = 0; i < chains_.size(); ++i) {
+//         const ProtoLink * link_ptr =
+//             find_link_to(i, src_term, dst_module, dst_chain_id);
+//         if (link_ptr) {
+//             res.push_back(link_ptr);
+//         }
+//     }
 
-    return res;
-}
+//     return res;
+// }
 
 const ProtoLink * ProtoModule::find_link_to(
     const size_t src_chain_id,
@@ -97,22 +99,54 @@ const ProtoLink * ProtoModule::find_link_to(
     return nullptr;
 }
 
+const ProtoLink * ProtoModule::find_link_to(
+    const TerminusType src_term,
+    const ProtoModule * dst_module,
+    const size_t dst_chain_id) const {
+    for (size_t i = 0; i < chains_.size(); ++i) {
+        const ProtoLink * link_ptr =
+            find_link_to(i, src_term, dst_module, dst_chain_id);
+        if (link_ptr) {
+            return link_ptr;
+        }
+    }
+
+    return nullptr;
+}
+
 bool ProtoModule::has_link_to(
     const TerminusType src_term,
-    ConstProtoModulePtr module,
-    const size_t chain_id) const {
+    ConstProtoModulePtr dst_module,
+    const size_t dst_chain_id) const {
     // Return true on first find
     for (const ProtoChain & chain : chains_) {
-        const ProtoTerminus & proto_term =
-            chain.get_term(src_term);
-        ProtoLinkPtrSetCItr itr =
-            proto_term.find_link_to(module, chain_id);
-        if (itr != proto_term.proto_link_set().end()) {
+        const ProtoTerminus & proto_term = chain.get_term(src_term);
+        if (proto_term.has_link_to(dst_module, dst_chain_id)) {
             return true;
         }
     }
 
     return false;
+}
+
+Vector<const ProtoModule *>
+ProtoModule::find_intermediate_proto_modules_to(
+    const size_t src_chain_id,
+    const TerminusType src_term,
+    const ProtoModule * dst_module,
+    const size_t dst_chain_id) const {
+    Vector<const ProtoModule *> res;
+
+    // Collect ProtoModules from each chain
+    // for (size_t i = 0; i < chains_.size(); ++i) {
+    //     const ProtoLink * link_ptr =
+    //         find_link_to(i, src_term, dst_module, dst_chain_id);
+    //     if (link_ptr) {
+    //         res.push_back(link_ptr->module);
+    //     }
+    // }
+
+    return res;
 }
 
 /* modifiers */
@@ -139,7 +173,7 @@ void ProtoModule::finalize() {
  * mod_a's C-terminus connects to mod_b's N-terminus
  * (static)
  */
-void ProtoModule::create_proto_link(
+void ProtoModule::create_proto_link_pair(
     const JSON & tx_json,
     ProtoModule * mod_a,
     const std::string & a_chain_name,
@@ -204,11 +238,16 @@ void ProtoModule::create_proto_link(
     if (a_chain.c_term_.proto_links().size() == 1) { // 0 -> 1 indicates a new interface
         mod_a->counts_.c_interfaces++;
     }
+
     b_chain.n_term_.proto_link_list_.emplace_back(tx_inv, mod_a, a_chain_id);
     mod_b->counts_.n_links++;
     if (b_chain.n_term_.proto_links().size() == 1) { // 0 -> 1 indicates a new interface
         mod_b->counts_.n_interfaces++;
     }
+
+    ProtoLink::pair_proto_links(
+        a_chain.c_term_.proto_link_list_.back(),
+        b_chain.n_term_.proto_link_list_.back());
 }
 
 /* printers */

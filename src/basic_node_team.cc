@@ -11,14 +11,14 @@
 #define NO_INSERT
 #define NO_SWAP
 #define NO_CROSS
-// #define NO_RANDOMIZE
+// #define NO_REGENERATE
 
 #if defined(NO_ERODE) || \
 defined(NO_DELETE) || \
 defined(NO_INSERT) || \
 defined(NO_SWAP) || \
 defined(NO_CROSS) || \
-defined(NO_RANDOMIZE)
+defined(NO_REGENERATE)
 #warning "At least one mutation function is DISABLED!!"
 #endif
 
@@ -32,21 +32,9 @@ namespace elfin {
 void BasicNodeTeam::fix_limb_transforms(const Link & arrow) {
     BasicNodeGenerator limb_gtor(&arrow);
     while (not limb_gtor.is_done()) {
-        Node * prev_node = limb_gtor.curr_node();
-
-        const Link * link = limb_gtor.curr_link();
-        DEBUG(link == nullptr);
-
-        Node * curr_node = limb_gtor.next(); // This modifies limb_gtor.curr_link()
-        const ProtoLink * proto_link =
-            prev_node->prototype()->find_link_to(
-                link->src().chain_id,
-                link->src().term,
-                link->dst().node->prototype(),
-                link->dst().chain_id);
-
-        DEBUG(proto_link == nullptr);
-        curr_node->tx_ =  proto_link->tx * curr_node->tx_;
+        const Link * curr_link = limb_gtor.curr_link();
+        Node * next_node = limb_gtor.next();
+        next_node->tx_ = curr_link->prototype()->tx() * next_node->tx_;
     }
 }
 
@@ -125,7 +113,8 @@ bool BasicNodeTeam::delete_mutate() {
 #ifndef NO_DELETE
     if (not free_chains_.empty()) {
         // Collect deletable nodes
-        Vector<Node *> deletable_nodes;
+        Vector<std::tuple<Node *, ProtoLink const*>>
+                deletables;
 
         Node * tip = free_chains_[0].node; // starting at either end is fine
         BasicNodeGenerator node_gtor(tip);
@@ -143,48 +132,51 @@ bool BasicNodeTeam::delete_mutate() {
             //              (fchain1)                         (fchain2)
             //                 vvv                               vvv
             //                 dst->-<-src--[curr_node]--src->-<-dst
-            const bool deletable =
-                fchain1.node->prototype()->has_link_to(
+            ProtoLink const* const proto_link_ptr =
+                fchain1.node->prototype()->find_link_to(
                     fchain1.term,
                     fchain2.node->prototype(),
                     fchain2.chain_id);
             // The reverse doesn't need to be checked, because all links have
             // a reverse
 
-            if (deletable) {
-                deletable_nodes.push_back(curr_node);
+            if (proto_link_ptr) {
+                deletables.push_back(
+                    std::make_tuple(curr_node, proto_link_ptr));
             }
 
             curr_node = next_node;
             next_node = node_gtor.next();
         }
 
-        if (not deletable_nodes.empty()) {
+        if (not deletables.empty()) {
             // Delete a random one
-            Node * to_delete = deletable_nodes.pick_random();
+            auto to_delete = deletables.pick_random();
+            Node * delete_node = std::get<0>(to_delete);
+            ProtoLink const* proto_link = std::get<1>(to_delete);
 
             // Link up neighbor1 and neighbor2
-            // X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
-            //                 (  link1  )               (  link2  )
-            //                 vvvvvvvvvvv               vvvvvvvvvvv
-            //                 dst->-<-src--[curr_node]--src->-<-dst
-            const Link & link1 = to_delete->neighbors().at(0);
-            const Link & link2 = to_delete->neighbors().at(1);
+            // X--[neighbor1]--src->-<-dst                 dst->-<-src--[neighbor2]--...
+            //                 (  link1  )                 (  link2  )
+            //                 vvvvvvvvvvv                 vvvvvvvvvvv
+            //                 dst->-<-src--[delete_node]--src->-<-dst
+            const Link & link1 = delete_node->neighbors().at(0);
+            const Link & link2 = delete_node->neighbors().at(1);
 
             Node * neighbor1 = link1.dst().node;
             Node * neighbor2 = link2.dst().node;
 
             neighbor1->remove_link(link1.reversed());
             neighbor2->remove_link(link2.reversed());
-            // X--[neighbor1]--X                                   X--[neighbor2]--...
-            //                 (  link1  )               (  link2  )
-            //                 vvvvvvvvvvv               vvvvvvvvvvv
-            //                 dst->-<-src--[curr_node]--src->-<-dst
+            // X--[neighbor1]--X                                     X--[neighbor2]--...
+            //                 (  link1  )                 (  link2  )
+            //                 vvvvvvvvvvv                 vvvvvvvvvvv
+            //                 dst->-<-src--[delete_node]--src->-<-dst
 
             // Create links between neighbor1 and neighbor2
-            const Link arrow1(link1.dst(), link2.dst());
-            neighbor1->add_link(arrow1.src(), arrow1.dst());
-            neighbor2->add_link(link2.dst(), link1.dst());
+            const Link arrow1(link1.dst(), proto_link, link2.dst());
+            neighbor1->add_link(arrow1);
+            neighbor2->add_link(arrow1.reversed());
             //           link1.dst(), link2.dst()
             //                 vvv     vvv
             // X--[neighbor1]--src->-<-dst
@@ -193,9 +185,10 @@ bool BasicNodeTeam::delete_mutate() {
             //           link1.dst(), link2.dst()
 
             // From this point on, memory of link1 and link2 are invalid!!!
-            remove_member(to_delete);
+            remove_member(delete_node);
 
-            // to_delete is guranteed to not be a tip so no need to clean up free_chains_
+            // delete_node is guranteed to not be a tip so no need to clean up
+            // free_chains_
 
             fix_limb_transforms(arrow1);
 
@@ -389,36 +382,51 @@ bool BasicNodeTeam::cross_mutate(
 }
 
 bool BasicNodeTeam::regenerate() {
+    bool mutate_success = false;
+
+#ifndef NO_REGENERATE
     if (nodes_.empty()) {
         // Pick random initial member
         add_member(XDB.basic_mods().draw());
     }
 
-    DEBUG(free_chains_.empty());
-
-    FreeChain free_chain = free_chains_.pick_random();
+    FreeChain free_chain_a = free_chains_.pick_random();
     while (size() < Candidate::MAX_LEN) {
-        const ProtoLink & pt_link = random_proto_link(free_chain);
-        invite_new_member(free_chain, pt_link);
+        const ProtoLink & proto_link =
+            free_chain_a.random_proto_link();
+
+        Node * node_a = free_chain_a.node;
+        Node * node_b = add_member(
+                            proto_link.module(),
+                            node_a->tx_ * proto_link.tx());
+
+        const TerminusType term_a =
+            free_chain_a.term;
+        const TerminusType term_b =
+            OPPOSITE_TERM[static_cast<int>(term_a)];
+
+        const FreeChain free_chain_b =
+            FreeChain(node_b, term_b, proto_link.chain_id());
+
+        node_a->add_link(free_chain_a, &proto_link, free_chain_b);
+        node_b->add_link(free_chain_b, proto_link.reverse(), free_chain_a);
+
+        free_chains_.lift_erase(free_chain_a);
+        free_chains_.lift_erase(free_chain_b);
 
         // Pick next tip chain
-        free_chain = free_chains_.pick_random();
+        free_chain_a = free_chains_.pick_random();
     }
 
-    return true;
+    mutate_success = true;
+#endif  /* ifndef NO_REGENERATE */
+
+    return mutate_success;
 }
 
 bool BasicNodeTeam::randomize_mutate() {
-    bool mutate_success = false;
-
-#ifndef NO_RANDOMIZE
     disperse();
-    add_member(XDB.basic_mods().draw());
-    regenerate();
-
-    mutate_success = true;
-#endif
-
+    bool const mutate_success = regenerate();
     return mutate_success;
 }
 
@@ -529,36 +537,39 @@ MutationMode BasicNodeTeam::mutate(
 
     MutationModeList modes = gen_mutation_mode_list();
 
-    bool mutation_ok = false;
+    bool mutate_success = false;
     MutationMode mode;
 
-    while (not mutation_ok and not modes.empty()) {
+    while (not mutate_success and not modes.empty()) {
         mode = modes.pop_random();
         switch (mode) {
         case MutationMode::ERODE:
-            mutation_ok = erode_mutate();
+            mutate_success = erode_mutate();
             break;
         case MutationMode::DELETE:
-            mutation_ok = delete_mutate();
+            mutate_success = delete_mutate();
             break;
         case MutationMode::INSERT:
-            mutation_ok = insert_mutate();
+            mutate_success = insert_mutate();
             break;
         case MutationMode::SWAP:
-            mutation_ok = swap_mutate();
+            mutate_success = swap_mutate();
             break;
         case MutationMode::CROSS:
-            mutation_ok = cross_mutate(father);
+            mutate_success = cross_mutate(father);
             break;
         case MutationMode::REGENERATE:
-            mutation_ok = regenerate();
-            break;
-        case MutationMode::RANDOMIZE:
-            mutation_ok = randomize_mutate();
+            mutate_success = regenerate();
             break;
         default:
             bad_mutation_mode(mode);
         }
+    }
+
+    if (not mutate_success) {
+        mutate_success = randomize_mutate();
+        NICE_PANIC(not mutate_success,
+                   "Randomize Mutate also failed - bug?");
     }
 
     return mode;
@@ -589,17 +600,23 @@ std::string BasicNodeTeam::to_string() const {
 StrList BasicNodeTeam::get_node_names() const {
     StrList res;
 
-    NICE_PANIC(free_chains_.empty());
-    Node * start_node = free_chains_.at(0).node;
-    BasicNodeGenerator node_gtor(start_node);
+    if (not free_chains_.empty()) {
+        NICE_PANIC(free_chains_.size() != 2);
 
-    while (not node_gtor.is_done()) {
-        res.emplace_back(node_gtor.next()->prototype()->name);
+        // Start at either tip
+        BasicNodeGenerator node_gtor(free_chains_.at(0).node);
+
+        while (not node_gtor.is_done()) {
+            res.emplace_back(node_gtor.next()->prototype()->name);
+        }
+
+        DEBUG(res.size() != size(),
+              string_format("res.size()=%lu, size()=%lu\n",
+                            res.size(), this->size()));
     }
-
-    DEBUG(res.size() != size(),
-          string_format("res.size()=%lu, size()=%lu\n",
-                        res.size(), this->size()));
+    else {
+        res.emplace_back("[Empty]");
+    }
 
     return res;
 }

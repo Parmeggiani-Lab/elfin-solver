@@ -55,23 +55,34 @@ public:
 
     /* accessors */
     size_t find_chain_id(const std::string & chain_name) const;
-    Vector<const ProtoLink *> find_all_links_to(
-        const TerminusType term,
-        const ProtoModule * module,
-        const size_t chain_id) const;
+    // Vector<const ProtoLink *>
+    // find_all_links_to(
+    //     const TerminusType src_term,
+    //     const ProtoModule * dst_module,
+    //     const size_t dst_chain_id) const;
     const ProtoLink * find_link_to(
         const size_t src_chain_id,
         const TerminusType src_term,
         const ProtoModule * dst_module,
         const size_t dst_chain_id) const;
+    const ProtoLink * find_link_to(
+        const TerminusType src_term,
+        const ProtoModule * dst_module,
+        const size_t dst_chain_id) const;
     bool has_link_to(
         const TerminusType src_term,
-        ConstProtoModulePtr src_module,
+        ConstProtoModulePtr dst_module,
+        const size_t dst_chain_id) const;
+    Vector<const ProtoModule *>
+    find_intermediate_proto_modules_to(
+        const size_t src_chain_id,
+        const TerminusType src_term,
+        const ProtoModule * dst_module,
         const size_t dst_chain_id) const;
 
     /* modifiers */
     void finalize();
-    static void create_proto_link(
+    static void create_proto_link_pair(
         const JSON & tx_json,
         ProtoModule * mod_a,
         const std::string & a_chain_name,

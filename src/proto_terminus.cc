@@ -22,7 +22,10 @@ void ProtoTerminus::finalize() {
      * Sort links by interface count in ascending order to facilitate fast
      * pick_random() that support partitioning by interface count.
      */
-    std::sort(proto_link_list_.begin(), proto_link_list_.end());
+    std::sort(
+        proto_link_list_.begin(),
+        proto_link_list_.end(),
+        CompareProtoLinkByModuleInterfaces());
 
     std::vector<float> n_cpd, c_cpd;
     std::vector<ProtoLink *> proto_link_ptrs;
@@ -32,11 +35,11 @@ void ProtoTerminus::finalize() {
             itr++) {
 
         ProtoLink & proto_link = *itr;
-        DEBUG(nullptr == proto_link.target_mod);
+        DEBUG(nullptr == proto_link.module());
 
         proto_link_set_.insert(&proto_link);
 
-        const ProtoModule * target_prot = proto_link.target_mod;
+        const ProtoModule * target_prot = proto_link.module();
 
         /*
          * Note: assigning 0 probability for ProtoLinks that have more than 2
@@ -85,9 +88,9 @@ void ProtoTerminus::finalize() {
         proto_link_ptrs.push_back(&proto_link);
 #ifdef PRINT_FINALIZE
         wrn("ProtoLink to %s into chain %lu with %lu interfaces\n",
-            proto_link.target_mod->name.c_str(),
-            proto_link.target_chain_id,
-            proto_link.target_mod->counts().all_interfaces());
+            proto_link.module()->name.c_str(),
+            proto_link.chain_id(),
+            proto_link.module()->counts().all_interfaces());
 #endif  /* ifdef PRINT_FINALIZE */
     }
 
@@ -96,8 +99,8 @@ void ProtoTerminus::finalize() {
 
     if (not proto_link_ptrs.empty()) {
         const ProtoLink * test_link = proto_link_ptrs.at(0);
-        NICE_PANIC(not has_link_to(test_link->target_mod,
-                                   test_link->target_chain_id));
+        NICE_PANIC(not has_link_to(test_link->module(),
+                                   test_link->chain_id()));
     }
 }
 
@@ -115,16 +118,17 @@ const ProtoLink & ProtoTerminus::pick_random_proto_link(
 }
 
 ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
-    ConstProtoModulePtr module,
-    const size_t chain_id) const {
+    ConstProtoModulePtr dst_module,
+    const size_t dst_chain_id) const {
     /*
      * Note:
-     *  - assumes that links are identical as long as their
-     * target_mod and target_chain_id are identical.
+     *  - assumes that links are identical as long as their module and
+     *    chain_id are identical. In other words the transformation matrix is
+     *    not considered.
      *  - assumes that there is only one ProtoLink that will meet the search
      *    criteria, which is true for the state of XDB at the time of writing.
      */
-    const ProtoLink key_link(Transform(), module, chain_id);
+    const ProtoLink key_link(Transform(), dst_module, dst_chain_id);
     return proto_link_set_.find(&key_link);
 }
 

@@ -20,16 +20,6 @@ namespace elfin {
 GEN_ENUM_AND_STRING(PointMutateMode, PointMutateModeNames, FOREACH_PMM);
 
 class NodeTeam {
-private:
-    /* forbidden */
-    NodeTeam(const NodeTeam & other) {
-        NICE_PANIC("Forbidden Copy-Ctor");
-    }
-
-    NodeTeam & operator=(const NodeTeam & other) {
-        NICE_PANIC("Forbidden Operator");
-    }
-
 protected:
     /* types */
     typedef VectorMap<Node *> Nodes;
@@ -42,19 +32,14 @@ protected:
 
     /* accessors */
     bool collides(
-        const Vector3f & new_com,
-        const float mod_radius) const;
-    const ProtoLink & random_proto_link(
-        const FreeChain & free_chain) const;
+        Vector3f const & new_com,
+        float const mod_radius) const;
 
     /* modifiers */
     void disperse();
     Node * add_member(
-        const ProtoModule * prot,
-        const Transform & tx = Transform());
-    const Node * invite_new_member(
-        const FreeChain free_chain_a, // Use a copy so deleting it won't invalid later access
-        const ProtoLink & proto_link);
+        ProtoModule const* prot,
+        Transform const& tx = Transform());
     void remove_member(Node *  node);
     void remove_member_chains(Node *  node);
 
@@ -62,26 +47,28 @@ public:
     /* ctors */
     NodeTeam();
     NodeTeam(NodeTeam && other);
+    NodeTeam(NodeTeam const& other) = delete;
+    NodeTeam & operator=(NodeTeam const& other) = delete;
     virtual NodeTeam * clone() const = 0;
 
     /* dtors */
     virtual ~NodeTeam();
 
     /* accessors */
-    const Nodes & nodes() const { return nodes_; }
-    const FreeChainList & free_chains() const { return free_chains_; }
+    Nodes const& nodes() const { return nodes_; }
+    FreeChainList const& free_chains() const { return free_chains_; }
     size_t size() const { return nodes_.size(); }
 
-    virtual float score(const WorkArea * wa) const = 0;
+    virtual float score(WorkArea const* wa) const = 0;
     virtual Crc32 checksum() const = 0;
 
     /* modifiers */
     NodeTeam & operator=(NodeTeam && other);
 
-    virtual void deep_copy_from(const NodeTeam * other) = 0;
+    virtual void deep_copy_from(NodeTeam const* other) = 0;
     virtual MutationMode mutate(
-        const NodeTeam * mother,
-        const NodeTeam * father) = 0;
+        NodeTeam const* mother,
+        NodeTeam const* father) = 0;
     virtual void randomize() = 0;
 
     /* printers */
