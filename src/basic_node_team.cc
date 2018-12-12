@@ -149,6 +149,9 @@ bool BasicNodeTeam::delete_mutate() {
                     std::make_tuple(curr_node, nullptr));
             }
             else if (neighbor_size == 2) {
+                // Find a link that skips curr_node. The reverse doesn't need to
+                // be checked, because all links have a reverse.
+
                 const FreeChain & fchain1 = curr_node->neighbors().at(0).dst();
                 const FreeChain & fchain2 = curr_node->neighbors().at(1).dst();
 
@@ -156,9 +159,6 @@ bool BasicNodeTeam::delete_mutate() {
                 //              (fchain1)                         (fchain2)
                 //                 vvv                               vvv
                 //                 dst->-<-src--[curr_node]--src->-<-dst
-
-                // Find a link that skips curr_node. The reverse doesn't need to
-                // be checked, because all links have a reverse.
                 ProtoLink const* const proto_link_ptr =
                     fchain1.node->prototype()->find_link_to(
                         fchain1.chain_id,
@@ -229,7 +229,7 @@ bool BasicNodeTeam::delete_mutate() {
         }
         else {
             // This is a tip node. Deleting is trivial - same as erode_mutate().
-            erode_mutate(delete_node, 1);
+            erode_mutate(delete_node, 1, false);
         }
 
         mutate_success = true;
@@ -246,21 +246,46 @@ bool BasicNodeTeam::insert_mutate() {
     if (not free_chains_.empty()) {
         // Walk through all links and find insert points
 
-        Node * tip = free_chains_[0].node; // starting at either end is fine
-        BasicNodeGenerator node_gtor(tip);
-        node_gtor.next(); // skip start tip
+        // starting at either end is fine
+        DEBUG(free_chains_.size() != 2);
+        Node * start_node = free_chains_[0].node;
+        BasicNodeGenerator node_gtor(start_node);
 
-        Node * curr_node = node_gtor.next();
-        Node * next_node = node_gtor.next();
-        while (next_node) { // skip end tip too
-            DEBUG(curr_node->neighbors().size() != 2);
-
+        Node * prev_node = nullptr, * curr_node = nullptr;
+        Node * next_node = node_gtor.next(); // starts with start_node
+        do {
+            prev_node = curr_node;
             curr_node = next_node;
-            next_node = node_gtor.next();
-        }
+            next_node = node_gtor.next(); // can be nullptr
+            const size_t neighbor_size = curr_node->neighbors().size();
 
+            if (prev_node == nullptr) {
+                // is start_node
+                NICE_PANIC(neighbor_size != 1,
+                           string_format(("prev_node == nullptr but "
+                                          "neighbor_size = %lu"), neighbor_size));
+                UNIMPLEMENTED();
+            }
+            
+            if (next_node == nullptr) {
+                // is end_node
+                NICE_PANIC(neighbor_size != 1,
+                           string_format(("next_node == nullptr but "
+                                          "neighbor_size = %lu"), neighbor_size));
+                UNIMPLEMENTED();
+            }
 
-        //
+            if(neighbor_size != 2) {
+                // is some node in between start_node and end_node
+                NICE_PANIC(neighbor_size != 2,
+                           string_format(("neither prev_node nor next_node is nullptr "
+                                          "but neighbor_size = %lu"), neighbor_size));
+                // Find a link that skips curr_node. The reverse doesn't need to
+                // be checked, because all links have a reverse.
+                UNIMPLEMENTED();
+            }
+        } while (not node_gtor.is_done());
+
     }
 #endif
 
