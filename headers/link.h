@@ -14,15 +14,15 @@ class Link {
 private:
     /* data */
     FreeChain src_chain_, dst_chain_;
-    const ProtoLink * prototype_;
+    ProtoLink const* prototype_;
     
 public:
     /* ctors */
     Link() = delete;
     Link(
-        const FreeChain & src_chain,
-        const ProtoLink * prototype,
-        const FreeChain & dst_chain);
+        FreeChain const& src_chain,
+        ProtoLink const* prototype,
+        FreeChain const& dst_chain);
     Link reversed() const {
         return Link(dst_chain_, prototype_->reverse(), src_chain_);
     }
@@ -31,15 +31,15 @@ public:
     virtual ~Link() {}
 
     /* accessors */
-    const FreeChain & src() const { return src_chain_; }
-    const FreeChain & dst() const { return dst_chain_; }
-    const ProtoLink * prototype() const { return prototype_; }
+    FreeChain const& src() const { return src_chain_; }
+    FreeChain const& dst() const { return dst_chain_; }
+    ProtoLink const* prototype() const { return prototype_; }
     size_t hash() const;
-    bool operator==(const Link & other) const;
+    bool operator==(Link const& other) const;
 
     /* modifiers */
-    void update_node_ptrs(const NodeAddrMap & nam);
-    static void sever(const Link link);
+    void update_node_ptrs(NodeAddrMap const& nam);
+    static void sever(Link const link);
 
     /* printers */
     std::string to_string() const;

@@ -19,9 +19,9 @@ private:
     void crash_dump() const;
     int run_unit_tests() const;
     int run_meta_tests() const;
-    static void interrupt_handler(const int signal);
+    static void interrupt_handler(int const signal);
 public:
-    ElfinRunner(const int argc, const char ** argv);
+    ElfinRunner(int const argc, const char ** argv);
     void run();
 };
 

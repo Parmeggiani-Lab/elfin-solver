@@ -19,8 +19,8 @@ void ProtoTerminus::finalize() {
 #endif  /* ifdef PRINT_FINALIZE */
 
     /*
-     * Sort links by interface count in ascending order to facilitate fast
-     * pick_random() that support partitioning by interface count.
+        Sort links by interface count in ascending order to facilitate fast
+        pick_random() that support partitioning by interface count.
      */
     std::sort(
         proto_link_list_.begin(),
@@ -42,24 +42,24 @@ void ProtoTerminus::finalize() {
         const ProtoModule * target_prot = proto_link.module();
 
         /*
-         * Note: assigning 0 probability for ProtoLinks that have more than 2
-         * interfaces.
-         *
-         * The reason for doing this is that in the current paradigm we only
-         * work with simple path candidates. In order to select a valid basic
-         * proto module in O(1), we ignore anything that has more than 2
-         * interfaces (which are all hubs). Some hubs have only 2 interfaces
-         * and can be used to reverse terminus polarity while maintaining a
-         * simple path shape.
-         *
-         * If progress down the road comes to dealing with generalized shape
-         * candidates, it might be advisable to remove this restriction so
-         * hubs > 2 interfaces can also be drawn from a ProtoModule's
-         * ProtoLinks.
+            Note: assigning 0 probability for ProtoLinks that have more than 2
+            interfaces.
+           
+            The reason for doing this is that in the current paradigm we only
+            work with simple path candidates. In order to select a valid basic
+            proto module in O(1), we ignore anything that has more than 2
+            interfaces (which are all hubs). Some hubs have only 2 interfaces
+            and can be used to reverse terminus polarity while maintaining a
+            simple path shape.
+           
+            If progress down the road comes to dealing with generalized shape
+            candidates, it might be advisable to remove this restriction so
+            hubs > 2 interfaces can also be drawn from a ProtoModule's
+            ProtoLinks.
          */
         if (target_prot->counts().all_interfaces() > 2) {
             // Fill the rest of the roulette with total probability (can't be
-            // picked by rand_item())
+            // picked by random::pick())
             n_cpd.push_back(0);
             c_cpd.push_back(0);
         }

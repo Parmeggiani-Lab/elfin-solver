@@ -13,9 +13,9 @@ class OutputManager
 public:
 
     static void write_output(
-        const EvolutionSolver * solver,
+        EvolutionSolver const* solver,
         std::string extra_dir = "",
-        const size_t indent_size = 4);
+        size_t const indent_size = 4);
 };
 
 }  /* elfin */

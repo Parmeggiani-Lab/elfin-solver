@@ -15,7 +15,7 @@ protected:
     UIObjects modules_;
 
 public:
-    FixedArea(const JSON & j, const std::string & name);
+    FixedArea(JSON const& j, const std::string & name);
 
     /* getters */
     std::string name() const { return name_; }

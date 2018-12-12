@@ -11,7 +11,7 @@ typedef nlohmann::json JSON;
 
 class RelaMat;
 
-std::string json_to_str(const JSON & j);
+std::string json_to_str(JSON const& j);
 
 JSON parse_json(const std::string & filename);
 

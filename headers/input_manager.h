@@ -40,19 +40,19 @@ public:
     }
 
     /* static setup methods */
-    static void setup(const int argc, const char ** argv);
+    static void setup(int const argc, const char ** argv);
 
     /* getters & setters */
-    static const Options & options() {
+    static Options const& options() {
         return instance().options_;
     }
-    static const Cutoffs & cutoffs() {
+    static Cutoffs const& cutoffs() {
         return instance().cutoffs_;
     }
-    static const Database & xdb() {
+    static Database const& xdb() {
         return instance().xdb_;
     }
-    static const Spec & spec() {
+    static Spec const& spec() {
         return instance().spec_;
     }
 
@@ -61,12 +61,12 @@ public:
     }
 };
 
-extern const Options & OPTIONS;
-extern const Cutoffs & CUTOFFS;
-extern const Database & XDB;
-extern const Spec & SPEC;
+extern Options const& OPTIONS;
+extern Cutoffs const& CUTOFFS;
+extern Database const& XDB;
+extern Spec const& SPEC;
 
-extern const GATimes & GA_TIMES;
+extern GATimes const& GA_TIMES;
 
 }  /* elfin */
 

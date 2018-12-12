@@ -28,12 +28,12 @@ protected:
 
 public:
     /* data */
-    static const size_t & MAX_LEN; // refers to MAX_LEN_ (private static)
+    static size_t const& MAX_LEN; // refers to MAX_LEN_ (private static)
 
     /* ctors */
     Candidate() {} // needed in order to support vector.resize()
-    Candidate(const WorkType work_type);
-    Candidate(const Candidate & other);
+    Candidate(WorkType const work_type);
+    Candidate(Candidate const& other);
     Candidate(Candidate && other);
     Candidate * clone() const;
 
@@ -41,11 +41,11 @@ public:
     virtual ~Candidate();
 
     /* accessors */
-    const NodeTeam * node_team() const { return node_team_; }
+    NodeTeam const* node_team() const { return node_team_; }
     virtual Crc32 checksum() const { return node_team_->checksum(); }
     size_t size() const { return node_team_->size(); }
     float get_score() const { return score_; }
-    bool operator<(const Candidate & rhs) const {
+    bool operator<(Candidate const& rhs) const {
         return score_ < rhs.score_;
     }
     static bool PtrComparator(
@@ -53,13 +53,13 @@ public:
         const Candidate *);
 
     /* modifiers */
-    Candidate & operator=(const Candidate & other);
-    static void setup(const WorkArea & wa);
-    void calc_score(const WorkArea * wa) { score_ = node_team_->score(wa); }
+    Candidate & operator=(Candidate const& other);
+    static void setup(WorkArea const& wa);
+    void calc_score(WorkArea const* wa) { score_ = node_team_->score(wa); }
     void randomize() { node_team_->randomize(); }
     MutationMode mutate(
-        const size_t rank,
-        const CandidateList * candidates);
+        size_t const rank,
+        CandidateList const* candidates);
 
     /* printers */
     virtual std::string to_string() const;

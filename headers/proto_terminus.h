@@ -20,15 +20,15 @@ private:
 
 public:
     /* accessors */
-    const ProtoLinkList & proto_links() const { return proto_link_list_; }
-    const ProtoLink & pick_random_proto_link(const TerminusType term) const;
-    const ProtoLinkPtrSet & proto_link_set() const { return proto_link_set_; }
+    ProtoLinkList const& proto_links() const { return proto_link_list_; }
+    ProtoLink const& pick_random_proto_link(TerminusType const term) const;
+    ProtoLinkPtrSet const& proto_link_set() const { return proto_link_set_; }
     ProtoLinkPtrSetCItr find_link_to(
         ConstProtoModulePtr dst_module,
-        const size_t dst_chain_id) const;
+        size_t const dst_chain_id) const;
     bool has_link_to(
         ConstProtoModulePtr dst_module,
-        const size_t dst_chain_id) const {
+        size_t const dst_chain_id) const {
         return find_link_to(dst_module, dst_chain_id) != proto_link_set_.end();
     }
 

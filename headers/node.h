@@ -35,7 +35,7 @@ public:
     Transform tx_;
     
     /* ctors */
-    Node(ProtoModule const* prototype, const Transform & tx);
+    Node(ProtoModule const* prototype, Transform const& tx);
     Node(ProtoModule const* prototype) : Node(prototype, Transform()) {}
     Node(ProtoModule const& other) = delete;
     Node & operator=(ProtoModule const& other) = delete;

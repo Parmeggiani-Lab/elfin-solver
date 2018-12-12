@@ -29,7 +29,7 @@ inline void bad_terminus(TerminusType term) {
                                            TerminusTypeToCStr(term)));
 }
 
-inline TerminusType opposite_term(const TerminusType term) {
+inline TerminusType opposite_term(TerminusType const term) {
     if (term == TerminusType::N) {
         return TerminusType::C;
     }

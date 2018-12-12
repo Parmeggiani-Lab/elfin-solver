@@ -43,14 +43,14 @@ public:
     virtual ~Database();
 
     /* getters */
-    const ModPtrRoulette & all_mods() const { return all_mods_; }
-    const ModPtrRoulette & singles() const { return singles_; }
-    const ModPtrRoulette & hubs() const { return hubs_; }
-    const ModPtrRoulette & basic_mods() const { return basic_mods_; }
-    const ModPtrRoulette & complex_mods() const { return complex_mods_; }
+    ModPtrRoulette const& all_mods() const { return all_mods_; }
+    ModPtrRoulette const& singles() const { return singles_; }
+    ModPtrRoulette const& hubs() const { return hubs_; }
+    ModPtrRoulette const& basic_mods() const { return basic_mods_; }
+    ModPtrRoulette const& complex_mods() const { return complex_mods_; }
 
     /* modifiers */
-    void parse_from_json(const JSON & xdb);
+    void parse_from_json(JSON const& xdb);
 };
 
 }  /* elfin */

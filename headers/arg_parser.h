@@ -33,8 +33,8 @@ struct ArgBundle
 class ArgParser
 {
 private:
-    const ArgBundle * match_arg_bundle(const char *arg_in);
-    void parse_options(const int argc, char const *argv[]);
+    ArgBundle const* match_arg_bundle(char const* arg_in);
+    void parse_options(int const argc, char const *argv[]);
 
     ARG_PARSER_CALLBACK_IN_HEADER(help_and_exit);
     ARG_PARSER_CALLBACK_IN_HEADER(failure_callback);
@@ -188,7 +188,7 @@ private:
     void check_options() const;
 
 public:
-    ArgParser(const int argc, char const *argv[]);
+    ArgParser(int const argc, char const *argv[]);
     virtual ~ArgParser();
     Options get_options() const;
 };

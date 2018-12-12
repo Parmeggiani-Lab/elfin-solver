@@ -25,20 +25,16 @@ public:
     /* dtors */
 
     /* accessors */
-    CItrType find(const T & item) const {
+    CItrType find(T const& item) const {
         return const_cast<Vector<T> *>(this)->find(item);
     }
 
-    bool contains(const T & item) const {
+    bool contains(T const& item) const {
         return find(item) == this->end();
     }
 
-    const T & rand_item() const {
-        return const_cast<Vector<T> *>(this)->rand_item();
-    }
-
     /* modifiers */
-    ItrType find(const T & item) {
+    ItrType find(T const& item) {
         return std::find(this->begin(), this->end(), item);
     }
 
@@ -49,13 +45,13 @@ public:
         }
     }
 
-    void lift_erase(const T & item) {
+    void lift_erase(T const& item) {
         ItrType itr = find(item);
         lift_erase(itr);
     }
 
     void lift_erase_all(
-        const T & item,
+        T const& item,
         bool (*item_comparator)(const T &, const T &) = T::operator=) {
         for (size_t i = 0; i < this->size(); ++i) {
             if (item_comparator(this->at(i), item)) {
@@ -67,6 +63,10 @@ public:
     }
 
     T & pick_random() {
+        return random::pick(*this);
+    }
+
+    T const& pick_random() const {
         return random::pick(*this);
     }
 

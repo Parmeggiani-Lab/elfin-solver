@@ -42,14 +42,14 @@ protected:
     std::vector<UIJoint *> leaf_joints_;
 
 public:
-    WorkArea(const JSON & j, const std::string & name);
+    WorkArea(JSON const& j, const std::string & name);
     WorkArea() {}
     V3fList to_points() const;
 
     /* getters */
     std::string name() const { return name_; }
     WorkType type() const { return type_; }
-    const UIJointMap & joints() const { return joints_; }
+    UIJointMap const& joints() const { return joints_; }
     const std::vector<UIJoint *> & occupied_joints() const { return occupied_joints_; }
     const std::vector<UIJoint *> & hinged_joints() const { return hinged_joints_; }
 };

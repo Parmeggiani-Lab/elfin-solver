@@ -33,7 +33,7 @@ typedef std::unordered_map<std::string, size_t> StrIndexMap;
  */
 #define string_format(FMT, ...) \
 [&](){ \
-    const size_t size = snprintf(nullptr, 0, FMT, ##__VA_ARGS__) + 1; \
+    size_t const size = snprintf(nullptr, 0, FMT, ##__VA_ARGS__) + 1; \
     std::unique_ptr<char[]> buf(new char[size]); \
     snprintf(buf.get(), size, FMT, ##__VA_ARGS__); \
     return std::string(buf.get(), buf.get() + size - 1); \

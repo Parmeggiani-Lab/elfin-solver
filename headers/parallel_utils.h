@@ -36,10 +36,10 @@ inline int omp_get_initial_device() { return 0; }
 
 #ifdef _DO_TIMING
 #define TIMING_START(varName) \
-	const double varName = get_timestamp_us();
+	double const varName = get_timestamp_us();
 
-inline long TIMING_END(const char * section_name, const double start_time) {
-	const long diff = (long) ((get_timestamp_us() - start_time) / 1e3);
+inline long TIMING_END(char const* section_name, double const start_time) {
+	long const diff = (long) ((get_timestamp_us() - start_time) / 1e3);
 	msg("Section (%s) time: %ldms\n", section_name, diff);
 	return diff;
 }

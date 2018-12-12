@@ -29,10 +29,10 @@ namespace elfin {
 /* private */
 /*modifiers */
 
-void BasicNodeTeam::fix_limb_transforms(const Link & arrow) {
+void BasicNodeTeam::fix_limb_transforms(Link const& arrow) {
     BasicNodeGenerator limb_gtor(&arrow);
     while (not limb_gtor.is_done()) {
-        const Link * curr_link = limb_gtor.curr_link();
+        Link const* curr_link = limb_gtor.curr_link();
         Node * next_node = limb_gtor.next();
         next_node->tx_ = curr_link->prototype()->tx() * next_node->tx_;
     }
@@ -88,7 +88,7 @@ bool BasicNodeTeam::erode_mutate(
         do {
             // A tip node is guranteed to have only one neighbor.
             NICE_PANIC(tip_node->links().size() != 1);
-            const Link tip_link = tip_node->links().at(0);
+            Link const tip_link = tip_node->links().at(0);
 
             // Delete this tip node and restore state to consistency
             chain_to_restore = tip_link.dst();
@@ -187,7 +187,7 @@ bool BasicNodeTeam::delete_mutate() {
         do {
             curr_node = next_node;
             next_node = node_gtor.next(); // can be nullptr
-            const size_t num_links = curr_node->links().size();
+            size_t const num_links = curr_node->links().size();
 
             if (num_links == 1) {
                 /*
@@ -248,7 +248,7 @@ bool BasicNodeTeam::delete_mutate() {
         DEBUG(delete_points.empty());
 
         // Delete a node using a random deletable point
-        const DeletePoint & delete_point = delete_points.pick_random();
+        DeletePoint const& delete_point = delete_points.pick_random();
         if (delete_point.skipper) {
             /*
                 This is NOT a tip node. Need to do some clean up
@@ -272,7 +272,7 @@ bool BasicNodeTeam::delete_mutate() {
             */
 
             // Create links between neighbor1 and neighbor2
-            const Link arrow1(delete_point.link1->dst(),
+            Link const arrow1(delete_point.link1->dst(),
                               delete_point.skipper,
                               delete_point.link2->dst());
             neighbor1->add_link(arrow1);
@@ -354,7 +354,7 @@ bool BasicNodeTeam::insert_mutate() {
             prev_node = curr_node;
             curr_node = next_node;
             next_node = node_gtor.next(); // can be nullptr
-            const size_t num_links = curr_node->links().size();
+            size_t const num_links = curr_node->links().size();
 
             if (num_links == 1) {
                 /*
@@ -410,9 +410,19 @@ bool BasicNodeTeam::insert_mutate() {
         DEBUG(insert_points.empty());
 
         // Insert a node using a random insert point
-        const InsertPoint & insert_point = insert_points.pick_random();
+        InsertPoint const& insert_point = insert_points.pick_random();
         if (insert_point.node2) {
             UNIMPLEMENTED();
+            // This is a non-tip node. Pick a random bridge.
+            auto const& bridge = insert_point.bridges.pick_random();
+
+            // [neighbor1] -ptlink1-> [new_node ] --ptlink2-> [neighbor2]
+            Node * neighbor1 = insert_point.link1->dst().node;
+            Node * neighbor2 = insert_point.link2->dst().node;
+
+            // Break link
+            neighbor1->remove_link(insert_point.link1->reversed());
+            neighbor2->remove_link(insert_point.link2->reversed());
         }
         else {
             // This is a tip node. Inserting is trivial - same as
@@ -428,13 +438,13 @@ bool BasicNodeTeam::insert_mutate() {
             }
 
             if (not free_chain_found) {
+                err("FreeChain not found for %s\n",
+                    insert_point.node1->to_string().c_str());
                 err("Available FreeChain(s):\n");
                 for (FreeChain const& fc : free_chains_) {
                     err("%s\n", fc.to_string().c_str());
                 }
-                NICE_PANIC(not free_chain_found,
-                           string_format("FreeChain not found for %s\n",
-                                         insert_point.node1->to_string().c_str()));
+                NICE_PANIC(not free_chain_found);
             }
         }
 
@@ -482,7 +492,7 @@ bool BasicNodeTeam::swap_mutate() {
 
         // // Pick a random one, or fall through to next case
         if (swappable_ids.size() > 0) {
-            const IdPair & ids = pick_random(swappable_ids);
+            IdPair const& ids = pick_random(swappable_ids);
             nodes_.at(ids.x).id = ids.y;
 
             synthesise(nodes_); // This is guaranteed to succeed
@@ -503,12 +513,12 @@ bool BasicNodeTeam::swap_mutate() {
  */
 #ifndef NO_CROSS
 IdPairs get_crossing_ids(
-    const NodeTeam & mother,
-    const NodeTeam & father) {
+    NodeTeam const& mother,
+    NodeTeam const& father) {
     IdPairs crossing_ids;
 
-    const size_t mn_len = mother.size();;
-    const size_t fn_len = father.size();
+    size_t const mn_len = mother.size();;
+    size_t const fn_len = father.size();
 
     for (long i = 1; i < (long) mn_len - 1; i++) {
         // Using i as nodes1 left limb cutoff
@@ -524,14 +534,14 @@ IdPairs get_crossing_ids(
 #endif // NO_CROSS
 
 bool BasicNodeTeam::cross_mutate(
-    const NodeTeam * father) {
+    NodeTeam const* father) {
     bool mutate_success = false;
 
 #ifndef NO_CROSS
     DEBUG(size() == 0);
 
-    const Nodes & mother_nodes = nodes_; // Self has already inherited mother
-    const Nodes & father_nodes = father->nodes_;
+    Nodes const& mother_nodes = nodes_; // Self has already inherited mother
+    Nodes const& father_nodes = father->nodes_;
     IdPairs crossing_ids = get_crossing_ids(mother_nodes, father_nodes);
 
     size_t tries = 0;
@@ -539,7 +549,7 @@ bool BasicNodeTeam::cross_mutate(
     while (tries < MAX_FREECANDIDATE_MUTATE_FAILS and
             crossing_ids.size()) {
         // Pick random crossing point
-        const IdPair & cross_point = pick_random(crossing_ids);
+        IdPair const& cross_point = pick_random(crossing_ids);
 
         Nodes new_nodes;
 
@@ -634,7 +644,7 @@ float BasicNodeTeam::score(WorkArea const* wa) const {
               string_format("points.size()=%lu, size()=%lu\n",
                             points.size(), this->size()));
 
-        const float new_score = kabsch_score(points, wa);
+        float const new_score = kabsch_score(points, wa);
         score = new_score < score ? new_score : score;
     }
 
@@ -656,8 +666,8 @@ Crc32 BasicNodeTeam::checksum() const {
 
         Crc32 crc_half = 0xffff;
         while (not node_gtor.is_done()) {
-            const Node * node = node_gtor.next();
-            const ProtoModule * prot = node->prototype();
+            Node const* node = node_gtor.next();
+            ProtoModule const* prot = node->prototype();
             checksum_cascade(&crc_half, &prot, sizeof(prot));
         }
         crc ^= crc_half;
@@ -668,7 +678,7 @@ Crc32 BasicNodeTeam::checksum() const {
 
 /* modifiers */
 void BasicNodeTeam::deep_copy_from(
-    const NodeTeam * other) {
+    NodeTeam const* other) {
     if (this != other) {
         disperse();
 
@@ -696,8 +706,8 @@ void BasicNodeTeam::deep_copy_from(
 }
 
 MutationMode BasicNodeTeam::mutate(
-    const NodeTeam * mother,
-    const NodeTeam * father) {
+    NodeTeam const* mother,
+    NodeTeam const* father) {
     // Inherit from mother
     deep_copy_from(mother);
 
@@ -751,10 +761,10 @@ std::string BasicNodeTeam::to_string() const {
 
     while (not node_gtor.is_done()) {
         ss << node_gtor.next()->to_string();
-        const Link * link_ptr = node_gtor.curr_link();
+        Link const* link_ptr = node_gtor.curr_link();
         if (link_ptr) {
-            const TerminusType src_term = link_ptr->src().term;
-            const TerminusType dst_term = link_ptr->dst().term;
+            TerminusType const src_term = link_ptr->src().term;
+            TerminusType const dst_term = link_ptr->dst().term;
             ss << "\n(" << TerminusTypeToCStr(src_term) << ", ";
             ss << TerminusTypeToCStr(dst_term) << ")\n";
         }

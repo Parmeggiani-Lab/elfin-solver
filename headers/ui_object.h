@@ -16,13 +16,13 @@ protected:
     Transform tx_;
 
 public:
-    UIObject(const JSON & j, const std::string & name);
-    UIObject(const Transform & tx, const std::string & name);
+    UIObject(JSON const& j, const std::string & name);
+    UIObject(Transform const& tx, const std::string & name);
     virtual ~UIObject() {}
 
     // getters
     const std::string & name() const { return name_; }
-    const Transform & tx() const { return tx_; }
+    Transform const& tx() const { return tx_; }
 };
 
 typedef std::unordered_map<std::string, UIObject> UIObjects;

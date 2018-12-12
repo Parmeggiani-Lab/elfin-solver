@@ -10,7 +10,7 @@ class BasicNodeGenerator {
 private:
     /* data */
     Node * curr_node_ = nullptr;
-    const Link * curr_link_ = nullptr;
+    Link const* curr_link_ = nullptr;
     Node * next_node_ = nullptr;
 public:
     /* ctors */
@@ -27,7 +27,7 @@ public:
      *    itself.
      *
      */
-    BasicNodeGenerator(const Link * arrow) :
+    BasicNodeGenerator(Link const* arrow) :
         curr_node_(arrow->src().node),
         curr_link_(arrow),
         next_node_(arrow->dst().node) {}
@@ -41,7 +41,7 @@ public:
     }
 
     Node * curr_node() const { return curr_node_; }
-    const Link * curr_link() const { return curr_link_; }
+    Link const* curr_link() const { return curr_link_; }
 
     /* modifiers */
     Node * next() {
@@ -53,7 +53,7 @@ public:
 
         // Look for next node
         if (curr_node_) {
-            const size_t neighbor_size = curr_node_->links().size();
+            size_t const neighbor_size = curr_node_->links().size();
             NICE_PANIC(neighbor_size > 2);
             for (auto & link : curr_node_->links()) {
                 if (link.dst().node != prev_node) {

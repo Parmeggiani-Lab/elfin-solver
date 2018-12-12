@@ -27,14 +27,14 @@ protected:
     float total_ = 0;
 
     /* modifiers */
-    void accumulate_prob(const float prob) {
+    void accumulate_prob(float const prob) {
         total_ += prob;
         cpd_.push_back(total_);
     }
 public:
     /* ctors */
     Roulette() {}
-    Roulette(const ItemList & items, const CummProbDist & cpd) :
+    Roulette(ItemList const& items, CummProbDist const& cpd) :
         items_(items) {
         for (float prob : cpd) {
             accumulate_prob(prob);
@@ -46,10 +46,10 @@ public:
     virtual ~Roulette() {}
 
     /* getters */
-    const ItemList & items() const { return items_; }
-    const CummProbDist & cpd() const { return cpd_; }
+    ItemList const& items() const { return items_; }
+    CummProbDist const& cpd() const { return cpd_; }
     size_t total() const { return total_; }
-    const ItemType & draw() const {
+    ItemType const& draw() const {
         NICE_PANIC(cpd_.empty());
         DEBUG(cpd_.size() != items_.size(),
               string_format("cml_sum size=%lu but container size=%lu\n",
@@ -63,13 +63,13 @@ public:
     }
 
     /* modifiers */
-    void push_back(const float prob, const ItemType & item) {
+    void push_back(float const prob, ItemType const& item) {
         accumulate_prob(prob);
         items_.push_back(item);
     }
 
     template <class ... Args>
-    void emplace_back(const float prob, Args &&... args) {
+    void emplace_back(float const prob, Args &&... args) {
         accumulate_prob(prob);
         items_.emplace_back(std::forward<Args>(args)...);
     }

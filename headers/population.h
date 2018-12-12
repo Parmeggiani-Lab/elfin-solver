@@ -23,31 +23,31 @@ protected:
     };
     /* data */
     Buffer * front_buffer_ = nullptr;
-    const Buffer * back_buffer_ = nullptr;
-    const WorkArea * work_area_ = nullptr;
+    Buffer const* back_buffer_ = nullptr;
+    WorkArea const* work_area_ = nullptr;
 
     /* modifiers */
     void release_resources();
 
     /* static */
     static void copy_buffer(
-        const Buffer * src,
+        Buffer const* src,
         Buffer * dst);
 public:
     /* ctors */
-    Population(const WorkArea * work_area);
-    Population(const Population & other);
+    Population(WorkArea const* work_area);
+    Population(Population const& other);
     Population(Population && other);
 
     /* dtors */
     virtual ~Population();
 
     /* accessors */
-    const Buffer * front_buffer() const { return front_buffer_; }
-    const Buffer * back_buffer() const { return back_buffer_; }
+    Buffer const* front_buffer() const { return front_buffer_; }
+    Buffer const* back_buffer() const { return back_buffer_; }
 
     /* modifiers */
-    Population & operator=(const Population & other);
+    Population & operator=(Population const& other);
     Population & operator=(Population && other);
     void evolve();
     void score();

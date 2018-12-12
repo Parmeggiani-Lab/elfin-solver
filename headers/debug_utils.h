@@ -23,10 +23,10 @@ namespace elfin {
 #define PROB_FUNC() do { wrn("%s called at %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__); } while(0)
 
 void __debug(
-    const bool result,
+    bool const result,
     const std::string & cond_expr,
-    const char *filename,
-    const int line,
+    char const* filename,
+    int const line,
     const std::string & msg);
 
 }  /* elfin */

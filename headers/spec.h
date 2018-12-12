@@ -18,15 +18,15 @@ protected:
     void map_joints();
 
 public:
-    static const char * const pg_networks_name;
-    static const char * const networks_name;
+    static char const* const pg_networks_name;
+    static char const* const networks_name;
 
     Spec() {};
-    Spec(const JSON & j);
+    Spec(JSON const& j);
     virtual ~Spec() {};
 
-    void parse_from_json(const JSON & j);
-    const WorkAreaMap & work_area_map() const { return work_area_map_; };
+    void parse_from_json(JSON const& j);
+    WorkAreaMap const& work_area_map() const { return work_area_map_; };
 };
 
 }  /* elfin */

@@ -29,8 +29,8 @@ public:
     virtual ~VectorMap() {}
 
     /* accessors */
-    const ItemList & items() const { return items_; }
-    ItemListCItr find(const ItemType & item) const {
+    ItemList const& items() const { return items_; }
+    ItemListCItr find(ItemType const& item) const {
         DEBUG(items_.empty());
 
         auto map_itr = item_to_id_map_.find(item);
@@ -40,7 +40,7 @@ public:
     }
     bool empty() const { return items_.empty(); }
     size_t size() const { return items_.size(); }
-    bool has(const ItemType & item) const {
+    bool has(ItemType const& item) const {
         return item_to_id_map_.find(item) != item_to_id_map_.end();
     }
     ItemListCItr begin() const { return items_.begin(); }
@@ -53,16 +53,16 @@ public:
         return items_.pick_random();
     }
 
-    const ItemType & pick_random() const {
-        return const_cast<VectorMap<ItemType> *>(this)->rand_item();
+    ItemType const& pick_random() const {
+        return this->pick_random();
     }
 
     /* modifiers */
-    void reserve(const size_t size) {
+    void reserve(size_t const size) {
         items_.reserve(size);
     }
 
-    void push_back(const ItemType & item) {
+    void push_back(ItemType const& item) {
         item_to_id_map_[item] = items_.size();
         items_.push_back(item);
     }
@@ -80,7 +80,7 @@ public:
 
     void erase(ItemMapIterator itr) {
         // itr->second is value, which is index to items_
-        const ItemType & back_val = items_.back();
+        ItemType const& back_val = items_.back();
         item_to_id_map_[back_val] = itr->second;
 
         items_[itr->second] = back_val;

@@ -33,23 +33,23 @@ inline void remove_at(std::vector<T> & v, typename std::vector<T>::size_type n) 
 template <typename T>
 inline T pop(std::vector<T> & v) {
     DEBUG(v.empty());
-    const size_t idx = get_dice(v.size());
+    size_t const idx = get_dice(v.size());
     T ret = v.at(idx);
     remove_at(v, idx);
     return ret;
 }
 
 template <typename T>
-inline const T & pick(const std::vector<T> & v) {
+inline T const& pick(const std::vector<T> & v) {
     DEBUG(v.empty());
-    const size_t idx = get_dice(v.size());
+    size_t const idx = get_dice(v.size());
     return v.at(idx);
 }
 
 template <typename T>
 inline T & pick(std::vector<T> & v) {
     DEBUG(v.empty());
-    const size_t idx = get_dice(v.size());
+    size_t const idx = get_dice(v.size());
     return v.at(idx);
 }
 
