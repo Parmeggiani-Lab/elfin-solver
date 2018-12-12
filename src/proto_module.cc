@@ -62,25 +62,6 @@ size_t ProtoModule::find_chain_id(
     NICE_PANIC("Chain Not Found");
 }
 
-// Vector<const ProtoLink *>
-// ProtoModule::find_all_links_to(
-//     const TerminusType src_term,
-//     const ProtoModule * dst_module,
-//     const size_t dst_chain_id) const {
-//     Vector<const ProtoLink *> res;
-
-//     // Collect links from each chain
-//     for (size_t i = 0; i < chains_.size(); ++i) {
-//         const ProtoLink * link_ptr =
-//             find_link_to(i, src_term, dst_module, dst_chain_id);
-//         if (link_ptr) {
-//             res.push_back(link_ptr);
-//         }
-//     }
-
-//     return res;
-// }
-
 const ProtoLink * ProtoModule::find_link_to(
     const size_t src_chain_id,
     const TerminusType src_term,
@@ -99,20 +80,20 @@ const ProtoLink * ProtoModule::find_link_to(
     return nullptr;
 }
 
-bool ProtoModule::has_link_to(
-    const TerminusType src_term,
-    ConstProtoModulePtr dst_module,
-    const size_t dst_chain_id) const {
-    // Return true on first find
-    for (const ProtoChain & chain : chains_) {
-        const ProtoTerminus & proto_term = chain.get_term(src_term);
-        if (proto_term.has_link_to(dst_module, dst_chain_id)) {
-            return true;
-        }
-    }
+// bool ProtoModule::has_link_to(
+//     const TerminusType src_term,
+//     ConstProtoModulePtr dst_module,
+//     const size_t dst_chain_id) const {
+//     // Return true on first find
+//     for (const ProtoChain & chain : chains_) {
+//         const ProtoTerminus & proto_term = chain.get_term(src_term);
+//         if (proto_term.has_link_to(dst_module, dst_chain_id)) {
+//             return true;
+//         }
+//     }
 
-    return false;
-}
+//     return false;
+// }
 
 Vector<const ProtoModule *>
 ProtoModule::find_intermediate_proto_modules_to(
@@ -121,6 +102,10 @@ ProtoModule::find_intermediate_proto_modules_to(
     const ProtoModule * dst_module,
     const size_t dst_chain_id) const {
     Vector<const ProtoModule *> res;
+
+    // Remember to skip the dst chain:term when searching for out going ProtoLinks
+    // from intermediate ProtoModule to dst
+
 
     // Collect ProtoModules from each chain
     // for (size_t i = 0; i < chains_.size(); ++i) {
