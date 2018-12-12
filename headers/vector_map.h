@@ -67,6 +67,11 @@ public:
         items_.push_back(item);
     }
 
+    void push_back(ItemType && item) {
+        item_to_id_map_[item] = items_.size();
+        items_.push_back(item);
+    }
+
     template <class ... Args>
     void emplace_back(Args && ... args) {
         items_.emplace_back(std::forward<Args>(args)...);
