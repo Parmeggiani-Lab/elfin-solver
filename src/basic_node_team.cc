@@ -123,19 +123,18 @@ bool BasicNodeTeam::erode_mutate(
 }
 
 struct DeletePoint {
-    Link const* link1;
+    Link const* link1, * link2;
     Node * delete_node;
-    Link const* link2;
-    ProtoLink const* skipper_proto_link;
+    ProtoLink const* skipper;
     DeletePoint(
         Link const* _link1,
-        Node * _delete_node,
         Link const* _link2,
-        ProtoLink const* _skipper_proto_link) :
+        Node * _delete_node,
+        ProtoLink const* _skipper) :
         link1(_link1),
-        delete_node(_delete_node),
         link2(_link2),
-        skipper_proto_link(_skipper_proto_link) {}
+        delete_node(_delete_node),
+        skipper(_skipper) {}
 };
 
 bool BasicNodeTeam::delete_mutate() {
@@ -143,13 +142,7 @@ bool BasicNodeTeam::delete_mutate() {
 
 #ifndef NO_DELETE
     if (not free_chains_.empty()) {
-        /*
-         * Walk through all nodes to collect delete points.
-         *
-         * A delete point tuple contains pointers to link1, curr_node, link2
-         * and a ProtoLink pointer that links link1.dst().node to
-         * link2.dst().node skipping curr_node, which is to be deleted.
-         */
+        // Walk through all nodes to collect delete points.
         Vector<DeletePoint> delete_points;
 
         // starting at either end is fine
@@ -168,11 +161,10 @@ bool BasicNodeTeam::delete_mutate() {
                 // This is a tip node, which can always be deleted trivially.
                 // Use ProtoLink * = nullptr to mark a tip node. Pointers
                 // link1 and link2 are not used.
-                delete_points.emplace_back(nullptr,
-                                           curr_node,
-                                           nullptr,
-                                           nullptr
-                                          );
+                delete_points.emplace_back(nullptr, // link1
+                                           nullptr, // link2
+                                           curr_node, // delete_node
+                                           nullptr); // skipper
             }
             else if (neighbor_size == 2) {
                 // Find a link that skips curr_node. The reverse doesn't need to
@@ -198,10 +190,10 @@ bool BasicNodeTeam::delete_mutate() {
 
                 if (proto_link_ptr) {
                     delete_points.emplace_back(
-                        &link1,
-                        curr_node,
-                        &link2,
-                        proto_link_ptr);
+                        &link1, // link1
+                        &link2, // link2
+                        curr_node, // delete_node
+                        proto_link_ptr); // skipper
                 }
             }
             else {
@@ -217,7 +209,7 @@ bool BasicNodeTeam::delete_mutate() {
 
         // Delete a node using a random deletable tuple
         const DeletePoint & delete_point = delete_points.pick_random();
-        if (delete_point.skipper_proto_link) {
+        if (delete_point.skipper) {
             // This is NOT a tip node. Need to do some clean up
 
             // Link up neighbor1 and neighbor2
@@ -237,7 +229,7 @@ bool BasicNodeTeam::delete_mutate() {
 
             // Create links between neighbor1 and neighbor2
             const Link arrow1(delete_point.link1->dst(),
-                              delete_point.skipper_proto_link,
+                              delete_point.skipper,
                               delete_point.link2->dst());
             neighbor1->add_link(arrow1);
             neighbor2->add_link(arrow1.reversed());
@@ -268,18 +260,21 @@ bool BasicNodeTeam::delete_mutate() {
     return mutate_success;
 }
 
+struct InsertPoint {
+    Node * node1;
+    Link const* link1, * link2;
+    Node * node2;
+    ProtoLink const* ptlink1, *ptlink2;
+    InsertPoint() {}
+};
+
 bool BasicNodeTeam::insert_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_INSERT
     if (not free_chains_.empty()) {
-        /*
-         * Walk through all links to collect insert points.
-         *
-         * An insert point contains ...
-         */
-        Vector<std::tuple<Node *, Link const*>>
-                                             insert_points;
+        // Walk through all links to collect insert points.
+        Vector<InsertPoint> insert_points;
 
         // starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
