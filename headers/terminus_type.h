@@ -29,7 +29,17 @@ inline void bad_terminus(TerminusType term) {
                                            TerminusTypeToCStr(term)));
 }
 
-const TerminusType OPPOSITE_TERM[2] = { TerminusType::C, TerminusType::N };
+inline TerminusType opposite_term(const TerminusType term) {
+    if (term == TerminusType::N) {
+        return TerminusType::C;
+    }
+    else if (term == TerminusType::C) {
+        return TerminusType::N;
+    }
+    else {
+        bad_terminus(term);
+    }
+}
 
 }  /* elfin */
 

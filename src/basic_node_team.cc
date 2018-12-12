@@ -389,7 +389,8 @@ bool BasicNodeTeam::insert_mutate() {
 
         // Insert a node using a random insert point
         const InsertPoint & insert_point = insert_points.pick_random();
-        UNIMPLEMENTED();
+
+        // UNIMPLEMENTED();
     }
 #endif
 
@@ -529,7 +530,7 @@ bool BasicNodeTeam::regenerate() {
 
     FreeChain free_chain_a = free_chains_.pick_random();
     while (size() < Candidate::MAX_LEN) {
-        const ProtoLink & proto_link =
+        ProtoLink const& proto_link =
             free_chain_a.random_proto_link();
 
         Node * node_a = free_chain_a.node;
@@ -537,12 +538,10 @@ bool BasicNodeTeam::regenerate() {
                             proto_link.module(),
                             node_a->tx_ * proto_link.tx());
 
-        const TerminusType term_a =
-            free_chain_a.term;
-        const TerminusType term_b =
-            OPPOSITE_TERM[static_cast<int>(term_a)];
+        TerminusType const term_a = free_chain_a.term;
+        TerminusType const term_b = opposite_term(term_a);
 
-        const FreeChain free_chain_b =
+        FreeChain const free_chain_b =
             FreeChain(node_b, term_b, proto_link.chain_id());
 
         node_a->add_link(free_chain_a, &proto_link, free_chain_b);
@@ -570,7 +569,7 @@ bool BasicNodeTeam::randomize_mutate() {
 
 /* public */
 /* ctors */
-BasicNodeTeam::BasicNodeTeam(const BasicNodeTeam & other) {
+BasicNodeTeam::BasicNodeTeam(BasicNodeTeam const& other) {
     deep_copy_from(&other);
 }
 
@@ -579,7 +578,7 @@ BasicNodeTeam * BasicNodeTeam::clone() const {
 }
 
 /* accessors */
-float BasicNodeTeam::score(const WorkArea * wa) const {
+float BasicNodeTeam::score(WorkArea const* wa) const {
     /*
      * In a BasicNodeTeam there are either 0 or 2 tips at any given time. The
      * nodes network is thus a simple path. We walk the path to collect the 3D

@@ -57,7 +57,7 @@ size_t ProtoModule::find_chain_id(
         chain_name, chain_name.c_str());
 
     err("The following chains are present:\n");
-    for (auto & chain : chains_) {
+    for (auto& chain : chains_) {
         err("%s", chain.name.c_str());
     }
 
@@ -89,20 +89,52 @@ ProtoModule::BridgeList ProtoModule::find_bridges(
     FreeChain const& dst = arrow.dst();
 
     DEBUG(src.node->prototype() != this);
+    ProtoModule const* dst_mod = dst.node->prototype();
+    const size_t dst_chain_id = dst.chain_id;
 
-    ProtoTerminus const& proto_term =
+    ProtoTerminus const& ptterm_src =
         chains_.at(src.chain_id).get_term(src.term);
 
-    UNIMPLEMENTED();
-    // Remember to skip the dst chain:term when searching for out going ProtoLinks
-    // from intermediate ProtoModule to dst
+    // For each middle ProtoModule that ptterm_src connects to...
+    for (ProtoLink const& ptlink1 : ptterm_src.proto_links()) {
+        ProtoModule const* const middle_mod = ptlink1.module();
 
-    // ProtoLinkPtrSetCItr itr =
-    //     proto_term.find_link_to(dst_module, dst_chain_id);
+        // Skip non basic modules
+        if (middle_mod->counts().all_interfaces() > 2) {
+            continue;
+        }
 
-    // if (itr != proto_term.proto_link_set().end()) {
-    //     return *itr;
-    // }
+        size_t const chain_in = ptlink1.chain_id();
+        TerminusType const term_in = opposite_term(src.term);
+
+        // Look for ptlink2 to dst_mod
+        for (ProtoChain const& middle_chain : middle_mod->chains_) {
+            auto find_ptlink2 = [&](TerminusType const term) {
+                ProtoTerminus const& ptterm_out =
+                    middle_chain.get_term(term);
+                ProtoLinkPtrSetCItr itr =
+                    ptterm_out.find_link_to(dst_mod, dst_chain_id);
+
+                if (itr != ptterm_out.proto_link_set().end()) {
+                    // We have found a ptlink2
+                    res.emplace_back(&ptlink1, *itr);
+                }
+            };
+
+            // Skip incoming chain:term, which gets occupied if the bridge
+            // does form.
+
+            if (not (middle_chain.id == chain_in and
+                     term_in == TerminusType::N)) {
+                find_ptlink2(TerminusType::N);
+            }
+
+            if (not (middle_chain.id == chain_in and
+                     term_in == TerminusType::C)) {
+                find_ptlink2(TerminusType::C);
+            }
+        }
+    }
 
     return res;
 }

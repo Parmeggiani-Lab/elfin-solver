@@ -29,7 +29,7 @@ public:
     /* accessors */
     Transform const& tx() const { return tx_; }
     ProtoModule const* module() const { return module_; }
-    size_t const& chain_id() const { return chain_id_; }
+    size_t const chain_id() const { return chain_id_; }
     ProtoLink const* reverse() const { return reverse_; }
 
     /* modifiers */
