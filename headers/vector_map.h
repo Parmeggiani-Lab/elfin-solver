@@ -45,19 +45,22 @@ public:
     }
     ItemListCItr begin() const { return items_.begin(); }
     ItemListCItr end() const { return items_.end(); }
+    ItemType const& pick_random() const {
+        return this->pick_random();
+    }
+    ItemType const& back() const {
+        return items_.back();
+    }
 
-    /*
-     * Returns a random item based on uniform probability.
-     */
+    /* modifiers */
+    ItemType & back() {
+        return items_.back();
+    }
+
     ItemType & pick_random() {
         return items_.pick_random();
     }
 
-    ItemType const& pick_random() const {
-        return this->pick_random();
-    }
-
-    /* modifiers */
     void reserve(size_t const size) {
         items_.reserve(size);
     }
