@@ -67,6 +67,8 @@ bool BasicNodeTeam::erode_mutate(
     bool mutate_success = false;
 
 #ifndef NO_ERODE
+    stop_after_n = std::min(stop_after_n, (long) size());
+
     if (stop_after_n == 0) {
         mutate_success = true; // eroded 0 node as requested... ?
     }
@@ -75,7 +77,8 @@ bool BasicNodeTeam::erode_mutate(
 
         // Pick random tip node if not specified
         if (tip_node == nullptr) {
-            tip_node = free_chains_.pick_random().node;
+            FreeChain const& fc = free_chains_.pick_random();
+            tip_node = fc.node;
         }
 
         // Remove all free chains originating from tip_node
@@ -87,56 +90,54 @@ bool BasicNodeTeam::erode_mutate(
         // Loop condition is always true on first entrance, hence do-while.
         do {
             // A tip node is guranteed to have only one neighbor.
-            NICE_PANIC(tip_node->links().size() != 1);
+            const size_t num_links = tip_node->links().size();
+            NICE_PANIC(num_links != 1);
             Link const tip_link = tip_node->links().at(0);
 
             // Delete this tip node and restore state to consistency
             chain_to_restore = tip_link.dst();
             Node * new_tip = chain_to_restore.node;
+
             /*
-                              (  tip_link  )
-                X--[tip_node]--src->-<-dst
-                chain_to_restore:      ^^^
-
-                               dst->-<-src--[new_tip]--[]--[]--...
-            */
-
+             *                 ( tip_link )
+             *  X--[tip_node]--src->-<-dst
+             *  chain_to_restore:      ^^^
+             *                 dst->-<-src--[new_tip]--[]--[]--...
+             */
             remove_member(tip_node);
+
             /*
-                              (  tip_link  )
-                {          freed          }
-
-                               dst->-<-src--[new_tip]--[]--[]--...
-
-                Remove tip_link to tip_node from the new_tip
-            */
+             *                 ( tip_link )
+             *  {          freed          }
+             *                 dst->-<-src--[new_tip]--[]--[]--...
+             */
+            // Remove tip_link to tip_node from the new_tip
             new_tip->remove_link(tip_link.reversed());
+
             /*
-                              (  tip_link  )
-                {          freed          }
-
-                                         X--[new_tip]--[]--[]--...
-
-                Update tip node ptr
-            */
+             *                (  tip_link  )
+             *  {          freed          }
+             *                           X--[new_tip]--[]--[]--...
+             */
+            // Update tip node ptr
             tip_node = new_tip;
 
             /*
-               Calculate next probability. The following formula gives:
-               remaining size / original size; p
-               6/6; p=0.8333333333333334
-               5/6; p=0.6666666666666667
-               4/6; p=0.5
-               3/6; p=0.3333333333333333
-               2/6; p=0.16666666666666666
-               1/6; p=0.0
-            */
+             * Calculate next probability. The following formula gives:
+             * remaining size / original size; p
+             * 6/6; p=0.8333333333333334
+             * 5/6; p=0.6666666666666667
+             * 4/6; p=0.5
+             * 3/6; p=0.3333333333333333
+             * 2/6; p=0.16666666666666666
+             * 1/6; p=0.0
+             */
             p = p * (size() - 1) / size();
 
             // stop_after_n < 0 < stop_after_n is true
             stop_after_n--;
-            // if stop_after_n <= 0, then exit
-        } while (stop_after_n > 0 or random::get_dice_0to1() <= p);
+        } while (stop_after_n != 0 and
+                 (stop_after_n > 0 or random::get_dice_0to1() <= p));
 
         // Restore FreeChain
         free_chains_.push_back(chain_to_restore);
@@ -412,17 +413,48 @@ bool BasicNodeTeam::insert_mutate() {
         // Insert a node using a random insert point
         InsertPoint const& insert_point = insert_points.pick_random();
         if (insert_point.node2) {
-            UNIMPLEMENTED();
-            // This is a non-tip node. Pick a random bridge.
-            auto const& bridge = insert_point.bridges.pick_random();
+            // This is a non-tip node.
 
-            // [neighbor1] -ptlink1-> [new_node ] --ptlink2-> [neighbor2]
-            Node * neighbor1 = insert_point.link1->dst().node;
-            Node * neighbor2 = insert_point.link2->dst().node;
+            // Copy links because they are about to be freed.
+            // [ node1 ] --link1-- > [ node2 ]
+            // [ node1 ] < --link2-- [ node2 ]
+            Link const link1 = *insert_point.link1;
+            Link const link2 = *insert_point.link2;
+            Node * node1 = link1.dst().node;
+            Node * node2 = link2.dst().node;
 
             // Break link
-            neighbor1->remove_link(insert_point.link1->reversed());
-            neighbor2->remove_link(insert_point.link2->reversed());
+            node1->remove_link(link1.reversed());
+            node2->remove_link(link2.reversed());
+
+            // Pick a random bridge.
+            auto const& bridge = insert_point.bridges.pick_random();
+
+            // Create a new node in the middle.
+            Node * new_node = new Node(
+                bridge.ptlink1->module(),
+                node1->tx_ * bridge.ptlink1->tx());
+            nodes_.push_back(new_node);
+
+            // Link up
+            // [ node1 ] -ptlink1-> [ new_node ] --ptlink2-> [ node2 ]
+            FreeChain fc_dst1(
+                new_node,
+                link1.dst().term, // always opposite of src().term
+                bridge.ptlink1->chain_id());
+
+            node1->add_link(link1.src(), bridge.ptlink1, fc_dst1);
+            new_node->add_link(fc_dst1, bridge.ptlink1->reverse(), link1.src());
+
+            FreeChain fc_src2(
+                new_node,
+                link2.dst().term,
+                bridge.ptlink2->reverse()->chain_id());
+
+            new_node->add_link(fc_src2, bridge.ptlink2, link2.src());
+            node2->add_link(link2.src(), bridge.ptlink2->reverse(), fc_src2);
+
+            UNIMPLEMENTED();
         }
         else {
             // This is a tip node. Inserting is trivial - same as

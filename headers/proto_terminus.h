@@ -19,6 +19,13 @@ private:
     ProtoLinkPtrSet proto_link_set_;
 
 public:
+    /* ctors */
+    ProtoTerminus() {}
+    ProtoTerminus(ProtoTerminus const& other) = delete;
+    ProtoTerminus(ProtoTerminus && other) = delete;
+    ProtoTerminus& operator=(ProtoTerminus const& other) = delete;
+    ProtoTerminus& operator=(ProtoTerminus && other) = delete;
+
     /* accessors */
     ProtoLinkList const& proto_links() const { return proto_link_list_; }
     ProtoLink const& pick_random_proto_link(TerminusType const term) const;

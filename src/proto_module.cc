@@ -225,13 +225,13 @@ void ProtoModule::create_proto_link_pair(
     // Create links and count
     a_chain.c_term_.proto_link_list_.emplace_back(tx, mod_b, b_chain_id);
     mod_a->counts_.c_links++;
-    if (a_chain.c_term_.proto_links().size() == 1) { // 0 -> 1 indicates a new interface
+    if (a_chain.c_term_.proto_link_list_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_a->counts_.c_interfaces++;
     }
 
     b_chain.n_term_.proto_link_list_.emplace_back(tx_inv, mod_a, a_chain_id);
     mod_b->counts_.n_links++;
-    if (b_chain.n_term_.proto_links().size() == 1) { // 0 -> 1 indicates a new interface
+    if (b_chain.n_term_.proto_link_list_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_b->counts_.n_interfaces++;
     }
 

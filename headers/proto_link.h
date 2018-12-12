@@ -61,7 +61,7 @@ struct EqualProtoLinkWithoutTx {
 typedef std::unordered_set <
 ConstProtoLinkPtr,
 HashProtoLinkWithoutTx,
-EqualProtoLinkWithoutTx>
+EqualProtoLinkWithoutTx >
 ProtoLinkPtrSet;
 
 typedef typename ProtoLinkPtrSet::const_iterator

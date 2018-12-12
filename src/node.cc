@@ -3,6 +3,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include "debug_utils.h"
+
 namespace elfin {
 
 /* public */
@@ -32,13 +34,19 @@ void Node::update_link_ptrs(NodeAddrMap const& nam) {
 }
 
 void Node::remove_link(Link const& link) {
+    bool found_link = false;
     for (size_t i = 0; i < links_.size(); ++i) {
         if (links_.at(i) == link) {
             links_.at(i) = std::move(links_.back());
             links_.pop_back();
+            found_link = true;
             break; // No two identical links should co-exist!
         }
     }
+
+    // NICE_PANIC(not found_link,
+    //     string_format("Link not found: %s\n", link.to_string().c_str()));
+    NICE_PANIC(not found_link);
 }
 
 /* printers */
