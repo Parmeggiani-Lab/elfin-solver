@@ -10,6 +10,7 @@
 #include "proto_chain.h"
 #include "debug_utils.h"
 #include "vector_utils.h"
+#include "link.h"
 
 namespace elfin {
 
@@ -37,48 +38,49 @@ private:
     Counts counts_ = {};
 
 public:
+    /* types */
+    struct Bridge {
+        ProtoLink const* ptlink1, * ptlink2;
+        Bridge(ProtoLink const* _ptlink1, ProtoLink const*_ptlink2) :
+            ptlink1(_ptlink1), ptlink2(_ptlink2) {}
+    };
+
+    typedef Vector<Bridge> BridgeList;
+
     /* data */
-    const std::string name;
-    const ModuleType type;
-    const float radius;
-    const ProtoChainList & proto_chains() const { return chains_; }
-    const Counts & counts() const { return counts_; }
+    std::string const name;
+    ModuleType const type;
+    float const radius;
+    ProtoChainList const& proto_chains() const { return chains_; }
+    Counts const& counts() const { return counts_; }
 
     /* ctors */
-    ProtoModule(const std::string & name,
-                const ModuleType type,
-                const float radius,
-                const StrList & chain_names);
+    ProtoModule(
+        std::string const& name,
+        ModuleType const type,
+        float const radius,
+        StrList const& chain_names);
 
     /* dtors */
     virtual ~ProtoModule() {}
 
     /* accessors */
-    size_t find_chain_id(const std::string & chain_name) const;
-    const ProtoLink * find_link_to(
-        const size_t src_chain_id,
-        const TerminusType src_term,
-        const ProtoModule * dst_module,
-        const size_t dst_chain_id) const;
-    // bool has_link_to(
-    //     const TerminusType src_term,
-    //     ConstProtoModulePtr dst_module,
-    //     const size_t dst_chain_id) const;
-    Vector<const ProtoModule *>
-    find_intermediate_proto_modules_to(
-        const size_t src_chain_id,
-        const TerminusType src_term,
-        const ProtoModule * dst_module,
-        const size_t dst_chain_id) const;
+    size_t find_chain_id(std::string const& chain_name) const;
+    ProtoLink const* find_link_to(
+        size_t const src_chain_id,
+        TerminusType const src_term,
+        ProtoModule const* dst_module,
+        size_t const dst_chain_id) const;
+    BridgeList find_bridges(Link const& arrow) const;
 
     /* modifiers */
     void finalize();
     static void create_proto_link_pair(
-        const JSON & tx_json,
+        JSON const& tx_json,
         ProtoModule * mod_a,
-        const std::string & a_chain_name,
+        std::string const& a_chain_name,
         ProtoModule * mod_b,
-        const std::string & b_chain_name);
+        std::string const& b_chain_name);
 
     /* printers */
     std::string to_string() const;

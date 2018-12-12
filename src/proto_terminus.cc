@@ -121,12 +121,17 @@ ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
     ConstProtoModulePtr dst_module,
     const size_t dst_chain_id) const {
     /*
-     * Note:
-     *  - assumes that links are identical as long as their module and
-     *    chain_id are identical. In other words the transformation matrix is
-     *    not considered.
-     *  - assumes that there is only one ProtoLink that will meet the search
-     *    criteria, which is true for the state of XDB at the time of writing.
+        Note:
+         - This assumes that links are identical as long as their module and
+           chain_id are identical. The transformation matrix does not need to
+           be compared.
+         - There should be either one or no ProtoLink that meets the search
+           criteria. A ProtoLink connects exactly one N terminus and one C
+           terminus between the src and dst ProtoModules. On any given chain,
+           there is exactly one N and one C.
+
+        In c++20 we could search without creating a new instance, by
+        implementing specialized comparators with custom key type.
      */
     const ProtoLink key_link(Transform(), dst_module, dst_chain_id);
     return proto_link_set_.find(&key_link);

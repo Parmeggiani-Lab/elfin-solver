@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "debug_utils.h"
+#include "node.h"
 
 // #define PRINT_INIT
 // #define PRINT_CREATE_PROTO_LINK
@@ -11,10 +12,11 @@
 namespace elfin {
 
 /* ctors */
-ProtoModule::ProtoModule(const std::string & _name,
-                         const ModuleType _type,
-                         const float _radius,
-                         const StrList & _chain_names) :
+ProtoModule::ProtoModule(
+    std::string const& _name,
+    ModuleType const _type,
+    float const _radius,
+    StrList const& _chain_names) :
     name(_name),
     type(_type),
     radius(_radius) {
@@ -22,7 +24,7 @@ ProtoModule::ProtoModule(const std::string & _name,
     wrn("New ProtoModule at %p\n", this);
 #endif  /* ifdef PRINT_INIT */
 
-    for (const std::string & cn : _chain_names) {
+    for (std::string const& cn : _chain_names) {
         chains_.emplace_back(cn, chains_.size());
 #ifdef PRINT_INIT
         Chain & actual = chains_.back();
@@ -44,7 +46,7 @@ ProtoModule::ProtoModule(const std::string & _name,
 
 /* accessors */
 size_t ProtoModule::find_chain_id(
-    const std::string & chain_name) const {
+    std::string const& chain_name) const {
     for (auto & chain : chains_) {
         if (chain.name == chain_name) {
             return chain.id;
@@ -61,14 +63,13 @@ size_t ProtoModule::find_chain_id(
 
     NICE_PANIC("Chain Not Found");
 }
+ProtoLink const* ProtoModule::find_link_to(
+    size_t const src_chain_id,
+    TerminusType const src_term,
+    ProtoModule const* dst_module,
+    size_t const dst_chain_id) const {
 
-const ProtoLink * ProtoModule::find_link_to(
-    const size_t src_chain_id,
-    const TerminusType src_term,
-    const ProtoModule * dst_module,
-    const size_t dst_chain_id) const {
-
-    const ProtoTerminus & proto_term =
+    ProtoTerminus const& proto_term =
         chains_.at(src_chain_id).get_term(src_term);
     ProtoLinkPtrSetCItr itr =
         proto_term.find_link_to(dst_module, dst_chain_id);
@@ -80,40 +81,27 @@ const ProtoLink * ProtoModule::find_link_to(
     return nullptr;
 }
 
-// bool ProtoModule::has_link_to(
-//     const TerminusType src_term,
-//     ConstProtoModulePtr dst_module,
-//     const size_t dst_chain_id) const {
-//     // Return true on first find
-//     for (const ProtoChain & chain : chains_) {
-//         const ProtoTerminus & proto_term = chain.get_term(src_term);
-//         if (proto_term.has_link_to(dst_module, dst_chain_id)) {
-//             return true;
-//         }
-//     }
+ProtoModule::BridgeList ProtoModule::find_bridges(
+    Link const& arrow) const {
+    BridgeList res;
 
-//     return false;
-// }
+    FreeChain const& src = arrow.src();
+    FreeChain const& dst = arrow.dst();
 
-Vector<const ProtoModule *>
-ProtoModule::find_intermediate_proto_modules_to(
-    const size_t src_chain_id,
-    const TerminusType src_term,
-    const ProtoModule * dst_module,
-    const size_t dst_chain_id) const {
-    Vector<const ProtoModule *> res;
+    DEBUG(src.node->prototype() != this);
 
+    ProtoTerminus const& proto_term =
+        chains_.at(src.chain_id).get_term(src.term);
+
+    UNIMPLEMENTED();
     // Remember to skip the dst chain:term when searching for out going ProtoLinks
     // from intermediate ProtoModule to dst
 
+    // ProtoLinkPtrSetCItr itr =
+    //     proto_term.find_link_to(dst_module, dst_chain_id);
 
-    // Collect ProtoModules from each chain
-    // for (size_t i = 0; i < chains_.size(); ++i) {
-    //     const ProtoLink * link_ptr =
-    //         find_link_to(i, src_term, dst_module, dst_chain_id);
-    //     if (link_ptr) {
-    //         res.push_back(link_ptr->module);
-    //     }
+    // if (itr != proto_term.proto_link_set().end()) {
+    //     return *itr;
     // }
 
     return res;
@@ -144,18 +132,18 @@ void ProtoModule::finalize() {
  * (static)
  */
 void ProtoModule::create_proto_link_pair(
-    const JSON & tx_json,
+    JSON const& tx_json,
     ProtoModule * mod_a,
-    const std::string & a_chain_name,
+    std::string const& a_chain_name,
     ProtoModule * mod_b,
-    const std::string & b_chain_name) {
+    std::string const& b_chain_name) {
     // Create transforms
-    const Transform tx(tx_json);
-    const Transform tx_inv = tx.inversed();
+    Transform const tx(tx_json);
+    Transform const tx_inv = tx.inversed();
 
     // Find chains
     ProtoChainList & a_chains = mod_a->chains_;
-    const size_t a_chain_id = mod_a->find_chain_id(a_chain_name);
+    size_t const a_chain_id = mod_a->find_chain_id(a_chain_name);
     ProtoChain & a_chain = a_chains.at(a_chain_id);
 
 #ifdef PRINT_CREATE_PROTO_LINK
@@ -179,7 +167,7 @@ void ProtoModule::create_proto_link_pair(
 #endif  /* ifdef PRINT_CREATE_PROTO_LINK */
 
     ProtoChainList & b_chains = mod_b->chains_;
-    const size_t b_chain_id = mod_b->find_chain_id(b_chain_name);
+    size_t const b_chain_id = mod_b->find_chain_id(b_chain_name);
     ProtoChain & b_chain = b_chains.at(b_chain_id);
 
 #ifdef PRINT_CREATE_PROTO_LINK

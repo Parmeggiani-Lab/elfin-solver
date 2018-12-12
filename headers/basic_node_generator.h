@@ -53,9 +53,9 @@ public:
 
         // Look for next node
         if (curr_node_) {
-            const size_t neighbor_size = curr_node_->neighbors().size();
+            const size_t neighbor_size = curr_node_->links().size();
             NICE_PANIC(neighbor_size > 2);
-            for (auto & link : curr_node_->neighbors()) {
+            for (auto & link : curr_node_->links()) {
                 if (link.dst().node != prev_node) {
                     // curr_link links curr_node to next_node
                     curr_link_ = &link;

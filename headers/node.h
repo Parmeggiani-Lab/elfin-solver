@@ -28,7 +28,7 @@ protected:
 
     /* data */
     ProtoModule const* prototype_ = nullptr;
-    LinkList neighbors_;
+    LinkList links_;
 
 public:
     /* data */
@@ -46,20 +46,21 @@ public:
 
     /* accessors */
     ProtoModule const* prototype() const { return prototype_; }
-    LinkList const& neighbors() const { return neighbors_; }
+    LinkList const& links() const { return links_; }
+    Link const* find_link_to(Node const* dst_node) const;
 
     /* modifiers */
     void add_link(
         FreeChain const& src,
         ProtoLink const* proto_link,
         FreeChain const& dst) {
-        neighbors_.emplace_back(src, proto_link, dst);
+        links_.emplace_back(src, proto_link, dst);
     }
     void add_link(Link const& link) {
-        neighbors_.emplace_back(link);
+        links_.emplace_back(link);
     }
-    void update_neighbor_ptrs(NodeAddrMap const& nam);
-    void remove_link(Link const link);
+    void update_link_ptrs(NodeAddrMap const& nam);
+    void remove_link(Link const& link);
 
     /* printers */
     virtual std::string to_string() const;

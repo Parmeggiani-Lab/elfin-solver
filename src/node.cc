@@ -6,31 +6,42 @@
 namespace elfin {
 
 /* public */
+/* ctors */
 Node::Node(
-    const ProtoModule * prototype,
-    const Transform & tx) :
+    ProtoModule const* prototype,
+    Transform const& tx) :
     prototype_(prototype),
     tx_(tx) {
     // Reserve memory for maximum occupancy
-    neighbors_.reserve(prototype_->counts().all_interfaces());
+    links_.reserve(prototype_->counts().all_interfaces());
 }
 
-void Node::update_neighbor_ptrs(const NodeAddrMap & nam) {
-    for (Link & link : neighbors_) {
+/* accessors */
+Link const* Node::find_link_to(Node const* dst_node) const {
+    for (auto & link : links_) {
+        if (link.dst().node == dst_node) return &link;
+    }
+    return nullptr;
+}
+
+/* modifiers */
+void Node::update_link_ptrs(NodeAddrMap const& nam) {
+    for (Link & link : links_) {
         link.update_node_ptrs(nam);
     }
 }
 
-void Node::remove_link(const Link link) {
-    for (size_t i = 0; i < neighbors_.size(); ++i) {
-        if (neighbors_.at(i) == link) {
-            neighbors_.at(i) = std::move(neighbors_.back());
-            neighbors_.pop_back();
-            i--; // need to check same index again
+void Node::remove_link(Link const& link) {
+    for (size_t i = 0; i < links_.size(); ++i) {
+        if (links_.at(i) == link) {
+            links_.at(i) = std::move(links_.back());
+            links_.pop_back();
+            break; // No two identical links should co-exist!
         }
     }
 }
 
+/* printers */
 std::string Node::to_string() const {
     return string_format("Node[%s]\nTx: %s",
                          prototype_->name.c_str(),
