@@ -6,15 +6,19 @@ Since [elfin-ui](https://github.com/joy13975/elfin-ui) are still undergoing acti
 working on elfin-solver.
 
 ### To Download
-```
+```Bash
+
 git clone --depth 1 git@github.com:joy13975/elfin-solver.git
 cd elfin-solver
 git submodule update --init --recursive
+
 ```
 
 ### To Update
-```
+```Bash
+
 git pull
 git submodule update
 ./fetch_db
-```​
+
+```
