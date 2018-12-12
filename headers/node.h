@@ -33,12 +33,10 @@ protected:
 public:
     /* data */
     Transform tx_;
-    
+
     /* ctors */
     Node(ProtoModule const* prototype, Transform const& tx);
     Node(ProtoModule const* prototype) : Node(prototype, Transform()) {}
-    Node(ProtoModule const& other) = delete;
-    Node & operator=(ProtoModule const& other) = delete;
     virtual Node * clone() const { return new Node(*this); }
 
     /* dtors */
