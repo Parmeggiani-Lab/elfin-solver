@@ -48,7 +48,6 @@ public:
     NodeTeam();
     NodeTeam(NodeTeam && other);
     NodeTeam(NodeTeam const& other) = delete;
-    NodeTeam & operator=(NodeTeam const& other) = delete;
     virtual NodeTeam * clone() const = 0;
 
     /* dtors */
@@ -63,6 +62,7 @@ public:
     virtual Crc32 checksum() const = 0;
 
     /* modifiers */
+    NodeTeam & operator=(NodeTeam const& other) = delete;
     NodeTeam & operator=(NodeTeam && other);
 
     virtual void deep_copy_from(NodeTeam const* other) = 0;
