@@ -9,6 +9,7 @@ class BasicNodeTeam : public NodeTeam {
 private:
     /*modifiers */
     void fix_limb_transforms(Link const& arrow);
+    void grow_tip(FreeChain free_chain_a);
 
     bool erode_mutate(
         Node * tip_node = nullptr,

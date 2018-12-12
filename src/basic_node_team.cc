@@ -38,6 +38,28 @@ void BasicNodeTeam::fix_limb_transforms(const Link & arrow) {
     }
 }
 
+void BasicNodeTeam::grow_tip(FreeChain free_chain_a) {
+    ProtoLink const& proto_link =
+        free_chain_a.random_proto_link();
+
+    Node * node_a = free_chain_a.node;
+    Node * node_b = add_member(
+                        proto_link.module(),
+                        node_a->tx_ * proto_link.tx());
+
+    TerminusType const term_a = free_chain_a.term;
+    TerminusType const term_b = opposite_term(term_a);
+
+    FreeChain const free_chain_b =
+        FreeChain(node_b, term_b, proto_link.chain_id());
+
+    node_a->add_link(free_chain_a, &proto_link, free_chain_b);
+    node_b->add_link(free_chain_b, proto_link.reverse(), free_chain_a);
+
+    free_chains_.lift_erase(free_chain_a);
+    free_chains_.lift_erase(free_chain_b);
+}
+
 bool BasicNodeTeam::erode_mutate(
     Node * tip_node,
     long stop_after_n,
@@ -389,8 +411,34 @@ bool BasicNodeTeam::insert_mutate() {
 
         // Insert a node using a random insert point
         const InsertPoint & insert_point = insert_points.pick_random();
+        if (insert_point.node2) {
+            UNIMPLEMENTED();
+        }
+        else {
+            // This is a tip node. Inserting is trivial - same as
+            // regenerate(). There is guranteed to have one FreeChain.
 
-        // UNIMPLEMENTED();
+            bool free_chain_found = false;
+            for (FreeChain const& fc : free_chains_) {
+                if (fc.node == insert_point.node1) {
+                    grow_tip(fc);
+                    free_chain_found = true;
+                    break;
+                }
+            }
+
+            if (not free_chain_found) {
+                err("Available FreeChain(s):\n");
+                for (FreeChain const& fc : free_chains_) {
+                    err("%s\n", fc.to_string().c_str());
+                }
+                NICE_PANIC(not free_chain_found,
+                           string_format("FreeChain not found for %s\n",
+                                         insert_point.node1->to_string().c_str()));
+            }
+        }
+
+        mutate_success = true;
     }
 #endif
 
@@ -530,25 +578,7 @@ bool BasicNodeTeam::regenerate() {
 
     FreeChain free_chain_a = free_chains_.pick_random();
     while (size() < Candidate::MAX_LEN) {
-        ProtoLink const& proto_link =
-            free_chain_a.random_proto_link();
-
-        Node * node_a = free_chain_a.node;
-        Node * node_b = add_member(
-                            proto_link.module(),
-                            node_a->tx_ * proto_link.tx());
-
-        TerminusType const term_a = free_chain_a.term;
-        TerminusType const term_b = opposite_term(term_a);
-
-        FreeChain const free_chain_b =
-            FreeChain(node_b, term_b, proto_link.chain_id());
-
-        node_a->add_link(free_chain_a, &proto_link, free_chain_b);
-        node_b->add_link(free_chain_b, proto_link.reverse(), free_chain_a);
-
-        free_chains_.lift_erase(free_chain_a);
-        free_chains_.lift_erase(free_chain_b);
+        grow_tip(free_chain_a);
 
         // Pick next tip chain
         free_chain_a = free_chains_.pick_random();
