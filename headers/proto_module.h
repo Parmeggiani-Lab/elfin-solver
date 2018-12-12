@@ -51,8 +51,6 @@ public:
     std::string const name;
     ModuleType const type;
     float const radius;
-    ProtoChainList const& proto_chains() const { return chains_; }
-    Counts const& counts() const { return counts_; }
 
     /* ctors */
     ProtoModule(
@@ -65,6 +63,8 @@ public:
     virtual ~ProtoModule() {}
 
     /* accessors */
+    ProtoChainList const& proto_chains() const { return chains_; }
+    Counts const& counts() const { return counts_; }
     size_t find_chain_id(std::string const& chain_name) const;
     ProtoLink const* find_link_to(
         size_t const src_chain_id,
