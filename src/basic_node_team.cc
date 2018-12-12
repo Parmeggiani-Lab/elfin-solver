@@ -64,10 +64,11 @@ bool BasicNodeTeam::erode_mutate(
 
         // Loop condition is always true on first entrance, hence do-while.
         do {
-            // Make new tip node state consistent
+            // A tip node is guranteed to have only one neighbor.
             NICE_PANIC(tip_node->neighbors().size() != 1);
             const Link tip_link = tip_node->neighbors().at(0);
 
+            // Delete this tip node and restore state to consistency
             chain_to_restore = tip_link.dst();
             Node * new_tip = chain_to_restore.node;
             //               (  tip_link  )
@@ -126,9 +127,12 @@ bool BasicNodeTeam::delete_mutate() {
 
 #ifndef NO_DELETE
     if (not free_chains_.empty()) {
-        // Collect deletable nodes
-        Vector<std::tuple<Node *, ProtoLink const*>>
-                deletables;
+        // Walk through all nodes to collect delete points. A delete point
+        // tuple contains pointers to link1, curr_node, link2 and a ProtoLink
+        // pointer that links link1.dst().node to link2.dst().node skipping
+        // curr_node, which is to be deleted.
+        Vector<std::tuple<Link const*, Node *, Link const*, ProtoLink const*>>
+                delete_points;
 
         // starting at either end is fine
         DEBUG(free_chains_.size() != 2);
@@ -144,18 +148,27 @@ bool BasicNodeTeam::delete_mutate() {
 
             if (neighbor_size == 1) {
                 // This is a tip node, which can always be deleted trivially.
-                // Use ProtoLink * = nullptr to mark a tip node.
-                deletables.push_back(
-                    std::make_tuple(curr_node, nullptr));
+                // Use ProtoLink * = nullptr to mark a tip node. Pointers
+                // link1 and link2 are not used.
+                delete_points.push_back(
+                    std::make_tuple(
+                        nullptr,
+                        curr_node,
+                        nullptr,
+                        nullptr));
             }
             else if (neighbor_size == 2) {
                 // Find a link that skips curr_node. The reverse doesn't need to
                 // be checked, because all links have a reverse.
 
-                const FreeChain & fchain1 = curr_node->neighbors().at(0).dst();
-                const FreeChain & fchain2 = curr_node->neighbors().at(1).dst();
+                Link const& link1 = curr_node->neighbors().at(0);
+                Link const& link2 = curr_node->neighbors().at(1);
+                FreeChain const& fchain1 = link1.dst();
+                FreeChain const& fchain2 = link2.dst();
 
                 // X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
+                //                 (  link1  )               (  link2  )
+                //                 vvvvvvvvvvv               vvvvvvvvvvv
                 //              (fchain1)                         (fchain2)
                 //                 vvv                               vvv
                 //                 dst->-<-src--[curr_node]--src->-<-dst
@@ -167,8 +180,12 @@ bool BasicNodeTeam::delete_mutate() {
                         fchain2.chain_id);
 
                 if (proto_link_ptr) {
-                    deletables.push_back(
-                        std::make_tuple(curr_node, proto_link_ptr));
+                    delete_points.push_back(
+                        std::make_tuple(
+                            &link1,
+                            curr_node,
+                            &link2,
+                            proto_link_ptr));
                 }
             }
             else {
@@ -179,15 +196,18 @@ bool BasicNodeTeam::delete_mutate() {
             }
         } while (not node_gtor.is_done());
 
-        // Deletables will at least contain the tip nodes.
-        DEBUG(deletables.empty());
+        // delete_points will at least contain the tip nodes.
+        DEBUG(delete_points.empty());
 
         // Delete a node using a random deletable tuple
-        auto to_delete = deletables.pick_random();
-        Node * delete_node = std::get<0>(to_delete);
-        ProtoLink const* proto_link = std::get<1>(to_delete);
+        auto delete_point = delete_points.pick_random();
+        Link const* link1 = std::get<0>(delete_point);
+        Node * delete_node = std::get<1>(delete_point);
+        Link const* link2 = std::get<2>(delete_point);
+        ProtoLink const* skipper_proto_link =
+            std::get<3>(delete_point);
 
-        if (proto_link) {
+        if (skipper_proto_link) {
             // This is NOT a tip node. Need to do some clean up
 
             // Link up neighbor1 and neighbor2
@@ -195,29 +215,26 @@ bool BasicNodeTeam::delete_mutate() {
             //                 (  link1  )                 (  link2  )
             //                 vvvvvvvvvvv                 vvvvvvvvvvv
             //                 dst->-<-src--[delete_node]--src->-<-dst
-            const Link & link1 = delete_node->neighbors().at(0);
-            const Link & link2 = delete_node->neighbors().at(1);
+            Node * neighbor1 = link1->dst().node;
+            Node * neighbor2 = link2->dst().node;
 
-            Node * neighbor1 = link1.dst().node;
-            Node * neighbor2 = link2.dst().node;
-
-            neighbor1->remove_link(link1.reversed());
-            neighbor2->remove_link(link2.reversed());
+            neighbor1->remove_link(link1->reversed());
+            neighbor2->remove_link(link2->reversed());
             // X--[neighbor1]--X                                     X--[neighbor2]--...
             //                 (  link1  )                 (  link2  )
             //                 vvvvvvvvvvv                 vvvvvvvvvvv
             //                 dst->-<-src--[delete_node]--src->-<-dst
 
             // Create links between neighbor1 and neighbor2
-            const Link arrow1(link1.dst(), proto_link, link2.dst());
+            const Link arrow1(link1->dst(), skipper_proto_link, link2->dst());
             neighbor1->add_link(arrow1);
             neighbor2->add_link(arrow1.reversed());
-            //           link1.dst(), link2.dst()
+            //        link1->dst()     link2->dst()
             //                 vvv     vvv
             // X--[neighbor1]--src->-<-dst
             //                 dst->-<-src--[neighbor2]--...
             //                 ^^^     ^^^
-            //           link1.dst(), link2.dst()
+            //        link1->dst()     link2->dst()
 
             // From this point on, memory of link1 and link2 are invalid!!!
             remove_member(delete_node);
@@ -244,9 +261,11 @@ bool BasicNodeTeam::insert_mutate() {
 
 #ifndef NO_INSERT
     if (not free_chains_.empty()) {
-        // Walk through all links and find insert points
+        // Walk through all links to collect insert points.
+        Vector<std::tuple<Node *, Link const*>>
+                                             insert_points;
 
-        // starting at either end is fine
+        // starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
         Node * start_node = free_chains_[0].node;
         BasicNodeGenerator node_gtor(start_node);
@@ -260,26 +279,28 @@ bool BasicNodeTeam::insert_mutate() {
             const size_t neighbor_size = curr_node->neighbors().size();
 
             if (prev_node == nullptr) {
-                // is start_node
+                // This is start_node.
                 NICE_PANIC(neighbor_size != 1,
                            string_format(("prev_node == nullptr but "
                                           "neighbor_size = %lu"), neighbor_size));
+                insert_points.push_back(
+                    std::make_tuple(nullptr, , ));
                 UNIMPLEMENTED();
             }
-            
+
             if (next_node == nullptr) {
-                // is end_node
+                // This is end_node.
                 NICE_PANIC(neighbor_size != 1,
                            string_format(("next_node == nullptr but "
                                           "neighbor_size = %lu"), neighbor_size));
                 UNIMPLEMENTED();
             }
 
-            if(neighbor_size != 2) {
-                // is some node in between start_node and end_node
-                NICE_PANIC(neighbor_size != 2,
-                           string_format(("neither prev_node nor next_node is nullptr "
-                                          "but neighbor_size = %lu"), neighbor_size));
+            // Note that a node could have been start_node and end_node at the
+            // same time. It's only not if it has two neighbors.
+            if (neighbor_size == 2) {
+                // This is some node in between start_node and end_node.
+
                 // Find a link that skips curr_node. The reverse doesn't need to
                 // be checked, because all links have a reverse.
                 UNIMPLEMENTED();
