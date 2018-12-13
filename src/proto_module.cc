@@ -82,44 +82,46 @@ ProtoLink const* ProtoModule::find_link_to(
 }
 
 ProtoModule::BridgeList ProtoModule::find_bridges(
-    Link const& arrow) const {
+    Link const* arrow) const {
     BridgeList res;
 
-    FreeChain const& src = arrow.src();
-    FreeChain const& dst = arrow.dst();
+    if (arrow) {
+        FreeChain const& src = arrow->src();
+        FreeChain const& dst = arrow->dst();
 
-    DEBUG(src.node->prototype() != this);
-    ProtoModule const* dst_mod = dst.node->prototype();
-    const size_t dst_chain_id = dst.chain_id;
+        DEBUG(src.node->prototype() != this);
+        ProtoModule const* dst_mod = dst.node->prototype();
+        const size_t dst_chain_id = dst.chain_id;
 
-    ProtoTerminus const& ptterm_src =
-        chains_.at(src.chain_id).get_term(src.term);
+        ProtoTerminus const& ptterm_src =
+            chains_.at(src.chain_id).get_term(src.term);
 
-    // For each middle ProtoModule that ptterm_src connects to...
-    for (ProtoLink const* ptlink1 : ptterm_src.proto_links()) {
-        ProtoModule const* const middle_mod = ptlink1->module();
+        // For each middle ProtoModule that ptterm_src connects to...
+        for (ProtoLink const* ptlink1 : ptterm_src.proto_links()) {
+            ProtoModule const* const middle_mod = ptlink1->module();
 
-        // Skip non basic modules
-        if (middle_mod->counts().all_interfaces() > 2) {
-            continue;
-        }
+            // Skip non basic modules
+            if (middle_mod->counts().all_interfaces() > 2) {
+                continue;
+            }
 
-        size_t const chain_in = ptlink1->chain_id();
+            size_t const chain_in = ptlink1->chain_id();
 
-        // Look for ptlink2 to dst_mod
-        for (ProtoChain const& middle_chain : middle_mod->chains_) {
-            // Skip incoming chain.
-            if (middle_chain.id == src.chain_id) continue;
+            // Look for ptlink2 to dst_mod
+            for (ProtoChain const& middle_chain : middle_mod->chains_) {
+                // Skip incoming chain.
+                if (middle_chain.id == src.chain_id) continue;
 
-            // dst.term is incoming term, the opposite of which is src.term.
-            ProtoTerminus const& ptterm_out =
-                middle_chain.get_term(src.term);
-            ProtoLinkPtrSetCItr itr =
-                ptterm_out.find_link_to(dst_mod, dst_chain_id);
+                // dst.term is incoming term, the opposite of which is src.term.
+                ProtoTerminus const& ptterm_out =
+                    middle_chain.get_term(src.term);
+                ProtoLinkPtrSetCItr itr =
+                    ptterm_out.find_link_to(dst_mod, dst_chain_id);
 
-            if (itr != ptterm_out.proto_link_set().end()) {
-                // We have found a ptlink2
-                res.emplace_back(ptlink1, *itr);
+                if (itr != ptterm_out.proto_link_set().end()) {
+                    // We have found a ptlink2
+                    res.emplace_back(ptlink1, *itr);
+                }
             }
         }
     }

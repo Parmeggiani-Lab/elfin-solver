@@ -8,7 +8,7 @@
 
 // #define NO_ERODE
 // #define NO_DELETE
-#define NO_INSERT
+// #define NO_INSERT
 #define NO_SWAP
 #define NO_CROSS
 // #define NO_REGENERATE
@@ -401,7 +401,9 @@ struct InsertPoint {
         node2(_node2),
         link1(_link1),
         link2(_link2),
-        bridges(find_bridges()) {
+        bridges(node1 == nullptr ?
+                ProtoModule::BridgeList() :
+                node1->prototype()->find_bridges(link1)) {
         if (link1) {
             DEBUG(link1->src() != link2->dst(),
                   string_format("link1: %s\n link2: %s\n",
@@ -412,12 +414,6 @@ struct InsertPoint {
                                 link1->to_string().c_str(),
                                 link2->to_string().c_str()));
         }
-    }
-    ProtoModule::BridgeList find_bridges() {
-        // Skip for tip nodes
-        return node2 == nullptr ?
-               ProtoModule::BridgeList() :
-               node1->prototype()->find_bridges(*link1);
     }
 };
 

@@ -43,7 +43,6 @@ public:
         ProtoLink const* const ptlink1, * const ptlink2;
         Bridge(ProtoLink const* _ptlink1, ProtoLink const*_ptlink2) :
             ptlink1(_ptlink1), ptlink2(_ptlink2) {}
-        ~Bridge() {}
     };
 
     typedef Vector<Bridge> BridgeList;
@@ -72,7 +71,7 @@ public:
         TerminusType const src_term,
         ProtoModule const* dst_module,
         size_t const dst_chain_id) const;
-    BridgeList find_bridges(Link const& arrow) const;
+    BridgeList find_bridges(Link const* arrow) const;
 
     /* modifiers */
     void finalize();
