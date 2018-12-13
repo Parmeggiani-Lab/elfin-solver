@@ -327,25 +327,26 @@ bool BasicNodeTeam::delete_mutate() {
         DeletePoint const& delete_point = delete_points.pick_random();
         if (delete_point.skipper) {
             /*
-                This is NOT a tip node. Need to do some clean up
-
-                Link up neighbor1 and neighbor2
-                X--[neighbor1]--src->-<-dst                 dst->-<-src--[neighbor2]--...
-                                (  link1  )                 (  link2  )
-                                vvvvvvvvvvv                 vvvvvvvvvvv
-                                dst->-<-src--[delete_node]--src->-<-dst
-            */
+             *  This is NOT a tip node. Need to do some clean up
+             *
+             *  Link up neighbor1 and neighbor2
+             *  X--[neighbor1]--src->-<-dst                 dst->-<-src--[neighbor2]--...
+             *                  (  link1  )                 (  link2  )
+             *                  vvvvvvvvvvv                 vvvvvvvvvvv
+             *                  dst->-<-src--[delete_node]--src->-<-dst
+             */
             Node* neighbor1 = delete_point.link1->dst().node;
             Node* neighbor2 = delete_point.link2->dst().node;
 
             neighbor1->remove_link(delete_point.link1->reversed());
             neighbor2->remove_link(delete_point.link2->reversed());
             /*
-                X--[neighbor1]--X                                     X--[neighbor2]--...
-                                (  link1  )                 (  link2  )
-                                vvvvvvvvvvv                 vvvvvvvvvvv
-                                dst->-<-src--[delete_node]--src->-<-dst
-            */
+             *  X--[neighbor1]--X                                     X--[neighbor2]--...
+             *                  (  link1  )                 (  link2  )
+             *                  vvvvvvvvvvv                 vvvvvvvvvvv
+             *                  dst->-<-src--[delete_node]--src->-<-dst
+             *                  ----------------arrow1---------------->
+             */
 
             // Create links between neighbor1 and neighbor2
             Link const arrow1(delete_point.link1->dst(),
@@ -354,13 +355,13 @@ bool BasicNodeTeam::delete_mutate() {
             neighbor1->add_link(arrow1);
             neighbor2->add_link(arrow1.reversed());
             /*
-                       link1->dst()     link2->dst()
-                                vvv     vvv
-                X--[neighbor1]--src->-<-dst
-                                dst->-<-src--[neighbor2]--...
-                                ^^^     ^^^
-                       link1->dst()     link2->dst
-            */
+             *         link1->dst()     link2->dst()
+             *                  vvv     vvv
+             *  X--[neighbor1]--src->-<-dst
+             *                  dst->-<-src--[neighbor2]--...
+             *                  ^^^     ^^^
+             *         link1->dst()     link2->dst
+             */
 
             // From this point on, memory of link1 and link2 are invalid!!!
             remove_member(delete_point.delete_node);
