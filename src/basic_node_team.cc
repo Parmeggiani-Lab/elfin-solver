@@ -383,7 +383,7 @@ bool BasicNodeTeam::delete_mutate() {
     return mutate_success;
 }
 
-struct BridgePoint {
+struct InsertPoint {
     /*
      *  [  node1 ] --------------link-------------> [ node2  ]
      *             src                          dst
@@ -393,7 +393,7 @@ struct BridgePoint {
      */
     FreeChain const src, dst;
     FreeChain::BridgeList const bridges;
-    BridgePoint(
+    InsertPoint(
         FreeChain const& _src,
         FreeChain const& _dst) :
         src(_src),
@@ -409,7 +409,7 @@ bool BasicNodeTeam::insert_mutate() {
 #ifndef NO_INSERT
     if (not free_chains_.empty()) {
         // Walk through all links to collect insert points.
-        Vector<BridgePoint> insert_points;
+        Vector<InsertPoint> insert_points;
 
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
@@ -454,7 +454,7 @@ bool BasicNodeTeam::insert_mutate() {
                 Link const* link1 = curr_node->find_link_to(next_node);
 
                 insert_points.emplace_back(link1->src(), link1->dst());
-                BridgePoint const& ip = insert_points.back();
+                InsertPoint const& ip = insert_points.back();
                 if (ip.bridges.size() == 0) {
                     insert_points.pop_back();
                 }
@@ -465,7 +465,7 @@ bool BasicNodeTeam::insert_mutate() {
         DEBUG(insert_points.empty());
 
         // Insert a node using a random insert point
-        BridgePoint const& insert_point = insert_points.pick_random();
+        InsertPoint const& insert_point = insert_points.pick_random();
         if (insert_point.dst.node) {
             // This is a non-tip node.
             FreeChain const& port1 = insert_point.src;
@@ -545,13 +545,23 @@ bool BasicNodeTeam::insert_mutate() {
     return mutate_success;
 }
 
+struct SwapPoint : public InsertPoint {
+    Node * const del_node;
+    SwapPoint(
+        FreeChain const& _src,
+        Node * const _del_node,
+        FreeChain const& _dst) :
+        InsertPoint(_src, _dst),
+        del_node(_del_node) {}
+};
+
 bool BasicNodeTeam::swap_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_SWAP
     if (not free_chains_.empty()) {
         // Walk through all links to collect swap points.
-        Vector<BridgePoint> swap_points;
+        Vector<SwapPoint> swap_points;
 
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
@@ -582,14 +592,13 @@ bool BasicNodeTeam::swap_mutate() {
 
                 // Check that neighbor can indead grow into a different
                 // ProtoModule.
-                FreeChain const& dst_fc = curr_node->links().at(0).dst();
-                ProtoModule const* neighbor = dst_fc.node->prototype();
-                ProtoChain const& chain = neighbor->chains().at(dst_fc.chain_id);
+                FreeChain const& tip_fc = curr_node->links().at(0).dst();
+                ProtoModule const* neighbor = tip_fc.node->prototype();
+                ProtoChain const& chain = neighbor->chains().at(tip_fc.chain_id);
 
-                if (chain.get_term(dst_fc.term).links().size() > 1) {
-                    FreeChain const src(curr_node, TerminusType::NONE, 0);
+                if (chain.get_term(tip_fc.term).links().size() > 1) {
                     FreeChain const dst(nullptr, TerminusType::NONE, 0);
-                    swap_points.emplace_back(src, dst);
+                    swap_points.emplace_back(tip_fc, curr_node, dst);
                 }
             }
 
@@ -608,8 +617,8 @@ bool BasicNodeTeam::swap_mutate() {
                 Link const* link1 = prev_node->find_link_to(curr_node);
                 Link const* link2 = curr_node->find_link_to(next_node);
 
-                swap_points.emplace_back(link1->src(), link2->dst());
-                BridgePoint const& sp = swap_points.back();
+                swap_points.emplace_back(link1->src(), curr_node, link2->dst());
+                SwapPoint const& sp = swap_points.back();
                 if (sp.bridges.size() == 0) {
                     swap_points.pop_back();
                 }
@@ -620,10 +629,10 @@ bool BasicNodeTeam::swap_mutate() {
         // be swapped.
         if (not swap_points.empty()) {
             // Insert a node using a random insert point
-            BridgePoint const& swap_point = swap_points.pick_random();
+            SwapPoint const& swap_point = swap_points.pick_random();
             if (swap_point.dst.node) {
                 return false;
-                
+
                 // This is a non-tip node.
                 FreeChain const& port1 = swap_point.src;
                 FreeChain const& port2 = swap_point.dst;
@@ -633,8 +642,6 @@ bool BasicNodeTeam::swap_mutate() {
                 // Break link
                 node1->remove_link(port1);
                 node2->remove_link(port2);
-
-                UNIMPLEMENTED();
 
                 // Pick a random bridge.
                 auto const& bridge = swap_point.bridges.pick_random();
@@ -674,36 +681,10 @@ bool BasicNodeTeam::swap_mutate() {
                 fix_limb_transforms(new_link2);
             }
             else {
-                Node * tip_node = swap_point.src.node;
-
-                // A tip node is guranteed to have only one neighbor.
-                const size_t num_links = tip_node->links().size();
-                NICE_PANIC(num_links != 1);
-                Link const tip_link = tip_node->links().at(0);
-                Node * new_tip = tip_link.dst().node;
-
                 // This is a tip node. Swapping is the same as erode_mutate()
                 // followed by grow_tip().
-                erode_mutate(tip_node, 1, false);
-
-                bool free_chain_found = false;
-                for (FreeChain const& fc : free_chains_) {
-                    if (fc.node == new_tip) {
-                        grow_tip(fc);
-                        free_chain_found = true;
-                        break;
-                    }
-                }
-
-                if (not free_chain_found) {
-                    err("FreeChain not found for %s\n",
-                        swap_point.src.node->to_string().c_str());
-                    err("Available FreeChain(s):\n");
-                    for (FreeChain const& fc : free_chains_) {
-                        err("%s\n", fc.to_string().c_str());
-                    }
-                    NICE_PANIC(not free_chain_found);
-                }
+                erode_mutate(swap_point.del_node, 1, false);
+                grow_tip(swap_point.src);
             }
 
             mutate_success = true;
