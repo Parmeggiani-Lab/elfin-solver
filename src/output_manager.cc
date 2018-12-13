@@ -64,7 +64,7 @@ void OutputManager::write_output(
                     1. Nodes need to express 4x4 tx in result
                     2. Nodes need to be transformed to solution frame
                     */
-                    cand_json["score"] = cand_ptr->get_score();
+                    cand_json["score"] = cand_ptr->score();
                 }
                 else {
                     err("Null candidate in work area \"%s\"\n", wa_name.c_str());

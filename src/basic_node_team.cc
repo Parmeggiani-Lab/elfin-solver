@@ -8,7 +8,7 @@
 
 // #define NO_ERODE
 // #define NO_DELETE
-// #define NO_INSERT
+#define NO_INSERT
 #define NO_SWAP
 #define NO_CROSS
 // #define NO_REGENERATE
@@ -27,14 +27,78 @@ defined(NO_REGENERATE)
 namespace elfin {
 
 /* private */
-/*modifiers */
+/* accessors */
+Crc32 BasicNodeTeam::calc_checksum() const {
+    /*
+     * We want the same checksum for two node teams that consist of the same
+     * sequence of nodes even if they are in reverse order. This can be
+     * achieved by XOR'ing the forward and backward checksums.
+     */
+    DEBUG(free_chains_.size() != 2 and size() != 0);
 
+    Crc32 crc = 0x0000;
+    for (auto& free_chain : free_chains_) {
+        Node* tip = free_chain.node;
+        BasicNodeGenerator node_gtor(tip);
+
+        Crc32 crc_half = 0xffff;
+        while (not node_gtor.is_done()) {
+            Node const* node = node_gtor.next();
+            ProtoModule const* prot = node->prototype();
+            checksum_cascade(&crc_half, &prot, sizeof(prot));
+        }
+
+        if (crc ^ crc_half) {
+            // If result is 0x0000 then it's due to the node sequence being
+            // symmetrical.
+            crc ^= crc_half;
+        }
+    }
+
+    return crc;
+}
+
+float BasicNodeTeam::calc_score(WorkArea const* wa) const {
+    /*
+     * In a BasicNodeTeam there are either 0 or 2 tips at any given time. The
+     * nodes network is thus a simple path. We walk the path to collect the 3D
+     * points in order.
+     *
+     * In addition, we walk the path forward and backward, because the Kabsch
+     * algorithm relies on point-wise correspondance. Different ordering can
+     * yield different RMSD scores.
+     */
+    DEBUG(free_chains_.size() != 2 and size() != 0);
+
+    float score = INFINITY;
+    for (auto& free_chain : free_chains_) {
+        Node* tip = free_chain.node;
+        BasicNodeGenerator node_gtor(tip);
+
+        V3fList points;
+        while (not node_gtor.is_done()) {
+            points.push_back(node_gtor.next()->tx_.collapsed());
+        }
+
+        DEBUG(points.size() != size(),
+              string_format("points.size()=%lu, size()=%lu\n",
+                            points.size(), this->size()));
+
+        float const new_score = kabsch_score(points, wa);
+        score = new_score < score ? new_score : score;
+    }
+
+    return score;
+}
+
+/*modifiers */
 void BasicNodeTeam::fix_limb_transforms(Link const& arrow) {
     BasicNodeGenerator limb_gtor(&arrow);
     while (not limb_gtor.is_done()) {
         Link const* curr_link = limb_gtor.curr_link();
+        Node* curr_node = limb_gtor.curr_node();
         Node* next_node = limb_gtor.next();
-        next_node->tx_ = curr_link->prototype()->tx() * next_node->tx_;
+        next_node->tx_ = curr_node->tx_ * curr_link->prototype()->tx();
     }
 }
 
@@ -480,6 +544,8 @@ bool BasicNodeTeam::insert_mutate() {
 
             new_node->add_link(new_link2);
             node2->add_link(new_link2.reversed());
+
+            fix_limb_transforms(new_link2);
         }
         else {
             // This is a tip node. Inserting is trivial - same as
@@ -674,65 +740,6 @@ BasicNodeTeam* BasicNodeTeam::clone() const {
     return new BasicNodeTeam(*this);
 }
 
-/* accessors */
-float BasicNodeTeam::score(WorkArea const* wa) const {
-    /*
-     * In a BasicNodeTeam there are either 0 or 2 tips at any given time. The
-     * nodes network is thus a simple path. We walk the path to collect the 3D
-     * points in order.
-     *
-     * In addition, we walk the path forward and backward, because the Kabsch
-     * algorithm relies on point-wise correspondance. Different ordering can
-     * yield different RMSD scores.
-     */
-    DEBUG(free_chains_.size() != 2 and size() != 0);
-
-    float score = INFINITY;
-    for (auto& free_chain : free_chains_) {
-        Node* tip = free_chain.node;
-        BasicNodeGenerator node_gtor(tip);
-
-        V3fList points;
-        while (not node_gtor.is_done()) {
-            points.push_back(node_gtor.next()->tx_.collapsed());
-        }
-
-        DEBUG(points.size() != size(),
-              string_format("points.size()=%lu, size()=%lu\n",
-                            points.size(), this->size()));
-
-        float const new_score = kabsch_score(points, wa);
-        score = new_score < score ? new_score : score;
-    }
-
-    return score;
-}
-
-Crc32 BasicNodeTeam::checksum() const {
-    /*
-     * We want the same checksum for two node teams that consist of the same
-     * sequence of nodes even if they are in reverse order. This can be
-     * achieved by XOR'ing the forward and backward checksums.
-     */
-    DEBUG(free_chains_.size() != 2 and size() != 0);
-
-    Crc32 crc = 0x0000;
-    for (auto& free_chain : free_chains_) {
-        Node* tip = free_chain.node;
-        BasicNodeGenerator node_gtor(tip);
-
-        Crc32 crc_half = 0xffff;
-        while (not node_gtor.is_done()) {
-            Node const* node = node_gtor.next();
-            ProtoModule const* prot = node->prototype();
-            checksum_cascade(&crc_half, &prot, sizeof(prot));
-        }
-        crc ^= crc_half;
-    }
-
-    return crc;
-}
-
 /* modifiers */
 void BasicNodeTeam::deep_copy_from(
     NodeTeam const* other) {
@@ -759,12 +766,16 @@ void BasicNodeTeam::deep_copy_from(
         for (auto& fc : free_chains_) {
             fc.node = addr_map.at(fc.node);
         }
+
+        checksum_ = other->checksum();
+        score_ = other->score();
     }
 }
 
-MutationMode BasicNodeTeam::mutate(
+MutationMode BasicNodeTeam::mutate_and_score(
     NodeTeam const* mother,
-    NodeTeam const* father) {
+    NodeTeam const* father,
+    WorkArea const* wa) {
     // Inherit from mother
     deep_copy_from(mother);
 
@@ -804,6 +815,12 @@ MutationMode BasicNodeTeam::mutate(
         NICE_PANIC(not mutate_success,
                    "Randomize Mutate also failed - bug?");
     }
+
+    // Update checksum
+    checksum_ = calc_checksum();
+
+    // Update score
+    score_ = calc_score(wa);
 
     return mode;
 }

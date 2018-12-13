@@ -48,9 +48,9 @@ EvolutionSolver::collect_gen_data(
     const Candidate* worst_candidate =
         pop.front_buffer()->front();
 
-    const float gen_best_score = best_candidate->get_score();
+    const float gen_best_score = best_candidate->score();
     const size_t gen_best_len = best_candidate->size();
-    const float gen_worst_score = worst_candidate->get_score();
+    const float gen_worst_score = worst_candidate->score();
     const double gen_time = ((get_timestamp_us() - gen_start_time) / 1e3);
 
     tot_gen_time += gen_time;
@@ -192,14 +192,14 @@ EvolutionSolver::debug_print_pop(
     {
         auto& c = pop.front_buffer()->at(i);
         wrn("curr  [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
-            i, c, c->checksum(), c->get_score(), c->size());
+            i, c, c->checksum(), c->score(), c->size());
     }
 
     for (size_t i = 0; i < i_max; ++i)
     {
         auto& c = pop.back_buffer()->at(i);
         wrn("buff  [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
-            i, c, c->checksum(), c->get_score(), c->size());
+            i, c, c->checksum(), c->score(), c->size());
     }
 }
 
@@ -244,11 +244,12 @@ EvolutionSolver::run() {
 
                     wrn("Before evolve\n");
                     debug_print_pop(population);
+                    
                     population.evolve();
                     wrn("After evolve\n");
                     debug_print_pop(population);
 
-                    population.score();
+                    // population.score();
 
                     population.rank();
                     wrn("Post rank\n");

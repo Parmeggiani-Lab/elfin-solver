@@ -50,7 +50,6 @@ public:
     Population& operator=(Population const& other);
     Population& operator=(Population && other);
     void evolve();
-    void score();
     void rank();
     void select();
     void swap_buffer();
