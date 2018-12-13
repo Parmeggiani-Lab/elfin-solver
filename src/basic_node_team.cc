@@ -136,7 +136,7 @@ bool BasicNodeTeam::erode_mutate(
              * 2/6; p=0.16666666666666666
              * 1/6; p=0.0
              */
-            p = p * (size() - 1) / size();
+            p = p* (size() - 1) / size();
 
             // stop_after_n < 0 < stop_after_n is true
             stop_after_n--;
@@ -448,7 +448,7 @@ bool BasicNodeTeam::insert_mutate() {
             // Create a new node in the middle.
             Node* new_node = new Node(
                 bridge.ptlink1->module(),
-                node1->tx_ * bridge.ptlink1->tx());
+                node1->tx_* bridge.ptlink1->tx());
             nodes_.push_back(new_node);
 
             /*
