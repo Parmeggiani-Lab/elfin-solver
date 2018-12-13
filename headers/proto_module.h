@@ -40,9 +40,10 @@ private:
 public:
     /* types */
     struct Bridge {
-        ProtoLink const* ptlink1, * ptlink2;
+        ProtoLink const* const ptlink1, * const ptlink2;
         Bridge(ProtoLink const* _ptlink1, ProtoLink const*_ptlink2) :
             ptlink1(_ptlink1), ptlink2(_ptlink2) {}
+        ~Bridge() {}
     };
 
     typedef Vector<Bridge> BridgeList;
