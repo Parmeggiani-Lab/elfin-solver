@@ -8,7 +8,7 @@
 
 // #define NO_ERODE
 // #define NO_DELETE
-// #define NO_INSERT
+#define NO_INSERT
 #define NO_SWAP
 #define NO_CROSS
 // #define NO_REGENERATE
