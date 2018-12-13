@@ -117,6 +117,9 @@ delete_test_objs:
 test: $(EXE)
 	$(BIN_DIR)/$(EXE) -c config/test.json
 
+unit: $(EXE)
+	$(BIN_DIR)/$(EXE) -t
+
 dry: $(EXE)
 	$(BIN_DIR)/$(EXE) -c config/test.json -dry
 

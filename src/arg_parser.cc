@@ -58,7 +58,7 @@ void ArgParser::print_args() const {
     reset_leading_spaces();
 }
 
-const ArgBundle* ArgParser::match_arg_bundle(const char *arg_in) {
+const ArgBundle* ArgParser::match_arg_bundle(const char *arg_in) const {
     // anything shorter than 2 chars cannot match
     if (arg_in[0] == '-')
         arg_in++; // to skip "-"
@@ -103,65 +103,57 @@ void ArgParser::parse_options(const int argc, char const *argv[]) {
 void ArgParser::check_options() const {
     // Files
     NICE_PANIC(options_.xdb == "",
-               "No xdb file given. Check your settings.json\n");
+               "No xdb path provided.");
 
     NICE_PANIC(!file_exists(options_.xdb.c_str()),
-               "xdb file could not be found\n");
+               "xdb file could not be found.");
 
     NICE_PANIC(options_.input_file == "",
-               "No input spec file given.\n");
+               "No input spec file given.");
 
     NICE_PANIC(!file_exists(options_.input_file.c_str()),
-               "Input file could not be found\n");
+               "Input file could not be found.");
 
-    NICE_PANIC(options_.config_file == "",
-               "No settings file file given.\n");
-
-    NICE_PANIC(!file_exists(options_.config_file.c_str()),
-               string_format("Settings file \"%s\" could not be found\n",
-                             options_.config_file.c_str()));
+    if (options_.config_file != "") {
+        NICE_PANIC(!file_exists(options_.config_file.c_str()),
+                   string_format("Settings file \"%s\" could not be found",
+                                 options_.config_file.c_str()));
+    }
 
     NICE_PANIC(options_.output_dir == "",
-               "No output directory given.\n");
+               "No output directory given.");
 
     if (!file_exists(options_.output_dir.c_str())) {
-        wrn("Output directory does not exist; creating...\n");
+        wrn("Output directory does not exist; creating...");
         mkdir_ifn_exists(options_.output_dir.c_str());
     }
 
     // Settings
 
-    NICE_PANIC(options_.ga_pop_size < 0, "Population size cannot be < 0\n");
+    NICE_PANIC(options_.ga_pop_size < 0, "Population size cannot be < 0");
 
-    NICE_PANIC(options_.ga_iters < 0, "Number of iterations cannot be < 0\n");
+    NICE_PANIC(options_.ga_iters < 0, "Number of iterations cannot be < 0");
 
     NICE_PANIC(options_.len_dev_alw < 0,
-               "Gene length deviation must be an integer > 0\n");
+               "Gene length deviation must be an integer > 0");
 
     // GA params
     NICE_PANIC(options_.ga_survive_rate <= 0.0 ||
                options_.ga_survive_rate >= 1.0,
-               "GA survive rate must be between 0 and 1 exclusive\n");
+               "GA survive rate must be between 0 and 1 exclusive");
 
-    NICE_PANIC(options_.avg_pair_dist < 0, "Average CoM distance must be > 0\n");
+    NICE_PANIC(options_.avg_pair_dist < 0, "Average CoM distance must be > 0");
 
     NICE_PANIC(options_.keep_n < 0 ||
                options_.keep_n > options_.ga_pop_size,
-               "Number of best solutions to output must be > 0 and < ga_pop_size\n");
+               "Number of best solutions to output must be > 0 and < ga_pop_size");
 }
 
-/* Public Methods */
-
+/* public */
+/* ctors */
 ArgParser::ArgParser(const int argc, char const *argv[]) {
     parse_options(argc, argv);
     check_options();
-}
-
-ArgParser::~ArgParser() {
-}
-
-Options ArgParser::get_options() const {
-    return options_;
 }
 
 } // namespace elfin

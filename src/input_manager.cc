@@ -50,6 +50,7 @@ void InputManager::setup(const int argc, const char ** argv) {
 
     // Setup data members
     setup_cutoffs();
+
     instance().xdb_.parse_from_json(parse_json(OPTIONS.xdb));
     instance().spec_.parse_from_json(parse_json(OPTIONS.input_file));
 

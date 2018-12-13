@@ -74,8 +74,7 @@ struct Vector3f {
 };
 typedef std::vector<Vector3f> V3fList;
 
-class Transform
-{
+class Transform {
 private:
 	/* types */
 	struct Data {
