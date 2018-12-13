@@ -27,6 +27,37 @@ defined(NO_REGENERATE)
 namespace elfin {
 
 /* private */
+/* types */
+struct BasicNodeTeam::InsertPoint {
+    /*
+     *  [  node1 ] --------------link-------------> [ node2  ]
+     *             src                          dst
+     *
+     *  Each bridge has ptlink1 and ptlink2 that:
+     *  [  node1 ] -ptlink1-> [new_node] -ptlink2-> [ node2  ]
+     */
+    FreeChain const src, dst;
+    FreeChain::BridgeList const bridges;
+    InsertPoint(
+        FreeChain const& _src,
+        FreeChain const& _dst) :
+        src(_src),
+        dst(_dst),
+        bridges(dst.node == nullptr ?
+                FreeChain::BridgeList() :
+                src.find_bridges(dst)) { }
+};
+
+struct BasicNodeTeam::SwapPoint : public BasicNodeTeam::InsertPoint {
+    Node * const del_node;
+    SwapPoint(
+        FreeChain const& _src,
+        Node * const _del_node,
+        FreeChain const& _dst) :
+        InsertPoint(_src, _dst),
+        del_node(_del_node) {}
+};
+
 /* accessors */
 Crc32 BasicNodeTeam::calc_checksum() const {
     /*
@@ -102,7 +133,7 @@ void BasicNodeTeam::fix_limb_transforms(Link const& arrow) {
     }
 }
 
-void BasicNodeTeam::grow_tip(FreeChain free_chain_a) {
+void BasicNodeTeam::grow_tip(FreeChain const free_chain_a) {
     ProtoLink const& proto_link =
         free_chain_a.random_proto_link();
 
@@ -122,6 +153,57 @@ void BasicNodeTeam::grow_tip(FreeChain free_chain_a) {
 
     free_chains_.lift_erase(free_chain_a);
     free_chains_.lift_erase(free_chain_b);
+}
+
+void BasicNodeTeam::build_bridge(
+    InsertPoint const& insert_point,
+    FreeChain::Bridge const* bridge) {
+    if (bridge == nullptr) {
+        bridge = &insert_point.bridges.pick_random();
+    }
+
+    FreeChain const& port1 = insert_point.src;
+    FreeChain const& port2 = insert_point.dst;
+    Node* node1 = port1.node;
+    Node* node2 = port2.node;
+
+    // Break link
+    node1->remove_link(port1);
+    node2->remove_link(port2);
+
+    // Create a new node in the middle.
+    Node* new_node = new Node(
+        bridge->ptlink1->module(),
+        node1->tx_ * bridge->ptlink1->tx());
+    nodes_.push_back(new_node);
+
+    /*
+     * Link up
+     * Old link  ------------------link------------------->
+     *           port1                                port2
+     *
+     * [ node1 ] <--new_link1-- [ new_node ] --new_link2--> [ node2 ]
+     *              /       \                  /       \
+     *          port1 --- nn_src1          nn_src2 --- port2
+     *         --new_link1_rev-->
+     *
+     * Prototype ---ptlink1--->              ---ptlink2--->
+     */
+    FreeChain nn_src1(
+        new_node, port2.term, bridge->ptlink1->chain_id());
+    Link const new_link1_rev(port1, bridge->ptlink1, nn_src1);
+
+    node1->add_link(new_link1_rev);
+    new_node->add_link(new_link1_rev.reversed());
+
+    FreeChain nn_src2(
+        new_node, port1.term, bridge->ptlink2->reverse()->chain_id());
+    Link const new_link2(nn_src2, bridge->ptlink1, port2);
+
+    new_node->add_link(new_link2);
+    node2->add_link(new_link2.reversed());
+
+    fix_limb_transforms(new_link2);
 }
 
 bool BasicNodeTeam::erode_mutate(
@@ -383,26 +465,6 @@ bool BasicNodeTeam::delete_mutate() {
     return mutate_success;
 }
 
-struct InsertPoint {
-    /*
-     *  [  node1 ] --------------link-------------> [ node2  ]
-     *             src                          dst
-     *
-     *  Each bridge has ptlink1 and ptlink2 that:
-     *  [  node1 ] -ptlink1-> [new_node] -ptlink2-> [ node2  ]
-     */
-    FreeChain const src, dst;
-    FreeChain::BridgeList const bridges;
-    InsertPoint(
-        FreeChain const& _src,
-        FreeChain const& _dst) :
-        src(_src),
-        dst(_dst),
-        bridges(dst.node == nullptr ?
-                FreeChain::BridgeList() :
-                src.find_bridges(dst)) { }
-};
-
 bool BasicNodeTeam::insert_mutate() {
     bool mutate_success = false;
 
@@ -468,56 +530,10 @@ bool BasicNodeTeam::insert_mutate() {
         InsertPoint const& insert_point = insert_points.pick_random();
         if (insert_point.dst.node) {
             // This is a non-tip node.
-            FreeChain const& port1 = insert_point.src;
-            FreeChain const& port2 = insert_point.dst;
-            Node* node1 = port1.node;
-            Node* node2 = port2.node;
-
-            // Break link
-            node1->remove_link(port1);
-            node2->remove_link(port2);
-
-            // Pick a random bridge.
-            auto const& bridge = insert_point.bridges.pick_random();
-
-            // Create a new node in the middle.
-            Node* new_node = new Node(
-                bridge.ptlink1->module(),
-                node1->tx_ * bridge.ptlink1->tx());
-            nodes_.push_back(new_node);
-
-            /*
-             * Link up
-             * Old link  ------------------link------------------->
-             *           port1                                port2
-             *
-             * [ node1 ] <--new_link1-- [ new_node ] --new_link2--> [ node2 ]
-             *              /       \                  /       \
-             *          port1 --- nn_src1          nn_src2 --- port2
-             *         --new_link1_rev-->
-             *
-             * Prototype ---ptlink1--->              ---ptlink2--->
-             */
-            FreeChain nn_src1(
-                new_node, port2.term, bridge.ptlink1->chain_id());
-            Link const new_link1_rev(port1, bridge.ptlink1, nn_src1);
-
-            node1->add_link(new_link1_rev);
-            new_node->add_link(new_link1_rev.reversed());
-
-            FreeChain nn_src2(
-                new_node, port1.term, bridge.ptlink2->reverse()->chain_id());
-            Link const new_link2(nn_src2, bridge.ptlink1, port2);
-
-            new_node->add_link(new_link2);
-            node2->add_link(new_link2.reversed());
-
-            fix_limb_transforms(new_link2);
+            build_bridge(insert_point);
         }
         else {
-            // This is a tip node. Inserting is the same as grow_tip(). There
-            // is guranteed to have one FreeChain.
-
+            // This is a tip node. Inserting is the same as grow_tip().
             bool free_chain_found = false;
             for (FreeChain const& fc : free_chains_) {
                 if (fc.node == insert_point.src.node) {
@@ -544,16 +560,6 @@ bool BasicNodeTeam::insert_mutate() {
 
     return mutate_success;
 }
-
-struct SwapPoint : public InsertPoint {
-    Node * const del_node;
-    SwapPoint(
-        FreeChain const& _src,
-        Node * const _del_node,
-        FreeChain const& _dst) :
-        InsertPoint(_src, _dst),
-        del_node(_del_node) {}
-};
 
 bool BasicNodeTeam::swap_mutate() {
     bool mutate_success = false;
@@ -631,54 +637,9 @@ bool BasicNodeTeam::swap_mutate() {
             // Insert a node using a random insert point
             SwapPoint const& swap_point = swap_points.pick_random();
             if (swap_point.dst.node) {
-                return false;
-
                 // This is a non-tip node.
-                FreeChain const& port1 = swap_point.src;
-                FreeChain const& port2 = swap_point.dst;
-                Node* node1 = port1.node;
-                Node* node2 = port2.node;
-
-                // Break link
-                node1->remove_link(port1);
-                node2->remove_link(port2);
-
-                // Pick a random bridge.
-                auto const& bridge = swap_point.bridges.pick_random();
-
-                // Create a new node in the middle.
-                Node* new_node = new Node(
-                    bridge.ptlink1->module(),
-                    node1->tx_ * bridge.ptlink1->tx());
-                nodes_.push_back(new_node);
-
-                /*
-                 * Link up
-                 * Old link  ------------------link------------------->
-                 *           port1                                port2
-                 *
-                 * [ node1 ] <--new_link1-- [ new_node ] --new_link2--> [ node2 ]
-                 *              /       \                  /       \
-                 *          port1 --- nn_src1          nn_src2 --- port2
-                 *         --new_link1_rev-->
-                 *
-                 * Prototype ---ptlink1--->              ---ptlink2--->
-                 */
-                FreeChain nn_src1(
-                    new_node, port2.term, bridge.ptlink1->chain_id());
-                Link const new_link1_rev(port1, bridge.ptlink1, nn_src1);
-
-                node1->add_link(new_link1_rev);
-                new_node->add_link(new_link1_rev.reversed());
-
-                FreeChain nn_src2(
-                    new_node, port1.term, bridge.ptlink2->reverse()->chain_id());
-                Link const new_link2(nn_src2, bridge.ptlink1, port2);
-
-                new_node->add_link(new_link2);
-                node2->add_link(new_link2.reversed());
-
-                fix_limb_transforms(new_link2);
+                remove_member(swap_point.del_node);
+                build_bridge(swap_point);
             }
             else {
                 // This is a tip node. Swapping is the same as erode_mutate()

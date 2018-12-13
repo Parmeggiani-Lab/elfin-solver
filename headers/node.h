@@ -40,7 +40,7 @@ public:
     virtual Node* clone() const { return new Node(*this); }
 
     /* dtors */
-    virtual ~Node() {}
+    // virtual ~Node() {}
 
     /* accessors */
     ProtoModule const* prototype() const { return prototype_; }

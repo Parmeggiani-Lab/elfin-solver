@@ -7,13 +7,20 @@ namespace elfin {
 
 class BasicNodeTeam : public NodeTeam {
 private:
+    /* types */
+    struct InsertPoint;
+    struct SwapPoint;
+
     /* accessors */
     Crc32 calc_checksum() const;
     float calc_score(WorkArea const* wa) const;
 
     /*modifiers */
     void fix_limb_transforms(Link const& arrow);
-    void grow_tip(FreeChain free_chain_a);
+    void grow_tip(FreeChain const free_chain_a);
+    void build_bridge(
+        InsertPoint const& insert_point,
+        FreeChain::Bridge const* bridge = nullptr);
 
     bool erode_mutate(
         Node* tip_node = nullptr,
