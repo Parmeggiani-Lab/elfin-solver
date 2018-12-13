@@ -49,12 +49,12 @@ Node* NodeTeam::add_member(
     Node* new_node = new Node(prot, tx);
     nodes_.push_back(new_node);
 
-    for (auto& proto_chain : new_node->prototype()->proto_chains()) {
-        if (not proto_chain.n_term().proto_links().empty()) {
+    for (auto& proto_chain : new_node->prototype()->chains()) {
+        if (not proto_chain.n_term().links().empty()) {
             free_chains_.emplace_back(new_node, TerminusType::N, proto_chain.id);
         }
 
-        if (not proto_chain.c_term().proto_links().empty()) {
+        if (not proto_chain.c_term().links().empty()) {
             free_chains_.emplace_back(new_node, TerminusType::C, proto_chain.id);
         }
     }

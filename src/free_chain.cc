@@ -24,9 +24,9 @@ bool FreeChain::operator==(FreeChain const& other) const {
 
 ProtoLink const& FreeChain::random_proto_link() const {
     ProtoChain const& proto_chain =
-        node->prototype()->proto_chains().at(chain_id);
+        node->prototype()->chains().at(chain_id);
 
-    return proto_chain.pick_random_proto_link(term);
+    return proto_chain.pick_random_link(term);
 }
 
 /* printers */

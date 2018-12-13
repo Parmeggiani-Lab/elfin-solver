@@ -81,23 +81,23 @@ void Database::print_db() {
     for (size_t i = 0; i < n_mods; ++i)
     {
         const ProtoModule* mod = all_mods_.items().at(i);
-        const size_t n_chains = mod->proto_chains().size();
+        const size_t n_chains = mod->chains().size();
         wrn("xdb_[#%lu:%s] has %lu chains\n",
             i, mod->name.c_str(), n_chains);
 
-        for (auto& proto_chain : mod->proto_chains()) {
+        for (auto& proto_chain : mod->chains()) {
             wrn("\tchain[#%lu:%s]:\n",
                 proto_chain.id,
                 proto_chain.name.c_str());
 
-            auto& n_links = proto_chain.n_term().proto_links();
+            auto& n_links = proto_chain.n_term().links();
             for (size_t k = 0; k < n_links.size(); ++k)
             {
                 wrn("\t\tn_links[%lu] -> xdb_[%s]\n",
                     k, n_links[k]->module()->name.c_str());
             }
 
-            auto& c_links = proto_chain.c_term().proto_links();
+            auto& c_links = proto_chain.c_term().links();
             for (size_t k = 0; k < c_links.size(); ++k)
             {
                 wrn("\t\tc_links[%lu] -> xdb_[%s]\n",

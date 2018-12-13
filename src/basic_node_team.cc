@@ -9,7 +9,7 @@
 // #define NO_ERODE
 // #define NO_DELETE
 // #define NO_INSERT
-#define NO_SWAP
+// #define NO_SWAP
 #define NO_CROSS
 // #define NO_REGENERATE
 
@@ -382,10 +382,9 @@ bool BasicNodeTeam::delete_mutate() {
     return mutate_success;
 }
 
-struct InsertPoint {
+struct BridgePoint {
     /*
-     *  [  node1 ] --link1--> [ node2  ]
-     *  [  node1 ] <--link2-- [ node2  ]
+     *  [  node1 ] -------------link1-------------> [ node2  ]
      *
      *  Each bridge has ptlink1 and ptlink2 that:
      *  [  node1 ] -ptlink1-> [new_node] -ptlink2-> [ node2  ]
@@ -393,7 +392,7 @@ struct InsertPoint {
     Node const* const node1, * const node2;
     Link const* const link1;
     ProtoModule::BridgeList const bridges;
-    InsertPoint(
+    BridgePoint(
         Node* _node1,
         Node* _node2,
         Link const* _link1) :
@@ -411,17 +410,16 @@ bool BasicNodeTeam::insert_mutate() {
 #ifndef NO_INSERT
     if (not free_chains_.empty()) {
         // Walk through all links to collect insert points.
-        Vector<InsertPoint> insert_points;
+        Vector<BridgePoint> insert_points;
 
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
         Node* start_node = free_chains_[0].node;
         BasicNodeGenerator node_gtor(start_node);
 
-        Node* prev_node = nullptr, * curr_node = nullptr;
+        Node* curr_node = nullptr;
         Node* next_node = node_gtor.next(); // starts with start_node
         do {
-            prev_node = curr_node;
             curr_node = next_node;
             next_node = node_gtor.next(); // can be nullptr
             size_t const num_links = curr_node->links().size();
@@ -457,7 +455,7 @@ bool BasicNodeTeam::insert_mutate() {
                 Link const* link1 = curr_node->find_link_to(next_node);
 
                 insert_points.emplace_back(curr_node, next_node, link1);
-                InsertPoint const& ip = insert_points.back();
+                BridgePoint const& ip = insert_points.back();
                 if (ip.bridges.size() == 0) {
                     insert_points.pop_back();
                 }
@@ -468,7 +466,7 @@ bool BasicNodeTeam::insert_mutate() {
         DEBUG(insert_points.empty());
 
         // Insert a node using a random insert point
-        InsertPoint const& insert_point = insert_points.pick_random();
+        BridgePoint const& insert_point = insert_points.pick_random();
         if (insert_point.node2) {
             // This is a non-tip node.
 
@@ -558,46 +556,152 @@ bool BasicNodeTeam::swap_mutate() {
 
 #ifndef NO_SWAP
     if (not free_chains_.empty()) {
-        // TODO
+        // Walk through all links to collect swap points.
+        Vector<BridgePoint> swap_points;
 
-        // First int is index from nodes_
-        // Second int is ido swap to
-        IdPairs swappable_ids;
-        for (size_t i = 0; i < n_nodes; i++) {
-            // For all neighbours of previous node
-            // find those that has nodes[i+1] as
-            // one of their RHS neighbours
-            for (size_t j = 0; j < rm_dim; j++) {
-                // Make sure it's not the original one
-                if (j != nodes_.at(i).id) {
-                    // Check whether i can be exchanged for j
-                    if ((i == 0 or REL_MAT.at(nodes_.at(i - 1).id).at(j))
-                            and
-                            (i == n_nodes - 1 or REL_MAT.at(j).at(nodes_.at(i + 1).id))
-                       ) {
-                        // Make sure resultant shape won't collide with itself
-                        Nodes test_nodes(nodes_);
-                        test_nodes.at(i).id = j;
+        // Starting at either end is fine.
+        DEBUG(free_chains_.size() != 2);
+        Node* start_node = free_chains_[0].node;
+        BasicNodeGenerator node_gtor(start_node);
 
-                        // dbg("checking swap at %d/%d of %s\n",
-                        //     i, n_nodes, to_string().c_str());
-                        if (synthesise(test_nodes))
-                            swappable_ids.push_back(IdPair(i, j));
-                    }
+        Node* curr_node = nullptr;
+        Node* next_node = node_gtor.next(); // starts with start_node
+        do {
+            curr_node = next_node;
+            next_node = node_gtor.next(); // can be nullptr
+            size_t const num_links = curr_node->links().size();
+
+            if (num_links == 1) {
+                /*
+                 *  curr_node is a tip node. A tip node can be swapped by
+                 *  deleting it, then randomly growing the tip into a
+                 *  different ProtoModule. The only time this is not possible
+                 *  is when the neighbor ProtoModule has no other ProtoLinks
+                 *  on the terminus in question.
+                 *
+                 *  Either:
+                 *              X---- [curr_node] ----> [next_node]
+                 *  Or:
+                 *  [prev_node] <---- [curr_node] ----X
+                 */
+
+                // Check that neighbor can indead grow into a different
+                // ProtoModule.
+                FreeChain const& dst_fc = curr_node->links().at(0).dst();
+                ProtoModule const* neighbor = dst_fc.node->prototype();
+                ProtoChain const& chain = neighbor->chains().at(dst_fc.chain_id);
+
+                if (chain.get_term(dst_fc.term).links().size() > 1) {
+                    swap_points.emplace_back(curr_node, nullptr, nullptr);
                 }
+            }
+
+            if (next_node) {
+                /*
+                 * curr_node and next_node are linked.
+                 * [curr_node] --link1--> [next_node]
+                 *
+                 * Find all ptlink1, ptlink2 that:
+                 * [curr_node] -ptlink1-> [new_node ] --ptlink2-> [next_node]
+                 *
+                 * Where src chain_id and term are known for curr_node, and
+                 * dst chain_id and term are known for next_node.
+                 */
+                Link const* link1 = curr_node->find_link_to(next_node);
+
+                swap_points.emplace_back(curr_node, next_node, link1);
+                BridgePoint const& ip = swap_points.back();
+                if (ip.bridges.size() == 0) {
+                    swap_points.pop_back();
+                }
+            }
+        } while (not node_gtor.is_done());
+
+        // swap_points will at least contain the tip nodes.
+        DEBUG(swap_points.empty());
+
+        UNIMPLEMENTED();
+
+        // Insert a node using a random insert point
+        BridgePoint const& swap_point = swap_points.pick_random();
+        if (swap_point.node2) {
+            // This is a non-tip node.
+
+            // Copy links because they are about to be freed.
+            // [ node1 ] --link1-- > [ node2 ]
+            Link const link1 = *swap_point.link1;
+
+            FreeChain const& port1 = link1.src();
+            FreeChain const& port2 = link1.dst();
+            Node* node1 = port1.node;
+            Node* node2 = port2.node;
+
+            // Break link
+            node1->remove_link(link1);
+            node2->remove_link(link1.reversed());
+
+            // Pick a random bridge.
+            auto const& bridge = swap_point.bridges.pick_random();
+
+            // Create a new node in the middle.
+            Node* new_node = new Node(
+                bridge.ptlink1->module(),
+                node1->tx_ * bridge.ptlink1->tx());
+            nodes_.push_back(new_node);
+
+            /*
+             * Link up
+             * Old link  -----link1------------------------------->
+             *           port1                                port2
+             *
+             * [ node1 ] <--new_link1-- [ new_node ] --new_link2--> [ node2 ]
+             *              /       \                  /       \
+             *          port1 --- nn_src1          nn_src2 --- port2
+             *         --new_link1_rev-->
+             *
+             * Prototype ---ptlink1--->              ---ptlink2--->
+             */
+            FreeChain nn_src1(
+                new_node, port2.term, bridge.ptlink1->chain_id());
+            Link const new_link1_rev(port1, bridge.ptlink1, nn_src1);
+
+            node1->add_link(new_link1_rev);
+            new_node->add_link(new_link1_rev.reversed());
+
+            FreeChain nn_src2(
+                new_node, port1.term, bridge.ptlink2->reverse()->chain_id());
+            Link const new_link2(nn_src2, bridge.ptlink1, port2);
+
+            new_node->add_link(new_link2);
+            node2->add_link(new_link2.reversed());
+
+            fix_limb_transforms(new_link2);
+        }
+        else {
+            // This is a tip node. Inserting is trivial - same as
+            // regenerate(). There is guranteed to have one FreeChain.
+
+            bool free_chain_found = false;
+            for (FreeChain const& fc : free_chains_) {
+                if (fc.node == swap_point.node1) {
+                    grow_tip(fc);
+                    free_chain_found = true;
+                    break;
+                }
+            }
+
+            if (not free_chain_found) {
+                err("FreeChain not found for %s\n",
+                    swap_point.node1->to_string().c_str());
+                err("Available FreeChain(s):\n");
+                for (FreeChain const& fc : free_chains_) {
+                    err("%s\n", fc.to_string().c_str());
+                }
+                NICE_PANIC(not free_chain_found);
             }
         }
 
-        // // Pick a random one, or fall through to next case
-        if (swappable_ids.size() > 0) {
-            IdPair const& ids = pick_random(swappable_ids);
-            nodes_.at(ids.x).id = ids.y;
-
-            synthesise(nodes_); // This is guaranteed to succeed
-            mutate_success = true;
-        }
-
-        //
+        mutate_success = true;
     }
 #endif
 

@@ -13,16 +13,16 @@ namespace elfin {
 
 /* dtors */
 ProtoTerminus::~ProtoTerminus() {
-    for (ProtoLink const* ptlink : proto_links_) {
+    for (ProtoLink const* ptlink : links_) {
         delete ptlink;
     }
 
-    proto_links_.clear();
-    proto_link_set_.clear();
+    links_.clear();
+    link_set_.clear();
 }
 
 /* accessors */
-const ProtoLink& ProtoTerminus::pick_random_proto_link(
+const ProtoLink& ProtoTerminus::pick_random_link(
     const TerminusType term) const {
     if (term == TerminusType::N) {
         return *n_roulette_.draw();
@@ -52,7 +52,7 @@ ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
      * implementing specialized comparators with custom key type.
      */
     const ProtoLink key_link(Transform(), dst_module, dst_chain_id);
-    return proto_link_set_.find(&key_link);
+    return link_set_.find(&key_link);
 }
 
 
@@ -63,7 +63,7 @@ void ProtoTerminus::finalize() {
     finalized_ = true;
 
 #ifdef PRINT_FINALIZE
-    wrn("Finalizing proto terminus with %lu links\n", proto_links_.size());
+    wrn("Finalizing proto terminus with %lu links\n", links_.size());
 #endif  /* ifdef PRINT_FINALIZE */
 
     /*
@@ -71,21 +71,21 @@ void ProtoTerminus::finalize() {
      * pick_random() that support partitioning by interface count.
      */
     std::sort(
-        proto_links_.begin(),
-        proto_links_.end(),
+        links_.begin(),
+        links_.end(),
         ProtoLinkInterfacesComparator());
 
     std::vector<float> n_cpd, c_cpd;
-    for (auto itr = proto_links_.begin();
-            itr != proto_links_.end();
+    for (auto itr = links_.begin();
+            itr != links_.end();
             itr++) {
 
-        ProtoLink const* proto_link_ptr = *itr;
-        DEBUG(nullptr == proto_link_ptr->module());
+        ProtoLink const* link_ptr = *itr;
+        DEBUG(nullptr == link_ptr->module());
 
-        proto_link_set_.insert(proto_link_ptr);
+        link_set_.insert(link_ptr);
 
-        const ProtoModule* target_prot = proto_link_ptr->module();
+        const ProtoModule* target_prot = link_ptr->module();
 
         /*
          * Note: assigning 0 probability for ProtoLinks that have more than 2
@@ -133,13 +133,13 @@ void ProtoTerminus::finalize() {
 
 #ifdef PRINT_FINALIZE
         wrn("ProtoLink to %s into chain %lu with %lu interfaces\n",
-            proto_link_ptr->module()->name.c_str(),
-            proto_link_ptr->chain_id(),
-            proto_link_ptr->module()->counts().all_interfaces());
+            link_ptr->module()->name.c_str(),
+            link_ptr->chain_id(),
+            link_ptr->module()->counts().all_interfaces());
 #endif  /* ifdef PRINT_FINALIZE */
     }
 
-    n_roulette_ = ProtoLinkRoulette(proto_links_, n_cpd);
-    c_roulette_ = ProtoLinkRoulette(proto_links_, c_cpd);
+    n_roulette_ = ProtoLinkRoulette(links_, n_cpd);
+    c_roulette_ = ProtoLinkRoulette(links_, c_cpd);
 }
 }  /* elfin */

@@ -33,7 +33,7 @@ public:
     ProtoLink const* reverse() const { return reverse_; }
 
     /* modifiers */
-    static void pair_proto_links(ProtoLink* lhs, ProtoLink* rhs);
+    static void pair_links(ProtoLink* lhs, ProtoLink* rhs);
 };
 
 /* types */

@@ -35,7 +35,7 @@ public:
     ProtoTerminus const& get_term(TerminusType const term) const;
     ProtoTerminus const& n_term() const { return n_term_; }
     ProtoTerminus const& c_term() const { return c_term_; }
-    ProtoLink const& pick_random_proto_link(
+    ProtoLink const& pick_random_link(
         TerminusType const term) const;
 
     /* modifiers */

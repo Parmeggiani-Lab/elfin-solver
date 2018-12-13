@@ -11,6 +11,10 @@
 
 namespace elfin {
 
+/* ProtoModule::Counts */
+
+/* ProtoModule */
+/* public */
 /* ctors */
 ProtoModule::ProtoModule(
     std::string const& _name,
@@ -33,9 +37,9 @@ ProtoModule::ProtoModule(
             chains_.size(),
             &actual,
             &actual.c_term_,
-            &actual.c_term_.proto_links(),
+            &actual.c_term_.links(),
             &actual.n_term_,
-            &actual.n_term_.proto_links());
+            &actual.n_term_.links());
 #endif  /* ifdef PRINT_INIT */
     }
 
@@ -74,7 +78,7 @@ ProtoLink const* ProtoModule::find_link_to(
     ProtoLinkPtrSetCItr itr =
         proto_term.find_link_to(dst_module, dst_chain_id);
 
-    if (itr != proto_term.proto_link_set().end()) {
+    if (itr != proto_term.link_set().end()) {
         return *itr;
     }
 
@@ -97,7 +101,7 @@ ProtoModule::BridgeList ProtoModule::find_bridges(
             chains_.at(src.chain_id).get_term(src.term);
 
         // For each middle ProtoModule that ptterm_src connects to...
-        for (ProtoLink const* ptlink1 : ptterm_src.proto_links()) {
+        for (ProtoLink const* ptlink1 : ptterm_src.links()) {
             ProtoModule const* const middle_mod = ptlink1->module();
 
             // Skip non basic modules
@@ -118,7 +122,7 @@ ProtoModule::BridgeList ProtoModule::find_bridges(
                 ProtoLinkPtrSetCItr itr =
                     ptterm_out.find_link_to(dst_mod, dst_chain_id);
 
-                if (itr != ptterm_out.proto_link_set().end()) {
+                if (itr != ptterm_out.link_set().end()) {
                     // We have found a ptlink2
                     res.emplace_back(ptlink1, *itr);
                 }
@@ -183,9 +187,9 @@ void ProtoModule::create_proto_link_pair(
         mod_a->counts().c_interfaces);
     wrn("a_chain: %p, %p, %p, %p\n",
         &a_chain.c_term_,
-        &a_chain.c_term_.proto_links_,
+        &a_chain.c_term_.links_,
         &a_chain.n_term_,
-        &a_chain.n_term_.proto_links_);
+        &a_chain.n_term_.links_);
 #endif  /* ifdef PRINT_CREATE_PROTO_LINK */
 
     ProtoChainList& b_chains = mod_b->chains_;
@@ -207,27 +211,27 @@ void ProtoModule::create_proto_link_pair(
         mod_b->counts().c_interfaces);
     wrn("b_chain: %p, %p, %p, %p\n",
         &b_chain.c_term_,
-        &b_chain.c_term_.proto_links_,
+        &b_chain.c_term_.links_,
         &b_chain.n_term_,
-        &b_chain.n_term_.proto_links_);
+        &b_chain.n_term_.links_);
 #endif  /* ifdef PRINT_CREATE_PROTO_LINK */
 
     // Create links and count
     ProtoLink* a_ptlink = new ProtoLink(tx, mod_b, b_chain_id);
-    a_chain.c_term_.proto_links_.push_back(a_ptlink);
+    a_chain.c_term_.links_.push_back(a_ptlink);
     mod_a->counts_.c_links++;
-    if (a_chain.c_term_.proto_links_.size() == 1) { // 0 -> 1 indicates a new interface
+    if (a_chain.c_term_.links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_a->counts_.c_interfaces++;
     }
 
     ProtoLink* b_ptlink = new ProtoLink(tx_inv, mod_a, a_chain_id);
-    b_chain.n_term_.proto_links_.push_back(b_ptlink);
+    b_chain.n_term_.links_.push_back(b_ptlink);
     mod_b->counts_.n_links++;
-    if (b_chain.n_term_.proto_links_.size() == 1) { // 0 -> 1 indicates a new interface
+    if (b_chain.n_term_.links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_b->counts_.n_interfaces++;
     }
 
-    ProtoLink::pair_proto_links(a_ptlink, b_ptlink);
+    ProtoLink::pair_links(a_ptlink, b_ptlink);
 }
 
 /* printers */

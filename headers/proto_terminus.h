@@ -16,9 +16,9 @@ private:
     typedef Roulette<ProtoLink const*> ProtoLinkRoulette; 
     /* data */
     bool finalized_ = false;
-    ProtoLinkPtrList proto_links_;
+    ProtoLinkPtrList links_;
     ProtoLinkRoulette n_roulette_, c_roulette_;
-    ProtoLinkPtrSet proto_link_set_;
+    ProtoLinkPtrSet link_set_;
 
 public:
     /* ctors */
@@ -32,16 +32,16 @@ public:
     virtual ~ProtoTerminus();
 
     /* accessors */
-    ProtoLinkPtrList const& proto_links() const { return proto_links_; }
-    ProtoLink const& pick_random_proto_link(TerminusType const term) const;
-    ProtoLinkPtrSet const& proto_link_set() const { return proto_link_set_; }
+    ProtoLinkPtrList const& links() const { return links_; }
+    ProtoLink const& pick_random_link(TerminusType const term) const;
+    ProtoLinkPtrSet const& link_set() const { return link_set_; }
     ProtoLinkPtrSetCItr find_link_to(
         ConstProtoModulePtr dst_module,
         size_t const dst_chain_id) const;
     bool has_link_to(
         ConstProtoModulePtr dst_module,
         size_t const dst_chain_id) const {
-        return find_link_to(dst_module, dst_chain_id) != proto_link_set_.end();
+        return find_link_to(dst_module, dst_chain_id) != link_set_.end();
     }
 
     /* modifiers */

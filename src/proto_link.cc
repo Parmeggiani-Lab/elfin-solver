@@ -15,7 +15,7 @@ ProtoLink::ProtoLink(
 
 /* modifiers */
 // static
-void ProtoLink::pair_proto_links(
+void ProtoLink::pair_links(
     ProtoLink* lhs, ProtoLink* rhs) {
     NICE_PANIC(lhs->tx_ != rhs->tx_.inversed(),
                string_format(

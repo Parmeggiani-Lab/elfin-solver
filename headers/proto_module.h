@@ -60,10 +60,10 @@ public:
         StrList const& chain_names);
 
     /* dtors */
-    virtual ~ProtoModule() {}
+    // virtual ~ProtoModule() {}
 
     /* accessors */
-    ProtoChainList const& proto_chains() const { return chains_; }
+    ProtoChainList const& chains() const { return chains_; }
     Counts const& counts() const { return counts_; }
     size_t find_chain_id(std::string const& chain_name) const;
     ProtoLink const* find_link_to(

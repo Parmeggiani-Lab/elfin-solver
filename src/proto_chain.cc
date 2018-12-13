@@ -38,9 +38,9 @@ void ProtoChain::finalize() {
     c_term_.finalize();
 }
 
-ProtoLink const& ProtoChain::pick_random_proto_link(
+ProtoLink const& ProtoChain::pick_random_link(
     TerminusType const term) const {
-    return get_term(term).pick_random_proto_link(term);
+    return get_term(term).pick_random_link(term);
 }
 
 }  /* elfin */

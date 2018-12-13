@@ -28,7 +28,7 @@ public:
     }
 
     /* dtors */
-    virtual ~Link() {}
+    // virtual ~Link() {}
 
     /* accessors */
     FreeChain const& src() const { return src_chain_; }
