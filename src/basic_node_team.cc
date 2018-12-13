@@ -8,7 +8,7 @@
 
 // #define NO_ERODE
 // #define NO_DELETE
-// #define NO_INSERT
+#define NO_INSERT
 #define NO_SWAP
 #define NO_CROSS
 // #define NO_REGENERATE
@@ -44,8 +44,8 @@ void BasicNodeTeam::grow_tip(FreeChain free_chain_a) {
 
     Node* node_a = free_chain_a.node;
     Node* node_b = add_member(
-                        proto_link.module(),
-                        node_a->tx_* proto_link.tx());
+                       proto_link.module(),
+                       node_a->tx_ * proto_link.tx());
 
     TerminusType const term_a = free_chain_a.term;
     TerminusType const term_b = opposite_term(term_a);
@@ -68,6 +68,8 @@ bool BasicNodeTeam::erode_mutate(
 
 #ifndef NO_ERODE
     stop_after_n = std::min(stop_after_n, (long) size());
+    // Any stop_after_n < 0 indicates to continue forever by linearly falling
+    // probability.
 
     if (stop_after_n == 0) {
         mutate_success = true; // eroded 0 node as requested... ?
@@ -89,6 +91,8 @@ bool BasicNodeTeam::erode_mutate(
 
         // Loop condition is always true on first entrance, hence do-while.
         do {
+            DEBUG(size() == 0);
+
             // A tip node is guranteed to have only one neighbor.
             const size_t num_links = tip_node->links().size();
             NICE_PANIC(num_links != 1);
@@ -132,12 +136,17 @@ bool BasicNodeTeam::erode_mutate(
              * 2/6; p=0.16666666666666666
              * 1/6; p=0.0
              */
-            p = p* (size() - 1) / size();
+            p = p * (size() - 1) / size();
 
             // stop_after_n < 0 < stop_after_n is true
             stop_after_n--;
-        } while (stop_after_n != 0 and
-                 (stop_after_n > 0 or random::get_dice_0to1() <= p));
+
+            // Continue if:
+            // (stop_after_n > 0 or stop_after_n < 0) ... i.e.
+            // stop_after_n != 0
+            // and
+            // random::get_dice_0to1() <= p
+        } while (stop_after_n != 0 and random::get_dice_0to1() <= p);
 
         // Restore FreeChain
         free_chains_.push_back(chain_to_restore);
@@ -316,7 +325,7 @@ struct InsertPoint {
     */
     Node* node1, * node2;
     Link const* link1, * link2;
-    ProtoModule::BridgeList const&& bridges;
+    ProtoModule::BridgeList const bridges;
     InsertPoint(
         Node* _node1,
         Node* _node2,
@@ -326,7 +335,7 @@ struct InsertPoint {
         node2(_node2),
         link1(_link1),
         link2(_link2),
-        bridges(std::move(find_bridges())) {}
+        bridges(find_bridges()) {}
     ProtoModule::BridgeList find_bridges() {
         // Return empty list of node2 is nullptr, which happens when node1 is
         // a tip node.
@@ -433,7 +442,7 @@ bool BasicNodeTeam::insert_mutate() {
             // Create a new node in the middle.
             Node* new_node = new Node(
                 bridge.ptlink1->module(),
-                node1->tx_* bridge.ptlink1->tx());
+                node1->tx_ * bridge.ptlink1->tx());
             nodes_.push_back(new_node);
 
             // Link up
@@ -454,7 +463,7 @@ bool BasicNodeTeam::insert_mutate() {
             new_node->add_link(fc_src2, bridge.ptlink2, link2.src());
             node2->add_link(link2.src(), bridge.ptlink2->reverse(), fc_src2);
 
-            UNIMPLEMENTED();
+            // UNIMPLEMENTED();
         }
         else {
             // This is a tip node. Inserting is trivial - same as
