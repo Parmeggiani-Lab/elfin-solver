@@ -7,6 +7,10 @@ namespace elfin {
 
 class BasicNodeTeam : public NodeTeam {
 private:
+    /* accessors */
+    Crc32 calc_checksum() const;
+    float calc_score(WorkArea const* wa) const;
+
     /*modifiers */
     void fix_limb_transforms(Link const& arrow);
     void grow_tip(FreeChain free_chain_a);
@@ -33,15 +37,12 @@ public:
     /* dtors */
     virtual ~BasicNodeTeam() {}
 
-    /* accessors */
-    virtual float score(WorkArea const* wa) const;
-    virtual Crc32 checksum() const;
-
     /* modifiers */
     virtual void deep_copy_from(NodeTeam const* other);
-    virtual MutationMode mutate(
+    virtual MutationMode mutate_and_score(
         NodeTeam const* mother,
-        NodeTeam const* father);
+        NodeTeam const* father,
+        WorkArea const* wa);
     virtual void randomize() { randomize_mutate(); }
 
     /* printers */

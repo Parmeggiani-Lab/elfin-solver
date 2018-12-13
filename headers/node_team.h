@@ -27,6 +27,9 @@ protected:
     /* data */
     Nodes nodes_;
     FreeChainList free_chains_;
+    Crc32 checksum_ = 0x0000;
+    float score_ = INFINITY;
+    // checksum_ is to be calculated automatically after mutate()
 
     /* ctors */
 
@@ -57,18 +60,18 @@ public:
     Nodes const& nodes() const { return nodes_; }
     FreeChainList const& free_chains() const { return free_chains_; }
     size_t size() const { return nodes_.size(); }
-
-    virtual float score(WorkArea const* wa) const = 0;
-    virtual Crc32 checksum() const = 0;
+    float score() const { return score_; }
+    Crc32 checksum() const { return checksum_; }
 
     /* modifiers */
     NodeTeam& operator=(NodeTeam const& other) = delete;
     NodeTeam& operator=(NodeTeam && other);
 
     virtual void deep_copy_from(NodeTeam const* other) = 0;
-    virtual MutationMode mutate(
+    virtual MutationMode mutate_and_score(
         NodeTeam const* mother,
-        NodeTeam const* father) = 0;
+        NodeTeam const* father,
+        WorkArea const* wa) = 0;
     virtual void randomize() = 0;
 
     /* printers */

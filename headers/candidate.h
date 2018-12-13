@@ -21,7 +21,6 @@ protected:
     /* data */
     static size_t MAX_LEN_;
     NodeTeam* node_team_ = nullptr;
-    float score_ = NAN;
 
     /* modifiers */
     void release_resources();
@@ -42,11 +41,11 @@ public:
 
     /* accessors */
     NodeTeam const* node_team() const { return node_team_; }
-    virtual Crc32 checksum() const { return node_team_->checksum(); }
+    Crc32 checksum() const { return node_team_->checksum(); }
     size_t size() const { return node_team_->size(); }
-    float get_score() const { return score_; }
+    float score() const { return node_team_->score(); }
     bool operator<(Candidate const& rhs) const {
-        return score_ < rhs.score_;
+        return score() < rhs.score();
     }
     static bool PtrComparator(
         const Candidate *,
@@ -54,12 +53,13 @@ public:
 
     /* modifiers */
     Candidate& operator=(Candidate const& other);
+    Candidate& operator=(Candidate && other);
     static void setup(WorkArea const& wa);
-    void calc_score(WorkArea const* wa) { score_ = node_team_->score(wa); }
     void randomize() { node_team_->randomize(); }
-    MutationMode mutate(
+    MutationMode mutate_and_score(
         size_t const rank,
-        CandidateList const* candidates);
+        CandidateList const* candidates,
+        WorkArea const* wa);
 
     /* printers */
     virtual std::string to_string() const;

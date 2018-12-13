@@ -57,10 +57,6 @@ Population::Population(const WorkArea* work_area) :
             new_back_buffer->at(i) = new Candidate(work_area_->type());
         }
 
-        // Scoring last candidate tests initialization and score func
-        new_front_buffer->at(pop_size - 1)->calc_score(work_area_);
-        new_back_buffer->at(pop_size - 1)->calc_score(work_area_);
-
         front_buffer_ = new_front_buffer;
         back_buffer_ = new_back_buffer;
 
@@ -114,9 +110,11 @@ void Population::evolve() {
 
         OMP_PAR_FOR
         for (size_t i = 0; i < CUTOFFS.pop_size; i++) {
-            mutation_mode_tally[i] = front_buffer_->at(i)->mutate(
-                                         i,
-                                         back_buffer_);
+            mutation_mode_tally[i] =
+                front_buffer_->at(i)->mutate_and_score(
+                    i,
+                    back_buffer_,
+                    work_area_);
         }
 
         MutationCounter mc;
@@ -134,7 +132,7 @@ void Population::evolve() {
         for (MutationMode mode : mutation_modes) {
             mutation_ss << "    " << MutationModeToCStr(mode) << ':';
 
-            const float mode_ratio = 100.f* mc[mode] / CUTOFFS.non_survivors;
+            const float mode_ratio = 100.f * mc[mode] / CUTOFFS.non_survivors;
             mutation_ss << " " << string_format("%.1f", mode_ratio) << "% ";
             mutation_ss << "(" << mc[mode] << "/" << CUTOFFS.non_survivors << ")\n";
         }
@@ -143,25 +141,6 @@ void Population::evolve() {
     }
     InputManager::ga_times().evolve_time +=
         TIMING_END("evolving", evolve_start_time);
-}
-
-void Population::score() {
-    TIMING_START(score_start_time);
-    {
-        msg("Scoring population...");
-
-        const size_t size = front_buffer_->size();
-
-        OMP_PAR_FOR
-        for (size_t i = 0; i < size; i++) {
-            front_buffer_->at(i)->calc_score(work_area_);
-        }
-
-        ERASE_LINE();
-        msg("Scoring done\n");
-    }
-    InputManager::ga_times().score_time +=
-        TIMING_END("scoring", score_start_time);
 }
 
 void Population::rank() {
