@@ -36,6 +36,7 @@ public:
     ProtoLink const* prototype() const { return prototype_; }
     size_t hash() const;
     bool operator==(Link const& other) const;
+    bool operator!=(Link const& other) const { return not this->operator==(other); }
 
     /* modifiers */
     void update_node_ptrs(NodeAddrMap const& nam);
