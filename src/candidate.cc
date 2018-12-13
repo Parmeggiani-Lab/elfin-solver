@@ -10,7 +10,7 @@ namespace elfin {
 
 /* static data members */
 size_t Candidate::MAX_LEN_ = 0;
-const size_t & Candidate::MAX_LEN = Candidate::MAX_LEN_;
+const size_t& Candidate::MAX_LEN = Candidate::MAX_LEN_;
 
 /* protected */
 
@@ -42,7 +42,7 @@ Candidate::Candidate(const WorkType work_type) {
     DEBUG(node_team_ == nullptr);
 }
 
-Candidate::Candidate(const Candidate & other) {
+Candidate::Candidate(const Candidate& other) {
     *this = other;
 }
 
@@ -52,8 +52,8 @@ Candidate::Candidate(Candidate && other) :
     other.node_team_ = nullptr;
 }
 
-Candidate * Candidate::clone() const {
-    Candidate * new_cand = new Candidate();
+Candidate* Candidate::clone() const {
+    Candidate* new_cand = new Candidate();
     new_cand->node_team_ = node_team_->clone();
     new_cand->score_ = score_;
     return new_cand;
@@ -66,13 +66,13 @@ Candidate::~Candidate() {
 
 /* accessors */
 bool Candidate::PtrComparator(
-    const Candidate * lhs,
-    const Candidate * rhs) {
+    const Candidate* lhs,
+    const Candidate* rhs) {
     return lhs->get_score() < rhs->get_score();
 }
 
 /* modifiesr */
-Candidate & Candidate::operator=(const Candidate & other) {
+Candidate& Candidate::operator=(const Candidate& other) {
     release_resources();
     DEBUG(nullptr == other.node_team_);
     node_team_ = other.node_team_->clone();
@@ -81,7 +81,7 @@ Candidate & Candidate::operator=(const Candidate & other) {
 }
 
 // static
-void Candidate::setup(const WorkArea & wa) {
+void Candidate::setup(const WorkArea& wa) {
     /*
      * Calculate expected length as sum of point
      * displacements over avg pair module distance
@@ -100,7 +100,7 @@ void Candidate::setup(const WorkArea & wa) {
 
 MutationMode Candidate::mutate(
     const size_t rank,
-    const CandidateList * candidates) {
+    const CandidateList* candidates) {
 
     MutationMode mode = MutationMode::NONE;
     if (rank < CUTOFFS.survivors) { // use < because rank is 0-indexed
@@ -111,11 +111,11 @@ MutationMode Candidate::mutate(
         // Replicate mother
         const size_t mother_id =
             random::get_dice(CUTOFFS.survivors); // only elites
-        const NodeTeam * mother_team = candidates->at(mother_id)->node_team();
+        const NodeTeam* mother_team = candidates->at(mother_id)->node_team();
 
         const size_t father_id =
             random::get_dice(CUTOFFS.pop_size); // include all candidates
-        const NodeTeam * father_team = candidates->at(father_id)->node_team();
+        const NodeTeam* father_team = candidates->at(father_id)->node_team();
 
         mode = node_team_->mutate(mother_team, father_team);
     }

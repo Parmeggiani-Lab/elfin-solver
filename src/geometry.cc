@@ -29,14 +29,14 @@ Vector3f Vector3f::operator-(Vector3f const& rhs) const
 Vector3f Vector3f::operator*(float const f) const
 {
 	return Vector3f(
-	           f * this->x,
-	           f * this->y,
-	           f * this->z);
+	           f* this->x,
+	           f* this->y,
+	           f* this->z);
 }
 
 float Vector3f::dot(Vector3f const& rhs) const
 {
-	return this->x * rhs.x + this->y * rhs.y + this->z * rhs.z;
+	return this->x* rhs.x + this->y* rhs.y + this->z* rhs.z;
 }
 
 float Vector3f::dist_to(Vector3f const& rhs) const
@@ -49,7 +49,7 @@ float Vector3f::sq_dist_to(Vector3f const& rhs) const
 	float const dx = (this->x - rhs.x);
 	float const dy = (this->y - rhs.y);
 	float const dz = (this->z - rhs.z);
-	return dx * dx + dy * dy + dz * dz;
+	return dx* dx + dy* dy + dz* dz;
 }
 
 bool Vector3f::approximates(
@@ -84,7 +84,7 @@ bool Vector3f::approximates(
 }
 
 /* Vector3f modifiers */
-Vector3f & Vector3f::operator+=(Vector3f const& rhs)
+Vector3f& Vector3f::operator+=(Vector3f const& rhs)
 {
 	this->x += rhs.x;
 	this->y += rhs.y;
@@ -93,7 +93,7 @@ Vector3f & Vector3f::operator+=(Vector3f const& rhs)
 	return *this;
 }
 
-Vector3f & Vector3f::operator-=(Vector3f const& rhs)
+Vector3f& Vector3f::operator-=(Vector3f const& rhs)
 {
 	this->x -= rhs.x;
 	this->y -= rhs.y;
@@ -152,7 +152,7 @@ Transform::Transform(JSON const& tx_json) {
 /* Transform accessors */
 Transform Transform::operator*(Transform const& rhs) const {
 	/*
-	 * In A * B = C, A is this current Transform.
+	 * In A* B = C, A is this current Transform.
 	 */
 	Transform new_tx;
 	for (size_t i = 0; i < 4; ++i) {
@@ -206,19 +206,19 @@ Vector3f Transform::collapsed() const {
 }
 
 /* Transform modifiers */
-Transform & Transform::operator=(Transform const& other) {
+Transform& Transform::operator=(Transform const& other) {
 	data_ = other.data_;
 	return *this;
 }
 
-Transform & Transform::operator=(Transform && other) {
+Transform& Transform::operator=(Transform && other) {
 	data_ = other.data_;
 	return *this;
 }
 
-Transform & Transform::operator*=(Transform const& rhs) {
+Transform& Transform::operator*=(Transform const& rhs) {
 	/*
-	 * A *= B => A = B * A
+	 * A *= B => A = B* A
 	 * A is this current Transform.
 	 */
 	for (size_t i = 0; i < 4; ++i) {

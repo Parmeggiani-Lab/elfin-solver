@@ -20,7 +20,7 @@ class Candidate {
 protected:
     /* data */
     static size_t MAX_LEN_;
-    NodeTeam * node_team_ = nullptr;
+    NodeTeam* node_team_ = nullptr;
     float score_ = NAN;
 
     /* modifiers */
@@ -35,7 +35,7 @@ public:
     Candidate(WorkType const work_type);
     Candidate(Candidate const& other);
     Candidate(Candidate && other);
-    Candidate * clone() const;
+    Candidate* clone() const;
 
     /* dtors */
     virtual ~Candidate();
@@ -53,7 +53,7 @@ public:
         const Candidate *);
 
     /* modifiers */
-    Candidate & operator=(Candidate const& other);
+    Candidate& operator=(Candidate const& other);
     static void setup(WorkArea const& wa);
     void calc_score(WorkArea const* wa) { score_ = node_team_->score(wa); }
     void randomize() { node_team_->randomize(); }

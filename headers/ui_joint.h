@@ -21,7 +21,7 @@ public:
     std::tuple<std::string, UIJoint const *> hinge_tuple_ =
         std::make_tuple("", nullptr);
 
-    UIJoint(JSON const& j, const std::string & name) :
+    UIJoint(JSON const& j, const std::string& name) :
         UIObject(j, name) {
         JSON const& jnbs = j["neighbours"];
         for (auto it = jnbs.begin(); it != jnbs.end(); ++it) {

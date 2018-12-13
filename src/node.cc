@@ -20,7 +20,7 @@ Node::Node(
 
 /* accessors */
 Link const* Node::find_link_to(Node const* dst_node) const {
-    for (auto & link : links_) {
+    for (auto& link : links_) {
         if (link.dst().node == dst_node) return &link;
     }
     return nullptr;
@@ -28,7 +28,7 @@ Link const* Node::find_link_to(Node const* dst_node) const {
 
 /* modifiers */
 void Node::update_link_ptrs(NodeAddrMap const& nam) {
-    for (Link & link : links_) {
+    for (Link& link : links_) {
         link.update_node_ptrs(nam);
     }
 }

@@ -12,7 +12,7 @@ namespace elfin {
  * https://stackoverflow.com/questions/8520560/get-a-file-name-from-a-path
  * (wild)
  */
-std::string get_filename(const std::string & path) {
+std::string get_filename(const std::string& path) {
     std::string filename = path;
     // Remove directory if present.
     // Do this before extension removal incase directory has a period character.
@@ -31,7 +31,7 @@ std::string get_filename(const std::string & path) {
 
 // static
 void OutputManager::write_output(
-    const EvolutionSolver * solver,
+    const EvolutionSolver* solver,
     std::string extra_dir,
     const size_t indent_size) {
     // Compute final output dir string
@@ -42,9 +42,9 @@ void OutputManager::write_output(
     mkdir_ifn_exists(output_dir_str.c_str());
 
     JSON data;
-    for (auto & kv : SPEC.work_area_map()) {
-        const std::string & wa_name = kv.first;
-        const WorkArea & wa = kv.second;
+    for (auto& kv : SPEC.work_area_map()) {
+        const std::string& wa_name = kv.first;
+        const WorkArea& wa = kv.second;
         JSON waj;
 
         try {
@@ -87,7 +87,7 @@ void OutputManager::write_output(
                         << ".json";
 
     std::string json_out_path_str = json_output_path_ss.str();
-    const char * json_output_path = json_out_path_str.c_str();
+    const char* json_output_path = json_out_path_str.c_str();
 
     // At last, write JSON
     std::string dump = data.dump(indent_size);

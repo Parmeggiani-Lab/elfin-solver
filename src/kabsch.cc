@@ -15,7 +15,7 @@ namespace elfin {
 template <typename T>
 using Matrix = std::vector<std::vector<T>>;
 
-std::vector<double> Vector3f_to_vector(Vector3f const & pt) {
+std::vector<double> Vector3f_to_vector(Vector3f const& pt) {
 	std::vector<double> v;
 
 	v.resize(3);
@@ -26,7 +26,7 @@ std::vector<double> Vector3f_to_vector(Vector3f const & pt) {
 	return v;
 }
 
-Matrix<double> V3fList_to_vectors(V3fList const & pts) {
+Matrix<double> V3fList_to_vectors(V3fList const& pts) {
 	Matrix<double> out;
 
 	out.resize(pts.size());
@@ -36,8 +36,8 @@ Matrix<double> V3fList_to_vectors(V3fList const & pts) {
 	return out;
 }
 
-void resample(V3fList & ref,
-              V3fList & pts) {
+void resample(V3fList& ref,
+              V3fList& pts) {
 	const size_t N = ref.size();
 
 	// Compute  shape total lengths
@@ -58,8 +58,8 @@ void resample(V3fList & ref,
 	float ref_prop = 0.0f, pts_prop = 0.0f;
 	int mpi = 1;
 	for (size_t i = 1; i < pts.size(); i++) {
-		const Vector3f & base_fp_point = pts.at(i - 1);
-		const Vector3f & next_fp_point = pts.at(i);
+		const Vector3f& base_fp_point = pts.at(i - 1);
+		const Vector3f& next_fp_point = pts.at(i);
 		const float base_fp_proportion = pts_prop;
 		const float fp_segment = next_fp_point.dist_to(base_fp_point)
 		                         / pts_tot_len;
@@ -77,7 +77,7 @@ void resample(V3fList & ref,
 
 			const float s = (ref_prop - base_fp_proportion)
 			                / fp_segment;
-			resampled.push_back(base_fp_point + (vec * s));
+			resampled.push_back(base_fp_point + (vec* s));
 
 			mpi++;
 		}
@@ -101,8 +101,8 @@ void resample(V3fList & ref,
 // u    - u(i,j) is   rotation  matrix for best superposition  (output)
 // t    - t(i)   is translation vector for best superposition  (output)
 bool rosetta_kabsch(
-    std::vector<std::vector<double>> const & x,
-    std::vector<std::vector<double>> const & y,
+    std::vector<std::vector<double>> const& x,
+    std::vector<std::vector<double>> const& y,
     int const n,
     int const mode,
     double *rms,
@@ -182,7 +182,7 @@ bool rosetta_kabsch(
 			      (y[m][i] - yc[i]) * (y[m][i] - yc[i]);
 			d = y[m][i] - yc[i];
 			for ( j = 0; j < 3; j++ ) {
-				r[i][j] += d * (x[m][j] - xc[j]);
+				r[i][j] += d* (x[m][j] - xc[j]);
 			}
 		}
 	}
@@ -205,24 +205,24 @@ bool rosetta_kabsch(
 	double spur = (rr[0] + rr[2] + rr[5]) / 3.0;
 	double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
 	                - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
-	det = det * det;
+	det = det* det;
 
 	for ( i = 0; i < 3; i++ ) {
 		e[i] = spur;
 	}
 
 	if ( spur > 0 ) {
-		d = spur * spur;
+		d = spur* spur;
 		h = d - cof;
-		g = (spur * cof - det) / 2.0 - spur * h;
+		g = (spur* cof - det) / 2.0 - spur* h;
 
 		if ( h > 0 ) {
 			sqrth = sqrt(h);
-			d = h * h * h - g * g;
+			d = h* h* h - g* g;
 			if ( d < 0.0 ) d = 0.0;
 			d = atan2( sqrt(d), -g ) / 3.0;
-			cth = sqrth * cos(d);
-			sth = sqrth * sqrt3 * sin(d);
+			cth = sqrth* cos(d);
+			sth = sqrth* sqrt3* sin(d);
 			e[0] = (spur + cth) + cth;
 			e[1] = (spur - cth) + sth;
 			e[2] = (spur - cth) - sth;
@@ -256,7 +256,7 @@ bool rosetta_kabsch(
 					}
 
 					d = 0.0;
-					j = 3 * j;
+					j = 3* j;
 					for ( i = 0; i < 3; i++ ) {
 						k = ip[i + j];
 						a[i][l] = ss[k];
@@ -278,7 +278,7 @@ bool rosetta_kabsch(
 				}
 				p = 0;
 				for ( i = 0; i < 3; i++ ) {
-					a[i][m1] = a[i][m1] - d * a[i][m];
+					a[i][m1] = a[i][m1] - d* a[i][m];
 					p = p + a[i][m1] * a[i][m1];
 				}
 				if ( p <= tol ) {
@@ -336,7 +336,7 @@ bool rosetta_kabsch(
 			p = 0.0;
 
 			for ( i = 0; i < 3; i++ ) {
-				b[i][1] = b[i][1] - d * b[i][0];
+				b[i][1] = b[i][1] - d* b[i][0];
 				p += b[i][1] * b[i][1];
 			}
 
@@ -410,11 +410,11 @@ bool rosetta_kabsch(
 
 // A Wrapper to call the unreadable Rosetta version
 bool kabsch(
-    const V3fList & mobile,
-    const V3fList & ref,
+    const V3fList& mobile,
+    const V3fList& ref,
     Matrix<double> & rot,
-    Vector3f & tran,
-    double & rms,
+    Vector3f& tran,
+    double& rms,
     int mode = 1) {
 	Matrix<double> xx = V3fList_to_vectors(mobile);
 	Matrix<double> yy = V3fList_to_vectors(ref);
@@ -423,7 +423,7 @@ bool kabsch(
 
 	if (rot.size() < 3)
 		rot.resize(3);
-	for (auto & row : rot)
+	for (auto& row : rot)
 		if (row.size() < 3)
 			row.resize(3);
 
@@ -435,7 +435,7 @@ bool kabsch(
 	return ret_val;
 }
 
-float kabsch_score(const V3fList & points, const WorkArea * wa) {
+float kabsch_score(const V3fList& points, const WorkArea* wa) {
 	return kabsch_score(points, wa->to_points());
 }
 
@@ -516,7 +516,7 @@ int _test_kabsch() {
 
 	msg("Rot:\n");
 	for (size_t i = 0; i < rot.size(); i++) {
-		auto const & row = rot.at(i);
+		auto const& row = rot.at(i);
 
 		raw("%16.6f %16.6f %16.6f\n",
 		    row.at(0), row.at(1), row.at(2));
@@ -594,7 +594,7 @@ int _test_kabsch() {
 	// }
 
 	// // Test shifted shapes
-	// for (Gene & g : G)
+	// for (Gene& g : G)
 	// 	g.com() += Vector3f(-10, 20, 30);
 
 	// score = kabsch_score(G, B);

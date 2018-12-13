@@ -12,7 +12,7 @@ private:
     void grow_tip(FreeChain free_chain_a);
 
     bool erode_mutate(
-        Node * tip_node = nullptr,
+        Node* tip_node = nullptr,
         long stop_after_n = -1,
         bool const regen = true);
     bool delete_mutate();
@@ -28,7 +28,7 @@ public:
     using NodeTeam::NodeTeam;
     BasicNodeTeam() : NodeTeam() {}
     BasicNodeTeam(BasicNodeTeam const& other);
-    virtual BasicNodeTeam * clone() const;
+    virtual BasicNodeTeam* clone() const;
 
     /* dtors */
     virtual ~BasicNodeTeam() {}

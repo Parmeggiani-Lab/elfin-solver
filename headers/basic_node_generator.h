@@ -9,13 +9,13 @@ namespace elfin {
 class BasicNodeGenerator {
 private:
     /* data */
-    Node * curr_node_ = nullptr;
+    Node* curr_node_ = nullptr;
     Link const* curr_link_ = nullptr;
-    Node * next_node_ = nullptr;
+    Node* next_node_ = nullptr;
 public:
     /* ctors */
     BasicNodeGenerator(
-        Node * start_node) :
+        Node* start_node) :
         next_node_(start_node) { }
 
     /*
@@ -40,12 +40,12 @@ public:
         return next_node_ == nullptr;
     }
 
-    Node * curr_node() const { return curr_node_; }
+    Node* curr_node() const { return curr_node_; }
     Link const* curr_link() const { return curr_link_; }
 
     /* modifiers */
-    Node * next() {
-        Node * prev_node = curr_node_;
+    Node* next() {
+        Node* prev_node = curr_node_;
         curr_node_ = next_node_;
 
         next_node_ = nullptr;
@@ -55,7 +55,7 @@ public:
         if (curr_node_) {
             size_t const neighbor_size = curr_node_->links().size();
             NICE_PANIC(neighbor_size > 2);
-            for (auto & link : curr_node_->links()) {
+            for (auto& link : curr_node_->links()) {
                 if (link.dst().node != prev_node) {
                     // curr_link links curr_node to next_node
                     curr_link_ = &link;

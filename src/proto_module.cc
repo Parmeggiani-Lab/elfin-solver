@@ -27,7 +27,7 @@ ProtoModule::ProtoModule(
     for (std::string const& cn : _chain_names) {
         chains_.emplace_back(cn, chains_.size());
 #ifdef PRINT_INIT
-        Chain & actual = chains_.back();
+        Chain& actual = chains_.back();
         wrn("Created chain[%s] chains_.size()=%lu at %p; actual: %p, %p, %p, %p\n",
             cn.c_str(),
             chains_.size(),
@@ -47,7 +47,7 @@ ProtoModule::ProtoModule(
 /* accessors */
 size_t ProtoModule::find_chain_id(
     std::string const& chain_name) const {
-    for (auto & chain : chains_) {
+    for (auto& chain : chains_) {
         if (chain.name == chain_name) {
             return chain.id;
         }
@@ -96,15 +96,15 @@ ProtoModule::BridgeList ProtoModule::find_bridges(
         chains_.at(src.chain_id).get_term(src.term);
 
     // For each middle ProtoModule that ptterm_src connects to...
-    for (ProtoLink const& ptlink1 : ptterm_src.proto_links()) {
-        ProtoModule const* const middle_mod = ptlink1.module();
+    for (ProtoLink const* ptlink1 : ptterm_src.proto_links()) {
+        ProtoModule const* const middle_mod = ptlink1->module();
 
         // Skip non basic modules
         if (middle_mod->counts().all_interfaces() > 2) {
             continue;
         }
 
-        size_t const chain_in = ptlink1.chain_id();
+        size_t const chain_in = ptlink1->chain_id();
         TerminusType const term_in = opposite_term(src.term);
 
         // Look for ptlink2 to dst_mod
@@ -117,7 +117,7 @@ ProtoModule::BridgeList ProtoModule::find_bridges(
 
                 if (itr != ptterm_out.proto_link_set().end()) {
                     // We have found a ptlink2
-                    res.emplace_back(&ptlink1, *itr);
+                    res.emplace_back(ptlink1, *itr);
                 }
             };
 
@@ -151,7 +151,7 @@ void ProtoModule::finalize() {
     wrn("Finalizing module %s\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
 
-    for (ProtoChain & proto_chain : chains_) {
+    for (ProtoChain& proto_chain : chains_) {
         proto_chain.finalize();
     }
 }
@@ -165,18 +165,18 @@ void ProtoModule::finalize() {
  */
 void ProtoModule::create_proto_link_pair(
     JSON const& tx_json,
-    ProtoModule * mod_a,
+    ProtoModule* mod_a,
     std::string const& a_chain_name,
-    ProtoModule * mod_b,
+    ProtoModule* mod_b,
     std::string const& b_chain_name) {
     // Create transforms
     Transform const tx(tx_json);
     Transform const tx_inv = tx.inversed();
 
     // Find chains
-    ProtoChainList & a_chains = mod_a->chains_;
+    ProtoChainList& a_chains = mod_a->chains_;
     size_t const a_chain_id = mod_a->find_chain_id(a_chain_name);
-    ProtoChain & a_chain = a_chains.at(a_chain_id);
+    ProtoChain& a_chain = a_chains.at(a_chain_id);
 
 #ifdef PRINT_CREATE_PROTO_LINK
     wrn(("mod_a[%p:%s] size: %lu, proto_chain[%p:%s:%lu], "
@@ -193,14 +193,14 @@ void ProtoModule::create_proto_link_pair(
         mod_a->counts().c_interfaces);
     wrn("a_chain: %p, %p, %p, %p\n",
         &a_chain.c_term_,
-        &a_chain.c_term_.proto_link_list_,
+        &a_chain.c_term_.proto_links_,
         &a_chain.n_term_,
-        &a_chain.n_term_.proto_link_list_);
+        &a_chain.n_term_.proto_links_);
 #endif  /* ifdef PRINT_CREATE_PROTO_LINK */
 
-    ProtoChainList & b_chains = mod_b->chains_;
+    ProtoChainList& b_chains = mod_b->chains_;
     size_t const b_chain_id = mod_b->find_chain_id(b_chain_name);
-    ProtoChain & b_chain = b_chains.at(b_chain_id);
+    ProtoChain& b_chain = b_chains.at(b_chain_id);
 
 #ifdef PRINT_CREATE_PROTO_LINK
     wrn("mod_b[%p:%s] size: %lu, proto_chain[%p:%s:%lu], "
@@ -217,27 +217,27 @@ void ProtoModule::create_proto_link_pair(
         mod_b->counts().c_interfaces);
     wrn("b_chain: %p, %p, %p, %p\n",
         &b_chain.c_term_,
-        &b_chain.c_term_.proto_link_list_,
+        &b_chain.c_term_.proto_links_,
         &b_chain.n_term_,
-        &b_chain.n_term_.proto_link_list_);
+        &b_chain.n_term_.proto_links_);
 #endif  /* ifdef PRINT_CREATE_PROTO_LINK */
 
     // Create links and count
-    a_chain.c_term_.proto_link_list_.emplace_back(tx, mod_b, b_chain_id);
+    ProtoLink* a_ptlink = new ProtoLink(tx, mod_b, b_chain_id);
+    a_chain.c_term_.proto_links_.push_back(a_ptlink);
     mod_a->counts_.c_links++;
-    if (a_chain.c_term_.proto_link_list_.size() == 1) { // 0 -> 1 indicates a new interface
+    if (a_chain.c_term_.proto_links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_a->counts_.c_interfaces++;
     }
 
-    b_chain.n_term_.proto_link_list_.emplace_back(tx_inv, mod_a, a_chain_id);
+    ProtoLink* b_ptlink = new ProtoLink(tx_inv, mod_a, a_chain_id);
+    b_chain.n_term_.proto_links_.push_back(b_ptlink);
     mod_b->counts_.n_links++;
-    if (b_chain.n_term_.proto_link_list_.size() == 1) { // 0 -> 1 indicates a new interface
+    if (b_chain.n_term_.proto_links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_b->counts_.n_interfaces++;
     }
 
-    ProtoLink::pair_proto_links(
-        a_chain.c_term_.proto_link_list_.back(),
-        b_chain.n_term_.proto_link_list_.back());
+    ProtoLink::pair_proto_links(a_ptlink, b_ptlink);
 }
 
 /* printers */

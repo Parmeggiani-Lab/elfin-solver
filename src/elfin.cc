@@ -68,8 +68,8 @@ int ElfinRunner::run_meta_tests() const {
     msg("Running meta tests...\n");
     int fail_count = 0;
 
-    for (auto & itr : SPEC.work_area_map()) {
-        const WorkArea & wa = itr.second;
+    for (auto& itr : SPEC.work_area_map()) {
+        const WorkArea& wa = itr.second;
         V3fList moved_spec = wa.to_points();
 
         // It seems that Kabsch cannot handle very large
@@ -86,7 +86,7 @@ int ElfinRunner::run_meta_tests() const {
         Transform tx(tx_ele);
 
         for (Vector3f &p : moved_spec) {
-            p = tx * p;
+            p = tx* p;
         }
 
         // Test scoring a transformed version of spec
@@ -100,7 +100,7 @@ int ElfinRunner::run_meta_tests() const {
         const int N = 10;
         const int rand_trials = 50000000;
         const int expect_avg = rand_trials / N;
-        const float rand_dev_tolerance = 0.05f * expect_avg;  // 5% deviation
+        const float rand_dev_tolerance = 0.05f* expect_avg;  // 5% deviation
 
         int rand_count[N] = {0};
         for (size_t i = 0; i < rand_trials; i++) {

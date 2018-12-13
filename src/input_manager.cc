@@ -5,22 +5,22 @@
 
 namespace elfin {
 
-const Options & OPTIONS =
+const Options& OPTIONS =
     InputManager::options();
-const Cutoffs & CUTOFFS =
+const Cutoffs& CUTOFFS =
     InputManager::cutoffs();
-const Database & XDB =
+const Database& XDB =
     InputManager::xdb();
-const Spec & SPEC =
+const Spec& SPEC =
     InputManager::spec();
 
-const GATimes & GA_TIMES =
+const GATimes& GA_TIMES =
     InputManager::ga_times();
 
 /* protected */
 //static
 void InputManager::setup_cutoffs() {
-    Cutoffs & cutoffs = instance().cutoffs_;
+    Cutoffs& cutoffs = instance().cutoffs_;
 
     cutoffs = {}; // zero struct
 
@@ -30,7 +30,7 @@ void InputManager::setup_cutoffs() {
     // Force survivors > 0
     cutoffs.survivors =
         std::max((size_t) 1,
-                 (size_t) std::round(OPTIONS.ga_survive_rate * OPTIONS.ga_pop_size));
+                 (size_t) std::round(OPTIONS.ga_survive_rate* OPTIONS.ga_pop_size));
 
     cutoffs.non_survivors =
         (OPTIONS.ga_pop_size - cutoffs.survivors);

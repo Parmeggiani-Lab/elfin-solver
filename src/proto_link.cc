@@ -16,15 +16,14 @@ ProtoLink::ProtoLink(
 /* modifiers */
 // static
 void ProtoLink::pair_proto_links(
-    ProtoLink & lhs,
-    ProtoLink & rhs) {
-    NICE_PANIC(lhs.tx_ != rhs.tx_.inversed(),
+    ProtoLink* lhs, ProtoLink* rhs) {
+    NICE_PANIC(lhs->tx_ != rhs->tx_.inversed(),
                string_format(
-                   "lhs.tx=%s\nrhs.tx.inversed()=%s\n",
-                   lhs.tx_.to_string().c_str(),
-                   rhs.tx_.inversed().to_string().c_str()));
-    lhs.reverse_ = &rhs;
-    rhs.reverse_ = &lhs;
+                   "lhs->tx=%s\nrhs->tx.inversed()=%s\n",
+                   lhs->tx_.to_string().c_str(),
+                   rhs->tx_.inversed().to_string().c_str()));
+    lhs->reverse_ = rhs;
+    rhs->reverse_ = lhs;
 }
 
 size_t HashProtoLinkWithoutTx::operator()(
@@ -40,11 +39,18 @@ bool EqualProtoLinkWithoutTx::operator()(
            lh_link->chain_id() == rh_link->chain_id();
 }
 
-bool CompareProtoLinkByModuleInterfaces::operator() (
+bool ProtoLinkInterfacesComparator::operator() (
     ProtoLink const& lhs,
     ProtoLink const& rhs) const {
     return lhs.module()->counts().all_interfaces() <
            rhs.module()->counts().all_interfaces();
+}
+
+bool ProtoLinkInterfacesComparator::operator() (
+    ProtoLink const* lhs,
+    ProtoLink const* rhs) const {
+    return lhs->module()->counts().all_interfaces() <
+           rhs->module()->counts().all_interfaces();
 }
 
 }  /* elfin */

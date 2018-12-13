@@ -17,7 +17,7 @@ void Population::release_resources() {
 }
 
 // static
-void Population::copy_buffer(const Buffer * src, Buffer * dst) {
+void Population::copy_buffer(const Buffer* src, Buffer* dst) {
     NICE_PANIC(src == dst);
 
     dst->clear();
@@ -33,7 +33,7 @@ void Population::copy_buffer(const Buffer * src, Buffer * dst) {
 
 /* public */
 /* ctors */
-Population::Population(const WorkArea * work_area) :
+Population::Population(const WorkArea* work_area) :
     work_area_(work_area) {
     TIMING_START(init_start_time);
     {
@@ -43,8 +43,8 @@ Population::Population(const WorkArea * work_area) :
         Candidate::setup(*work_area);
 
         // Initialize for front_buffer_
-        Buffer * new_front_buffer = new Buffer();
-        Buffer * new_back_buffer = new Buffer();
+        Buffer* new_front_buffer = new Buffer();
+        Buffer* new_back_buffer = new Buffer();
 
         // Must pre allocate for parallel assignment
         new_front_buffer->resize(pop_size);
@@ -70,7 +70,7 @@ Population::Population(const WorkArea * work_area) :
     TIMING_END("init", init_start_time);
 }
 
-Population::Population(const Population & other) {
+Population::Population(const Population& other) {
     *this = other; // calls operator=(const T&)
 }
 
@@ -84,7 +84,7 @@ Population::~Population() {
 }
 
 /* modifiers */
-Population & Population::operator=(const Population & other) {
+Population& Population::operator=(const Population& other) {
     release_resources();
     front_buffer_ = new Buffer();
     copy_buffer(other.back_buffer_, front_buffer_);
@@ -95,7 +95,7 @@ Population & Population::operator=(const Population & other) {
     return *this;
 }
 
-Population & Population::operator=(Population && other) {
+Population& Population::operator=(Population && other) {
     release_resources();
     front_buffer_ = other.front_buffer_;
     other.front_buffer_ = nullptr;
@@ -120,7 +120,7 @@ void Population::evolve() {
         }
 
         MutationCounter mc;
-        for (const MutationMode & mode : mutation_mode_tally) {
+        for (const MutationMode& mode : mutation_mode_tally) {
             mc[mode]++;
         }
 
@@ -134,7 +134,7 @@ void Population::evolve() {
         for (MutationMode mode : mutation_modes) {
             mutation_ss << "    " << MutationModeToCStr(mode) << ':';
 
-            const float mode_ratio = 100.f * mc[mode] / CUTOFFS.non_survivors;
+            const float mode_ratio = 100.f* mc[mode] / CUTOFFS.non_survivors;
             mutation_ss << " " << string_format("%.1f", mode_ratio) << "% ";
             mutation_ss << "(" << mc[mode] << "/" << CUTOFFS.non_survivors << ")\n";
         }
@@ -208,7 +208,7 @@ void Population::select() {
 
         // Insert map-value-indexed individual back into population
         size_t pop_index = 0;
-        for (auto & kv : crc_map) {
+        for (auto& kv : crc_map) {
             delete front_buffer_->at(pop_index); // free candidate memory
             front_buffer_->at(pop_index) = kv.second;
             pop_index++;
@@ -227,7 +227,7 @@ void Population::select() {
 }
 
 void Population::swap_buffer() {
-    const Buffer * tmp = back_buffer_;
+    const Buffer* tmp = back_buffer_;
     back_buffer_ = front_buffer_;
     front_buffer_ = const_cast<Buffer *>(tmp);
 }

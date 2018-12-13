@@ -38,7 +38,7 @@ public:
         return std::find(this->begin(), this->end(), item);
     }
 
-    void lift_erase(ItrType & itr) {
+    void lift_erase(ItrType& itr) {
         if (itr != this->end()) {
             *itr = std::move(this->back());
             this->pop_back();
@@ -62,7 +62,7 @@ public:
         }
     }
 
-    T & pick_random() {
+    T& pick_random() {
         return random::pick(*this);
     }
 

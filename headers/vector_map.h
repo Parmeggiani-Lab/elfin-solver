@@ -53,11 +53,11 @@ public:
     }
 
     /* modifiers */
-    ItemType & back() {
+    ItemType& back() {
         return items_.back();
     }
 
-    ItemType & pick_random() {
+    ItemType& pick_random() {
         return items_.pick_random();
     }
 
@@ -93,7 +93,7 @@ public:
         item_to_id_map_.erase(itr->first);
     }
 
-    void erase(ItemType & item) {
+    void erase(ItemType& item) {
         erase(item_to_id_map_.find(item));
     }
 

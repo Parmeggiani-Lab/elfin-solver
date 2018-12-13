@@ -52,7 +52,7 @@ typedef Vector<Link> LinkList;
 namespace std {
 
 template <> struct hash<elfin::Link> {
-    size_t operator()(const elfin::Link & x) const {
+    size_t operator()(const elfin::Link& x) const {
         return std::hash<elfin::FreeChain>()(x.src()) ^
                std::hash<elfin::FreeChain>()(x.dst());
     }

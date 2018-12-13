@@ -16,12 +16,12 @@ protected:
     Transform tx_;
 
 public:
-    UIObject(JSON const& j, const std::string & name);
-    UIObject(Transform const& tx, const std::string & name);
+    UIObject(JSON const& j, const std::string& name);
+    UIObject(Transform const& tx, const std::string& name);
     virtual ~UIObject() {}
 
     // getters
-    const std::string & name() const { return name_; }
+    const std::string& name() const { return name_; }
     Transform const& tx() const { return tx_; }
 };
 

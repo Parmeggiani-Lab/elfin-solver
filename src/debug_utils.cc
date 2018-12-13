@@ -6,10 +6,10 @@ namespace elfin {
 
 void __debug(
     const bool result,
-    const std::string & cond_expr,
+    const std::string& cond_expr,
     const char *filename,
     const int line,
-    const std::string & msg) {
+    const std::string& msg) {
     if (result) {
         raw("\n\n");
         err("Bug: %s\n", msg.c_str());

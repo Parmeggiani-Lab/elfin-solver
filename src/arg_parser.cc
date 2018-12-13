@@ -49,7 +49,7 @@ ARG_PARSER_CALLBACK(set_input_file) {
 }
 
 void ArgParser::print_args() const {
-    for (const auto & ab : argb_) {
+    for (const auto& ab : argb_) {
         set_leading_spaces(8);
         raw("%s, %s\n", ab.short_form.c_str(), ab.long_form.c_str());
         set_leading_spaces(12);
@@ -58,12 +58,12 @@ void ArgParser::print_args() const {
     reset_leading_spaces();
 }
 
-const ArgBundle * ArgParser::match_arg_bundle(const char *arg_in) {
+const ArgBundle* ArgParser::match_arg_bundle(const char *arg_in) {
     // anything shorter than 2 chars cannot match
     if (arg_in[0] == '-')
         arg_in++; // to skip "-"
 
-    for (const auto & ab : argb_) {
+    for (const auto& ab : argb_) {
         if (!ab.short_form.compare(arg_in) or
                 (arg_in[0] == '-' and !ab.long_form.compare((char *) (arg_in + 1)))
            ) {

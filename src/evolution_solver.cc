@@ -34,18 +34,18 @@ std::string timing_msg_format =
 
 void
 EvolutionSolver::collect_gen_data(
-    const Population & pop,
+    const Population& pop,
     const size_t gen_id,
     const double gen_start_time,
-    double & tot_gen_time,
-    size_t & stagnant_count,
-    float & lastgen_best_score,
-    CandidateSharedPtrs & best_sols,
-    bool & should_break) {
+    double& tot_gen_time,
+    size_t& stagnant_count,
+    float& lastgen_best_score,
+    CandidateSharedPtrs& best_sols,
+    bool& should_break) {
     // Stat collection
-    const Candidate * best_candidate =
+    const Candidate* best_candidate =
         pop.front_buffer()->front();
-    const Candidate * worst_candidate =
+    const Candidate* worst_candidate =
         pop.front_buffer()->front();
 
     const float gen_best_score = best_candidate->get_score();
@@ -63,7 +63,7 @@ EvolutionSolver::collect_gen_data(
         gen_worst_score,
         gen_time);
 
-    // Compute stagnancy & check inverted scores
+    // Compute stagnancy& check inverted scores
     if (float_approximates(gen_best_score, lastgen_best_score)) {
         stagnant_count++;
     }
@@ -89,7 +89,7 @@ EvolutionSolver::collect_gen_data(
 
     // update best sols
     for (size_t j = 0; j < OPTIONS.keep_n; j++) {
-        Candidate * best_cand_clone =
+        Candidate* best_cand_clone =
             pop.front_buffer()->at(j)->clone();
         best_sols[j] =
             std::shared_ptr<Candidate>(best_cand_clone);
@@ -114,8 +114,8 @@ EvolutionSolver::collect_gen_data(
 }
 
 void
-EvolutionSolver::print_start_msg(const V3fList & shape) const {
-    for (auto & p : shape)
+EvolutionSolver::print_start_msg(const V3fList& shape) const {
+    for (auto& p : shape)
         dbg("Work Area Point: %s\n", p.to_string().c_str());
 
     msg("Length guess: < %lu; Spec has %d points\n",
@@ -183,21 +183,21 @@ EvolutionSolver::print_timing() const {
 
 void
 EvolutionSolver::debug_print_pop(
-    const Population & pop,
+    const Population& pop,
     const size_t cutoff) const {
     const size_t i_max =
         std::min(cutoff, pop.front_buffer()->size());
 
     for (size_t i = 0; i < i_max; ++i)
     {
-        auto & c = pop.front_buffer()->at(i);
+        auto& c = pop.front_buffer()->at(i);
         wrn("curr  [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
             i, c, c->checksum(), c->get_score(), c->size());
     }
 
     for (size_t i = 0; i < i_max; ++i)
     {
-        auto & c = pop.back_buffer()->at(i);
+        auto& c = pop.back_buffer()->at(i);
         wrn("buff  [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
             i, c, c->checksum(), c->get_score(), c->size());
     }
@@ -208,7 +208,7 @@ EvolutionSolver::debug_print_pop(
 void
 EvolutionSolver::run() {
     start_time_in_us_ = get_timestamp_us();
-    for (auto & itr : SPEC.work_area_map()) {
+    for (auto& itr : SPEC.work_area_map()) {
 
         // if this was a complex work area, we need to break it down to
         // multiple simple ones by first choosing hubs and their orientations.
@@ -216,7 +216,7 @@ EvolutionSolver::run() {
         TODO: Break complex work area
         */
         const std::string wa_name = itr.first;
-        const WorkArea & wa = itr.second;
+        const WorkArea& wa = itr.second;
         if (wa.type() != WorkType::FREE) {
             std::ostringstream ss;
             ss << "Skipping work_area: ";

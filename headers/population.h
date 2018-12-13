@@ -22,7 +22,7 @@ protected:
         }
     };
     /* data */
-    Buffer * front_buffer_ = nullptr;
+    Buffer* front_buffer_ = nullptr;
     Buffer const* back_buffer_ = nullptr;
     WorkArea const* work_area_ = nullptr;
 
@@ -32,7 +32,7 @@ protected:
     /* static */
     static void copy_buffer(
         Buffer const* src,
-        Buffer * dst);
+        Buffer* dst);
 public:
     /* ctors */
     Population(WorkArea const* work_area);
@@ -47,8 +47,8 @@ public:
     Buffer const* back_buffer() const { return back_buffer_; }
 
     /* modifiers */
-    Population & operator=(Population const& other);
-    Population & operator=(Population && other);
+    Population& operator=(Population const& other);
+    Population& operator=(Population && other);
     void evolve();
     void score();
     void rank();

@@ -15,14 +15,14 @@ class Node;
 
 struct FreeChain {
     /* data */
-    Node * node;
+    Node* node;
     TerminusType term;
     size_t chain_id;
 
     /* ctors */
     FreeChain() : FreeChain(nullptr, TerminusType::NONE, 0) {}
     FreeChain(
-        Node * _node,
+        Node* _node,
         TerminusType const _term,
         size_t const _chain_id);
 

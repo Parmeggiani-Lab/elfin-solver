@@ -34,7 +34,7 @@ protected:
 
     static void setup_cutoffs();
 public:
-    static InputManager & instance() {
+    static InputManager& instance() {
         static InputManager im;
         return im;
     }
@@ -42,7 +42,7 @@ public:
     /* static setup methods */
     static void setup(int const argc, const char ** argv);
 
-    /* getters & setters */
+    /* getters& setters */
     static Options const& options() {
         return instance().options_;
     }
@@ -56,7 +56,7 @@ public:
         return instance().spec_;
     }
 
-    static GATimes & ga_times() {
+    static GATimes& ga_times() {
         return instance().ga_times_;
     }
 };
