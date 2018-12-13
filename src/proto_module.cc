@@ -105,33 +105,21 @@ ProtoModule::BridgeList ProtoModule::find_bridges(
         }
 
         size_t const chain_in = ptlink1->chain_id();
-        TerminusType const term_in = opposite_term(src.term);
 
         // Look for ptlink2 to dst_mod
         for (ProtoChain const& middle_chain : middle_mod->chains_) {
-            auto find_ptlink2 = [&](TerminusType const term) {
-                ProtoTerminus const& ptterm_out =
-                    middle_chain.get_term(term);
-                ProtoLinkPtrSetCItr itr =
-                    ptterm_out.find_link_to(dst_mod, dst_chain_id);
+            // Skip incoming chain.
+            if (middle_chain.id == src.chain_id) continue;
 
-                if (itr != ptterm_out.proto_link_set().end()) {
-                    // We have found a ptlink2
-                    res.emplace_back(ptlink1, *itr);
-                }
-            };
+            // dst.term is incoming term, the opposite of which is src.term.
+            ProtoTerminus const& ptterm_out =
+                middle_chain.get_term(src.term);
+            ProtoLinkPtrSetCItr itr =
+                ptterm_out.find_link_to(dst_mod, dst_chain_id);
 
-            // Skip incoming chain:term, which gets occupied if the bridge
-            // does form.
-
-            if (not (middle_chain.id == chain_in and
-                     term_in == TerminusType::N)) {
-                find_ptlink2(TerminusType::N);
-            }
-
-            if (not (middle_chain.id == chain_in and
-                     term_in == TerminusType::C)) {
-                find_ptlink2(TerminusType::C);
+            if (itr != ptterm_out.proto_link_set().end()) {
+                // We have found a ptlink2
+                res.emplace_back(ptlink1, *itr);
             }
         }
     }
