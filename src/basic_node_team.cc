@@ -33,7 +33,7 @@ void BasicNodeTeam::fix_limb_transforms(Link const& arrow) {
     BasicNodeGenerator limb_gtor(&arrow);
     while (not limb_gtor.is_done()) {
         Link const* curr_link = limb_gtor.curr_link();
-        Node * next_node = limb_gtor.next();
+        Node* next_node = limb_gtor.next();
         next_node->tx_ = curr_link->prototype()->tx() * next_node->tx_;
     }
 }
@@ -42,10 +42,10 @@ void BasicNodeTeam::grow_tip(FreeChain free_chain_a) {
     ProtoLink const& proto_link =
         free_chain_a.random_proto_link();
 
-    Node * node_a = free_chain_a.node;
-    Node * node_b = add_member(
+    Node* node_a = free_chain_a.node;
+    Node* node_b = add_member(
                         proto_link.module(),
-                        node_a->tx_ * proto_link.tx());
+                        node_a->tx_* proto_link.tx());
 
     TerminusType const term_a = free_chain_a.term;
     TerminusType const term_b = opposite_term(term_a);
@@ -61,7 +61,7 @@ void BasicNodeTeam::grow_tip(FreeChain free_chain_a) {
 }
 
 bool BasicNodeTeam::erode_mutate(
-    Node * tip_node,
+    Node* tip_node,
     long stop_after_n,
     bool const regen) {
     bool mutate_success = false;
@@ -96,7 +96,7 @@ bool BasicNodeTeam::erode_mutate(
 
             // Delete this tip node and restore state to consistency
             chain_to_restore = tip_link.dst();
-            Node * new_tip = chain_to_restore.node;
+            Node* new_tip = chain_to_restore.node;
 
             /*
              *                 ( tip_link )
@@ -132,7 +132,7 @@ bool BasicNodeTeam::erode_mutate(
              * 2/6; p=0.16666666666666666
              * 1/6; p=0.0
              */
-            p = p * (size() - 1) / size();
+            p = p* (size() - 1) / size();
 
             // stop_after_n < 0 < stop_after_n is true
             stop_after_n--;
@@ -156,11 +156,11 @@ struct DeletePoint {
        [neighbor1] <--link1-- [delete_node] --link2--> [neighbor2]
                    --------------skipper------------->
     */
-    Node * delete_node;
+    Node* delete_node;
     Link const* link1, * link2;
     ProtoLink const* skipper;
     DeletePoint(
-        Node * _delete_node,
+        Node* _delete_node,
         Link const* _link1,
         Link const* _link2,
         ProtoLink const* _skipper) :
@@ -180,11 +180,11 @@ bool BasicNodeTeam::delete_mutate() {
 
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
-        Node * start_node = free_chains_[0].node;
+        Node* start_node = free_chains_[0].node;
         BasicNodeGenerator node_gtor(start_node);
 
-        Node * curr_node = nullptr;
-        Node * next_node = node_gtor.next(); // starts with start_node
+        Node* curr_node = nullptr;
+        Node* next_node = node_gtor.next(); // starts with start_node
         do {
             curr_node = next_node;
             next_node = node_gtor.next(); // can be nullptr
@@ -193,7 +193,7 @@ bool BasicNodeTeam::delete_mutate() {
             if (num_links == 1) {
                 /*
                    curr_node is a tip node, which can always be deleted trivially.
-                   Use ProtoLink * = nullptr to mark a tip node. Pointers
+                   Use ProtoLink* = nullptr to mark a tip node. Pointers
                    link1 and link2 are not used.
                 */
 
@@ -260,8 +260,8 @@ bool BasicNodeTeam::delete_mutate() {
                                 vvvvvvvvvvv                 vvvvvvvvvvv
                                 dst->-<-src--[delete_node]--src->-<-dst
             */
-            Node * neighbor1 = delete_point.link1->dst().node;
-            Node * neighbor2 = delete_point.link2->dst().node;
+            Node* neighbor1 = delete_point.link1->dst().node;
+            Node* neighbor2 = delete_point.link2->dst().node;
 
             neighbor1->remove_link(delete_point.link1->reversed());
             neighbor2->remove_link(delete_point.link2->reversed());
@@ -314,12 +314,12 @@ struct InsertPoint {
         Each bridge has ptlink1 and ptlink2 that:
         [  node1 ] -ptlink1-> [new_node] -ptlink2-> [ node2  ]
     */
-    Node * node1, * node2;
+    Node* node1, * node2;
     Link const* link1, * link2;
     ProtoModule::BridgeList const&& bridges;
     InsertPoint(
-        Node * _node1,
-        Node * _node2,
+        Node* _node1,
+        Node* _node2,
         Link const* _link1,
         Link const* _link2) :
         node1(_node1),
@@ -346,11 +346,11 @@ bool BasicNodeTeam::insert_mutate() {
 
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
-        Node * start_node = free_chains_[0].node;
+        Node* start_node = free_chains_[0].node;
         BasicNodeGenerator node_gtor(start_node);
 
-        Node * prev_node = nullptr, * curr_node = nullptr;
-        Node * next_node = node_gtor.next(); // starts with start_node
+        Node* prev_node = nullptr, * curr_node = nullptr;
+        Node* next_node = node_gtor.next(); // starts with start_node
         do {
             prev_node = curr_node;
             curr_node = next_node;
@@ -420,8 +420,8 @@ bool BasicNodeTeam::insert_mutate() {
             // [ node1 ] < --link2-- [ node2 ]
             Link const link1 = *insert_point.link1;
             Link const link2 = *insert_point.link2;
-            Node * node1 = link1.dst().node;
-            Node * node2 = link2.dst().node;
+            Node* node1 = link1.dst().node;
+            Node* node2 = link2.dst().node;
 
             // Break link
             node1->remove_link(link1.reversed());
@@ -431,9 +431,9 @@ bool BasicNodeTeam::insert_mutate() {
             auto const& bridge = insert_point.bridges.pick_random();
 
             // Create a new node in the middle.
-            Node * new_node = new Node(
+            Node* new_node = new Node(
                 bridge.ptlink1->module(),
-                node1->tx_ * bridge.ptlink1->tx());
+                node1->tx_* bridge.ptlink1->tx());
             nodes_.push_back(new_node);
 
             // Link up
@@ -645,7 +645,7 @@ BasicNodeTeam::BasicNodeTeam(BasicNodeTeam const& other) {
     deep_copy_from(&other);
 }
 
-BasicNodeTeam * BasicNodeTeam::clone() const {
+BasicNodeTeam* BasicNodeTeam::clone() const {
     return new BasicNodeTeam(*this);
 }
 
@@ -663,8 +663,8 @@ float BasicNodeTeam::score(WorkArea const* wa) const {
     DEBUG(free_chains_.size() != 2 and size() != 0);
 
     float score = INFINITY;
-    for (auto & free_chain : free_chains_) {
-        Node * tip = free_chain.node;
+    for (auto& free_chain : free_chains_) {
+        Node* tip = free_chain.node;
         BasicNodeGenerator node_gtor(tip);
 
         V3fList points;
@@ -692,8 +692,8 @@ Crc32 BasicNodeTeam::checksum() const {
     DEBUG(free_chains_.size() != 2 and size() != 0);
 
     Crc32 crc = 0x0000;
-    for (auto & free_chain : free_chains_) {
-        Node * tip = free_chain.node;
+    for (auto& free_chain : free_chains_) {
+        Node* tip = free_chain.node;
         BasicNodeGenerator node_gtor(tip);
 
         Crc32 crc_half = 0xffff;
@@ -731,7 +731,7 @@ void BasicNodeTeam::deep_copy_from(
             nodes_.push_back(node_ptr);
         }
 
-        for (auto & fc : free_chains_) {
+        for (auto& fc : free_chains_) {
             fc.node = addr_map.at(fc.node);
         }
     }
@@ -788,7 +788,7 @@ std::string BasicNodeTeam::to_string() const {
     std::ostringstream ss;
 
     NICE_PANIC(free_chains_.empty());
-    Node * start_node = free_chains_.at(0).node;
+    Node* start_node = free_chains_.at(0).node;
     BasicNodeGenerator node_gtor(start_node);
 
     while (not node_gtor.is_done()) {

@@ -8,18 +8,18 @@
 
 namespace elfin {
 
-WorkArea::WorkArea(const JSON & j, const std::string & name) :
+WorkArea::WorkArea(const JSON& j, const std::string& name) :
     name_(name) {
     size_t n_branches = 0;
     for (auto it = j.begin(); it != j.end(); ++it) {
-        const JSON & jt_json = *it;
-        const std::string & joint_name = it.key();
+        const JSON& jt_json = *it;
+        const std::string& joint_name = it.key();
         auto j_itr = joints_.emplace(joint_name, UIJoint(jt_json, joint_name));
         const size_t n_nbs = jt_json["neighbours"].size();
         n_branches += n_nbs > 2;
 
-        auto & key_val = *j_itr.first;
-        UIJoint * ptr = &(key_val.second);
+        auto& key_val = *j_itr.first;
+        UIJoint* ptr = &(key_val.second);
         if (jt_json["occupant"] != "") {
             ptr->occupant_triple_ =
                 std::make_tuple(
@@ -68,8 +68,8 @@ V3fList WorkArea::to_points() const {
     NICE_PANIC(leaf_joints_.size() != 2,
                string_format("Size of leaf_joints_ not exactly 2 in work_area: %s\n", name_.c_str()));
 
-    UIJoint const * prev = nullptr, * tmp = nullptr;
-    UIJoint const * j = leaf_joints_.at(0);
+    UIJoint const* prev = nullptr, * tmp = nullptr;
+    UIJoint const* j = leaf_joints_.at(0);
     while (1) {
         res.emplace_back(j->tx().collapsed());
 

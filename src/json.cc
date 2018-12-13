@@ -8,7 +8,7 @@
 
 namespace elfin {
 
-std::string json_to_str(const JSON & j) {
+std::string json_to_str(const JSON& j) {
     std::ostringstream ss;
     if (j.is_string()) {
         ss << j.get<std::string>();
@@ -19,7 +19,7 @@ std::string json_to_str(const JSON & j) {
     return ss.str();
 }
 
-JSON parse_json(const std::string & filename)
+JSON parse_json(const std::string& filename)
 {
     std::ifstream input_stream(filename);
 

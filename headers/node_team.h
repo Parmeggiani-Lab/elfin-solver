@@ -32,23 +32,23 @@ protected:
 
     /* accessors */
     bool collides(
-        Vector3f const & new_com,
+        Vector3f const& new_com,
         float const mod_radius) const;
 
     /* modifiers */
     void disperse();
-    Node * add_member(
+    Node* add_member(
         ProtoModule const* prot,
         Transform const& tx = Transform());
-    void remove_member(Node *  node);
-    void remove_member_chains(Node *  node);
+    void remove_member(Node* node);
+    void remove_member_chains(Node* node);
 
 public:
     /* ctors */
     NodeTeam();
     NodeTeam(NodeTeam && other);
     NodeTeam(NodeTeam const& other) = delete;
-    virtual NodeTeam * clone() const = 0;
+    virtual NodeTeam* clone() const = 0;
 
     /* dtors */
     virtual ~NodeTeam();
@@ -62,8 +62,8 @@ public:
     virtual Crc32 checksum() const = 0;
 
     /* modifiers */
-    NodeTeam & operator=(NodeTeam const& other) = delete;
-    NodeTeam & operator=(NodeTeam && other);
+    NodeTeam& operator=(NodeTeam const& other) = delete;
+    NodeTeam& operator=(NodeTeam && other);
 
     virtual void deep_copy_from(NodeTeam const* other) = 0;
     virtual MutationMode mutate(

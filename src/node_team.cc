@@ -25,7 +25,7 @@ bool NodeTeam::collides(
         float const sq_com_dist = node_ptr->tx_.collapsed().sq_dist_to(new_com);
         float const required_com_dist = mod_radius +
                                         node_ptr->prototype()->radius;
-        if (sq_com_dist < (required_com_dist * required_com_dist)) {
+        if (sq_com_dist < (required_com_dist* required_com_dist)) {
             return true;
         }
     }
@@ -43,13 +43,13 @@ void NodeTeam::disperse() {
     free_chains_.clear();
 }
 
-Node * NodeTeam::add_member(
+Node* NodeTeam::add_member(
     ProtoModule const* prot,
     Transform const& tx) {
-    Node * new_node = new Node(prot, tx);
+    Node* new_node = new Node(prot, tx);
     nodes_.push_back(new_node);
 
-    for (auto & proto_chain : new_node->prototype()->proto_chains()) {
+    for (auto& proto_chain : new_node->prototype()->proto_chains()) {
         if (not proto_chain.n_term().proto_links().empty()) {
             free_chains_.emplace_back(new_node, TerminusType::N, proto_chain.id);
         }
@@ -62,12 +62,12 @@ Node * NodeTeam::add_member(
     return new_node;
 }
 
-void NodeTeam::remove_member(Node * node) {
+void NodeTeam::remove_member(Node* node) {
     nodes_.erase(node);
     delete node;
 }
 
-void NodeTeam::remove_member_chains(Node * node) {
+void NodeTeam::remove_member_chains(Node* node) {
     // Remove any FreeChain originating from node
     free_chains_.lift_erase_all(
         FreeChain(node, TerminusType::NONE, 0),
@@ -93,7 +93,7 @@ NodeTeam::~NodeTeam() {
 /* accessors */
 
 /* modifiers */
-NodeTeam & NodeTeam::operator=(NodeTeam && other) {
+NodeTeam& NodeTeam::operator=(NodeTeam && other) {
     if (this != &other) {
         disperse();
 

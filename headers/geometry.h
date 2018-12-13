@@ -62,8 +62,8 @@ struct Vector3f {
 	    double const tolerance = 1e-4) const;
 
 	/* modifiers */
-	Vector3f & operator+=(Vector3f const& rhs);
-	Vector3f & operator-=(Vector3f const& rhs);
+	Vector3f& operator+=(Vector3f const& rhs);
+	Vector3f& operator-=(Vector3f const& rhs);
 
 	/* printers */
 	std::string to_string() const;
@@ -85,7 +85,7 @@ private:
 			{0, 0, 1, 0},
 			{0, 0, 0, 0}
 		};
-		float * operator[](size_t const i) { return data[i]; }
+		float* operator[](size_t const i) { return data[i]; }
 		float const* operator[](size_t const i) const { return data[i]; }
 		bool operator==(Data const& other) const {
 			return memcmp(data, other.data, sizeof(data)) == 0;
@@ -111,9 +111,9 @@ public:
 	bool operator!=(Transform const& other) const { return not this->operator==(other); }
 
 	/* modifiers */
-	Transform & operator=(Transform const& other);
-	Transform & operator=(Transform && other);
-	Transform & operator*=(Transform const& rhs);
+	Transform& operator=(Transform const& other);
+	Transform& operator=(Transform && other);
+	Transform& operator*=(Transform const& rhs);
 
 	/* printers */
 	std::string to_string() const;

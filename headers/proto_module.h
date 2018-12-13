@@ -77,9 +77,9 @@ public:
     void finalize();
     static void create_proto_link_pair(
         JSON const& tx_json,
-        ProtoModule * mod_a,
+        ProtoModule* mod_a,
         std::string const& a_chain_name,
-        ProtoModule * mod_b,
+        ProtoModule* mod_b,
         std::string const& b_chain_name);
 
     /* printers */

@@ -26,11 +26,11 @@ protected:
 	    Population const& pop,
 	    size_t const gen_id,
 	    double const gen_start_time,
-	    double & tot_gen_time,
-	    size_t & stagnant_count,
-	    float & lastgen_best_score,
-	    CandidateSharedPtrs & best_sols,
-	    bool & should_break);
+	    double& tot_gen_time,
+	    size_t& stagnant_count,
+	    float& lastgen_best_score,
+	    CandidateSharedPtrs& best_sols,
+	    bool& should_break);
 
 	/* printers */
 	void print_start_msg(V3fList const& shape) const;

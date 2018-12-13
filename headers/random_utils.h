@@ -13,7 +13,7 @@ namespace random {
 
 inline float get_dice_0to1()
 {
-    uint32_t & thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
+    uint32_t& thread_seed = get_para_rand_seeds().at(omp_get_thread_num());
     return (float) rand_r(&thread_seed) / RAND_MAX;
 }
 
@@ -47,7 +47,7 @@ inline T const& pick(const std::vector<T> & v) {
 }
 
 template <typename T>
-inline T & pick(std::vector<T> & v) {
+inline T& pick(std::vector<T> & v) {
     DEBUG(v.empty());
     size_t const idx = get_dice(v.size());
     return v.at(idx);

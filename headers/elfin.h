@@ -11,7 +11,7 @@ namespace elfin {
 class ElfinRunner
 {
 private:
-    EvolutionSolver * solver_;
+    EvolutionSolver* solver_;
 
     bool es_started_ = false;
     static std::vector<ElfinRunner *> instances_;

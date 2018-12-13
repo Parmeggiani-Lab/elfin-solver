@@ -15,11 +15,11 @@ protected:
     UIObjects modules_;
 
 public:
-    FixedArea(JSON const& j, const std::string & name);
+    FixedArea(JSON const& j, const std::string& name);
 
     /* getters */
     std::string name() const { return name_; }
-    UIObjects const & modules() const { return modules_; }
+    UIObjects const& modules() const { return modules_; }
 };
 
 typedef std::unordered_map<std::string, FixedArea> FixedAreaMap;

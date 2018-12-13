@@ -37,7 +37,7 @@ public:
     /* ctors */
     Node(ProtoModule const* prototype, Transform const& tx);
     Node(ProtoModule const* prototype) : Node(prototype, Transform()) {}
-    virtual Node * clone() const { return new Node(*this); }
+    virtual Node* clone() const { return new Node(*this); }
 
     /* dtors */
     virtual ~Node() {}

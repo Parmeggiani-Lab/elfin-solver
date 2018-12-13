@@ -33,9 +33,7 @@ public:
     ProtoLink const* reverse() const { return reverse_; }
 
     /* modifiers */
-    static void pair_proto_links(
-        ProtoLink & lhs,
-        ProtoLink & rhs);
+    static void pair_proto_links(ProtoLink* lhs, ProtoLink* rhs);
 };
 
 /* types */
@@ -56,7 +54,7 @@ struct EqualProtoLinkWithoutTx {
 /*
  * Note: with c++20, std::unordered_set::find(K& key) becomes a template
  * method. We'll be able to search the pointer set without creating a new
- * ProtoLink instance (by comparing ProtoLink * with FreeChain *).
+ * ProtoLink instance (by comparing ProtoLink* with FreeChain *).
  */
 typedef std::unordered_set <
 ConstProtoLinkPtr,
@@ -67,9 +65,11 @@ ProtoLinkPtrSet;
 typedef typename ProtoLinkPtrSet::const_iterator
 ProtoLinkPtrSetCItr;
 
-typedef Vector<ProtoLink> ProtoLinkList;
+typedef Vector<ConstProtoLinkPtr> ProtoLinkPtrList;
 
-struct CompareProtoLinkByModuleInterfaces {
+struct ProtoLinkInterfacesComparator {
+    bool operator() (
+        ProtoLink const* lhs, ProtoLink const* rhs) const;
     bool operator() (
         ProtoLink const& lhs, ProtoLink const& rhs) const;
 };

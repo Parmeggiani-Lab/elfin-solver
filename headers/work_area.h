@@ -42,7 +42,7 @@ protected:
     std::vector<UIJoint *> leaf_joints_;
 
 public:
-    WorkArea(JSON const& j, const std::string & name);
+    WorkArea(JSON const& j, const std::string& name);
     WorkArea() {}
     V3fList to_points() const;
 

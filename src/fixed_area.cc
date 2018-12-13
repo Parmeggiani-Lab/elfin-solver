@@ -2,7 +2,7 @@
 
 namespace elfin {
 
-FixedArea::FixedArea(const JSON & j, const std::string & name) :
+FixedArea::FixedArea(const JSON& j, const std::string& name) :
     name_(name) {
     for (auto it = j.begin(); it != j.end(); ++it) {
         std::string mod_name = it.key();

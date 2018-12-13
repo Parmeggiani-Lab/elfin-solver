@@ -24,10 +24,10 @@ namespace elfin {
 
 void __debug(
     bool const result,
-    const std::string & cond_expr,
+    const std::string& cond_expr,
     char const* filename,
     int const line,
-    const std::string & msg);
+    const std::string& msg);
 
 }  /* elfin */
 
