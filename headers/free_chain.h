@@ -28,6 +28,7 @@ struct FreeChain {
 
     /* accessors */
     bool operator==(FreeChain const& other) const;
+    bool operator!=(FreeChain const& other) const { return not this->operator==(other); }
     ProtoLink const& random_proto_link() const;
 
     /* printers */

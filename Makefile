@@ -61,7 +61,7 @@ else
 	TIMING_FLAGS=
 endif
 
-INCS 			:= -I./headers -I./jutil/src/ -I.
+INCS += -I./headers -I./jutil/src/ -I.
 
 ifeq ($(CXX), clang++)
 	ifeq ($(OS),Windows_NT)
@@ -120,11 +120,13 @@ test: $(EXE)
 dry: $(EXE)
 	$(BIN_DIR)/$(EXE) -c config/test.json -dry
 
+VALGRIND_FLAGS += --track-origins=yes --leak-check=full --show-leak-kinds=all --gen-suppressions=yes
+
 valgrind: $(EXE)
-	valgrind --track-origins=yes --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$(EXE) -c config/test.json
+	valgrind $(VALGRIND_FLAGS) $(BIN_DIR)/$(EXE) -c config/test.json
 
 valgrind_dry: $(EXE)
-	valgrind --track-origins=yes --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$(EXE) -c config/test.json -dry
+	valgrind $(VALGRIND_FLAGS) $(BIN_DIR)/$(EXE) -c config/test.json -dry
 
 FORCE:
 .PHONY: all clean
