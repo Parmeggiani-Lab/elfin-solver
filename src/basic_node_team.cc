@@ -9,7 +9,7 @@
 // #define NO_ERODE
 // #define NO_DELETE
 // #define NO_INSERT
-// #define NO_SWAP
+#define NO_SWAP
 #define NO_CROSS
 // #define NO_REGENERATE
 
@@ -384,24 +384,22 @@ bool BasicNodeTeam::delete_mutate() {
 
 struct BridgePoint {
     /*
-     *  [  node1 ] -------------link1-------------> [ node2  ]
+     *  [  node1 ] --------------link-------------> [ node2  ]
+     *             src                          dst
      *
      *  Each bridge has ptlink1 and ptlink2 that:
      *  [  node1 ] -ptlink1-> [new_node] -ptlink2-> [ node2  ]
      */
-    Node const* const node1, * const node2;
-    Link const* const link1;
-    ProtoModule::BridgeList const bridges;
+    FreeChain const src, dst;
+    FreeChain::BridgeList const bridges;
     BridgePoint(
-        Node* _node1,
-        Node* _node2,
-        Link const* _link1) :
-        node1(_node1),
-        node2(_node2),
-        link1(_link1),
-        bridges(node1 == nullptr ?
-                ProtoModule::BridgeList() :
-                node1->prototype()->find_bridges(link1)) { }
+        FreeChain const& _src,
+        FreeChain const& _dst) :
+        src(_src),
+        dst(_dst),
+        bridges(dst.node == nullptr ?
+                FreeChain::BridgeList() :
+                src.find_bridges(dst)) { }
 };
 
 bool BasicNodeTeam::insert_mutate() {
@@ -427,10 +425,8 @@ bool BasicNodeTeam::insert_mutate() {
             if (num_links == 1) {
                 /*
                  *  curr_node is a tip node. A new node can be inserted on the
-                 *  unconnected terminus of a tip node trivially. Instead of
-                 *  storing all the possible ProtoLink pointers, make them
-                 *  nullptr so if curr_node does get picked then
-                 *  random_proto_link() can be used.
+                 *  unconnected terminus of a tip node trivially. Use nullptr
+                 *  in dst.node to flag that this is tip node.
                  *
                  *  Either:
                  *              X---- [curr_node] ----> [next_node]
@@ -438,23 +434,25 @@ bool BasicNodeTeam::insert_mutate() {
                  *  [prev_node] <---- [curr_node] ----X
                  */
 
-                insert_points.emplace_back(curr_node, nullptr, nullptr);
+                FreeChain const src(curr_node, TerminusType::NONE, 0);
+                FreeChain const dst(nullptr, TerminusType::NONE, 0);
+                insert_points.emplace_back(src, dst);
             }
 
             if (next_node) {
                 /*
                  * curr_node and next_node are linked.
-                 * [curr_node] --link1--> [next_node]
+                 * [curr_node] -------------link1-------------> [next_node]
                  *
                  * Find all ptlink1, ptlink2 that:
-                 * [curr_node] -ptlink1-> [new_node ] --ptlink2-> [next_node]
+                 * [curr_node] -ptlink1-> [new_node] -ptlink2-> [next_node]
                  *
                  * Where src chain_id and term are known for curr_node, and
                  * dst chain_id and term are known for next_node.
                  */
                 Link const* link1 = curr_node->find_link_to(next_node);
 
-                insert_points.emplace_back(curr_node, next_node, link1);
+                insert_points.emplace_back(link1->src(), link1->dst());
                 BridgePoint const& ip = insert_points.back();
                 if (ip.bridges.size() == 0) {
                     insert_points.pop_back();
@@ -467,21 +465,16 @@ bool BasicNodeTeam::insert_mutate() {
 
         // Insert a node using a random insert point
         BridgePoint const& insert_point = insert_points.pick_random();
-        if (insert_point.node2) {
+        if (insert_point.dst.node) {
             // This is a non-tip node.
-
-            // Copy links because they are about to be freed.
-            // [ node1 ] --link1-- > [ node2 ]
-            Link const link1 = *insert_point.link1;
-
-            FreeChain const& port1 = link1.src();
-            FreeChain const& port2 = link1.dst();
+            FreeChain const& port1 = insert_point.src;
+            FreeChain const& port2 = insert_point.dst;
             Node* node1 = port1.node;
             Node* node2 = port2.node;
 
             // Break link
-            node1->remove_link(link1);
-            node2->remove_link(link1.reversed());
+            node1->remove_link(Link(port1, nullptr, port2));
+            node2->remove_link(Link(port2, nullptr, port1));
 
             // Pick a random bridge.
             auto const& bridge = insert_point.bridges.pick_random();
@@ -494,7 +487,7 @@ bool BasicNodeTeam::insert_mutate() {
 
             /*
              * Link up
-             * Old link  -----link1------------------------------->
+             * Old link  ------------------link------------------->
              *           port1                                port2
              *
              * [ node1 ] <--new_link1-- [ new_node ] --new_link2--> [ node2 ]
@@ -526,7 +519,7 @@ bool BasicNodeTeam::insert_mutate() {
 
             bool free_chain_found = false;
             for (FreeChain const& fc : free_chains_) {
-                if (fc.node == insert_point.node1) {
+                if (fc.node == insert_point.src.node) {
                     grow_tip(fc);
                     free_chain_found = true;
                     break;
@@ -535,7 +528,7 @@ bool BasicNodeTeam::insert_mutate() {
 
             if (not free_chain_found) {
                 err("FreeChain not found for %s\n",
-                    insert_point.node1->to_string().c_str());
+                    insert_point.src.node->to_string().c_str());
                 err("Available FreeChain(s):\n");
                 for (FreeChain const& fc : free_chains_) {
                     err("%s\n", fc.to_string().c_str());
@@ -564,9 +557,10 @@ bool BasicNodeTeam::swap_mutate() {
         Node* start_node = free_chains_[0].node;
         BasicNodeGenerator node_gtor(start_node);
 
-        Node* curr_node = nullptr;
+        Node* prev_node = nullptr, curr_node = nullptr;
         Node* next_node = node_gtor.next(); // starts with start_node
         do {
+            prev_node = curr_node;
             curr_node = next_node;
             next_node = node_gtor.next(); // can be nullptr
             size_t const num_links = curr_node->links().size();
@@ -592,24 +586,29 @@ bool BasicNodeTeam::swap_mutate() {
                 ProtoChain const& chain = neighbor->chains().at(dst_fc.chain_id);
 
                 if (chain.get_term(dst_fc.term).links().size() > 1) {
-                    swap_points.emplace_back(curr_node, nullptr, nullptr);
+                    FreeChain const src(curr_node, TerminusType::NONE, 0);
+                    FreeChain const dst(nullptr, TerminusType::NONE, 0);
+                    swap_points.emplace_back(src, dst);
                 }
             }
 
-            if (next_node) {
+            if (prev_node and next_node) {
                 /*
-                 * curr_node and next_node are linked.
-                 * [curr_node] --link1--> [next_node]
+                 * Linkage:
+                 * [prev_node] --link1--> [curr_node] --link2--> [next_node]
+                 *             -------(artificial) link3------->
                  *
                  * Find all ptlink1, ptlink2 that:
-                 * [curr_node] -ptlink1-> [new_node ] --ptlink2-> [next_node]
+                 * [prev_node] -ptlink1-> [diff_node] -ptlink2-> [next_node]
                  *
                  * Where src chain_id and term are known for curr_node, and
                  * dst chain_id and term are known for next_node.
                  */
-                Link const* link1 = curr_node->find_link_to(next_node);
+                Link const* link1 = prev_node->find_link_to(curr_node);
+                Link const* link2 = curr_node->find_link_to(next_node);
+                Link const link3 = Link(link1.src(), nullptr, link2.dst());
 
-                swap_points.emplace_back(curr_node, next_node, link1);
+                swap_points.emplace_back(curr_node, next_node, link3);
                 BridgePoint const& ip = swap_points.back();
                 if (ip.bridges.size() == 0) {
                     swap_points.pop_back();

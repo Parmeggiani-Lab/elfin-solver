@@ -85,54 +85,6 @@ ProtoLink const* ProtoModule::find_link_to(
     return nullptr;
 }
 
-ProtoModule::BridgeList ProtoModule::find_bridges(
-    Link const* arrow) const {
-    BridgeList res;
-
-    if (arrow) {
-        FreeChain const& src = arrow->src();
-        FreeChain const& dst = arrow->dst();
-
-        DEBUG(src.node->prototype() != this);
-        ProtoModule const* dst_mod = dst.node->prototype();
-        const size_t dst_chain_id = dst.chain_id;
-
-        ProtoTerminus const& ptterm_src =
-            chains_.at(src.chain_id).get_term(src.term);
-
-        // For each middle ProtoModule that ptterm_src connects to...
-        for (ProtoLink const* ptlink1 : ptterm_src.links()) {
-            ProtoModule const* const middle_mod = ptlink1->module();
-
-            // Skip non basic modules
-            if (middle_mod->counts().all_interfaces() > 2) {
-                continue;
-            }
-
-            size_t const chain_in = ptlink1->chain_id();
-
-            // Look for ptlink2 to dst_mod
-            for (ProtoChain const& middle_chain : middle_mod->chains_) {
-                // Skip incoming chain.
-                if (middle_chain.id == src.chain_id) continue;
-
-                // dst.term is incoming term, the opposite of which is src.term.
-                ProtoTerminus const& ptterm_out =
-                    middle_chain.get_term(src.term);
-                ProtoLinkPtrSetCItr itr =
-                    ptterm_out.find_link_to(dst_mod, dst_chain_id);
-
-                if (itr != ptterm_out.link_set().end()) {
-                    // We have found a ptlink2
-                    res.emplace_back(ptlink1, *itr);
-                }
-            }
-        }
-    }
-
-    return res;
-}
-
 /* modifiers */
 void ProtoModule::finalize() {
     // ProtoChain finalize() relies on Terminus finalize(), which assumes that

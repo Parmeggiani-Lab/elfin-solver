@@ -14,6 +14,15 @@ namespace elfin {
 class Node;
 
 struct FreeChain {
+    /* types */
+    struct Bridge {
+        ProtoLink const* const ptlink1, * const ptlink2;
+        Bridge(ProtoLink const* _ptlink1, ProtoLink const*_ptlink2) :
+            ptlink1(_ptlink1), ptlink2(_ptlink2) {}
+    };
+
+    typedef Vector<Bridge> BridgeList;
+
     /* data */
     Node* node;
     TerminusType term;
@@ -30,6 +39,7 @@ struct FreeChain {
     bool operator==(FreeChain const& other) const;
     bool operator!=(FreeChain const& other) const { return not this->operator==(other); }
     ProtoLink const& random_proto_link() const;
+    BridgeList find_bridges(FreeChain const& dst) const;
 
     /* printers */
     std::string to_string() const;
