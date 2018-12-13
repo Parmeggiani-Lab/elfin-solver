@@ -200,7 +200,7 @@ bool BasicNodeTeam::erode_mutate(
              * 2/6; p=0.16666666666666666
              * 1/6; p=0.0
              */
-            p = p* (size() - 1) / size();
+            p = p * (size() - 1) / size();
 
             // stop_after_n < 0 < stop_after_n is true
             stop_after_n--;
@@ -391,31 +391,18 @@ struct InsertPoint {
      *  [  node1 ] -ptlink1-> [new_node] -ptlink2-> [ node2  ]
      */
     Node const* const node1, * const node2;
-    Link const* const link1, * const link2;
+    Link const* const link1;
     ProtoModule::BridgeList const bridges;
     InsertPoint(
         Node* _node1,
         Node* _node2,
-        Link const* _link1,
-        Link const* _link2) :
+        Link const* _link1) :
         node1(_node1),
         node2(_node2),
         link1(_link1),
-        link2(_link2),
         bridges(node1 == nullptr ?
                 ProtoModule::BridgeList() :
-                node1->prototype()->find_bridges(link1)) {
-        if (link1) {
-            DEBUG(link1->src() != link2->dst(),
-                  string_format("link1: %s\n link2: %s\n",
-                                link1->to_string().c_str(),
-                                link2->to_string().c_str()));
-            DEBUG(link2->dst() != link1->src(),
-                  string_format("link1: %s\n link2: %s\n",
-                                link1->to_string().c_str(),
-                                link2->to_string().c_str()));
-        }
-    }
+                node1->prototype()->find_bridges(link1)) { }
 };
 
 bool BasicNodeTeam::insert_mutate() {
@@ -453,18 +440,13 @@ bool BasicNodeTeam::insert_mutate() {
                  *  [prev_node] <---- [curr_node] ----X
                  */
 
-                insert_points.emplace_back(
-                    curr_node, // node1
-                    nullptr, // node2
-                    nullptr, // link1
-                    nullptr); // link2, no bridges
+                insert_points.emplace_back(curr_node, nullptr, nullptr);
             }
 
             if (next_node) {
                 /*
                  * curr_node and next_node are linked.
                  * [curr_node] --link1--> [next_node]
-                 * [curr_node] <--link2-- [next_node]
                  *
                  * Find all ptlink1, ptlink2 that:
                  * [curr_node] -ptlink1-> [new_node ] --ptlink2-> [next_node]
@@ -473,9 +455,8 @@ bool BasicNodeTeam::insert_mutate() {
                  * dst chain_id and term are known for next_node.
                  */
                 Link const* link1 = curr_node->find_link_to(next_node);
-                Link const* link2 = next_node->find_link_to(curr_node);
 
-                insert_points.emplace_back(curr_node, next_node, link1, link2);
+                insert_points.emplace_back(curr_node, next_node, link1);
                 InsertPoint const& ip = insert_points.back();
                 if (ip.bridges.size() == 0) {
                     insert_points.pop_back();
@@ -493,15 +474,16 @@ bool BasicNodeTeam::insert_mutate() {
 
             // Copy links because they are about to be freed.
             // [ node1 ] --link1-- > [ node2 ]
-            // [ node1 ] < --link2-- [ node2 ]
             Link const link1 = *insert_point.link1;
-            Link const link2 = *insert_point.link2;
-            Node* node1 = link1.src().node;
-            Node* node2 = link2.src().node;
+
+            FreeChain const& port1 = link1.src();
+            FreeChain const& port2 = link1.dst();
+            Node* node1 = port1.node;
+            Node* node2 = port2.node;
 
             // Break link
             node1->remove_link(link1);
-            node2->remove_link(link2);
+            node2->remove_link(link1.reversed());
 
             // Pick a random bridge.
             auto const& bridge = insert_point.bridges.pick_random();
@@ -509,13 +491,12 @@ bool BasicNodeTeam::insert_mutate() {
             // Create a new node in the middle.
             Node* new_node = new Node(
                 bridge.ptlink1->module(),
-                node1->tx_* bridge.ptlink1->tx());
+                node1->tx_ * bridge.ptlink1->tx());
             nodes_.push_back(new_node);
 
             /*
              * Link up
              * Old link  -----link1------------------------------->
-             * Old link  <-------------------------------link2-----
              *           port1                                port2
              *
              * [ node1 ] <--new_link1-- [ new_node ] --new_link2--> [ node2 ]
@@ -525,9 +506,6 @@ bool BasicNodeTeam::insert_mutate() {
              *
              * Prototype ---ptlink1--->              ---ptlink2--->
              */
-            FreeChain const& port1 = link1.src();
-            FreeChain const& port2 = link2.src();
-
             FreeChain nn_src1(
                 new_node, port2.term, bridge.ptlink1->chain_id());
             Link const new_link1_rev(port1, bridge.ptlink1, nn_src1);
