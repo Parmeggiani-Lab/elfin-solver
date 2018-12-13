@@ -515,8 +515,8 @@ bool BasicNodeTeam::insert_mutate() {
             fix_limb_transforms(new_link2);
         }
         else {
-            // This is a tip node. Inserting is trivial - same as
-            // regenerate(). There is guranteed to have one FreeChain.
+            // This is a tip node. Inserting is the same as grow_tip(). There
+            // is guranteed to have one FreeChain.
 
             bool free_chain_found = false;
             for (FreeChain const& fc : free_chains_) {
@@ -622,6 +622,8 @@ bool BasicNodeTeam::swap_mutate() {
             // Insert a node using a random insert point
             BridgePoint const& swap_point = swap_points.pick_random();
             if (swap_point.dst.node) {
+                return false;
+                
                 // This is a non-tip node.
                 FreeChain const& port1 = swap_point.src;
                 FreeChain const& port2 = swap_point.dst;
@@ -631,6 +633,8 @@ bool BasicNodeTeam::swap_mutate() {
                 // Break link
                 node1->remove_link(port1);
                 node2->remove_link(port2);
+
+                UNIMPLEMENTED();
 
                 // Pick a random bridge.
                 auto const& bridge = swap_point.bridges.pick_random();
@@ -670,12 +674,21 @@ bool BasicNodeTeam::swap_mutate() {
                 fix_limb_transforms(new_link2);
             }
             else {
-                // This is a tip node. Inserting is trivial - same as
-                // regenerate(). There is guranteed to have one FreeChain.
+                Node * tip_node = swap_point.src.node;
+
+                // A tip node is guranteed to have only one neighbor.
+                const size_t num_links = tip_node->links().size();
+                NICE_PANIC(num_links != 1);
+                Link const tip_link = tip_node->links().at(0);
+                Node * new_tip = tip_link.dst().node;
+
+                // This is a tip node. Swapping is the same as erode_mutate()
+                // followed by grow_tip().
+                erode_mutate(tip_node, 1, false);
 
                 bool free_chain_found = false;
                 for (FreeChain const& fc : free_chains_) {
-                    if (fc.node == swap_point.src.node) {
+                    if (fc.node == new_tip) {
                         grow_tip(fc);
                         free_chain_found = true;
                         break;
