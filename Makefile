@@ -97,6 +97,8 @@ COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS) \
 	$(OPT_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) $(TIMING_FLAGS) \
 	$(DEFS) $(INCS) -fmax-errors=$(MAX_ERRORS) $(EXTRA_FLAGS)
 
+BINRAY=$(BIN_DIR)$(EXE)
+
 #
 # start of rules
 #
@@ -108,20 +110,17 @@ $(OBJ_DIR)/%.o: %.$1
 endef
 $(foreach EXT,$(EXTS),$(eval $(call make_rule,$(EXT))))
 
-$(EXE): delete_test_objs $(OBJS)
-	$(COMPILE) $(OBJS) -o $(BIN_DIR)/$@ $(LD_FLAGS)
+$(BINRAY): $(OBJS)
+	$(COMPILE) $(OBJS) -o $(BINRAY) $(LD_FLAGS)
 
-delete_test_objs:
-	rm -rf $(objToDelete)
+test: $(BINRAY)
+	$(BINRAY) -c config/test.json
 
-test: $(EXE)
-	$(BIN_DIR)/$(EXE) -c config/test.json
+unit: $(BINRAY)
+	$(BINRAY) -t
 
-unit: $(EXE)
-	$(BIN_DIR)/$(EXE) -t
-
-dry: $(EXE)
-	$(BIN_DIR)/$(EXE) -c config/test.json -dry
+dry: $(BINRAY)
+	$(BINRAY) -c config/test.json -dry
 
 VALGRIND_FLAGS += --track-origins=yes --leak-check=full --show-leak-kinds=all --gen-suppressions=yes
 

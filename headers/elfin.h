@@ -8,21 +8,29 @@
 
 namespace elfin {
 
-class ElfinRunner
-{
+class Elfin {
 private:
+    /* data */
     EvolutionSolver* solver_;
+    bool solver_started_ = false;
+    static std::vector<Elfin *> instances_;
 
-    bool es_started_ = false;
-    static std::vector<ElfinRunner *> instances_;
-
+    /* accessors */
     void crash_dump() const;
     int run_unit_tests() const;
     int run_meta_tests() const;
+
+    /* handlers */
     static void interrupt_handler(int const signal);
 public:
-    ElfinRunner(int const argc, const char ** argv);
-    void run();
+    /* ctors */
+    Elfin(int const argc, const char ** argv);
+
+    /* dtors */
+    ~Elfin();
+
+    /* modifiers */
+    int run();
 };
 
 } /* elfin */

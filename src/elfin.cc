@@ -12,7 +12,6 @@
 #include "spec.h"
 #include "database.h"
 #include "kabsch.h"
-#include "jutil.h"
 #include "random_utils.h"
 #include "parallel_utils.h"
 #include "output_manager.h"
@@ -23,32 +22,13 @@
 
 namespace elfin {
 
-std::vector<ElfinRunner *> ElfinRunner::instances_;
+std::vector<Elfin *> Elfin::instances_;
 bool interrupt_caught = false;
 
-void ElfinRunner::interrupt_handler(const int signal) {
-    if (interrupt_caught) {
-        raw("\n\n");
-        die("Caught interrupt signal (second)\n");
-    }
-    else {
-        interrupt_caught = true;
-
-        raw("\n\n");
-        wrn("Caught interrupt signal (first)\n");
-
-        // Save latest results
-        for (auto er : instances_) {
-            er->crash_dump();
-            delete er;
-        }
-
-        exit(signal);
-    }
-}
-
-void ElfinRunner::crash_dump() const {
-    if (es_started_) {
+/* private */
+/* accessors */
+void Elfin::crash_dump() const {
+    if (solver_started_) {
         wrn("Dumping latest results...\n");
         OutputManager::write_output(solver_, "crash_dump");
         delete solver_;
@@ -57,14 +37,14 @@ void ElfinRunner::crash_dump() const {
     }
 }
 
-int ElfinRunner::run_unit_tests() const {
+int Elfin::run_unit_tests() const {
     msg("Running unit tests...\n");
     int fail_count = 0;
     fail_count += _test_kabsch();
     return fail_count;
 }
 
-int ElfinRunner::run_meta_tests() const {
+int Elfin::run_meta_tests() const {
     msg("Running meta tests...\n");
     int fail_count = 0;
 
@@ -86,7 +66,7 @@ int ElfinRunner::run_meta_tests() const {
         Transform tx(tx_ele);
 
         for (Vector3f &p : moved_spec) {
-            p = tx* p;
+            p = tx * p;
         }
 
         // Test scoring a transformed version of spec
@@ -100,7 +80,7 @@ int ElfinRunner::run_meta_tests() const {
         const int N = 10;
         const int rand_trials = 50000000;
         const int expect_avg = rand_trials / N;
-        const float rand_dev_tolerance = 0.05f* expect_avg;  // 5% deviation
+        const float rand_dev_tolerance = 0.05f * expect_avg; // 5% deviation
 
         int rand_count[N] = {0};
         for (size_t i = 0; i < rand_trials; i++) {
@@ -159,7 +139,31 @@ int ElfinRunner::run_meta_tests() const {
     return fail_count;
 }
 
-ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
+/* handlers */
+void Elfin::interrupt_handler(const int signal) {
+    if (interrupt_caught) {
+        raw("\n\n");
+        die("Caught interrupt signal (second)\n");
+    }
+    else {
+        interrupt_caught = true;
+
+        raw("\n\n");
+        wrn("Caught interrupt signal (first)\n");
+
+        // Save latest results
+        for (auto er : instances_) {
+            er->crash_dump();
+            delete er;
+        }
+
+        exit(signal);
+    }
+}
+
+/* public */
+/* ctors */
+Elfin::Elfin(const int argc, const char ** argv) {
     instances_.push_back(this);
 
     std::signal(SIGINT, interrupt_handler);
@@ -169,30 +173,33 @@ ElfinRunner::ElfinRunner(const int argc, const char ** argv) {
     InputManager::setup(argc, argv);
 }
 
-void ElfinRunner::run() {
+/* dtors */
+Elfin::~Elfin() {
+    delete solver_;
+}
+
+/* modifiers */
+int Elfin::run() {
+    solver_ = new EvolutionSolver();
+
     if (OPTIONS.run_unit_tests) {
         int fail_count = 0;
         fail_count += run_unit_tests();
         fail_count += run_meta_tests();
 
         if (fail_count > 0) {
-            die("Some unit tests failed\n");
+            die("More than zero unit tests failed\n");
         } else {
-            msg("Passed!\n");
+            msg("All unit tests passed!\n");
+            raw(unit_tests_passed_str);
         }
     } else {
-        solver_ = new EvolutionSolver();
-        es_started_ = true;
+        solver_started_ = true;
         solver_->run();
         OutputManager::write_output(solver_);
-
-        delete solver_;
     }
+
+    return 0;
 }
 
 }  // namespace elfin
-
-int main(const int argc, const char ** argv) {
-    elfin::ElfinRunner(argc, argv).run();
-    return 0;
-}
