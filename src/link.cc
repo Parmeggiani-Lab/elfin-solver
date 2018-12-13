@@ -26,11 +26,6 @@ void Link::update_node_ptrs(const NodeAddrMap& nam) {
     dst_chain_.node = nam.at(dst_chain_.node);
 }
 
-void Link::sever(const Link link) {
-    link.src_chain_.node->remove_link(link);
-    link.dst_chain_.node->remove_link(link.reversed());
-}
-
 /* printers */
 std::string Link::to_string() const {
     return string_format("Link[\n%s\n%s]",

@@ -33,10 +33,10 @@ void Node::update_link_ptrs(NodeAddrMap const& nam) {
     }
 }
 
-void Node::remove_link(Link const& link) {
+void Node::remove_link(FreeChain const& src) {
     bool found_link = false;
     for (size_t i = 0; i < links_.size(); ++i) {
-        if (links_.at(i) == link) {
+        if (links_.at(i).src() == src) {
             links_.at(i) = std::move(links_.back());
             links_.pop_back();
             found_link = true;

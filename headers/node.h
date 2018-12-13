@@ -58,7 +58,7 @@ public:
         links_.emplace_back(link);
     }
     void update_link_ptrs(NodeAddrMap const& nam);
-    void remove_link(Link const& link);
+    void remove_link(FreeChain const& fc);
 
     /* printers */
     virtual std::string to_string() const;

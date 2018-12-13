@@ -40,7 +40,6 @@ public:
 
     /* modifiers */
     void update_node_ptrs(NodeAddrMap const& nam);
-    static void sever(Link const link);
 
     /* printers */
     std::string to_string() const;
