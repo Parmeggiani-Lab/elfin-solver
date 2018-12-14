@@ -6,7 +6,7 @@
 #include <tuple>
 
 #include "ui_object.h"
-#include "string_utils.h"
+#include "debug_utils.h"
 
 namespace elfin {
 
@@ -21,11 +21,17 @@ public:
     std::tuple<std::string, UIJoint const *> hinge_tuple_ =
         std::make_tuple("", nullptr);
 
-    UIJoint(JSON const& j, const std::string& name) :
+    UIJoint(JSON const& j, std::string const& name) :
         UIObject(j, name) {
-        JSON const& jnbs = j["neighbours"];
-        for (auto it = jnbs.begin(); it != jnbs.end(); ++it) {
-            neighbours_.push_back(*it);
+        try {
+            JSON const& jnbs = j["neighbours"];
+            for (auto it = jnbs.begin(); it != jnbs.end(); ++it) {
+                neighbours_.push_back(*it);
+            }
+        } catch (const std::exception& e) {
+            NICE_PANIC("Exception",
+                       string_format("Failed to parse spec from JSON."
+                                     "\nReason: %s", e.what()));
         }
     }
 

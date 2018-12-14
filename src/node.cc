@@ -57,8 +57,8 @@ std::string Node::to_string() const {
 }
 
 std::string Node::to_csv_string() const {
-    UNIMPLEMENTED(); // This function probably need an update
-    return tx_.to_csv_string();
+    UNIMPLEMENTED(); // This function needs an update
+    return "???";
 }
 
 }  /* elfin */
