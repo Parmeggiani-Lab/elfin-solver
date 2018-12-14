@@ -117,7 +117,7 @@ void ProtoModule::create_proto_link_pair(
     std::string const& b_chain_name) {
     // Create transforms
     Transform const tx(tx_json);
-    Transform const tx_inv = tx.inverse();
+    Transform const tx_inv = tx.inversed();
 
     // Find chains
     ProtoChainList& a_chains = mod_a->chains_;

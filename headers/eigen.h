@@ -2,7 +2,7 @@
 #define EIGEN_H_
 
 #define EIGEN_MATRIXBASE_PLUGIN  "matrix_base_addons.h"
-#define EIGEN_TRANSFORM_PLUGIN "transform_base_addons.h"
+
 #include <Eigen/Dense> // for Matrix
 #include <Eigen/Geometry> // for Transform 
 

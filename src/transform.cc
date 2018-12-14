@@ -7,30 +7,44 @@ namespace elfin {
 
 /* ctors */
 Transform::Transform(JSON const& tx_json) {
-    MatrixType & matrix = this->matrix();
-
     JSON const& rot = tx_json["rot"];
     NICE_PANIC(rot.size() != 3);
     NICE_PANIC(rot[0].size() != 3);
 
-    // rot << rot[0][0], rot[0][1], rot[0][2],
-    //     rot[1][0], rot[1][1], rot[1][2],
-    //     rot[2][0], rot[2][1], rot[2][2];
-
     JSON const& tran = tx_json["tran"];
     NICE_PANIC(tran.size() != 3);
 
-    // tran << tran[0], tran[1], tran[2];
-
-    matrix << rot[0][0], rot[0][1], rot[0][2], tran[0],
-           rot[1][0], rot[1][1], rot[1][2], tran[1],
-           rot[2][0], rot[2][1], rot[2][2], tran[2];
+    (*this) << rot[0][0], rot[0][1], rot[0][2], tran[0],
+    rot[1][0], rot[1][1], rot[1][2], tran[1],
+    rot[2][0], rot[2][1], rot[2][2], tran[2],
+    0.f, 0.f, 0.f, 1.f;
 }
 
 /* accessors */
 Vector3f Transform::collapsed() const {
-    return this->operator*(Vector3f());
-    // return rot * TranVec::Identity() + tran;
+    return block<3, 1>(0, 3);
+}
+
+Transform Transform::inversed() const {
+    Eigen::Matrix3f const inv_rot =
+        block<3, 3>(0, 0).transpose();
+    Eigen::Vector3f const inv_tran =
+        inv_rot * -block<3, 1>(0, 3);
+    Transform res;
+    res << inv_rot(0, 0), inv_rot(0, 1), inv_rot(0, 2), inv_tran(0),
+        inv_rot(1, 0), inv_rot(1, 1), inv_rot(1, 2), inv_tran(1),
+        inv_rot(2, 0), inv_rot(2, 1), inv_rot(2, 2), inv_tran(2),
+        0, 0, 0, 1;
+    return res;
+}
+
+Transform Transform::operator*(Transform const& rhs) const {
+    return EigenTransform::operator*(rhs);
+}
+
+Vector3f Transform::operator*(
+    Vector3f const& vec) const {
+    return block<3, 3>(0, 0) * vec + block<3, 1>(0, 3);
 }
 
 /* tests */
