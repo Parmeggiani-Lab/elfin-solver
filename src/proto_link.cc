@@ -17,11 +17,11 @@ ProtoLink::ProtoLink(
 // static
 void ProtoLink::pair_links(
     ProtoLink* lhs, ProtoLink* rhs) {
-    NICE_PANIC(not lhs->tx_.isApprox(rhs->tx_.inverse()),
+    NICE_PANIC(not lhs->tx_.isApprox(rhs->tx_.inversed()),
                string_format(
-                   "lhs->tx=%s\nrhs->tx.inverse()=%s\n",
+                   "lhs->tx=%s\nrhs->tx.inversed()=%s\n",
                    lhs->tx_.to_string().c_str(),
-                   rhs->tx_.inverse().to_string().c_str()));
+                   rhs->tx_.inversed().to_string().c_str()));
     lhs->reverse_ = rhs;
     rhs->reverse_ = lhs;
 }
