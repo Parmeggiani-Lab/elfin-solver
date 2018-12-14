@@ -19,9 +19,9 @@ std::vector<double> Vector3f_to_vector(Vector3f const& pt) {
 	std::vector<double> v;
 
 	v.resize(3);
-	v.at(0) = pt.x;
-	v.at(1) = pt.y;
-	v.at(2) = pt.z;
+	v.at(0) = pt[0];
+	v.at(1) = pt[1];
+	v.at(2) = pt[2];
 
 	return v;
 }
@@ -430,7 +430,7 @@ bool kabsch(
 	const size_t n = mobile.size();
 
 	const bool ret_val = rosetta_kabsch(xx, yy, n, mode, &rms, tt, rot);
-	tran = Vector3f(std::vector<float>(tt.begin(), tt.end()));
+	tran = Vector3f(tt);
 
 	return ret_val;
 }

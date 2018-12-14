@@ -5,69 +5,87 @@
 #include <vector>
 #include <memory>
 
+#include <Eigen/Dense>
+
 #include "json.h"
-#include "jutil.h"
-#include "string_utils.h"
 #include "debug_utils.h"
 
 namespace elfin
 {
 
-struct Vector3f {
-	/* data */
-	float x, y, z;
-
-	/* ctors */
-	Vector3f() : Vector3f(0, 0, 0) {}
-	Vector3f(Vector3f const& rhs) :
-		x(rhs.x), y(rhs.y), z(rhs.z) {}
-	Vector3f(float _x, float _y, float _z) :
-		x(_x), y(_y), z(_z) {}
-	template <typename Iterable>
-	Vector3f(Iterable itb) :
-		Vector3f(itb.begin(), itb.begin() + 3) {}
-	template <typename ItrBegin, typename ItrEnd>
-	Vector3f(ItrBegin begin, ItrEnd end) {
+typedef Eigen::Vector3f EigenV3f;
+class Vector3f : public EigenV3f {
+private:
+	template<class RandomAccessIterator >
+	Vector3f(
+	    RandomAccessIterator begin,
+	    RandomAccessIterator end) {
 		NICE_PANIC((end - begin) < 3,
 		           string_format(
 		               "Invalid Argument Size: %lu, should be <3\n",
 		               end - begin));
-
 		auto itr = begin;
-		x = *itr++;
-		y = *itr++;
-		z = *itr++;
+		Vector3f& me = *this;
+		me[0] = *itr++;
+		me[1] = *itr++;
+		me[2] = *itr++;
 	}
+
+public:
+	/* ctors */
+
+	// This constructor allows you to construct Vector3f from Eigen expressions
+	template<typename OtherDerived>
+	Vector3f(const Eigen::MatrixBase<OtherDerived>& other)
+		: EigenV3f(other)
+	{ }
+	// This method allows you to assign Eigen expressions to Vector3f
+	template<typename OtherDerived>
+	Vector3f& operator=(const Eigen::MatrixBase <OtherDerived>& other)
+	{
+		this->EigenV3f::operator=(other);
+		return *this;
+	}
+
+	Vector3f() : EigenV3f(0.f, 0.f, 0.f) {}
+	Vector3f(float x, float y, float z) : EigenV3f(x, y, z) {}
+	template <typename T>
+	Vector3f(std::vector<T> const& vec) :
+		Vector3f(vec.cbegin(), vec.cbegin() + 3) {}
 
 	/* accessors */
-	Vector3f operator+(Vector3f const& rhs) const;
-	Vector3f operator-(Vector3f const& rhs) const;
-	Vector3f operator*(float const f) const;
-	float operator[](size_t const idx) const {
-		DEBUG(idx > 2,
-		      string_format(
-		          ("Vector3f operator[] out of bound "
-		           "(max index is 2, but got %lu)"),
-		          idx));
-		return *(&x + idx);
+	inline float dist_to(Vector3f const& rhs) const {
+		return this->operator-(rhs).norm();
 	}
-	float dot(Vector3f const& rhs) const;
-	float dist_to(Vector3f const& rhs) const;
-	float sq_dist_to(Vector3f const& rhs) const;
+	inline float sq_dist_to(Vector3f const& rhs) const {
+		return this->operator-(rhs).squaredNorm();
+	}
 
 	// Default tolerance is 1e-4 because PDBs have only 4 decimals of
 	// precision
 	bool approximates(
-	    Vector3f const& ref,
-	    double const tolerance = 1e-4) const;
-
-	/* modifiers */
-	Vector3f& operator+=(Vector3f const& rhs);
-	Vector3f& operator-=(Vector3f const& rhs);
+	    Vector3f const& other,
+	    double const tolerance = 1e-4) const {
+		for (size_t i = 0; i < 3; ++i) {
+			if (not float_approximates_err(
+			            this->operator[](i), other[i], tolerance)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	/* printers */
-	std::string to_string() const;
-	std::string to_csv_string() const;
+	std::string to_string() const {
+		Vector3f const& me = *this;
+		return string_format("(%f, %f, %f)",
+		                     me[0], me[1], me[2]);
+	}
+	std::string to_csv_string() const {
+		Vector3f const& me = *this;
+		return string_format("%f, %f, %f",
+		                     me[0], me[1], me[2]);
+	}
 
 	/* tests */
 	static size_t test();
