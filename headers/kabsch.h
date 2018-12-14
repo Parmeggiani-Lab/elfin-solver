@@ -13,7 +13,8 @@ namespace elfin
 float kabsch_score(V3fList const& points, WorkArea const* wa);
 float kabsch_score(V3fList mobile, V3fList ref);
 
-int _test_kabsch();
+void _test_kabsch(size_t& errors, size_t& tests);
+
 } // namespace elfin
 
 #endif /* include guard */

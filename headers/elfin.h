@@ -1,7 +1,7 @@
 #ifndef ELFIN_H_
 #define ELFIN_H_
 
-#include <vector>
+#include <unordered_set>
 #include <memory>
 
 #include "evolution_solver.h"
@@ -9,20 +9,10 @@
 namespace elfin {
 
 class Elfin {
-private:
-    /* data */
-    EvolutionSolver* solver_;
-    bool solver_started_ = false;
-    static std::vector<Elfin *> instances_;
+public: 
+    /* types */
+    typedef std::unordered_set<Elfin const*> InstanceMap;
 
-    /* accessors */
-    void crash_dump() const;
-    int run_unit_tests() const;
-    int run_meta_tests() const;
-
-    /* handlers */
-    static void interrupt_handler(int const signal);
-public:
     /* ctors */
     Elfin(int const argc, const char ** argv);
 
@@ -31,6 +21,17 @@ public:
 
     /* modifiers */
     int run();
+
+private:
+    /* data */
+    EvolutionSolver solver_;
+    static InstanceMap instances_;
+
+    /* accessors */
+    void crash_dump() const;
+
+    /* handlers */
+    static void interrupt_handler(int const signal);
 };
 
 } /* elfin */

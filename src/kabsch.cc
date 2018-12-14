@@ -77,7 +77,7 @@ void resample(V3fList& ref,
 
 			const float s = (ref_prop - base_fp_proportion)
 			                / fp_segment;
-			resampled.push_back(base_fp_point + (vec* s));
+			resampled.push_back(base_fp_point + (vec * s));
 
 			mpi++;
 		}
@@ -182,7 +182,7 @@ bool rosetta_kabsch(
 			      (y[m][i] - yc[i]) * (y[m][i] - yc[i]);
 			d = y[m][i] - yc[i];
 			for ( j = 0; j < 3; j++ ) {
-				r[i][j] += d* (x[m][j] - xc[j]);
+				r[i][j] += d * (x[m][j] - xc[j]);
 			}
 		}
 	}
@@ -205,24 +205,24 @@ bool rosetta_kabsch(
 	double spur = (rr[0] + rr[2] + rr[5]) / 3.0;
 	double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
 	                - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
-	det = det* det;
+	det = det * det;
 
 	for ( i = 0; i < 3; i++ ) {
 		e[i] = spur;
 	}
 
 	if ( spur > 0 ) {
-		d = spur* spur;
+		d = spur * spur;
 		h = d - cof;
-		g = (spur* cof - det) / 2.0 - spur* h;
+		g = (spur * cof - det) / 2.0 - spur * h;
 
 		if ( h > 0 ) {
 			sqrth = sqrt(h);
-			d = h* h* h - g* g;
+			d = h * h * h - g * g;
 			if ( d < 0.0 ) d = 0.0;
 			d = atan2( sqrt(d), -g ) / 3.0;
-			cth = sqrth* cos(d);
-			sth = sqrth* sqrt3* sin(d);
+			cth = sqrth * cos(d);
+			sth = sqrth * sqrt3 * sin(d);
 			e[0] = (spur + cth) + cth;
 			e[1] = (spur - cth) + sth;
 			e[2] = (spur - cth) - sth;
@@ -256,7 +256,7 @@ bool rosetta_kabsch(
 					}
 
 					d = 0.0;
-					j = 3* j;
+					j = 3 * j;
 					for ( i = 0; i < 3; i++ ) {
 						k = ip[i + j];
 						a[i][l] = ss[k];
@@ -278,7 +278,7 @@ bool rosetta_kabsch(
 				}
 				p = 0;
 				for ( i = 0; i < 3; i++ ) {
-					a[i][m1] = a[i][m1] - d* a[i][m];
+					a[i][m1] = a[i][m1] - d * a[i][m];
 					p = p + a[i][m1] * a[i][m1];
 				}
 				if ( p <= tol ) {
@@ -336,7 +336,7 @@ bool rosetta_kabsch(
 			p = 0.0;
 
 			for ( i = 0; i < 3; i++ ) {
-				b[i][1] = b[i][1] - d* b[i][0];
+				b[i][1] = b[i][1] - d * b[i][0];
 				p += b[i][1] * b[i][1];
 			}
 
@@ -461,7 +461,7 @@ float kabsch_score(V3fList mobile, V3fList ref) {
 	return rms;
 }
 
-int _test_kabsch() {
+void _test_kabsch(size_t& errors, size_t& tests) {
 	using namespace elfin;
 
 	msg("Testing Kabsch\n");
@@ -508,8 +508,6 @@ int _test_kabsch() {
 	Vector3f tran;
 	double rms;
 
-	uint32_t failCount = 0;
-
 	// Test Kabsch rotation and translation
 	const bool ret_val = kabsch(A, B, rot, tran, rms);
 	msg("Kabsch call ret_val: %s\n", ret_val ? "ok" : "failed");
@@ -520,15 +518,17 @@ int _test_kabsch() {
 
 		raw("%16.6f %16.6f %16.6f\n",
 		    row.at(0), row.at(1), row.at(2));
+		tests++;
 		if (!Vector3f(row.at(0), row.at(1), row.at(2)).approximates(actualR[i])) {
-			failCount++;
+			errors++;
 			err("Rotation test failed: row does not approximate actual rotation row\n");
 		}
 	}
 
 	msg("Tran: %s\n", tran.to_string().c_str());
+	tests++;
 	if (!tran.approximates(actualTran)) {
-		failCount++;
+		errors++;
 		err("Translation test failed: does not approximate actual translation\n");
 	}
 
@@ -542,96 +542,12 @@ int _test_kabsch() {
 
 	resample(Afewer, B);
 
+	tests++;
 	if (Afewer.size() != B.size()) {
-		failCount++;
+		errors++;
 		err("Upsampling failed: Lengths: Afewer=%d B=%d\n",
 		    Afewer.size(), B.size());
 	}
-
-	// // Load necessary data to setup Gene
-	// RelaMat relaMat;
-	// StrIdMap nameIdMap;
-	// IdNameMap idNameMap;
-	// RadiiList radiiList;
-	// DBParser::parse(parse_json(OPTIONS.xdb), nameIdMap, idNameMap, relaMat, radiiList);
-
-	// Gene::setup(&idNameMap);
-
-	// // Test Kabsch scoring
-	// Genes G;
-	// for (int i = 0; i < A.size(); i++)
-	// 	G.push_back(Gene(i, A.at(i)));
-
-	// Vector3f B0Copy = B.at(0);
-
-	// float score = kabsch_score(G, B);
-	// msg("A-B Score: %.10f\n", score);
-	// if (!float_approximates(score, 7796.9331054688))
-	// {
-	// 	failCount++;
-	// 	err("A-B Score test failed\n");
-	// }
-
-	// if (!B.at(0).approximates(B0Copy))
-	// {
-	// 	failCount++;
-	// 	err("Scoring const-ness failed: shape B was modified during scoring\n");
-	// }
-
-
-	// // Test scoring identical shapes
-	// G.clear();
-	// for (int i = 0; i < B.size(); i++)
-	// 	G.push_back(Gene(i, B.at(i)));
-
-	// score = kabsch_score(G, B);
-
-	// msg("B-B Score: %.10f\n", score);
-	// if (!float_approximates(score, 0.0))
-	// {
-	// 	failCount++;
-	// 	err("B-B self score failed\n");
-	// }
-
-	// // Test shifted shapes
-	// for (Gene& g : G)
-	// 	g.com() += Vector3f(-10, 20, 30);
-
-	// score = kabsch_score(G, B);
-
-	// msg("B-B Shifted Score: %.10f\n", score);
-	// if (!float_approximates(score, 0.0))
-	// {
-	// 	failCount++;
-	// 	err("B-B shifted self score failed\n");
-	// }
-
-	// // Test scoring different sized (sub)shapes
-	// G.clear();
-	// for (int i = 0; i < B.size(); i++)
-	// {
-	// 	if (i == B.size() / 2)
-	// 		continue;
-	// 	G.push_back(Gene(i, B.at(i)));
-	// }
-
-	// score = kabsch_score(G, B);
-
-	// msg("B[1:]-B score: %.10f\n", score);
-
-	// if (!float_approximates(score, 650.2928466797))
-	// {
-	// 	err("Resampled score differs\n");
-	// 	failCount++;
-	// }
-
-	// Test verdict
-	if (failCount == 0)
-		msg("Passed!\n");
-	else
-		err("Failed! failCount=%d\n", failCount);
-
-	return failCount;
 }
 
-} // namespace elfin
+}  /* elfin */

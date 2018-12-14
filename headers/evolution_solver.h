@@ -14,10 +14,10 @@ typedef std::vector<std::shared_ptr<Candidate>> CandidateSharedPtrs;
 typedef std::unordered_map<std::string,
         CandidateSharedPtrs> SolutionMap;
 
-class EvolutionSolver
-{
+class EvolutionSolver {
 protected:
 	/* data */
+	bool has_result_ = false;
 	SolutionMap best_sols_;
 	double start_time_in_us_ = 0;
 
@@ -42,11 +42,11 @@ protected:
 
 public:
 	/* ctors */
-	EvolutionSolver() {}
 
 	/* dtors */
 
 	/* accessors */
+	bool has_result() const { return has_result_; }
 	SolutionMap const& best_sols() const { return best_sols_; }
 
 	/* modifiers */

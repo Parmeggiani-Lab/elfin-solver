@@ -2,19 +2,11 @@
 
 #include "elfin.h"
 
-#include <string>
-#include <sstream>
 #include <csignal>
-#include <iostream>
-#include <fstream>
 
 #include "input_manager.h"
-#include "spec.h"
-#include "database.h"
-#include "kabsch.h"
-#include "random_utils.h"
-#include "parallel_utils.h"
 #include "output_manager.h"
+#include "test_manager.h"
 
 #ifndef _NO_OMP
 #include <omp.h>
@@ -22,139 +14,31 @@
 
 namespace elfin {
 
-std::vector<Elfin *> Elfin::instances_;
+Elfin::InstanceMap Elfin::instances_;
 bool interrupt_caught = false;
 
 /* private */
 /* accessors */
 void Elfin::crash_dump() const {
-    if (solver_started_) {
-        wrn("Dumping latest results...\n");
-        OutputManager::write_output(solver_, "crash_dump");
-        delete solver_;
-    } else {
-        wrn("GA did not get to start\n");
-    }
-}
-
-int Elfin::run_unit_tests() const {
-    msg("Running unit tests...\n");
-    int fail_count = 0;
-    fail_count += _test_kabsch();
-    return fail_count;
-}
-
-int Elfin::run_meta_tests() const {
-    msg("Running meta tests...\n");
-    int fail_count = 0;
-
-    for (auto& itr : SPEC.work_area_map()) {
-        const WorkArea& wa = itr.second;
-        V3fList moved_spec = wa.to_points();
-
-        // It seems that Kabsch cannot handle very large
-        // translations, but in the scale we're working
-        // at it should rarely, if ever, go beyond
-        // one thousand Angstroms
-        const float tx_ele[4][4] = {
-            1.0f, .0f, .0f, -39.0f,
-            .0f, -0.5177697998f, 0.855519979f, 999.3413f,
-            .0f, -0.855519979f, -0.5177697998f, -400.11f,
-            .0f, .0f, .0f, 1.0f
-        };
-
-        Transform tx(tx_ele);
-
-        for (Vector3f &p : moved_spec) {
-            p = tx * p;
-        }
-
-        // Test scoring a transformed version of spec
-        const float trx_score = kabsch_score(moved_spec, wa.to_points());
-        if (!float_approximates(trx_score, 0)) {
-            fail_count++;
-            wrn("Self score test failed: self score should be 0\n");
-        }
-
-        // Test randomiser
-        const int N = 10;
-        const int rand_trials = 50000000;
-        const int expect_avg = rand_trials / N;
-        const float rand_dev_tolerance = 0.05f * expect_avg; // 5% deviation
-
-        int rand_count[N] = {0};
-        for (size_t i = 0; i < rand_trials; i++) {
-            const size_t dice = random::get_dice(N);
-            if (dice >= N) {
-                fail_count++;
-                err("Failed to produce correct dice: random::get_dice() "
-                    "produced %d for [0-%d)",
-                    dice, N);
-                break;
-            }
-            rand_count[dice]++;
-        }
-
-        for (size_t i = 0; i < N; i++) {
-            const float rand_dev = static_cast<float>(
-                                       abs(rand_count[i] - expect_avg) / (expect_avg));
-            if (rand_dev > rand_dev_tolerance) {
-                fail_count++;
-                err("Too much random deviation: %.3f%% (expecting %d)\n",
-                    rand_dev, expect_avg);
-            }
-        }
-
-        // Test parallel randomiser
-#ifndef _NO_OMP
-        std::vector<uint32_t> para_rand_seeds = get_para_rand_seeds();
-        const int n_threads = para_rand_seeds.size();
-        const int para_rand_n = 8096;
-        const int64_t dice_lim = 13377331;
-
-        std::vector<uint32_t> rands1(para_rand_n);
-        #pragma omp parallel for
-        for (size_t i = 0; i < para_rand_n; i++)
-            rands1.at(i) = random::get_dice(dice_lim);
-
-        get_para_rand_seeds() = para_rand_seeds;
-        std::vector<uint32_t> rands2(para_rand_n);
-        #pragma omp parallel for
-        for (size_t i = 0; i < para_rand_n; i++)
-            rands2.at(i) = random::get_dice(dice_lim);
-
-        for (size_t i = 0; i < para_rand_n; i++) {
-            if (rands1.at(i) != rands2.at(i)) {
-                fail_count++;
-                err("Parallel randomiser failed: %d vs %d\n",
-                    rands1.at(i), rands2.at(i));
-            }
-        }
-#endif
-
-        if (fail_count > 0)
-            break;
-    }
-
-    return fail_count;
+    wrn("Crash-dumping results...\n");
+    OutputManager::write_output(solver_, "crash_dump");
 }
 
 /* handlers */
 void Elfin::interrupt_handler(const int signal) {
     if (interrupt_caught) {
         raw("\n\n");
-        die("Caught interrupt signal (second)\n");
+        die("Caught interrupt signal (second). Aborting NOW.\n");
     }
     else {
         interrupt_caught = true;
 
         raw("\n\n");
-        wrn("Caught interrupt signal (first)\n");
+        wrn("Caught interrupt signal (first); trying to save data...\n");
 
         // Save latest results
-        for (auto er : instances_) {
-            er->crash_dump();
-            delete er;
+        for (auto inst : instances_) {
+            inst->crash_dump();
         }
 
         exit(signal);
@@ -164,38 +48,28 @@ void Elfin::interrupt_handler(const int signal) {
 /* public */
 /* ctors */
 Elfin::Elfin(const int argc, const char ** argv) {
-    instances_.push_back(this);
+    instances_.insert(this);
 
     std::signal(SIGINT, interrupt_handler);
 
     set_log_level(LOG_WARN);
 
+    // Parse arguments and configuration
     InputManager::setup(argc, argv);
 }
 
 /* dtors */
 Elfin::~Elfin() {
-    delete solver_;
+    instances_.erase(this);
 }
 
 /* modifiers */
 int Elfin::run() {
-    solver_ = new EvolutionSolver();
 
     if (OPTIONS.run_unit_tests) {
-        int fail_count = 0;
-        fail_count += run_unit_tests();
-        fail_count += run_meta_tests();
-
-        if (fail_count > 0) {
-            die("More than zero unit tests failed\n");
-        } else {
-            msg("All unit tests passed!\n");
-            raw(unit_tests_passed_str);
-        }
+        TestManager().run();
     } else {
-        solver_started_ = true;
-        solver_->run();
+        solver_.run();
         OutputManager::write_output(solver_);
     }
 

@@ -13,7 +13,7 @@ class OutputManager
 public:
 
     static void write_output(
-        EvolutionSolver const* solver,
+        EvolutionSolver const& solver,
         std::string extra_dir = "",
         size_t const indent_size = 4);
 };

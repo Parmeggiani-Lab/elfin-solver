@@ -48,10 +48,14 @@ EvolutionSolver::collect_gen_data(
     const Candidate* worst_candidate =
         pop.front_buffer()->front();
 
-    const float gen_best_score = best_candidate->score();
-    const size_t gen_best_len = best_candidate->size();
-    const float gen_worst_score = worst_candidate->score();
-    const double gen_time = ((get_timestamp_us() - gen_start_time) / 1e3);
+    const float gen_best_score =
+        best_candidate->score();
+    const size_t gen_best_len =
+        best_candidate->size();
+    const float gen_worst_score =
+        worst_candidate->score();
+    const double gen_time =
+        ((get_timestamp_us() - gen_start_time) / 1e3);
 
     tot_gen_time += gen_time;
 
@@ -93,6 +97,7 @@ EvolutionSolver::collect_gen_data(
             pop.front_buffer()->at(j)->clone();
         best_sols[j] =
             std::shared_ptr<Candidate>(best_cand_clone);
+        has_result_ |= true;
     }
 
     // Check stop conditions
@@ -207,6 +212,14 @@ EvolutionSolver::debug_print_pop(
 
 void
 EvolutionSolver::run() {
+    static bool run_entered = false;
+    
+    if (run_entered) {
+        die("%s called more than once.\n", __PRETTY_FUNCTION__);
+    }
+
+    run_entered = true;
+
     start_time_in_us_ = get_timestamp_us();
     for (auto& itr : SPEC.work_area_map()) {
 
@@ -244,7 +257,7 @@ EvolutionSolver::run() {
 
                     wrn("Before evolve\n");
                     debug_print_pop(population);
-                    
+
                     population.evolve();
                     wrn("After evolve\n");
                     debug_print_pop(population);

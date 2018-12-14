@@ -16,13 +16,13 @@ std::string get_filename(const std::string& path) {
     std::string filename = path;
     // Remove directory if present.
     // Do this before extension removal incase directory has a period character.
-    const size_t last_slash_idx = filename.find_last_of("\\/");
+    size_t const last_slash_idx = filename.find_last_of("\\/");
     if (std::string::npos != last_slash_idx) {
         filename.erase(0, last_slash_idx + 1);
     }
 
     // Remove extension if present.
-    const size_t period_idx = filename.rfind('.');
+    size_t const period_idx = filename.rfind('.');
     if (std::string::npos != period_idx) {
         filename.erase(period_idx);
     }
@@ -31,9 +31,14 @@ std::string get_filename(const std::string& path) {
 
 // static
 void OutputManager::write_output(
-    const EvolutionSolver* solver,
+    EvolutionSolver const& solver,
     std::string extra_dir,
-    const size_t indent_size) {
+    size_t const indent_size) {
+    if (not solver.has_result()) {
+        wrn("Solver %p\n has no result to be written out\n", &solver);
+        return;
+    }
+
     // Compute final output dir string
     std::ostringstream output_dir_ss;
     output_dir_ss << OPTIONS.output_dir << "/"
@@ -49,7 +54,7 @@ void OutputManager::write_output(
 
         try {
             const std::vector<std::shared_ptr<Candidate>> & candidates =
-                        solver->best_sols().at(wa_name);
+                        solver.best_sols().at(wa_name);
             for (size_t i = 0; i < candidates.size(); ++i)
             {
                 JSON cand_json;
