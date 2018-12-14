@@ -165,8 +165,7 @@ void Database::parse_from_json(const JSON& xdb) {
 
     auto parse_link = [&](JSON_MOD_PARAMS) {
         const size_t mod_a_id = name_id_map[jit.key()];
-        ProtoModule* const mod_a =
-            nf_mod_list.at(mod_a_id);
+        ProtoModule* const mod_a = nf_mod_list.at(mod_a_id);
 
         const JSON& chains_json = (*jit)["chains"];
         for (auto a_chain_it = chains_json.begin();
@@ -182,8 +181,7 @@ void Database::parse_from_json(const JSON& xdb) {
                     c_it != c_json.end();
                     ++c_it) {
                 const size_t mod_b_id = name_id_map[c_it.key()];
-                ProtoModule* const mod_b =
-                    nf_mod_list.at(mod_b_id);
+                ProtoModule* const mod_b = nf_mod_list.at(mod_b_id);
 
                 const JSON& b_chains_json = (*c_it);
                 for (auto b_chain_it = b_chains_json.begin();
@@ -195,7 +193,7 @@ void Database::parse_from_json(const JSON& xdb) {
                                 "\tEither xdb.json is corrupted or "
                                 "there is an error in dbgen.py.\n"));
 
-                    const JSON& tx_json = xdb["n_to_c_tx"][tx_id]["tx"];
+                    const JSON& tx_json = xdb["n_to_c_tx"][tx_id];
                     ProtoModule::create_proto_link_pair(
                         tx_json,
                         mod_a,

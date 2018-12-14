@@ -124,16 +124,16 @@ dry: $(BINRAY)
 
 VALGRIND_FLAGS += --track-origins=yes --leak-check=full --show-leak-kinds=all --gen-suppressions=yes
 
-valgrind: $(EXE)
-	valgrind $(VALGRIND_FLAGS) $(BIN_DIR)/$(EXE) -c config/test.json
+valgrind: $(BINRAY)
+	valgrind $(VALGRIND_FLAGS) $(BINRAY) -c config/test.json
 
-valgrind_dry: $(EXE)
-	valgrind $(VALGRIND_FLAGS) $(BIN_DIR)/$(EXE) -c config/test.json -dry
+valgrind_dry: $(BINRAY)
+	valgrind $(VALGRIND_FLAGS) $(BINRAY) -c config/test.json -dry
 
 FORCE:
 .PHONY: all clean
 
-all: $(EXE)
+all: $(BINRAY)
 
 clean: FORCE
 	rm -rf $(BIN_DIR)/* $(OBJ_DIR)/* *.dSYM .DS_Store *.dec *.bin

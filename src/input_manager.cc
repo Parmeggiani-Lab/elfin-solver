@@ -52,6 +52,8 @@ void InputManager::setup(const int argc, const char ** argv) {
     setup_cutoffs();
 
     instance().xdb_.parse_from_json(parse_json(OPTIONS.xdb));
+
+    msg("Using input file: %s\n", OPTIONS.input_file.c_str());
     instance().spec_.parse_from_json(parse_json(OPTIONS.input_file));
 
     // Give each thread their own seed

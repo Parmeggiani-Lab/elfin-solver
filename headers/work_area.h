@@ -5,6 +5,7 @@
 #include <string>
 
 #include "ui_joint.h"
+#include "debug_utils.h"
 #include "geometry.h"
 
 namespace elfin {
@@ -31,9 +32,9 @@ inline void bad_work_type(WorkType type) {
                                            WorkTypeToCStr(type)));
 }
 
-class WorkArea
-{
+class WorkArea {
 protected:
+    /* data */
     std::string name_ = "unamed_area";
     WorkType type_ = WorkType::FREE;
     UIJointMap joints_;
@@ -41,17 +42,23 @@ protected:
     std::vector<UIJoint *> hinged_joints_;
     std::vector<UIJoint *> leaf_joints_;
 
+    void set_type();
 public:
+    /* ctors */
     WorkArea(JSON const& j, const std::string& name);
     WorkArea() {}
     V3fList to_points() const;
 
-    /* getters */
+    /* accessors */
     std::string name() const { return name_; }
     WorkType type() const { return type_; }
     UIJointMap const& joints() const { return joints_; }
-    const std::vector<UIJoint *> & occupied_joints() const { return occupied_joints_; }
-    const std::vector<UIJoint *> & hinged_joints() const { return hinged_joints_; }
+    const std::vector<UIJoint *> & occupied_joints() const {
+        return occupied_joints_;
+    }
+    const std::vector<UIJoint *> & hinged_joints() const {
+        return hinged_joints_;
+    }
 };
 
 typedef std::unordered_map<std::string, WorkArea> WorkAreaMap;

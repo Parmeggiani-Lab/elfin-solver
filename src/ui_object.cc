@@ -8,7 +8,7 @@ JSON data into elfin representation.
 */
 UIObject::UIObject(
     const JSON& j, const std::string& name) :
-    tx_(Transform(j["tx"])),
+    tx_(Transform(j)),
     name_(name) {}
 
 UIObject::UIObject(

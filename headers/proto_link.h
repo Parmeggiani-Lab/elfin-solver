@@ -9,7 +9,6 @@
 namespace elfin {
 
 class ProtoModule;
-class ProtoLink;
 
 class ProtoLink
 {

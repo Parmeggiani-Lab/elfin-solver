@@ -33,8 +33,9 @@ void Spec::parse_from_json(const JSON& j) {
             fixed_areas_.emplace(fa_name, FixedArea(*it, fa_name));
         }
     } catch (const std::exception& e) {
-        err("Failed to parse spec from JSON.\nReason: %s\n", e.what());
-        throw e;
+        NICE_PANIC("Exception",
+                   string_format("Failed to parse spec from JSON."
+                                 "\nReason: %s", e.what()));
     }
 
     map_joints();
