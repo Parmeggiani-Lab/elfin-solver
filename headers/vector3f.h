@@ -1,16 +1,40 @@
 #ifndef VECTOR3F_H_
 #define VECTOR3F_H_
 
+// #define USE_EIGEN
+#ifdef USE_EIGEN
+#define V3F_USE_EIGEN
+#endif /* ifdef USE_EIGEN */
+
 #include <vector>
 
+#ifdef V3F_USE_EIGEN
 #include "eigen.h"
+#else
+#include <cmath>
+#endif  /* ifdef V3F_USE_EIGEN */
+
 #include "debug_utils.h"
+
+#include "stack_trace.h"
 
 namespace elfin {
 
+#ifdef V3F_USE_EIGEN
 typedef Eigen::Vector3f EigenV3f;
-class Vector3f : public EigenV3f {
+#define V3F_INHERIT : public EigenV3f
+#else
+#define V3F_INHERIT
+#endif  /* ifdef V3F_USE_EIGEN */
+
+class Vector3f V3F_INHERIT {
 private:
+
+#ifndef V3F_USE_EIGEN
+    /* data */
+    float data_[3] = { 0, 0, 0 };
+#endif  /* ifdef V3F_USE_EIGEN */
+
     /* ctors */
     template<class RandomAccessIterator >
     Vector3f(
@@ -21,15 +45,21 @@ private:
                        "Invalid Argument Size: %lu, should be <3\n",
                        end - begin));
         auto itr = begin;
-        Vector3f& me = *this;
-        me[0] = *itr++;
-        me[1] = *itr++;
-        me[2] = *itr++;
+
+#ifdef V3F_USE_EIGEN
+        Vector3f& data_ = *this;
+#endif  /* ifdef V3F_USE_EIGEN */
+
+        data_[0] = *itr++;
+        data_[1] = *itr++;
+        data_[2] = *itr++;
     }
 
 public:
     /* ctors */
 
+
+#ifdef V3F_USE_EIGEN
     // Construct Vector3f from Eigen expressions
     template<typename OtherDerived>
     Vector3f(
@@ -37,41 +67,115 @@ public:
         : EigenV3f(other) {}
     Vector3f() : EigenV3f(EigenV3f::Zero()) {}
     Vector3f(float x, float y, float z) : EigenV3f(x, y, z) {}
+#else
+    Vector3f() {}
+    Vector3f(float x, float y, float z) {
+        data_[0] = x, data_[1] = y, data_[2] = z;
+    }
+#endif  /* ifdef V3F_USE_EIGEN */
+
     template <typename T>
     Vector3f(std::vector<T> const& vec) :
         Vector3f(vec.cbegin(), vec.cbegin() + 3) {}
 
     /* accessors */
+    inline float squared_norm() const {
+#ifdef V3F_USE_EIGEN
+        return EigenV3f::squaredNorm();
+#else
+        return data_[0] * data_[0] +
+               data_[1] * data_[1] +
+               data_[2] * data_[2];
+#endif  /* ifdef V3F_USE_EIGEN */
+    }
+
     inline float dist_to(Vector3f const& rhs) const {
+#ifdef V3F_USE_EIGEN
         return this->operator-(rhs).norm();
+#else
+        return sqrt(this->operator-(rhs).squared_norm());
+#endif  /* ifdef V3F_USE_EIGEN */
     }
     inline float sq_dist_to(Vector3f const& rhs) const {
-        return this->operator-(rhs).squaredNorm();
+        Vector3f const tmp = this->operator-(rhs);
+        return tmp.squared_norm();
     }
 
-    // Default tolerance is 1e-4 because PDBs have only 4 decimals of
-    // precision
-    inline bool approximates(
+    /*
+     * We use 0.0001 as tolerance here because that's the highest precision
+     * PDBs support.
+     */
+    inline bool is_approx(
         Vector3f const& other,
-        double const tolerance = 1e-4) const {
+        float const tolerance = 1e-4) const {
+#ifdef V3F_USE_EIGEN
         return isApprox(other, tolerance);
+#else
+        for (size_t i = 0; i < 3; ++i) {
+            if (not float_approximates_err(
+                        data_[i],
+                        other.data_[i],
+                        tolerance)) {
+                return false;
+            }
+        }
+        return true;
+#endif  /* ifdef V3F_USE_EIGEN */
     }
+
+#ifndef V3F_USE_EIGEN
+
+    Vector3f operator+(Vector3f const& rhs) const {
+        return Vector3f(
+                   data_[0] + rhs.data_[0],
+                   data_[1] + rhs.data_[1],
+                   data_[2] + rhs.data_[2]);
+    }
+    Vector3f operator-(Vector3f const& rhs) const {
+        return Vector3f(
+                   data_[0] - rhs.data_[0],
+                   data_[1] - rhs.data_[1],
+                   data_[2] - rhs.data_[2]);
+    }
+    Vector3f operator*(float const f) const {
+        return Vector3f(
+                   data_[0] * f,
+                   data_[1] * f,
+                   data_[2] * f);
+    }
+    float operator[](size_t const i) const {
+        DEBUG(i >= 3);
+        return data_[i];
+    }
+
+#endif  /* ifndef V3F_USE_EIGEN */
 
     /* modifiers */
+#ifdef V3F_USE_EIGEN
     // Assign Eigen expressions to Vector3f
     template<typename OtherDerived>
     Vector3f& operator=(
         Eigen::MatrixBase<OtherDerived> const& other)
     {
-        this->EigenV3f::operator=(other);
+        EigenV3f::operator=(other);
         return *this;
     }
+#endif  /* ifdef V3F_USE_EIGEN */
 
     /* printers */
+#ifndef V3F_USE_EIGEN
+    std::string to_string() const {
+        return string_format("(%f, %f, %f)",
+                             data_[0], data_[1], data_[2]);
+    }
+#endif  /* ifdef V3F_USE_EIGEN */
+
     std::string to_csv_string() const {
-        Vector3f const& me = *this;
+#ifdef V3F_USE_EIGEN
+        Vector3f const& data_ = *this;
+#endif  /* ifdef V3F_USE_EIGEN */
         return string_format("%f, %f, %f",
-                             me[0], me[1], me[2]);
+                             data_[0], data_[1], data_[2]);
     }
 
     /* tests */

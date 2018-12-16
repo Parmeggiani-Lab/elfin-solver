@@ -1,14 +1,13 @@
 #ifndef TRANSFOREIGEN_H_
 #define TRANSFOREIGEN_H_
 
-// #define USE_EIGEN_IMPL
+// #define USE_EIGEN
 
 #include <sstream>
 
-#ifdef USE_EIGEN_IMPL
+#ifdef USE_EIGEN
 #include "eigen.h"
-#endif  /* ifdef USE_EIGEN_IMPL */
-
+#endif  /* ifdef USE_EIGEN */
 
 #include "json.h"
 
@@ -17,17 +16,17 @@ namespace elfin {
 
 class Vector3f;
 
-#ifdef USE_EIGEN_IMPL
+#ifdef USE_EIGEN
 using Matrix4f = Eigen::Matrix4f;
 #define TX_INHERIT : public Matrix4f
 #else
 #define TX_INHERIT
-#endif  /* ifdef USE_EIGEN_IMPL */
+#endif  /* ifdef USE_EIGEN */
 
 class Transform TX_INHERIT {
 private:
 
-#ifndef USE_EIGEN_IMPL
+#ifndef USE_EIGEN
 
     /* data */
     float rot_[3][3] = {
@@ -38,12 +37,12 @@ private:
 
     float tran_[3] = {0, 0, 0};
 
-#endif  /* ifndef USE_EIGEN_IMPL */
+#endif  /* ifndef USE_EIGEN */
 
 public:
 
     /* ctors */
-#ifdef USE_EIGEN_IMPL
+#ifdef USE_EIGEN
 
     // Construct Transform from Eigen expressions
     template<typename OtherDerived>
@@ -56,7 +55,7 @@ public:
 
     Transform() {}
 
-#endif  /* ifdef USE_EIGEN_IMPL */
+#endif  /* ifdef USE_EIGEN */
 
     Transform(JSON const& tx_json);
 
@@ -64,21 +63,27 @@ public:
     Vector3f collapsed() const;
     Transform inversed() const;
 
-#ifdef USE_EIGEN_IMPL
+#ifdef USE_EIGEN
     template<typename OtherDerived>
     Transform operator*(
-        Eigen::MatrixBase<OtherDerived> const & rhs) const {
+        Eigen::MatrixBase<OtherDerived> const& rhs) const {
         return Matrix4f::operator*(rhs);
     }
 #else
-    Transform operator*(Transform const & rhs) const;
-#endif  /* ifdef USE_EIGEN_IMPL */
+    Transform operator*(Transform const& rhs) const;
+#endif  /* ifdef USE_EIGEN */
 
-    Vector3f operator*(Vector3f const & vec) const;
-    bool is_approx(Transform const& other) const;
+    Vector3f operator*(Vector3f const& vec) const;
+
+    /*
+     * We use 0.0001 as tolerance here because that's the highest precision
+     * PDBs support.
+     */
+    bool is_approx(Transform const& other,
+                   float const tolerance = 1e-4) const;
 
     /* modifiers */
-#ifdef USE_EIGEN_IMPL
+#ifdef USE_EIGEN
     // Assign Eigen expressions to Transform
     template<typename OtherDerived>
     Transform & operator=(
@@ -87,10 +92,10 @@ public:
         this->Matrix4f::operator=(other);
         return *this;
     }
-#endif  /* ifdef USE_EIGEN_IMPL */
+#endif  /* ifdef USE_EIGEN */
 
     /* printers */
-#ifndef USE_EIGEN_IMPL
+#ifndef USE_EIGEN
 
     std::string to_string() const {
         std::ostringstream ss;
@@ -115,7 +120,7 @@ public:
         return ss.str();
     }
 
-#endif  /* ifndef USE_EIGEN_IMPL */
+#endif  /* ifndef USE_EIGEN */
 
     /* tests */
     static void test(size_t& errors, size_t& tests);

@@ -14,7 +14,7 @@ Transform::Transform(JSON const& tx_json) {
     JSON const& tran_json = tx_json["tran"];
     NICE_PANIC(tran_json.size() != 3);
 
-#ifdef USE_EIGEN_IMPL
+#ifdef USE_EIGEN
 
     (*this) << rot_json[0][0], rot_json[0][1], rot_json[0][2], tran_json[0],
     rot_json[1][0], rot_json[1][1], rot_json[1][2], tran_json[1],
@@ -30,13 +30,13 @@ Transform::Transform(JSON const& tx_json) {
         tran_[i] = tran_json[i];
     }
 
-#endif  /* ifdef USE_EIGEN_IMPL */
+#endif  /* ifdef USE_EIGEN */
 
 }
 
 /* accessors */
 Vector3f Transform::collapsed() const {
-#ifdef USE_EIGEN_IMPL
+#ifdef USE_EIGEN
 
     return block<3, 1>(0, 3);
 
@@ -44,11 +44,11 @@ Vector3f Transform::collapsed() const {
 
     return Vector3f(tran_[0], tran_[1], tran_[2]);
 
-#endif  /* ifdef USE_EIGEN_IMPL */
+#endif  /* ifdef USE_EIGEN */
 }
 
 Transform Transform::inversed() const {
-#ifdef USE_EIGEN_IMPL
+#ifdef USE_EIGEN
 
     Transform res;
 
@@ -81,10 +81,10 @@ Transform Transform::inversed() const {
 
     return res;
 
-#endif  /* ifdef USE_EIGEN_IMPL */
+#endif  /* ifdef USE_EIGEN */
 }
 
-#ifndef USE_EIGEN_IMPL
+#ifndef USE_EIGEN
 
 Transform Transform::operator*(Transform const& rhs) const {
     Transform res;
@@ -105,11 +105,11 @@ Transform Transform::operator*(Transform const& rhs) const {
     return res;
 }
 
-#endif  /* ifndef USE_EIGEN_IMPL */
+#endif  /* ifndef USE_EIGEN */
 
 Vector3f Transform::operator*(
     Vector3f const& vec) const {
-#ifdef USE_EIGEN_IMPL
+#ifdef USE_EIGEN
 
     return block<3, 3>(0, 0) * vec + block<3, 1>(0, 3);
 
@@ -132,21 +132,17 @@ Vector3f Transform::operator*(
 
     return Vector3f(rx, ry, rz);
 
-#endif  /* ifdef USE_EIGEN_IMPL */
+#endif  /* ifdef USE_EIGEN */
 }
 
-bool Transform::is_approx(Transform const& other) const {
-#ifdef USE_EIGEN_IMPL
+bool Transform::is_approx(
+    Transform const& other,
+    float const tolerance) const {
+#ifdef USE_EIGEN
 
     return isApprox(other);
 
 #else
-
-    /*
-     * We use 0.0001 as tolerance here because that's the highest precision
-     * PDBs support. 
-     */
-    float const tolerance = 1e-4;
 
     for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {
@@ -168,7 +164,7 @@ bool Transform::is_approx(Transform const& other) const {
 
     return true;
 
-#endif  /* ifdef USE_EIGEN_IMPL */
+#endif  /* ifdef USE_EIGEN */
 }
 
 /* tests */

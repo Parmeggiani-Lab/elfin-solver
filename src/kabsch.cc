@@ -519,7 +519,7 @@ void _test_kabsch(size_t& errors, size_t& tests) {
 		raw("%16.6f %16.6f %16.6f\n",
 		    row.at(0), row.at(1), row.at(2));
 		tests++;
-		if (!Vector3f(row.at(0), row.at(1), row.at(2)).approximates(actualR[i])) {
+		if (!Vector3f(row.at(0), row.at(1), row.at(2)).is_approx(actualR[i])) {
 			errors++;
 			err("Rotation test failed: row does not approximate actual rotation row\n");
 		}
@@ -527,7 +527,7 @@ void _test_kabsch(size_t& errors, size_t& tests) {
 
 	msg("Tran: %s\n", tran.to_string().c_str());
 	tests++;
-	if (!tran.approximates(actualTran)) {
+	if (!tran.is_approx(actualTran)) {
 		errors++;
 		err("Translation test failed: does not approximate actual translation\n");
 	}
