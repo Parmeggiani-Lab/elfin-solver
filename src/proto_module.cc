@@ -66,6 +66,7 @@ size_t ProtoModule::find_chain_id(
     }
 
     NICE_PANIC("Chain Not Found");
+    exit(1); // suppress no return warning
 }
 ProtoLink const* ProtoModule::find_link_to(
     size_t const src_chain_id,

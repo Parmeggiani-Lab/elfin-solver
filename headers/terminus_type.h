@@ -38,6 +38,7 @@ inline TerminusType opposite_term(TerminusType const term) {
     }
     else {
         bad_terminus(term);
+        return TerminusType::NONE;
     }
 }
 

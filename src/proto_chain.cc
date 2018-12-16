@@ -17,6 +17,7 @@ ProtoTerminus const& ProtoChain::get_term(
     }
     else {
         bad_terminus(term);
+        exit(1); // suppress no return warning
     }
 }
 

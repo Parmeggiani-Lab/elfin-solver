@@ -32,6 +32,7 @@ const ProtoLink& ProtoTerminus::pick_random_link(
     }
     else {
         bad_terminus(term);
+        exit(1); // suppress no return warning
     }
 }
 
