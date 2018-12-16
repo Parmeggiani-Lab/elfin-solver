@@ -46,7 +46,7 @@ EvolutionSolver::collect_gen_data(
     const Candidate* best_candidate =
         pop.front_buffer()->front();
     const Candidate* worst_candidate =
-        pop.front_buffer()->front();
+        pop.front_buffer()->back();
 
     const float gen_best_score =
         best_candidate->score();
