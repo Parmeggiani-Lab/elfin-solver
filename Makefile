@@ -90,7 +90,7 @@ else ifeq ($(CXX), g++)
 endif
 
 OPT_FLAGS 		+= -O3
-CC_FLAGS 		+= -MMD -std=c++17 # c++17 for more copy elision
+CC_FLAGS 		+= -MMD -std=gnu++17 # c++17 for more copy elision
 					
 
 COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS) \
