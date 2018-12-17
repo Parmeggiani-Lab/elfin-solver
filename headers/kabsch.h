@@ -10,10 +10,14 @@
 namespace elfin
 {
 
-float kabsch_score(V3fList const& points, WorkArea const* wa);
-float kabsch_score(V3fList mobile, V3fList ref);
+namespace kabsch {
 
-void _test_kabsch(size_t& errors, size_t& tests);
+float score(V3fList const& points, WorkArea const* wa);
+float score(V3fList mobile, V3fList ref);
+
+void test(size_t& errors, size_t& tests);
+
+}  /* kabsch */
 
 } // namespace elfin
 

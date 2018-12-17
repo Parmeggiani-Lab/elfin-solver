@@ -12,6 +12,8 @@
 
 namespace elfin {
 
+namespace kabsch {
+
 template <typename T>
 using Matrix = std::vector<std::vector<T>>;
 
@@ -435,11 +437,11 @@ bool kabsch(
 	return ret_val;
 }
 
-float kabsch_score(const V3fList& points, const WorkArea* wa) {
-	return kabsch_score(points, wa->to_points());
+float score(const V3fList& points, const WorkArea* wa) {
+	return score(points, wa->to_points());
 }
 
-float kabsch_score(V3fList mobile, V3fList ref) {
+float score(V3fList mobile, V3fList ref) {
 	if (mobile.empty() or ref.empty())
 		return INFINITY;
 
@@ -461,11 +463,10 @@ float kabsch_score(V3fList mobile, V3fList ref) {
 	return rms;
 }
 
-void _test_kabsch(size_t& errors, size_t& tests) {
-	using namespace elfin;
+void test(size_t& errors, size_t& tests) {
+	msg("Testing kabsch\n");
 
-	msg("Testing Kabsch\n");
-	const Vector3f arrA[] = {
+	const Vector3f arr_a[] = {
 		Vector3f(4.7008892286345, 42.938597096873, 14.4318130193692),
 		Vector3f(-20.3679194392227, 27.5712678608402, -12.1390617339732),
 		Vector3f(24.4692807074156, -1.32083675968276, 31.1580458282477),
@@ -478,7 +479,7 @@ void _test_kabsch(size_t& errors, size_t& tests) {
 		Vector3f(-41.8874231134215, 29.4831416883453, 8.70447045314168),
 	};
 
-	const Vector3f arrB[] = {
+	const Vector3f arr_b[] = {
 		Vector3f(-29.2257707266972, -18.8897713349587, 9.48960740086143),
 		Vector3f(-19.8753669720509, 42.3379642103244, -23.7788252219155),
 		Vector3f(-2.90766514824093, -6.9792608670416, 10.2843089382083),
@@ -491,63 +492,70 @@ void _test_kabsch(size_t& errors, size_t& tests) {
 		Vector3f(-6.43013158961009, -9.12801538874479, 0.785828466111815),
 	};
 
-	const Vector3f actualR[] = {
+	const Vector3f actual_r[] = {
 		Vector3f( 0.523673403299203, -0.276948392922051, -0.805646171923458),
 		Vector3f(-0.793788382691122, -0.501965361762521, -0.343410511043611),
 		Vector3f(-0.309299482996081, 0.819347522879342, -0.482704326238996),
 	};
 
-	const Vector3f actualTran(-1.08234396236629,
-	                          5.08395199432057,
-	                          -13.0170407784248);
+	const Vector3f actual_tran(-1.08234396236629,
+	                           5.08395199432057,
+	                           -13.0170407784248);
 
-	V3fList A(arrA, arrA + sizeof(arrA) / sizeof(arrA[0]));
-	V3fList B(arrB, arrB + sizeof(arrB) / sizeof(arrB[0]));
+	V3fList A(arr_a, arr_a + sizeof(arr_a) / sizeof(arr_a[0]));
+	V3fList B(arr_b, arr_b + sizeof(arr_b) / sizeof(arr_b[0]));
 
+	/* kabsch() return variables */
 	Matrix<double> rot;
 	Vector3f tran;
 	double rms;
 
-	// Test Kabsch rotation and translation
+	/* kabsch() call should return true */
 	const bool ret_val = kabsch(A, B, rot, tran, rms);
-	msg("Kabsch call ret_val: %s\n", ret_val ? "ok" : "failed");
+	tests++;
+	if (not ret_val) {
+		errors++;
+		err("kabsch() returned false\n");
+	}
 
-	msg("Rot:\n");
+	/* Check kabsch() rotation */
+	tests++;
 	for (size_t i = 0; i < rot.size(); i++) {
 		auto const& row = rot.at(i);
 
-		raw("%16.6f %16.6f %16.6f\n",
-		    row.at(0), row.at(1), row.at(2));
-		tests++;
-		if (!Vector3f(row.at(0), row.at(1), row.at(2)).is_approx(actualR[i])) {
+		if (!Vector3f(row.at(0), row.at(1), row.at(2)).is_approx(actual_r[i])) {
 			errors++;
-			err("Rotation test failed: row does not approximate actual rotation row\n");
+			err("Rotation test failed: "
+			    "row %lu does not approximate actual rotation row\n",
+			    i);
+			break;
 		}
 	}
 
-	msg("Tran: %s\n", tran.to_string().c_str());
+	/* Check kabsch() translation */
 	tests++;
-	if (!tran.is_approx(actualTran)) {
+	if (!tran.is_approx(actual_tran)) {
 		errors++;
-		err("Translation test failed: does not approximate actual translation\n");
+		err("Translation test failed: "
+		    "does not approximate actual translation\n");
 	}
 
-	// Test upsampling
-	V3fList Afewer = A;
-	Afewer.erase(Afewer.begin() + (Afewer.size() / 2),
-	             Afewer.begin() + (Afewer.size() / 2) + 1);
+	/* Test upsampling */
+	V3fList a_fewer = A;
+	a_fewer.erase(a_fewer.begin() + (a_fewer.size() / 2),
+	              a_fewer.begin() + (a_fewer.size() / 2) + 1);
 
-	if (Afewer.size() == B.size())
-		die("Afewer and B sizes have not been made different!\n");
+	assert(a_fewer.size() != B.size());
 
-	resample(Afewer, B);
-
+	resample(a_fewer, B);
 	tests++;
-	if (Afewer.size() != B.size()) {
+	if (a_fewer.size() != B.size()) {
 		errors++;
-		err("Upsampling failed: Lengths: Afewer=%d B=%d\n",
-		    Afewer.size(), B.size());
+		err("Upsampling failed: Lengths: a_fewer=%d B=%d\n",
+		    a_fewer.size(), B.size());
 	}
 }
+
+}  /* kabsch */
 
 }  /* elfin */
