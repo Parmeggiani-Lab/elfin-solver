@@ -39,24 +39,24 @@ ifeq ($(TARGET), gpu)
 $(info Using clang++ for GPU target)
 $(info This was only tested on the Zoo cluster)
 	CXX=clang++
-	OMP_FLAGS=-fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda --cuda-path=/nfs/modules/cuda/8.0.61/ -D_TARGET_GPU
+	OMP_FLAGS=-fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda --cuda-path=/nfs/modules/cuda/8.0.61/ -DTARGET_GPU
 endif
 
-ifeq ($(OMP), yes)
-	ifeq ($(CXX), clang++)
-		# clang has no GLIBCXX_PARALLEL until c++17
-		ifeq ($(TARGET), cpu)
-			OMP_FLAGS=-openmp
-		endif
-	else
-		OMP_FLAGS=-fopenmp -D_GLIBCXX_PARALLEL
+ifeq ($(CXX), clang++)
+	# clang has no GLIBCXX_PARALLEL until c++17
+	ifeq ($(TARGET), cpu)
+		OMP_FLAGS=-openmp
 	endif
 else
-	OMP_FLAGS=-D_NO_OMP
+	OMP_FLAGS=-fopenmp -D_GLIBCXX_PARALLEL
+endif
+
+ifeq ($(OMP), no)
+	DEFS+=-DNO_OMP
 endif
 
 ifeq ($(TIMING), yes)
-	TIMING_FLAGS=-D_DO_TIMING
+	TIMING_FLAGS=-DDO_TIMING
 else
 	TIMING_FLAGS=
 endif
