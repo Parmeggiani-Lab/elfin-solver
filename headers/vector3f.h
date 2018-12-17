@@ -16,8 +16,6 @@
 
 #include "debug_utils.h"
 
-#include "stack_trace.h"
-
 namespace elfin {
 
 #ifdef V3F_USE_EIGEN

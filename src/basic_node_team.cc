@@ -28,6 +28,28 @@ namespace elfin {
 
 /* private */
 /* types */
+struct BasicNodeTeam::DeletePoint {
+    /*
+       [neighbor1] <--link1-- [delete_node] --link2--> [neighbor2]
+                   dst----src               src----dst
+                   ^^^                             ^^^
+                  (src)                           (dst) 
+                   --------------skipper------------->
+    */
+    Node* delete_node;
+    FreeChain const src, dst;
+    ProtoLink const* skipper;
+    DeletePoint(
+        Node* _delete_node,
+        FreeChain const&  _src,
+        FreeChain const&  _dst,
+        ProtoLink const* _skipper) :
+        src(_src),
+        dst(_dst),
+        delete_node(_delete_node),
+        skipper(_skipper) {}
+};
+
 struct BasicNodeTeam::InsertPoint {
     /*
      *  [  node1 ] --------------link-------------> [ node2  ]
@@ -115,7 +137,7 @@ float BasicNodeTeam::calc_score(WorkArea const* wa) const {
               string_format("points.size()=%lu, size()=%lu\n",
                             points.size(), this->size()));
 
-        float const new_score = kabsch_score(points, wa);
+        float const new_score = kabsch::score(points, wa);
         score = new_score < score ? new_score : score;
     }
 
@@ -309,25 +331,6 @@ bool BasicNodeTeam::erode_mutate(
     return mutate_success;
 }
 
-struct DeletePoint {
-    /*
-       [neighbor1] <--link1-- [delete_node] --link2--> [neighbor2]
-                   --------------skipper------------->
-    */
-    Node* delete_node;
-    Link const* link1, * link2;
-    ProtoLink const* skipper;
-    DeletePoint(
-        Node* _delete_node,
-        Link const* _link1,
-        Link const* _link2,
-        ProtoLink const* _skipper) :
-        link1(_link1),
-        link2(_link2),
-        delete_node(_delete_node),
-        skipper(_skipper) {}
-};
-
 bool BasicNodeTeam::delete_mutate() {
     bool mutate_success = false;
 
@@ -352,13 +355,13 @@ bool BasicNodeTeam::delete_mutate() {
                 /*
                  * curr_node is a tip node, which can always be deleted trivially.
                  * Use ProtoLink* = nullptr to mark a tip node. Pointers
-                 * link1 and link2 are not used.
+                 * src and dst are not used.
                  */
 
                 delete_points.emplace_back(
                     curr_node, // delete_node
-                    nullptr, // link1
-                    nullptr, // link2
+                    FreeChain(), // src
+                    FreeChain(), // dst
                     nullptr); // skipper
             }
             else if (num_links == 2) {
@@ -370,29 +373,29 @@ bool BasicNodeTeam::delete_mutate() {
 
                 Link const& link1 = curr_node->links().at(0);
                 Link const& link2 = curr_node->links().at(1);
-                FreeChain const& fchain1 = link1.dst();
-                FreeChain const& fchain2 = link2.dst();
+                FreeChain const& src = link1.dst();
+                FreeChain const& dst = link2.dst();
 
                 /*
                  * X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
                  *                 (  link1  )               (  link2  )
                  *                 vvvvvvvvvvv               vvvvvvvvvvv
-                 *              (fchain1)                         (fchain2)
-                 *                 vvv                               vvv
                  *                 dst->-<-src--[curr_node]--src->-<-dst
+                 *                 ^^^                               ^^^
+                 *                (src)                             (dst)
                 */
                 ProtoLink const* const proto_link_ptr =
-                    fchain1.node->prototype()->find_link_to(
-                        fchain1.chain_id,
-                        fchain1.term,
-                        fchain2.node->prototype(),
-                        fchain2.chain_id);
+                    src.node->prototype()->find_link_to(
+                        src.chain_id,
+                        src.term,
+                        dst.node->prototype(),
+                        dst.chain_id);
 
                 if (proto_link_ptr) {
                     delete_points.emplace_back(
                         curr_node, // delete_node
-                        &link1, // link1
-                        &link2, // link2
+                        src, // src
+                        dst, // dst
                         proto_link_ptr); // skipper
                 }
             }
@@ -417,12 +420,14 @@ bool BasicNodeTeam::delete_mutate() {
              *                  (  link1  )                 (  link2  )
              *                  vvvvvvvvvvv                 vvvvvvvvvvv
              *                  dst->-<-src--[delete_node]--src->-<-dst
+             *                  ^^^                                 ^^^
+             *                 (src)                               (dst)
              */
-            Node* neighbor1 = delete_point.link1->dst().node;
-            Node* neighbor2 = delete_point.link2->dst().node;
+            Node* neighbor1 = delete_point.src.node;
+            Node* neighbor2 = delete_point.dst.node;
 
-            neighbor1->remove_link(delete_point.link1->dst());
-            neighbor2->remove_link(delete_point.link2->dst());
+            neighbor1->remove_link(delete_point.src);
+            neighbor2->remove_link(delete_point.dst);
             /*
              *  X--[neighbor1]--X                                     X--[neighbor2]--...
              *                  (  link1  )                 (  link2  )
@@ -432,9 +437,9 @@ bool BasicNodeTeam::delete_mutate() {
              */
 
             // Create links between neighbor1 and neighbor2
-            Link const arrow1(delete_point.link1->dst(),
+            Link const arrow1(delete_point.src,
                               delete_point.skipper,
-                              delete_point.link2->dst());
+                              delete_point.dst);
             neighbor1->add_link(arrow1);
             neighbor2->add_link(arrow1.reversed());
             /*

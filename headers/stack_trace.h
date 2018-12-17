@@ -1,8 +1,8 @@
 // stacktrace.h (c) 2008, Timo Bingmann from http://idlebox.net/
 // published under the WTFPL v2.0
 
-#ifndef _STACKTRACE_H_
-#define _STACKTRACE_H_
+#ifndef STACKTRACE_H_
+#define STACKTRACE_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,4 +90,4 @@ static inline void print_stacktrace(FILE *out = stderr, unsigned int max_frames 
     free(symbollist);
 }
 
-#endif // _STACKTRACE_H_
+#endif  /* end of include guard: STACKTRACE_H_ */

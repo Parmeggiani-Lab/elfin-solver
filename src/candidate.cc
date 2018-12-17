@@ -112,7 +112,8 @@ MutationMode Candidate::mutate_and_score(
     WorkArea const* wa) {
 
     MutationMode mode = MutationMode::NONE;
-    if (rank < CUTOFFS.survivors) { // use < because rank is 0-indexed
+    // Rank is 0-indexed, hence <
+    if (rank < CUTOFFS.survivors) {
         *this = *(candidates->at(rank));
         mode = MutationMode::NONE;
     }

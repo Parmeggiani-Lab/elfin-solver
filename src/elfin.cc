@@ -7,10 +7,7 @@
 #include "input_manager.h"
 #include "output_manager.h"
 #include "test_manager.h"
-
-#ifndef _NO_OMP
-#include <omp.h>
-#endif
+#include "parallel_utils.h"
 
 namespace elfin {
 
@@ -56,6 +53,8 @@ Elfin::Elfin(const int argc, const char ** argv) {
 
     // Parse arguments and configuration
     InputManager::setup(argc, argv);
+
+    parallel::init();
 }
 
 /* dtors */

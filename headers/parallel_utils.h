@@ -50,4 +50,13 @@ inline long TIMING_END(char const* section_name, double const start_time) {
 
 #endif //ifdef DO_TIMING
 
+namespace parallel {
+
+static inline void init() {
+    // Explicitly disable dynamic thread teams
+    omp_set_dynamic(0);
+}
+
+}  /* parallel */
+
 #endif  /* end of include guard: PARALLEL_UTILS_H_ */

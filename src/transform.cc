@@ -1,5 +1,7 @@
 #include "transform.h"
 
+#include <cmath>
+
 #include "debug_utils.h"
 #include "vector3f.h"
 
@@ -15,21 +17,17 @@ Transform::Transform(JSON const& tx_json) {
     NICE_PANIC(tran_json.size() != 3);
 
 #ifdef USE_EIGEN
-
     (*this) << rot_json[0][0], rot_json[0][1], rot_json[0][2], tran_json[0],
     rot_json[1][0], rot_json[1][1], rot_json[1][2], tran_json[1],
     rot_json[2][0], rot_json[2][1], rot_json[2][2], tran_json[2],
     0.f, 0.f, 0.f, 1.f;
-
 #else
-
     for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {
             rot_[i][j] = rot_json[i][j];
         }
         tran_[i] = tran_json[i];
     }
-
 #endif  /* ifdef USE_EIGEN */
 
 }
@@ -37,13 +35,9 @@ Transform::Transform(JSON const& tx_json) {
 /* accessors */
 Vector3f Transform::collapsed() const {
 #ifdef USE_EIGEN
-
     return block<3, 1>(0, 3);
-
 #else
-
     return Vector3f(tran_[0], tran_[1], tran_[2]);
-
 #endif  /* ifdef USE_EIGEN */
 }
 
@@ -58,7 +52,6 @@ Transform Transform::inversed() const {
     return res;
 
 #else
-
     Transform res;
 
     for (size_t i = 0; i < 3; ++i) {
@@ -107,43 +100,12 @@ Transform Transform::operator*(Transform const& rhs) const {
 
 #endif  /* ifndef USE_EIGEN */
 
-Vector3f Transform::operator*(
-    Vector3f const& vec) const {
-#ifdef USE_EIGEN
-
-    return block<3, 3>(0, 0) * vec + block<3, 1>(0, 3);
-
-#else
-
-    float const rx = rot_[0][0] * vec[0] +
-                     rot_[0][1] * vec[1] +
-                     rot_[0][2] * vec[2] +
-                     tran_[0];
-
-    float const ry = rot_[1][0] * vec[0] +
-                     rot_[1][1] * vec[1] +
-                     rot_[1][2] * vec[2] +
-                     tran_[1];
-
-    float const rz = rot_[2][0] * vec[0] +
-                     rot_[2][1] * vec[1] +
-                     rot_[2][2] * vec[2] +
-                     tran_[2];
-
-    return Vector3f(rx, ry, rz);
-
-#endif  /* ifdef USE_EIGEN */
-}
-
 bool Transform::is_approx(
     Transform const& other,
     float const tolerance) const {
 #ifdef USE_EIGEN
-
     return isApprox(other);
-
 #else
-
     for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {
             if (not float_approximates_err(
@@ -163,7 +125,6 @@ bool Transform::is_approx(
     }
 
     return true;
-
 #endif  /* ifdef USE_EIGEN */
 }
 

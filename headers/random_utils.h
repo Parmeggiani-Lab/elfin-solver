@@ -12,16 +12,13 @@ namespace random {
 
 namespace {
 
-std::vector<uint32_t> RAND_SEEDS;
+extern std::vector<uint32_t> RAND_SEEDS;
 
 }  /* (anonymous) */
 
-void init_seeds(uint32_t global_seed);
+void init(uint32_t global_seed);
 
-static inline float get_dice_0to1() {
-    uint32_t& thread_seed = RAND_SEEDS.at(omp_get_thread_num());
-    return (float) rand_r(&thread_seed) / RAND_MAX;
-}
+float get_dice_0to1();
 
 static inline size_t get_dice(size_t ceiling) {
     return (size_t) std::round(get_dice_0to1() * (ceiling ? ceiling - 1 : 0));

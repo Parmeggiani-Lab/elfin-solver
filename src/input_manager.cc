@@ -1,7 +1,7 @@
 #include "input_manager.h"
 
 #include "arg_parser.h"
-#include "parallel_utils.h"
+#include "random_utils.h"
 
 namespace elfin {
 
@@ -57,7 +57,7 @@ void InputManager::setup(const int argc, const char ** argv) {
     instance().spec_.parse_from_json(parse_json(OPTIONS.input_file));
 
     // Give each thread their own seed
-    set_thread_seeds(OPTIONS.rand_seed);
+    random::init(OPTIONS.rand_seed);
 }
 
 }  /* elfin */

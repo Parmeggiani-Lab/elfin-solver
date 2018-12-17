@@ -8,6 +8,7 @@ namespace elfin {
 class BasicNodeTeam : public NodeTeam {
 private:
     /* types */
+    struct DeletePoint;
     struct InsertPoint;
     struct SwapPoint;
 

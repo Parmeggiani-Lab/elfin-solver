@@ -11,10 +11,16 @@
 
 #include "json.h"
 
+#include "eigen.h"
+#include "debug_utils.h"
+
 
 namespace elfin {
 
 class Vector3f;
+
+typedef Eigen::Matrix3f Mat3f;
+typedef Eigen::Vector3f Vec3f;
 
 #ifdef USE_EIGEN
 using Matrix4f = Eigen::Matrix4f;
@@ -43,18 +49,14 @@ public:
 
     /* ctors */
 #ifdef USE_EIGEN
-
     // Construct Transform from Eigen expressions
     template<typename OtherDerived>
     Transform(
         Eigen::MatrixBase<OtherDerived> const& other)
         : Matrix4f(other) {}
     Transform() : Matrix4f(Identity()) {}
-
 #else
-
     Transform() {}
-
 #endif  /* ifdef USE_EIGEN */
 
     Transform(JSON const& tx_json);
@@ -72,8 +74,6 @@ public:
 #else
     Transform operator*(Transform const& rhs) const;
 #endif  /* ifdef USE_EIGEN */
-
-    Vector3f operator*(Vector3f const& vec) const;
 
     /*
      * We use 0.0001 as tolerance here because that's the highest precision

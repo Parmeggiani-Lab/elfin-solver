@@ -1,39 +1,80 @@
 #include "random_utils.h"
 
+#include "input_manager.h"
+
 namespace elfin {
 
 namespace random {
 
-void init_seeds(uint32_t global_seed) {
-    // Seending the RNG needs to be done per-thread because std::rand()
-    // is not requied to be thread-safe
+namespace {
+
+std::vector<uint32_t> RAND_SEEDS;
+
+}  /* (anonymous) */
+
+void init(uint32_t global_seed) {
+    /*
+     * Create per-thread seed, because std::rand() is not required to be
+     * thread-safe.
+     */
+    size_t num_threads = 1;
     #pragma omp parallel
     {
         #pragma omp single
         {
-            RAND_SEEDS.resize(omp_get_num_threads(), 0);
+            num_threads = omp_get_num_threads();
+            RAND_SEEDS.resize(num_threads, 0);
         }
-
-        const uint32_t seed =
-            global_seed == 0 ?
-            global_seed : get_timestamp_us();
-        const int tid = omp_get_thread_num();
-
-        RAND_SEEDS.at(tid) = seed ^ tid;
     }
+
+    if (global_seed == 0)
+        global_seed = get_timestamp_us();
+
+    for (size_t tid = 0; tid < num_threads; ++tid) {
+        RAND_SEEDS.at(tid) = global_seed ^ tid;
+    }
+}
+
+float get_dice_0to1() {
+    DEBUG(omp_get_thread_num() >= RAND_SEEDS.size(),
+          string_format("Thread #%d; RAND_SEEDS size: %lu\n",
+                        omp_get_thread_num(), RAND_SEEDS.size()));
+    uint32_t& thread_seed = RAND_SEEDS.at(omp_get_thread_num());
+    return (float) rand_r(&thread_seed) / RAND_MAX;
 }
 
 void test(size_t& errors, size_t& tests) {
     /* Set up OMP */
     omp_set_dynamic(0); // Explicitly disable dynamic thread teams
-    omp_set_num_threads(8); // Use exactly 8 threads
+    size_t const num_threads = 9; // Use a weird number
+    omp_set_num_threads(num_threads); // Use exactly N threads
 
     #pragma omp parallel
     {
         #pragma omp single
         {
-            msg("Testing random_utils (forcing %lu threads)\n",
-                omp_get_num_threads());
+            size_t const n = omp_get_num_threads();
+            msg("Testing random_utils (forcing %lu threads)\n", n);
+
+            NICE_PANIC(n != num_threads,
+            string_format(
+                "Faild to set number of threads! Set %lu, got %lu",
+                num_threads, n));
+        }
+    }
+
+    /* Test multi-thread init() consistency */
+    init(OPTIONS.rand_seed);
+    std::vector<uint32_t> const init_seeds1 = RAND_SEEDS;
+    init(OPTIONS.rand_seed);
+    std::vector<uint32_t> const init_seeds2 = RAND_SEEDS;
+
+    tests++;
+    for (size_t i = 0; i < num_threads; ++i) {
+        if (init_seeds1.at(i) != init_seeds2.at(i)) {
+            errors++;
+            err("random::init() is inconsistent!\n");
+            break;
         }
     }
 
