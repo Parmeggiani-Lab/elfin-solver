@@ -89,7 +89,7 @@ else ifeq ($(CXX), g++)
 	ERR_FLAGS	:= -fdiagnostics-color=always -fmax-errors=1
 endif
 
-OPT_FLAGS 		+= -O3
+OPT_FLAGS 		+= -Ofast
 CC_FLAGS 		+= -MMD -std=gnu++17 # c++17 for more copy elision
 					
 

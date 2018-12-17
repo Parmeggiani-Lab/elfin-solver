@@ -70,6 +70,15 @@ FreeChain::BridgeList FreeChain::find_bridges(
     return res;
 }
 
+ProtoLink const* FreeChain::find_link_to(
+    FreeChain const& dst) const {
+    return node->prototype()->find_link_to(
+               chain_id,
+               term,
+               dst.node->prototype(),
+               dst.chain_id);
+}
+
 /* printers */
 std::string FreeChain::to_string() const {
     return string_format("FreeChain[node: %s (%p), term: %s, chain: %lu]",

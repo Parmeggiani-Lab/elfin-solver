@@ -2,6 +2,7 @@
 #define RANDOM_UTILS_H_
 
 #include <vector>
+#include <random>
 
 #include "parallel_utils.h"
 #include "debug_utils.h"
@@ -12,7 +13,7 @@ namespace random {
 
 namespace {
 
-extern std::vector<uint32_t> RAND_SEEDS;
+extern std::vector<std::mt19937> TWISTERS;
 
 }  /* (anonymous) */
 
@@ -42,7 +43,7 @@ static inline T pop(std::vector<T> & v) {
 }
 
 template <typename T>
-static inline T const& pick(const std::vector<T> & v) {
+static inline T const& pick(std::vector<T> const& v) {
     DEBUG(v.empty());
     size_t const idx = get_dice(v.size());
     return v.at(idx);

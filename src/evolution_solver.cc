@@ -165,8 +165,10 @@ EvolutionSolver::print_start_msg(const V3fList& shape) const {
 
     #pragma omp parallel
     {
-        if (omp_get_thread_num() == 0)
-            msg("Running with %d threads\n", omp_get_max_threads());
+        #pragma omp single
+        {
+            msg("Running with %d threads\n", omp_get_num_threads());
+        }
     }
 }
 
@@ -213,7 +215,7 @@ EvolutionSolver::debug_print_pop(
 void
 EvolutionSolver::run() {
     static bool run_entered = false;
-    
+
     if (run_entered) {
         die("%s called more than once.\n", __PRETTY_FUNCTION__);
     }

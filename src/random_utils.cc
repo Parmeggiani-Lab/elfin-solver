@@ -8,39 +8,38 @@ namespace random {
 
 namespace {
 
-std::vector<uint32_t> RAND_SEEDS;
+std::vector<std::mt19937> TWISTERS;
 
 }  /* (anonymous) */
 
 void init(uint32_t global_seed) {
     /*
-     * Create per-thread seed, because std::rand() is not required to be
-     * thread-safe.
+     * Create per-thread twister.
      */
-    size_t num_threads = 1;
+    TWISTERS.clear();
+
     #pragma omp parallel
     {
         #pragma omp single
         {
-            num_threads = omp_get_num_threads();
-            RAND_SEEDS.resize(num_threads, 0);
+            size_t const num_threads = omp_get_num_threads();
+
+            if (global_seed == 0)
+                global_seed = get_timestamp_us();
+
+            for (size_t tid = 0; tid < num_threads; ++tid) {
+                TWISTERS.emplace_back((uint32_t) global_seed ^ tid);
+            }
         }
-    }
-
-    if (global_seed == 0)
-        global_seed = get_timestamp_us();
-
-    for (size_t tid = 0; tid < num_threads; ++tid) {
-        RAND_SEEDS.at(tid) = global_seed ^ tid;
     }
 }
 
 float get_dice_0to1() {
-    DEBUG(omp_get_thread_num() >= RAND_SEEDS.size(),
-          string_format("Thread #%d; RAND_SEEDS size: %lu\n",
-                        omp_get_thread_num(), RAND_SEEDS.size()));
-    uint32_t& thread_seed = RAND_SEEDS.at(omp_get_thread_num());
-    return (float) rand_r(&thread_seed) / RAND_MAX;
+    DEBUG(omp_get_thread_num() >= TWISTERS.size(),
+          string_format("Thread #%d; TWISTERS size: %lu\n",
+                        omp_get_thread_num(), TWISTERS.size()));
+    std::mt19937& mt = TWISTERS.at(omp_get_thread_num());
+    return (float) mt() / mt.max();
 }
 
 void test(size_t& errors, size_t& tests) {
@@ -63,55 +62,38 @@ void test(size_t& errors, size_t& tests) {
         }
     }
 
-    /* Test multi-thread init() consistency */
-    init(OPTIONS.rand_seed);
-    std::vector<uint32_t> const init_seeds1 = RAND_SEEDS;
-    init(OPTIONS.rand_seed);
-    std::vector<uint32_t> const init_seeds2 = RAND_SEEDS;
+    /* Test single thread mt consistency */
+    size_t const N = 3719;
+    size_t const dice_max = 13377331;
+    uint32_t const mt_seed = 0xeeee;
+
+    std::mt19937 mt1(mt_seed);
+    std::mt19937 mt2(mt_seed);
 
     tests++;
-    for (size_t i = 0; i < num_threads; ++i) {
-        if (init_seeds1.at(i) != init_seeds2.at(i)) {
+    for (size_t i = 0; i < N; ++i) {
+        size_t const v1 = mt1(), v2 = mt2();
+        if (v1 != v2) {
             errors++;
-            err("random::init() is inconsistent!\n");
+            err("MT19937 failed at #%lu: %lu vs %lu\n",
+                i, v1, v2);
             break;
         }
     }
-
-    /* Test for randomizer consistency */
-    std::vector<uint32_t> const original_seeds = RAND_SEEDS;
-
-    size_t const N = 8096;
-    size_t const dice_max = 13377331;
 
     std::vector<size_t> rand_vals1(N, 0);
     std::vector<size_t> rand_vals2(N, 0);
 
+    init(OPTIONS.rand_seed);
     #pragma omp parallel for
     for (size_t i = 0; i < N; ++i) {
         rand_vals1.at(i) = get_dice(dice_max);
     }
-    std::vector<uint32_t> const seeds1 = RAND_SEEDS;
 
-    RAND_SEEDS = original_seeds; // Restore to original seeds
+    init(OPTIONS.rand_seed);
     #pragma omp parallel for
     for (size_t i = 0; i < N; ++i) {
         rand_vals2.at(i) = get_dice(dice_max);
-    }
-    std::vector<uint32_t> const seeds2 = RAND_SEEDS;
-
-    /*
-     * Check that seeds are identical after the same number of calls to
-     * get_dice().
-     */
-    tests++;
-    for (size_t i = 0; i < RAND_SEEDS.size(); ++i) {
-        if (seeds1.at(i) != seeds2.at(i)) {
-            errors++;
-            err("seeds1[%lu] = %lu, different from seeds2[%lu] = %lu\n",
-                i, seeds1.at(i), i, seeds2.at(i));
-            break;
-        }
     }
 
     /*
@@ -122,8 +104,8 @@ void test(size_t& errors, size_t& tests) {
     for (size_t i = 0; i < N; ++i) {
         if (rand_vals1.at(i) != rand_vals2.at(i)) {
             errors++;
-            err("Parallel randomiser failed: %lu vs %lu\n",
-                rand_vals1.at(i), rand_vals2.at(i));
+            err("Parallel randomiser failed at #%lu: %lu vs %lu\n",
+                i, rand_vals1.at(i), rand_vals2.at(i));
             break;
         }
     }

@@ -10,19 +10,15 @@
 // #define NO_DELETE
 // #define NO_INSERT
 // #define NO_SWAP
-#define NO_CROSS
-// #define NO_REGENERATE
+// #define NO_CROSS
 
 #if defined(NO_ERODE) || \
 defined(NO_DELETE) || \
 defined(NO_INSERT) || \
 defined(NO_SWAP) || \
-defined(NO_CROSS) || \
-defined(NO_REGENERATE)
+defined(NO_CROSS)
 #warning "At least one mutation function is DISABLED!!"
 #endif
-
-// #define SHOW_UNDELETABLE
 
 namespace elfin {
 
@@ -78,6 +74,22 @@ struct BasicNodeTeam::SwapPoint : public BasicNodeTeam::InsertPoint {
         FreeChain const& _dst) :
         InsertPoint(_src, _dst),
         del_node(_del_node) {}
+};
+
+struct BasicNodeTeam::CrossPoint {
+    ProtoLink const* ptlink;
+    Link const* arrow;
+    FreeChain const* father_src;
+    bool reversed;
+    CrossPoint(
+        ProtoLink const* _ptlink,
+        Link const* _arrow,
+        FreeChain const* _father_src,
+        bool const _reversed) :
+        ptlink(_ptlink),
+        arrow(_arrow),
+        father_src(_father_src),
+        reversed(_reversed) {}
 };
 
 /* accessors */
@@ -266,7 +278,9 @@ bool BasicNodeTeam::erode_mutate() {
             size() > 1) {
         // Pick random tip node if not specified
         Node* tip_node = free_chains_.pick_random().node;
+        remove_free_chains(tip_node);
 
+        FreeChain last_free_chain;
         float p = 1.0f; // probability
 
         // Loop condition is always true on first entrance, hence do-while.
@@ -286,8 +300,32 @@ bool BasicNodeTeam::erode_mutate() {
             p = p * (size() - 2) / (size() - 1); // size() is at least 2
             next_loop = random::get_dice_0to1() <= p;
 
-            tip_node = nip_tip(tip_node);
+            // Verify tip node
+            const size_t num_links = tip_node->links().size();
+            NICE_PANIC(num_links != 1);
+
+            Node* new_tip = nullptr;
+            // new_free_chain scope
+            {
+                FreeChain const& new_free_chain =
+                    tip_node->links().at(0).dst();
+                new_tip = new_free_chain.node;
+
+                // Unlink
+                new_tip->remove_link(new_free_chain);
+
+                if (not next_loop) {
+                    last_free_chain = new_free_chain;
+                }
+            }
+
+            remove_member(tip_node);
+
+            tip_node = new_tip;
         } while (next_loop);
+
+        // Restore FreeChain
+        free_chains_.push_back(last_free_chain);
 
         regenerate();
 
@@ -352,12 +390,7 @@ bool BasicNodeTeam::delete_mutate() {
                  *                (src)                             (dst)
                 */
                 ProtoLink const* const proto_link_ptr =
-                    src.node->prototype()->find_link_to(
-                        src.chain_id,
-                        src.term,
-                        dst.node->prototype(),
-                        dst.chain_id);
-
+                    src.find_link_to(dst);
                 if (proto_link_ptr) {
                     delete_points.emplace_back(
                         curr_node, // delete_node
@@ -623,71 +656,77 @@ bool BasicNodeTeam::swap_mutate() {
     return mutate_success;
 }
 
-
-/*
- * Compute index pairs of mother and father nodes at which cross mutation is
- * possible.
- */
-#ifndef NO_CROSS
-IdPairs get_crossing_ids(
-    NodeTeam const& mother,
-    NodeTeam const& father) {
-    IdPairs crossing_ids;
-
-    size_t const mn_len = mother.size();;
-    size_t const fn_len = father.size();
-
-    for (long i = 1; i < (long) mn_len - 1; i++) {
-        // Using i as nodes1 left limb cutoff
-        for (long j = 1; j < (long) fn_len - 1; j++) {
-            if (mother.at(i)->prototype() == father.at(j)->prototype()) {
-                crossing_ids.push_back(IdPair(i, j));
-            }
-        }
-    }
-
-    return crossing_ids;
-}
-#endif // NO_CROSS
-
 bool BasicNodeTeam::cross_mutate(
     NodeTeam const* father) {
     bool mutate_success = false;
 
 #ifndef NO_CROSS
-    DEBUG(size() == 0);
+    if (not free_chains_.empty() and
+            not father->free_chains().empty()) {
+        // First collect arrows from both sides
+        // Starting at either end is fine.
+        DEBUG(free_chains_.size() != 2);
+        auto m_arrows = BasicNodeGenerator::collect_arrows(
+                            free_chains_[0].node);
+        DEBUG(father->free_chains().size() != 2);
+        auto f_arrows = BasicNodeGenerator::collect_arrows(
+                            father->free_chains()[0].node);
 
-    Nodes const& mother_nodes = nodes_; // Self has already inherited mother
-    Nodes const& father_nodes = father->nodes_;
-    IdPairs crossing_ids = get_crossing_ids(mother_nodes, father_nodes);
-
-    size_t tries = 0;
-    // cross can fail - if resultant nodes collide during synth
-    while (tries < MAX_FREECANDIDATE_MUTATE_FAILS and
-            crossing_ids.size()) {
-        // Pick random crossing point
-        IdPair const& cross_point = pick_random(crossing_ids);
-
-        Nodes new_nodes;
-
-        new_nodes.insert(
-            new_nodes.end(),
-            mother_nodes.begin(),
-            mother_nodes.begin() + cross_point.x);
-
-        new_nodes.insert(
-            new_nodes.end(),
-            father_nodes.begin() + cross_point.y,
-            father_nodes.end());
-
-        die("Collision check here?\n");
-        if (synthesise(new_nodes)) {
-            nodes_ = new_nodes;
-            cross_ok = true;
-            break;
+        // Walk through all link pairs to collect cross points.
+        Vector<CrossPoint> cross_points;
+        for (Link const* m_arrow : m_arrows) {
+            for (Link const* f_arrow : f_arrows) {
+                ProtoLink const* ss =
+                    m_arrow->src().find_link_to(f_arrow->src());
+                if (ss) {
+                    cross_points.emplace_back(
+                        ss,
+                        m_arrow,
+                        &f_arrow->src(),
+                        false);
+                }
+                ProtoLink const* sd =
+                    m_arrow->src().find_link_to(f_arrow->dst());
+                if (sd) {
+                    cross_points.emplace_back(
+                        sd,
+                        m_arrow,
+                        &f_arrow->dst(),
+                        false);
+                }
+                ProtoLink const* ds =
+                    m_arrow->dst().find_link_to(f_arrow->src());
+                if (ds) {
+                    cross_points.emplace_back(
+                        ds,
+                        m_arrow,
+                        &f_arrow->src(),
+                        true);
+                }
+                ProtoLink const* dd =
+                    m_arrow->dst().find_link_to(f_arrow->dst());
+                if (dd) {
+                    cross_points.emplace_back(
+                        dd,
+                        m_arrow,
+                        &f_arrow->dst(),
+                        true);
+                }
+            }
         }
 
-        tries++;
+        if (not cross_points.empty()) {
+            CrossPoint const& cp = cross_points.pick_random();
+
+            Link arrow = *cp.arrow;
+            if (cp.reversed) {
+                arrow = arrow.reversed();
+            }
+
+            return false;
+
+            mutate_success = true;
+        }
     }
 #endif
 
@@ -697,7 +736,6 @@ bool BasicNodeTeam::cross_mutate(
 bool BasicNodeTeam::regenerate() {
     bool mutate_success = false;
 
-#ifndef NO_REGENERATE
     if (nodes_.empty()) {
         // Pick random initial member
         add_member(XDB.basic_mods().draw());
@@ -712,7 +750,6 @@ bool BasicNodeTeam::regenerate() {
     }
 
     mutate_success = true;
-#endif  /* ifndef NO_REGENERATE */
 
     return mutate_success;
 }

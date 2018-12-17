@@ -11,6 +11,7 @@ private:
     struct DeletePoint;
     struct InsertPoint;
     struct SwapPoint;
+    struct CrossPoint;
 
     /* accessors */
     Crc32 calc_checksum() const;

@@ -40,6 +40,7 @@ struct FreeChain {
     bool operator!=(FreeChain const& other) const { return not this->operator==(other); }
     ProtoLink const& random_proto_link() const;
     BridgeList find_bridges(FreeChain const& dst) const;
+    ProtoLink const* find_link_to(FreeChain const& dst) const;
 
     /* printers */
     std::string to_string() const;
