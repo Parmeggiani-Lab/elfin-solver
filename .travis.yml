@@ -15,10 +15,9 @@ compiler:
   - gcc
   # - clang
 env: 
-  - OMP_NUM_THREADS=4
+  - OMP_NUM_THREADS=`grep -c ^processor /proc/cpuinfo`
 script:
-  - make -j4 unit
-  - make test
+  - make -j${OMP_NUM_THREADS} unit && make test
 
 notifications:
   email:
