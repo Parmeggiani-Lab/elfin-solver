@@ -33,7 +33,7 @@ struct BasicNodeTeam::DeletePoint {
        [neighbor1] <--link1-- [delete_node] --link2--> [neighbor2]
                    dst----src               src----dst
                    ^^^                             ^^^
-                  (src)                           (dst) 
+                  (src)                           (dst)
                    --------------skipper------------->
     */
     Node* delete_node;
@@ -177,6 +177,36 @@ void BasicNodeTeam::grow_tip(FreeChain const free_chain_a) {
     free_chains_.lift_erase(free_chain_b);
 }
 
+Node* BasicNodeTeam::nip_tip(
+    Node* tip_node) {
+    /*
+     * Removes the selected tip.
+     */
+
+    // Verify tip node
+    const size_t num_links = tip_node->links().size();
+    NICE_PANIC(num_links != 1);
+
+    Node* new_tip = nullptr;
+    // new_free_chain scope
+    {
+        FreeChain const& new_free_chain =
+            tip_node->links().at(0).dst();
+        new_tip = new_free_chain.node;
+
+        // Unlink
+        new_tip->remove_link(new_free_chain);
+
+        // Restore FreeChain
+        free_chains_.push_back(new_free_chain);
+    }
+
+    remove_free_chains(tip_node);
+    remove_member(tip_node);
+
+    return new_tip;
+}
+
 void BasicNodeTeam::build_bridge(
     InsertPoint const& insert_point,
     FreeChain::Bridge const* bridge) {
@@ -228,75 +258,23 @@ void BasicNodeTeam::build_bridge(
     fix_limb_transforms(new_link2);
 }
 
-bool BasicNodeTeam::erode_mutate(
-    Node* tip_node,
-    long stop_after_n,
-    bool const regen) {
+bool BasicNodeTeam::erode_mutate() {
     bool mutate_success = false;
 
 #ifndef NO_ERODE
-    stop_after_n = std::min(stop_after_n, (long) size());
-    // Any stop_after_n < 0 indicates to continue forever by linearly falling
-    // probability.
-
-    if (stop_after_n == 0) {
-        mutate_success = true; // eroded 0 node as requested... ?
-    }
-    else if (not free_chains_.empty()) {
-        // free_chains_ should not be empty even if tip_node is specified.
-
+    if (not free_chains_.empty() and
+            size() > 1) {
         // Pick random tip node if not specified
-        if (tip_node == nullptr) {
-            FreeChain const& fc = free_chains_.pick_random();
-            tip_node = fc.node;
-        }
-
-        // Remove all free chains originating from tip_node
-        remove_member_chains(tip_node);
+        Node* tip_node = free_chains_.pick_random().node;
 
         float p = 1.0f; // probability
-        FreeChain chain_to_restore;
 
         // Loop condition is always true on first entrance, hence do-while.
+        bool next_loop = false;
         do {
-            DEBUG(size() == 0);
-
-            // A tip node is guranteed to have only one neighbor.
-            const size_t num_links = tip_node->links().size();
-            NICE_PANIC(num_links != 1);
-            Link const tip_link = tip_node->links().at(0);
-
-            // Delete this tip node and restore state to consistency
-            chain_to_restore = tip_link.dst();
-            Node* new_tip = chain_to_restore.node;
-
+            // Calculate next iteration condition
             /*
-             *                 ( tip_link )
-             *  X--[tip_node]--src->-<-dst
-             *  chain_to_restore:      ^^^
-             *                 dst->-<-src--[new_tip]--[]--[]--...
-             */
-            remove_member(tip_node);
-
-            /*
-             *                 ( tip_link )
-             *  {          freed          }
-             *                 dst->-<-src--[new_tip]--[]--[]--...
-             */
-            // Remove tip_link to tip_node from the new_tip. Because it's
-            // reversed, use dst instead of src.
-            new_tip->remove_link(tip_link.dst());
-
-            /*
-             *                (  tip_link  )
-             *  {          freed          }
-             *                           X--[new_tip]--[]--[]--...
-             */
-            // Update tip node ptr
-            tip_node = new_tip;
-
-            /*
-             * Calculate next probability. The following formula gives:
+             * The following formula gives:
              * remaining size / original size; p
              * 6/6; p=0.8333333333333334
              * 5/6; p=0.6666666666666667
@@ -305,24 +283,13 @@ bool BasicNodeTeam::erode_mutate(
              * 2/6; p=0.16666666666666666
              * 1/6; p=0.0
              */
-            p = p * (size() - 1) / size();
+            p = p * (size() - 2) / (size() - 1); // size() is at least 2
+            next_loop = random::get_dice_0to1() <= p;
 
-            // stop_after_n < 0 < stop_after_n is true
-            stop_after_n--;
+            tip_node = nip_tip(tip_node);
+        } while (next_loop);
 
-            /*
-             * Continue if:
-             * (stop_after_n > 0 or stop_after_n < 0) ... i.e.
-             * stop_after_n != 0
-             * and
-             * random::get_dice_0to1() <= p
-             */
-        } while (stop_after_n != 0 and random::get_dice_0to1() <= p);
-
-        // Restore FreeChain
-        free_chains_.push_back(chain_to_restore);
-
-        if (regen) regenerate();
+        regenerate();
 
         mutate_success = true;
     }
@@ -459,8 +426,8 @@ bool BasicNodeTeam::delete_mutate() {
             fix_limb_transforms(arrow1);
         }
         else {
-            // This is a tip node. Deleting is trivial - same as erode_mutate().
-            erode_mutate(delete_point.delete_node, 1, false);
+            // This is a tip node.
+            nip_tip(delete_point.delete_node);
         }
 
         mutate_success = true;
@@ -595,10 +562,7 @@ bool BasicNodeTeam::swap_mutate() {
                  *  is when the neighbor ProtoModule has no other ProtoLinks
                  *  on the terminus in question.
                  *
-                 *  Either:
-                 *              X---- [curr_node] ----> [next_node]
-                 *  Or:
-                 *  [prev_node] <---- [curr_node] ----X
+                 *              X---- [curr_node] ----> [some_node]
                  */
 
                 // Check that neighbor can indead grow into a different
@@ -608,8 +572,7 @@ bool BasicNodeTeam::swap_mutate() {
                 ProtoChain const& chain = neighbor->chains().at(tip_fc.chain_id);
 
                 if (chain.get_term(tip_fc.term).links().size() > 1) {
-                    FreeChain const dst(nullptr, TerminusType::NONE, 0);
-                    swap_points.emplace_back(tip_fc, curr_node, dst);
+                    swap_points.emplace_back(tip_fc, curr_node, FreeChain());
                 }
             }
 
@@ -647,9 +610,8 @@ bool BasicNodeTeam::swap_mutate() {
                 build_bridge(swap_point);
             }
             else {
-                // This is a tip node. Swapping is the same as erode_mutate()
-                // followed by grow_tip().
-                erode_mutate(swap_point.del_node, 1, false);
+                // This is a tip node.
+                nip_tip(swap_point.del_node);
                 grow_tip(swap_point.src);
             }
 

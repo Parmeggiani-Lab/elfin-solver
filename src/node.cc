@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "debug_utils.h"
+#include "stack_trace.h"
 
 namespace elfin {
 
@@ -37,22 +38,31 @@ void Node::remove_link(FreeChain const& src) {
     bool found_link = false;
     for (size_t i = 0; i < links_.size(); ++i) {
         if (links_.at(i).src() == src) {
-            links_.at(i) = std::move(links_.back());
+            links_.at(i) = links_.back();
             links_.pop_back();
             found_link = true;
             break; // No two identical links should co-exist!
         }
     }
 
-    // NICE_PANIC(not found_link,
-    //     string_format("Link not found: %s\n", link.to_string().c_str()));
-    NICE_PANIC(not found_link);
+    // A bit more verbose diagnosis
+    if (not found_link) {
+        err("Trying to remove link that does not exist. Links:\n");
+        for (size_t i = 0; i < links_.size(); ++i) {
+            err("Link #%lu: %s\n",
+                i, links_[i].to_string().c_str());
+        }
+        err("%s\n", to_string().c_str());
+        print_stacktrace();
+        die("%s\n", src.to_string().c_str());
+    }
 }
 
 /* printers */
 std::string Node::to_string() const {
-    return string_format("Node[%s]\nTx: %s",
+    return string_format("Node[%s:%p]\n%s",
                          prototype_->name.c_str(),
+                         this,
                          tx_.to_string().c_str());
 }
 

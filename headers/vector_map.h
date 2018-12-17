@@ -72,7 +72,7 @@ public:
 
     void push_back(ItemType && item) {
         item_to_id_map_[item] = items_.size();
-        items_.push_back(std::move(item));
+        items_.push_back(item);
     }
 
     template <class ... Args>

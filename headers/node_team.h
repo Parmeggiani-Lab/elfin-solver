@@ -44,7 +44,7 @@ protected:
         ProtoModule const* prot,
         Transform const& tx = Transform());
     void remove_member(Node* node);
-    void remove_member_chains(Node* node);
+    void remove_free_chains(Node* node);
 
 public:
     /* ctors */

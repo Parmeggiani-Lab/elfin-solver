@@ -19,14 +19,12 @@ private:
     /*modifiers */
     void fix_limb_transforms(Link const& arrow);
     void grow_tip(FreeChain const free_chain_a);
+    Node* nip_tip(Node* tip_node);
     void build_bridge(
         InsertPoint const& insert_point,
         FreeChain::Bridge const* bridge = nullptr);
 
-    bool erode_mutate(
-        Node* tip_node = nullptr,
-        long stop_after_n = -1,
-        bool const regen = true);
+    bool erode_mutate();
     bool delete_mutate();
     bool insert_mutate();
     bool swap_mutate();

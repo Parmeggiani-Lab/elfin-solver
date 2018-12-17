@@ -100,22 +100,23 @@ public:
     std::string to_string() const {
         std::ostringstream ss;
 
-        ss << "Transform[\nRot[";
+        ss << "Transform[\n  Rot[\n";
         for (size_t i = 0; i < 3; ++i) {
-            ss << "  [ ";
+            ss << "    [ ";
             for (size_t j = 0; j < 3; ++j) {
                 ss << rot_[i][j];
-                if (j < 3) {
+                if (j < 2) {
                     ss << ", ";
                 }
             }
             ss << " ]\n";
         }
-        ss << "]\n";
+        ss << "  ]\n";
 
-        ss << "Tran[" << tran_[0];
+        ss << "  Tran[ " << tran_[0];
         ss << ", " << tran_[1];
-        ss << ", " << tran_[2] << "]";
+        ss << ", " << tran_[2] << " ]\n";
+        ss <<"]";
 
         return ss.str();
     }

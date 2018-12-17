@@ -28,7 +28,7 @@ void Link::update_node_ptrs(const NodeAddrMap& nam) {
 
 /* printers */
 std::string Link::to_string() const {
-    return string_format("Link[\n%s\n%s]",
+    return string_format("Link[\n  %s\n  %s\n]",
                          src_chain_.to_string().c_str(),
                          dst_chain_.to_string().c_str());
 }

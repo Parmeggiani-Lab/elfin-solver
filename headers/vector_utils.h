@@ -40,7 +40,7 @@ public:
 
     void lift_erase(ItrType& itr) {
         if (itr != this->end()) {
-            *itr = std::move(this->back());
+            *itr = this->back();
             this->pop_back();
         }
     }
@@ -55,7 +55,7 @@ public:
         bool (*item_comparator)(const T &, const T &) = T::operator=) {
         for (size_t i = 0; i < this->size(); ++i) {
             if (item_comparator(this->at(i), item)) {
-                this->at(i) = std::move(this->back());
+                this->at(i) = this->back();
                 this->pop_back();
                 i--; // need to check same index again
             }

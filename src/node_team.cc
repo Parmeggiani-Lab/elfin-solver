@@ -25,7 +25,7 @@ bool NodeTeam::collides(
         float const sq_com_dist = node_ptr->tx_.collapsed().sq_dist_to(new_com);
         float const required_com_dist = mod_radius +
                                         node_ptr->prototype()->radius;
-        if (sq_com_dist < (required_com_dist* required_com_dist)) {
+        if (sq_com_dist < (required_com_dist * required_com_dist)) {
             return true;
         }
     }
@@ -67,7 +67,7 @@ void NodeTeam::remove_member(Node* node) {
     delete node;
 }
 
-void NodeTeam::remove_member_chains(Node* node) {
+void NodeTeam::remove_free_chains(Node* node) {
     // Remove any FreeChain originating from node
     free_chains_.lift_erase_all(
         FreeChain(node, TerminusType::NONE, 0),
