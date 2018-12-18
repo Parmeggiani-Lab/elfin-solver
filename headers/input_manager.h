@@ -23,6 +23,7 @@ struct GATimes {
 class InputManager
 {
 protected:
+    /* data */
     Options options_;
     Cutoffs cutoffs_;
     Database xdb_;
@@ -30,19 +31,18 @@ protected:
 
     GATimes ga_times_;
 
+    /* ctors */
     InputManager() {}
 
+    /* modifiers */
     static void setup_cutoffs();
 public:
+    /* accessors */
     static InputManager& instance() {
         static InputManager im;
         return im;
     }
 
-    /* static setup methods */
-    static void setup(int const argc, const char ** argv);
-
-    /* getters& setters */
     static Options const& options() {
         return instance().options_;
     }
@@ -59,6 +59,12 @@ public:
     static GATimes& ga_times() {
         return instance().ga_times_;
     }
+
+    /* modifiers */
+    static void setup(int const argc, char const** argv);
+
+    /* tests */
+    static void test(size_t& tests, size_t& errors);
 };
 
 extern Options const& OPTIONS;

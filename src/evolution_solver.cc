@@ -223,26 +223,26 @@ EvolutionSolver::run() {
     run_entered = true;
 
     start_time_in_us_ = get_timestamp_us();
-    for (auto& itr : SPEC.work_area_map()) {
+    for (auto itr : SPEC.work_areas()) {
 
         // if this was a complex work area, we need to break it down to
         // multiple simple ones by first choosing hubs and their orientations.
         /*
         TODO: Break complex work area
         */
-        const std::string wa_name = itr.first;
-        const WorkArea& wa = itr.second;
-        if (wa.type() != WorkType::FREE) {
+        std::string const wa_name = itr.first;
+        WorkArea const* wa = itr.second;
+        if (wa->type() != WorkType::FREE) {
             std::ostringstream ss;
             ss << "Skipping work_area: ";
-            ss << WorkTypeToCStr(wa.type()) << std::endl;
+            ss << WorkTypeToCStr(wa->type()) << std::endl;
             wrn(ss.str().c_str());
             continue;
         }
 
-        Population population = Population(&wa);
+        Population population = Population(wa);
 
-        const V3fList shape = itr.second.to_points();
+        V3fList const shape = itr.second->to_points();
         this->print_start_msg(shape);
 
         best_sols_[wa_name] = CandidateSharedPtrs();

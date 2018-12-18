@@ -47,6 +47,7 @@ public:
     /* ctors */
     WorkArea(JSON const& j, const std::string& name);
     WorkArea() {}
+    WorkArea(WorkArea const& other) = delete;
     V3fList to_points() const;
 
     /* accessors */
@@ -59,9 +60,12 @@ public:
     const std::vector<UIJoint *> & hinged_joints() const {
         return hinged_joints_;
     }
+
+    /* modifiers */
+    WorkArea& operator=(WorkArea const& other) = delete;
 };
 
-typedef std::unordered_map<std::string, WorkArea> WorkAreaMap;
+typedef std::unordered_map<std::string, WorkArea*> WorkAreaMap;
 
 }  /* elfin */
 

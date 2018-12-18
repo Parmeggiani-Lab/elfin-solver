@@ -47,18 +47,18 @@ void OutputManager::write_output(
     mkdir_ifn_exists(output_dir_str.c_str());
 
     JSON data;
-    for (auto& kv : SPEC.work_area_map()) {
-        const std::string& wa_name = kv.first;
-        const WorkArea& wa = kv.second;
+    for (auto itr : SPEC.work_areas()) {
+        std::string const& wa_name = itr.first;
+        WorkArea const* wa = itr.second;
         JSON waj;
 
         try {
-            const std::vector<std::shared_ptr<Candidate>> & candidates =
-                        solver.best_sols().at(wa_name);
+            std::vector<std::shared_ptr<Candidate>> const& candidates =
+                    solver.best_sols().at(wa_name);
             for (size_t i = 0; i < candidates.size(); ++i)
             {
                 JSON cand_json;
-                const std::shared_ptr<Candidate> cand_ptr = candidates.at(i);
+                std::shared_ptr<Candidate> const cand_ptr = candidates.at(i);
 
                 if (cand_ptr) {
                     auto node_names = cand_ptr->get_node_names();
@@ -92,7 +92,7 @@ void OutputManager::write_output(
                         << ".json";
 
     std::string json_out_path_str = json_output_path_ss.str();
-    const char* json_output_path = json_out_path_str.c_str();
+    char const* json_output_path = json_out_path_str.c_str();
 
     // At last, write JSON
     std::string dump = data.dump(indent_size);

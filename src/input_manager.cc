@@ -18,7 +18,6 @@ const GATimes& GA_TIMES =
     InputManager::ga_times();
 
 /* protected */
-//static
 void InputManager::setup_cutoffs() {
     Cutoffs& cutoffs = instance().cutoffs_;
 
@@ -30,14 +29,13 @@ void InputManager::setup_cutoffs() {
     // Force survivors > 0
     cutoffs.survivors =
         std::max((size_t) 1,
-                 (size_t) std::round(OPTIONS.ga_survive_rate* OPTIONS.ga_pop_size));
+                 (size_t) std::round(OPTIONS.ga_survive_rate * OPTIONS.ga_pop_size));
 
     cutoffs.non_survivors =
         (OPTIONS.ga_pop_size - cutoffs.survivors);
 }
 
 /* public */
-// static
 void InputManager::setup(const int argc, const char ** argv) {
     // Parse arguments into options struct
     instance().options_ = ArgParser(argc, argv).get_options();
@@ -55,6 +53,30 @@ void InputManager::setup(const int argc, const char ** argv) {
 
     msg("Using input file: %s\n", OPTIONS.input_file.c_str());
     instance().spec_.parse_from_json(parse_json(OPTIONS.input_file));
+}
+
+void InputManager::test(size_t& tests, size_t& errors) {
+    char const* argv[] = {
+        "elfin", /* binary name */
+        "--input_file", "examples/quarter_snake_free.json",
+        "--xdb", "xdb.json",
+        "--output_dir", "./output/",
+        "--rand_seed", "0xbeef1337",
+        "--len_dev_alw", "1",
+        "--keep_n", "1",
+        "--ga_pop_size", "1024",
+        "--ga_iters", "100",
+        "--ga_survive_rate", "0.02",
+        "--ga_stop_stagnancy", "10"
+    };
+
+    size_t const argc = sizeof(argv) / sizeof(argv[0]);
+    InputManager::setup(argc, argv);
+
+    for (auto itr: SPEC.work_areas()) {
+        WorkArea const* wa = itr.second;
+        V3fList points = wa->to_points();
+    }
 }
 
 }  /* elfin */

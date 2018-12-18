@@ -22,7 +22,7 @@ public:
     UIObjects const& modules() const { return modules_; }
 };
 
-typedef std::unordered_map<std::string, FixedArea> FixedAreaMap;
+typedef std::unordered_map<std::string, FixedArea *> FixedAreaMap;
 
 }  /* elfin */
 

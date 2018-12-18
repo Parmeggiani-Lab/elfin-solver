@@ -2,6 +2,7 @@
 
 #include "kabsch.h"
 #include "random_utils.h"
+#include "input_manager.h"
 
 namespace elfin {
 
@@ -22,6 +23,7 @@ size_t TestManager::test_units() const {
     collect_stats(kabsch::test);
     collect_stats(Transform::test);
     collect_stats(Vector3f::test);
+    collect_stats(InputManager::test);
 
     msg("%lu/%lu unit tests passed.\n",
         (total_tests - total_errors), total_tests);
@@ -36,7 +38,7 @@ size_t TestManager::test_integration() const {
     size_t total_errors = 0;
     size_t total_tests = 0;
 
-//     for (auto& itr : SPEC.work_area_map()) {
+//     for (auto itr : SPEC.work_areas()) {
 //         const WorkArea& wa = itr.second;
 //         V3fList moved_spec = wa.to_points();
 

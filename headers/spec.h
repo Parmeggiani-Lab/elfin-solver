@@ -9,24 +9,36 @@
 
 namespace elfin {
 
-class Spec
-{
+class Spec {
 protected:
-    WorkAreaMap work_area_map_;
+    /* data */
+    WorkAreaMap work_areas_;
     FixedAreaMap fixed_areas_;
 
+    /* modifiers */
     void map_joints();
+    void release_resources();
 
 public:
+    /* data */
     static char const* const pg_networks_name;
     static char const* const networks_name;
 
-    Spec() {};
-    Spec(JSON const& j);
-    virtual ~Spec() {};
+    /* ctors */
+    Spec() {}
+    Spec(Spec const& other) = delete;
 
+    /* dtors */
+    virtual ~Spec();
+
+    /* accessors */
+    WorkAreaMap const& work_areas() const {
+        return work_areas_;
+    }
+
+    /* modifiers */
+    Spec& operator=(Spec const& other) = delete;
     void parse_from_json(JSON const& j);
-    WorkAreaMap const& work_area_map() const { return work_area_map_; };
 };
 
 }  /* elfin */

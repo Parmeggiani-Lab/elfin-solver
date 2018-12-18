@@ -44,7 +44,7 @@ void Elfin::interrupt_handler(const int signal) {
 
 /* public */
 /* ctors */
-Elfin::Elfin(const int argc, const char ** argv) {
+Elfin::Elfin(int const argc, char const** argv) {
     instances_.insert(this);
 
     std::signal(SIGINT, interrupt_handler);

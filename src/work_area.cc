@@ -86,7 +86,7 @@ V3fList WorkArea::to_points() const {
                              "exactly 2 in work_area: %s\n",
                              name_.c_str()));
 
-    UIJoint const* prev = nullptr, * tmp = nullptr;
+    UIJoint const* prev = nullptr;
     UIJoint const* j = leaf_joints_.at(0);
     while (1) {
         res.emplace_back(j->tx().collapsed());
@@ -94,12 +94,12 @@ V3fList WorkArea::to_points() const {
         if (j == leaf_joints_.at(1))
             break;
 
-        tmp = j;
         std::string next_name = j->neighbours().at(0);
         if (prev and next_name == prev->name())
             next_name = j->neighbours().at(1);
-        j = &joints_.at(next_name);
+
         prev = j;
+        j = &joints_.at(next_name);
     }
 
     return res;

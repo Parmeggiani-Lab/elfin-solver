@@ -47,7 +47,7 @@ Candidate::Candidate(Candidate const& other) {
 }
 
 Candidate::Candidate(Candidate && other) {
-     *this = other; // calls operator=(T &&)
+    *this = other; // calls operator=(T &&)
 }
 
 Candidate* Candidate::clone() const {
@@ -95,19 +95,19 @@ void Candidate::setup(WorkArea const& wa) {
      * displacements over avg pair module distance
      */
     float sum_dist = 0.0f;
-    const V3fList shape = wa.to_points();
+    V3fList const shape = wa.to_points();
     for (auto i = shape.begin() + 1; i != shape.end(); ++i) {
         sum_dist += (i - 1)->dist_to(*i);
     }
 
     // Add one because division counts segments. We want number of points.
-    const size_t expected_len =
+    size_t const expected_len =
         1 + round(sum_dist / OPTIONS.avg_pair_dist);
     MAX_LEN_ = expected_len + OPTIONS.len_dev_alw;
 }
 
 MutationMode Candidate::mutate_and_score(
-    const size_t rank,
+    size_t const rank,
     CandidateList const* candidates,
     WorkArea const* wa) {
 
@@ -119,11 +119,11 @@ MutationMode Candidate::mutate_and_score(
     }
     else {
         // Replicate mother
-        const size_t mother_id =
+        size_t const mother_id =
             random::get_dice(CUTOFFS.survivors); // only elites
         NodeTeam const* mother_team = candidates->at(mother_id)->node_team();
 
-        const size_t father_id =
+        size_t const father_id =
             random::get_dice(CUTOFFS.pop_size); // include all candidates
         NodeTeam const* father_team = candidates->at(father_id)->node_team();
 

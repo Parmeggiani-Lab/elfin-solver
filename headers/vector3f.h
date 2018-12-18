@@ -135,11 +135,12 @@ public:
                    data_[1] - rhs.data_[1],
                    data_[2] - rhs.data_[2]);
     }
-    Vector3f operator*(float const f) const {
+    template <typename ScalarType>
+    Vector3f operator*(ScalarType const scalar) const {
         return Vector3f(
-                   data_[0] * f,
-                   data_[1] * f,
-                   data_[2] * f);
+                   data_[0] * scalar,
+                   data_[1] * scalar,
+                   data_[2] * scalar);
     }
     float operator[](size_t const i) const {
         DEBUG(i >= 3);
@@ -180,6 +181,13 @@ public:
     static void test(size_t& errors, size_t& tests);
 };
 typedef std::vector<Vector3f> V3fList;
+
+template<typename T>
+static inline Vector3f operator*(
+    T const& scalar,
+    Vector3f const& vec) {
+    return vec * scalar;
+}
 
 }  /* elfin */
 
