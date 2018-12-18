@@ -114,21 +114,21 @@ $(BINRAY): $(OBJS)
 	$(COMPILE) $(OBJS) -o $(BINRAY) $(LD_FLAGS)
 
 test: $(BINRAY)
-	$(BINRAY) -c config/test.json
+	$(BINRAY) -c config/test.json $(ELFIN_ARGS)
 
 unit: $(BINRAY)
-	$(BINRAY) -t
+	$(BINRAY) -t $(ELFIN_ARGS)
 
 dry: $(BINRAY)
-	$(BINRAY) -c config/test.json -dry
+	$(BINRAY) -c config/test.json -dry $(ELFIN_ARGS)
 
-VALGRIND_FLAGS += --track-origins=yes --leak-check=full --show-leak-kinds=all --gen-suppressions=yes
+VALGRIND_FLAGS += --track-origins=yes --leak-check=full --show-leak-kinds=all --show-reachable=no 
 
 valgrind: $(BINRAY)
-	valgrind $(VALGRIND_FLAGS) $(BINRAY) -c config/test.json
+	valgrind $(VALGRIND_FLAGS) $(BINRAY) -c config/test.json $(ELFIN_ARGS)
 
 valgrind_dry: $(BINRAY)
-	valgrind $(VALGRIND_FLAGS) $(BINRAY) -c config/test.json -dry
+	valgrind $(VALGRIND_FLAGS) $(BINRAY) -c config/test.json -dry $(ELFIN_ARGS)
 
 FORCE:
 .PHONY: all clean
