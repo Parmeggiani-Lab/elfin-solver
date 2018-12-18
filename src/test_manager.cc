@@ -2,6 +2,7 @@
 
 #include "kabsch.h"
 #include "random_utils.h"
+#include "test_manager.h"
 
 namespace elfin {
 
@@ -11,8 +12,16 @@ size_t TestManager::test_units() const {
     size_t total_errors = 0;
     size_t total_tests = 0;
 
-    random::test(total_errors, total_tests);
-    kabsch::test(total_errors, total_tests);
+    auto collect_stats = [&](void (*test_func)(size_t&, size_t&)) {
+        size_t errors = 0, tests = 0;
+        test_func(errors, tests);
+        total_errors += errors;
+        total_tests += tests;
+    };
+
+    collect_stats(random::test);
+    collect_stats(kabsch::test);
+    collect_stats(Transform::test);
 
     msg("%lu/%lu unit tests passed.\n",
         (total_tests - total_errors), total_tests);

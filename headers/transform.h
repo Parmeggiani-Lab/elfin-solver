@@ -11,16 +11,9 @@
 
 #include "json.h"
 
-#include "eigen.h"
-#include "debug_utils.h"
-
-
 namespace elfin {
 
 class Vector3f;
-
-typedef Eigen::Matrix3f Mat3f;
-typedef Eigen::Vector3f Vec3f;
 
 #ifdef USE_EIGEN
 using Matrix4f = Eigen::Matrix4f;
@@ -87,8 +80,7 @@ public:
     // Assign Eigen expressions to Transform
     template<typename OtherDerived>
     Transform & operator=(
-        Eigen::MatrixBase<OtherDerived> const& other)
-    {
+        Eigen::MatrixBase<OtherDerived> const& other) {
         this->Matrix4f::operator=(other);
         return *this;
     }
@@ -116,7 +108,7 @@ public:
         ss << "  Tran[ " << tran_[0];
         ss << ", " << tran_[1];
         ss << ", " << tran_[2] << " ]\n";
-        ss <<"]";
+        ss << "]";
 
         return ss.str();
     }
