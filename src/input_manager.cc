@@ -55,9 +55,6 @@ void InputManager::setup(const int argc, const char ** argv) {
 
     msg("Using input file: %s\n", OPTIONS.input_file.c_str());
     instance().spec_.parse_from_json(parse_json(OPTIONS.input_file));
-
-    // Give each thread their own seed
-    random::init(OPTIONS.rand_seed);
 }
 
 }  /* elfin */

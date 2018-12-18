@@ -12,9 +12,9 @@ std::vector<std::mt19937> TWISTERS;
 
 }  /* (anonymous) */
 
-void init(uint32_t global_seed) {
+void init() {
     /*
-     * Create per-thread twister.
+     * Create per-thread Mersenne Twisters with different seeds.
      */
     TWISTERS.clear();
 
@@ -23,9 +23,12 @@ void init(uint32_t global_seed) {
         #pragma omp single
         {
             size_t const num_threads = omp_get_num_threads();
+            dbg("Creating %lu Mersenne Twisters\n", num_threads);
 
-            if (global_seed == 0)
+            uint32_t global_seed = OPTIONS.rand_seed;
+            if (global_seed == 0) {
                 global_seed = get_timestamp_us();
+            }
 
             for (size_t tid = 0; tid < num_threads; ++tid) {
                 TWISTERS.emplace_back((uint32_t) global_seed ^ tid);
@@ -84,13 +87,13 @@ void test(size_t& errors, size_t& tests) {
     std::vector<size_t> rand_vals1(N, 0);
     std::vector<size_t> rand_vals2(N, 0);
 
-    init(OPTIONS.rand_seed);
+    init();
     #pragma omp parallel for
     for (size_t i = 0; i < N; ++i) {
         rand_vals1.at(i) = get_dice(dice_max);
     }
 
-    init(OPTIONS.rand_seed);
+    init();
     #pragma omp parallel for
     for (size_t i = 0; i < N; ++i) {
         rand_vals2.at(i) = get_dice(dice_max);

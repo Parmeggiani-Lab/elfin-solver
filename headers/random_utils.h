@@ -17,7 +17,7 @@ extern std::vector<std::mt19937> TWISTERS;
 
 }  /* (anonymous) */
 
-void init(uint32_t global_seed);
+void init();
 
 float get_dice_0to1();
 

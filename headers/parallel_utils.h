@@ -1,35 +1,12 @@
 #ifndef PARALLEL_UTILS_H_
 #define PARALLEL_UTILS_H_
 
-#include <vector>
-#include <cmath>
-
 #include <omp.h>
 
 #include "jutil.h"
 
 /* OMP Macros */
-#ifdef NO_OMP
-
-#define OMP_PAR_FOR
-#define MAP_DATA()
-
-#else  /* ifdef NO_OMP */
-
-#ifdef TARGET_GPU
-
-#error "Not implemented"
-// #define OMP_PAR_FOR _Pragma("omp target teams distribute parallel for simd schedule(static,1)")
-// #define MAP_DATA() _Pragma("omp target data map(buff_pop_data_[0:pop_size_], curr_pop_data_[0:pop_size_])")
-
-#else  /* ifdef TARGET_GPU */
-
 #define OMP_PAR_FOR _Pragma("omp parallel for simd schedule(runtime)")
-#define MAP_DATA() {}
-
-#endif  /* ifdef TARGET_GPU */
-
-#endif  /* ifdef NO_OMP */
 
 /* Timing Macros */
 #ifdef DO_TIMING
@@ -50,13 +27,14 @@ inline long TIMING_END(char const* section_name, double const start_time) {
 
 #endif //ifdef DO_TIMING
 
+namespace elfin {
+
 namespace parallel {
 
-static inline void init() {
-    // Explicitly disable dynamic thread teams
-    omp_set_dynamic(0);
-}
+void init();
 
 }  /* parallel */
+
+}  /* elfin */
 
 #endif  /* end of include guard: PARALLEL_UTILS_H_ */

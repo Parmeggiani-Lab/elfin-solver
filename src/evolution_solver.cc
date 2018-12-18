@@ -253,41 +253,39 @@ EvolutionSolver::run() {
         float lastgen_best_score = INFINITY;
 
         if (!OPTIONS.dry_run) {
-            MAP_DATA() {
-                for (size_t gen_id = 0; gen_id < OPTIONS.ga_iters; gen_id++) {
-                    const double gen_start_time = get_timestamp_us();
+            for (size_t gen_id = 0; gen_id < OPTIONS.ga_iters; gen_id++) {
+                const double gen_start_time = get_timestamp_us();
 
-                    wrn("Before evolve\n");
-                    debug_print_pop(population);
+                wrn("Before evolve\n");
+                debug_print_pop(population);
 
-                    population.evolve();
-                    wrn("After evolve\n");
-                    debug_print_pop(population);
+                population.evolve();
+                wrn("After evolve\n");
+                debug_print_pop(population);
 
-                    // population.score();
+                // population.score();
 
-                    population.rank();
-                    wrn("Post rank\n");
-                    debug_print_pop(population);
+                population.rank();
+                wrn("Post rank\n");
+                debug_print_pop(population);
 
-                    population.select();
-                    wrn("Post select\n");
-                    debug_print_pop(population);
+                population.select();
+                wrn("Post select\n");
+                debug_print_pop(population);
 
-                    bool should_break = false;
-                    collect_gen_data(
-                        population,
-                        gen_id,
-                        gen_start_time,
-                        tot_gen_time,
-                        stagnant_count,
-                        lastgen_best_score,
-                        best_sols_[wa_name],
-                        should_break);
-                    if (should_break) break;
+                bool should_break = false;
+                collect_gen_data(
+                    population,
+                    gen_id,
+                    gen_start_time,
+                    tot_gen_time,
+                    stagnant_count,
+                    lastgen_best_score,
+                    best_sols_[wa_name],
+                    should_break);
+                if (should_break) break;
 
-                    population.swap_buffer();
-                }
+                population.swap_buffer();
             }
         }
     }

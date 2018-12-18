@@ -135,6 +135,12 @@ private:
             true,
             &ArgParser::set_device
         },
+        {   "w",
+            "n_workers",
+            "Set number of threads (default=0, which uses the OMP_NUM_THREADS env var)",
+            true,
+            &ArgParser::set_n_workers
+        },
         {   "kn",
             "keep_n",
             "Set number of best solutions to keep for output (default=3)",
@@ -164,30 +170,82 @@ private:
     void parse_options(int const argc, char const *argv[]);
 
     ARG_PARSER_CALLBACK_IN_HEADER(help_and_exit);
+
     ARG_PARSER_CALLBACK_IN_HEADER(failure_callback);
+
     ARG_PARSER_CALLBACK_IN_HEADER(parse_config);
+
     ARG_PARSER_CALLBACK_IN_HEADER(set_input_file);
-    ARG_PARSER_CALLBACK_IN_HEADER(set_xdb) { options_.xdb = arg_in; }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_output_dir) { options_.output_dir = arg_in; }
 
-    ARG_PARSER_CALLBACK_IN_HEADER(set_len_dev_alw) { options_.len_dev_alw = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_avg_pair_dist) { options_.avg_pair_dist = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_rand_seed) { options_.rand_seed = parse_long(arg_in.c_str()); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_xdb) {
+        options_.xdb = arg_in;
+    }
 
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_pop_size) { options_.ga_pop_size = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_iters) { options_.ga_iters = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_survive_rate) { options_.ga_survive_rate = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_stop_score) { options_.ga_stop_score = parse_float(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_stop_stagnancy) { options_.ga_stop_stagnancy = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_log_level) { ::set_log_level((Log_Level) parse_long(arg_in.c_str())); }
+    ARG_PARSER_CALLBACK_IN_HEADER(set_output_dir) {
+        options_.output_dir = arg_in;
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_len_dev_alw) {
+        options_.len_dev_alw = parse_long(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_avg_pair_dist) {
+        options_.avg_pair_dist = parse_float(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_rand_seed) {
+        options_.rand_seed = parse_long(arg_in.c_str());
+    }
+
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_pop_size) {
+        options_.ga_pop_size = parse_long(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_iters) {
+        options_.ga_iters = parse_long(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_survive_rate) {
+        options_.ga_survive_rate = parse_float(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_stop_score) {
+        options_.ga_stop_score = parse_float(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_ga_stop_stagnancy) {
+        options_.ga_stop_stagnancy = parse_long(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_log_level) {
+        ::set_log_level((Log_Level) parse_long(arg_in.c_str()));
+    }
+
     ARG_PARSER_CALLBACK_IN_HEADER(set_run_unit_tests) {
         options_.run_unit_tests = true;
         options_.input_file = "examples/quarter_snake_free.json";
     }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_device) { options_.device = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_keep_n) { options_.keep_n = parse_long(arg_in.c_str()); }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_dry_run) { options_.dry_run = true; }
-    ARG_PARSER_CALLBACK_IN_HEADER(set_radius_type) { options_.radius_type = arg_in; }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_device) {
+        options_.device = parse_long(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_n_workers) {
+        options_.n_workers = parse_long(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_keep_n) {
+        options_.keep_n = parse_long(arg_in.c_str());
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_dry_run) {
+        options_.dry_run = true;
+    }
+
+    ARG_PARSER_CALLBACK_IN_HEADER(set_radius_type) {
+        options_.radius_type = arg_in;
+    }
 
     /* printers */
     void print_args() const;

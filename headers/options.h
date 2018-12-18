@@ -33,6 +33,7 @@ struct Options {
 
     bool run_unit_tests = false;
 
+    size_t n_workers = 0;
     int device = 0;
     size_t keep_n = 3;
 

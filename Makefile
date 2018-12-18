@@ -51,10 +51,6 @@ else
 	OMP_FLAGS=-fopenmp -D_GLIBCXX_PARALLEL
 endif
 
-ifeq ($(OMP), no)
-	OMP_DEF=-DNO_OMP
-endif
-
 ifeq ($(TIMING), yes)
 	TIMING_FLAGS=-DDO_TIMING
 else
@@ -95,7 +91,7 @@ CC_FLAGS 		+= -MMD -std=gnu++17 # c++17 for more copy elision
 
 COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS) \
 	$(OPT_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) $(TIMING_FLAGS) \
-	$(OMP_DEF) $(DEFS) $(INCS) -fmax-errors=$(MAX_ERRORS) $(EXTRA_FLAGS)
+	$(DEFS) $(INCS) -fmax-errors=$(MAX_ERRORS) $(EXTRA_FLAGS)
 
 BINRAY=$(BIN_DIR)$(EXE)
 

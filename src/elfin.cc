@@ -54,7 +54,11 @@ Elfin::Elfin(const int argc, const char ** argv) {
     // Parse arguments and configuration
     InputManager::setup(argc, argv);
 
+    // Set up parallel utils after parsing number of threads into OPTIONS
     parallel::init();
+
+    // Give per-thread Mersenne Twisters
+    random::init();
 }
 
 /* dtors */
