@@ -103,7 +103,7 @@ Crc32 BasicNodeTeam::calc_checksum() const {
      * achieved by XOR'ing the forward and backward checksums.
      */
     DEBUG(free_chains_.size() != 2,
-          string_format("There are %lu free chains!\n",
+          string_format("There are %lu free chains!",
                         free_chains_.size()));
     DEBUG(size() == 0);
 
@@ -176,26 +176,33 @@ void BasicNodeTeam::fix_limb_transforms(Link const& arrow) {
     }
 }
 
-void BasicNodeTeam::grow_tip(FreeChain const free_chain_a) {
-    ProtoLink const& proto_link =
-        free_chain_a.random_proto_link();
+Node* BasicNodeTeam::grow_tip(
+    FreeChain const free_chain_a,
+    ProtoLink const* ptlink) {
+    if (ptlink == nullptr) {
+        ptlink = &free_chain_a.random_proto_link();
+    }
 
     Node* node_a = free_chain_a.node;
+    DEBUG(node_a->links().size() > 1);
+
     Node* node_b = add_member(
-                       proto_link.module(),
-                       node_a->tx_ * proto_link.tx());
+                       ptlink->module(),
+                       node_a->tx_ * ptlink->tx());
 
     TerminusType const term_a = free_chain_a.term;
     TerminusType const term_b = opposite_term(term_a);
 
     FreeChain const free_chain_b =
-        FreeChain(node_b, term_b, proto_link.chain_id());
+        FreeChain(node_b, term_b, ptlink->chain_id());
 
-    node_a->add_link(free_chain_a, &proto_link, free_chain_b);
-    node_b->add_link(free_chain_b, proto_link.reverse(), free_chain_a);
+    node_a->add_link(free_chain_a, ptlink, free_chain_b);
+    node_b->add_link(free_chain_b, ptlink->reverse(), free_chain_a);
 
     free_chains_.lift_erase(free_chain_a);
     free_chains_.lift_erase(free_chain_b);
+
+    return node_b;
 }
 
 Node* BasicNodeTeam::nip_tip(
@@ -271,7 +278,7 @@ void BasicNodeTeam::build_bridge(
 
     FreeChain nn_src2(
         new_node, port1.term, bridge->ptlink2->reverse()->chain_id());
-    Link const new_link2(nn_src2, bridge->ptlink1, port2);
+    Link const new_link2(nn_src2, bridge->ptlink2, port2);
 
     new_node->add_link(new_link2);
     node2->add_link(new_link2.reversed());
@@ -293,7 +300,7 @@ void BasicNodeTeam::sever_limb(Link const& arrow) {
 
         // Verify temporary tip node
         num_links = next_node->links().size();
-        NICE_PANIC(num_links > 1); // must be 0 or 1
+        DEBUG(num_links > 1); // must be 0 or 1
 
         if (num_links > 0) {
             curr_arrow = next_node->links().at(0); // copy
@@ -310,8 +317,74 @@ void BasicNodeTeam::sever_limb(Link const& arrow) {
     free_chains_.push_back(arrow.src());
 }
 
-void BasicNodeTeam::copy_limb(Link const& m_arrow, Link const& f_arrow) {
+void BasicNodeTeam::copy_limb(
+    Link const& m_arrow,
+    Link const& f_arrow) {
+    /*
+     * Copy nodes starting from f_arrow.dst() to m_arrow.src().
+     */
+    DEBUG(size() == 0);
 
+    Node* tip_node = m_arrow.src().node;
+    size_t num_links = tip_node->links().size();
+    DEBUG(size() > 1 and num_links != 1);
+
+    // Occupy src chain
+    free_chains_.lift_erase(m_arrow.src());
+
+    // Form first link
+    ProtoLink const* ptlink =
+        tip_node->prototype()->find_link_to(
+            m_arrow.src().chain_id,
+            m_arrow.src().term,
+            f_arrow.dst().node->prototype(),
+            f_arrow.dst().chain_id);
+    DEBUG(ptlink == nullptr);
+
+    tip_node = grow_tip(m_arrow.src(), ptlink);
+
+    num_links = tip_node->links().size();
+    DEBUG(num_links != 1,
+          string_format("There are %lu links!\n", num_links));
+
+    BasicNodeGenerator node_gtor(&f_arrow);
+    node_gtor.next(); // Same as f_arrow.dst().node
+    while (not node_gtor.is_done()) {
+        Link const* curr_link = node_gtor.curr_link();
+        DEBUG(curr_link->dst().node->prototype() !=
+              curr_link->prototype()->module());
+
+        // Modify copy of curr_link->src()
+        FreeChain src = curr_link->src();
+
+        DEBUG(src.node->prototype() != tip_node->prototype(),
+              string_format("%s vs %s\n",
+                            src.node->prototype()->name.c_str(),
+                            tip_node->prototype()->name.c_str()));
+        src.node = tip_node;
+
+        // Occupy src chain
+        free_chains_.lift_erase(src);
+        DEBUG(free_chains_.size() != 1,
+              string_format("There are %lu free chains!",
+                            free_chains_.size()));
+
+        tip_node = grow_tip(src, curr_link->prototype());
+        if (curr_link->dst().node->prototype() != tip_node->prototype()) {
+            err("%s vs %s\n",
+                curr_link->dst().node->prototype()->name.c_str(),
+                tip_node->prototype()->name.c_str());
+            err("curr_link->prototype(): %s\n",
+                curr_link->prototype()->module()->name.c_str());
+            die("");
+        }
+
+        num_links = tip_node->links().size();
+        DEBUG(num_links != 1,
+              string_format("There are %lu links!\n", num_links));
+
+        node_gtor.next();
+    }
 }
 
 /* mutation methods */

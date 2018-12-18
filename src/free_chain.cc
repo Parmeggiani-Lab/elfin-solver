@@ -72,6 +72,10 @@ FreeChain::BridgeList FreeChain::find_bridges(
 
 ProtoLink const* FreeChain::find_link_to(
     FreeChain const& dst) const {
+    if (dst.term != opposite_term(term)) {
+        return nullptr;
+    }
+
     return node->prototype()->find_link_to(
                chain_id,
                term,

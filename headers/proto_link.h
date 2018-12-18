@@ -64,7 +64,7 @@ ProtoLinkPtrSet;
 typedef typename ProtoLinkPtrSet::const_iterator
 ProtoLinkPtrSetCItr;
 
-typedef Vector<ConstProtoLinkPtr> ProtoLinkPtrList;
+typedef elfin::Vector<ConstProtoLinkPtr> ProtoLinkPtrList;
 
 struct ProtoLinkInterfacesComparator {
     bool operator() (

@@ -10,8 +10,7 @@
 
 namespace elfin {
 
-class Node
-{
+class Node {
 protected:
     /*
      * Note: Use of vector as container for neighbors (LinkList)

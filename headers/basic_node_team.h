@@ -19,7 +19,9 @@ private:
 
     /*modifiers */
     void fix_limb_transforms(Link const& arrow);
-    void grow_tip(FreeChain const free_chain_a);
+    Node* grow_tip(
+        FreeChain const free_chain_a,
+        ProtoLink const* ptlink = nullptr);
     Node* nip_tip(Node* tip_node);
     void build_bridge(
         InsertPoint const& insert_point,

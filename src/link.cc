@@ -12,7 +12,9 @@ Link::Link(
     const FreeChain& dst_chain) :
     src_chain_(src_chain),
     prototype_(prototype),
-    dst_chain_(dst_chain) {}
+    dst_chain_(dst_chain) {
+    DEBUG(dst_chain_.node->prototype() != prototype_->module());
+}
 
 /* accessors */
 bool Link::operator==(const Link& other) const {
