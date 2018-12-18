@@ -24,6 +24,8 @@ private:
     void build_bridge(
         InsertPoint const& insert_point,
         FreeChain::Bridge const* bridge = nullptr);
+    void sever_limb(Link const& arrow);
+    void copy_limb(Link const& m_arrow, Link const& f_arrow);
 
     bool erode_mutate();
     bool delete_mutate();

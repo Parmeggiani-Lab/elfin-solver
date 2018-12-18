@@ -78,18 +78,21 @@ struct BasicNodeTeam::SwapPoint : public BasicNodeTeam::InsertPoint {
 
 struct BasicNodeTeam::CrossPoint {
     ProtoLink const* ptlink;
-    Link const* arrow;
-    FreeChain const* father_src;
-    bool reversed;
+    Link const* m_arrow;
+    bool m_rev;
+    Link const* f_arrow;
+    bool f_rev;
     CrossPoint(
         ProtoLink const* _ptlink,
-        Link const* _arrow,
-        FreeChain const* _father_src,
-        bool const _reversed) :
+        Link const* _m_arrow,
+        bool const _m_rev,
+        Link const* _f_arrow,
+        bool const _f_rev) :
         ptlink(_ptlink),
-        arrow(_arrow),
-        father_src(_father_src),
-        reversed(_reversed) {}
+        m_arrow(_m_arrow),
+        m_rev(_m_rev),
+        f_arrow(_f_arrow),
+        f_rev(_f_rev) {}
 };
 
 /* accessors */
@@ -99,7 +102,10 @@ Crc32 BasicNodeTeam::calc_checksum() const {
      * sequence of nodes even if they are in reverse order. This can be
      * achieved by XOR'ing the forward and backward checksums.
      */
-    DEBUG(free_chains_.size() != 2 and size() != 0);
+    DEBUG(free_chains_.size() != 2,
+          string_format("There are %lu free chains!\n",
+                        free_chains_.size()));
+    DEBUG(size() == 0);
 
     Crc32 crc = 0x0000;
     for (auto& free_chain : free_chains_) {
@@ -133,7 +139,10 @@ float BasicNodeTeam::calc_score(WorkArea const* wa) const {
      * algorithm relies on point-wise correspondance. Different ordering can
      * yield different RMSD scores.
      */
-    DEBUG(free_chains_.size() != 2 and size() != 0);
+    DEBUG(free_chains_.size() != 2,
+          string_format("There are %lu free chains!\n",
+                        free_chains_.size()));
+    DEBUG(size() == 0);
 
     float score = INFINITY;
     for (auto& free_chain : free_chains_) {
@@ -270,6 +279,42 @@ void BasicNodeTeam::build_bridge(
     fix_limb_transforms(new_link2);
 }
 
+void BasicNodeTeam::sever_limb(Link const& arrow) {
+    /* Delete the dst side of arrow */
+    DEBUG(arrow.src().node == nullptr);
+    DEBUG(arrow.dst().node == nullptr);
+
+    Link curr_arrow = arrow;
+    size_t num_links = 0;
+    do {
+        // Unlink
+        Node* next_node = curr_arrow.dst().node;
+        next_node->remove_link(curr_arrow.dst());
+
+        // Verify temporary tip node
+        num_links = next_node->links().size();
+        NICE_PANIC(num_links > 1); // must be 0 or 1
+
+        if (num_links > 0) {
+            curr_arrow = next_node->links().at(0); // copy
+        }
+        else {
+            remove_free_chains(next_node);
+        }
+
+        // Safe to delete node
+        remove_member(next_node);
+    } while (num_links > 0);
+
+    arrow.src().node->remove_link(arrow.src());
+    free_chains_.push_back(arrow.src());
+}
+
+void BasicNodeTeam::copy_limb(Link const& m_arrow, Link const& f_arrow) {
+
+}
+
+/* mutation methods */
 bool BasicNodeTeam::erode_mutate() {
     bool mutate_success = false;
 
@@ -676,41 +721,40 @@ bool BasicNodeTeam::cross_mutate(
         Vector<CrossPoint> cross_points;
         for (Link const* m_arrow : m_arrows) {
             for (Link const* f_arrow : f_arrows) {
-                ProtoLink const* ss =
-                    m_arrow->src().find_link_to(f_arrow->src());
-                if (ss) {
-                    cross_points.emplace_back(
-                        ss,
-                        m_arrow,
-                        &f_arrow->src(),
-                        false);
-                }
                 ProtoLink const* sd =
                     m_arrow->src().find_link_to(f_arrow->dst());
                 if (sd) {
                     cross_points.emplace_back(
                         sd,
-                        m_arrow,
-                        &f_arrow->dst(),
-                        false);
+                        m_arrow, false,     // { } --m_arrow--v { del  }
+                        f_arrow, false);    // { } --f_arrow--> { copy }
                 }
-                ProtoLink const* ds =
-                    m_arrow->dst().find_link_to(f_arrow->src());
-                if (ds) {
+
+                ProtoLink const* ss =
+                    m_arrow->src().find_link_to(f_arrow->src());
+                if (ss) {
                     cross_points.emplace_back(
-                        ds,
-                        m_arrow,
-                        &f_arrow->src(),
-                        true);
+                        ss,
+                        m_arrow, false,     // {      } --m_arrow--v { del }
+                        f_arrow, true);     // { copy } <---f_rev--- {     }
                 }
+
                 ProtoLink const* dd =
                     m_arrow->dst().find_link_to(f_arrow->dst());
                 if (dd) {
                     cross_points.emplace_back(
                         dd,
-                        m_arrow,
-                        &f_arrow->dst(),
-                        true);
+                        m_arrow, true,      // { del } v---m_rev--- {      }
+                        f_arrow, false);    // {     } --f_arrow--> { copy }
+                }
+
+                ProtoLink const* ds =
+                    m_arrow->dst().find_link_to(f_arrow->src());
+                if (ds) {
+                    cross_points.emplace_back(
+                        ds,
+                        m_arrow, true,      // { del  } v---m_rev--- { }
+                        f_arrow, true);     // { keep } <---f_rev--- { }
                 }
             }
         }
@@ -718,12 +762,17 @@ bool BasicNodeTeam::cross_mutate(
         if (not cross_points.empty()) {
             CrossPoint const& cp = cross_points.pick_random();
 
-            Link arrow = *cp.arrow;
-            if (cp.reversed) {
-                arrow = arrow.reversed();
-            }
+            Link m_arrow = cp.m_rev ?
+                           cp.m_arrow->reversed() :
+                           *cp.m_arrow; // Make a copy
+            Link f_arrow = cp.f_rev ?
+                           cp.f_arrow->reversed() :
+                           *cp.f_arrow; // Make a copy
 
-            return false;
+            // Always keep m_arrow.src, del m_arrow.dst
+            // And copy from f_arrow.dst
+            sever_limb(m_arrow);
+            copy_limb(m_arrow, f_arrow);
 
             mutate_success = true;
         }
