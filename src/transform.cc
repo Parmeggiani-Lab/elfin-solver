@@ -4,7 +4,6 @@
 
 #include "debug_utils.h"
 #include "vector3f.h"
-#include "eigen.h" // Always needed for tests
 
 namespace elfin {
 
@@ -68,7 +67,7 @@ Transform Transform::inversed() const {
     res.tran_[2] = -(res.rot_[2][0] * tran_[0] +
                      res.rot_[2][1] * tran_[1] +
                      res.rot_[2][2] * tran_[2]);
-    
+
     return res;
 #endif  /* ifdef USE_EIGEN */
 }
@@ -126,11 +125,6 @@ bool Transform::is_approx(
 
 /* tests */
 void Transform::test(size_t& errors, size_t& tests) {
-    using Mat4f = Eigen::Matrix4f;
-    using Mat3f = Eigen::Matrix3f;
-    using Vec3f = Eigen::Vector3f;
-
-
     /* Frame Shift Test */
     JSON a_world_json = {
         {   "rot", {
@@ -188,7 +182,6 @@ void Transform::test(size_t& errors, size_t& tests) {
     Transform c_to_a(c_to_a_json);
     Transform c_world(c_world_json);
 
-    /* Check Eigen frame shift */
     Transform b_test = a_world * a_to_b.inversed(); // C-term extrude "raise"
     tests++;
     if (not b_test.is_approx(b_world)) {
