@@ -1,6 +1,7 @@
 #include "proto_module.h"
 
 #include <sstream>
+#include <memory>
 
 #include "debug_utils.h"
 #include "node.h"
@@ -170,21 +171,21 @@ void ProtoModule::create_proto_link_pair(
 #endif  /* ifdef PRINT_CREATE_PROTO_LINK */
 
     // Create links and count
-    ProtoLink* a_ptlink = new ProtoLink(tx, &mod_b, b_chain_id);
+    auto a_ptlink = std::make_shared<ProtoLink>(tx, &mod_b, b_chain_id);
+    auto b_ptlink = std::make_shared<ProtoLink>(tx_inv, &mod_a, a_chain_id);
+    ProtoLink::pair_links(a_ptlink.get(), b_ptlink.get());
+
     a_chain.c_term_.links_.push_back(a_ptlink);
     mod_a.counts_.c_links++;
     if (a_chain.c_term_.links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_a.counts_.c_interfaces++;
     }
 
-    ProtoLink* b_ptlink = new ProtoLink(tx_inv, &mod_a, a_chain_id);
     b_chain.n_term_.links_.push_back(b_ptlink);
     mod_b.counts_.n_links++;
     if (b_chain.n_term_.links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_b.counts_.n_interfaces++;
     }
-
-    ProtoLink::pair_links(a_ptlink, b_ptlink);
 }
 
 /* printers */

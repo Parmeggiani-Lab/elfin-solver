@@ -13,10 +13,11 @@ class ProtoTerminus {
     friend ProtoModule;
 private:
     /* types */
-    typedef Roulette<ProtoLink const*> ProtoLinkRoulette; 
+    typedef Roulette<ProtoLink const*> ProtoLinkRoulette;
+
     /* data */
     bool finalized_ = false;
-    ProtoLinkPtrList links_;
+    ProtoLinkSPList links_;
     ProtoLinkRoulette n_roulette_, c_roulette_;
     ProtoLinkPtrSet link_set_;
 
@@ -24,15 +25,12 @@ public:
     /* ctors */
     ProtoTerminus() {}
     ProtoTerminus(ProtoTerminus const& other) = delete;
-    ProtoTerminus(ProtoTerminus && other) = delete;
+    ProtoTerminus(ProtoTerminus&& other) = delete;
     ProtoTerminus& operator=(ProtoTerminus const& other) = delete;
-    ProtoTerminus& operator=(ProtoTerminus && other) = delete;
-
-    /* dtors */
-    virtual ~ProtoTerminus();
+    ProtoTerminus& operator=(ProtoTerminus&& other) = delete;
 
     /* accessors */
-    ProtoLinkPtrList const& links() const { return links_; }
+    ProtoLinkSPList const& links() const { return links_; }
     ProtoLink const& pick_random_link(TerminusType const term) const;
     ProtoLinkPtrSet const& link_set() const { return link_set_; }
     ProtoLinkPtrSetCItr find_link_to(

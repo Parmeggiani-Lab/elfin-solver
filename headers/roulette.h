@@ -21,6 +21,7 @@ protected:
     /* types */
     typedef std::vector<ItemType> ItemList;
     typedef std::vector<float> CummProbDist;
+    
     /* data */
     ItemList items_;
     CummProbDist cpd_;

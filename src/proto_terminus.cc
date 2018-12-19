@@ -10,17 +10,6 @@
 namespace elfin {
 
 /* public */
-
-/* dtors */
-ProtoTerminus::~ProtoTerminus() {
-    for (ProtoLink const* ptlink : links_) {
-        delete ptlink;
-    }
-
-    links_.clear();
-    link_set_.clear();
-}
-
 /* accessors */
 ProtoLink const& ProtoTerminus::pick_random_link(
     TerminusType const term) const {
@@ -72,21 +61,20 @@ void ProtoTerminus::finalize() {
      * pick_random() that support partitioning by interface count.
      */
     std::sort(
-        links_.begin(),
-        links_.end(),
-        ProtoLinkInterfacesComparator());
+        begin(links_),
+        end(links_),
+    [](ProtoLinkSP const& lhs, ProtoLinkSP const& rhs) {
+        return lhs->module_->counts().all_interfaces() <
+               rhs->module_->counts().all_interfaces();
+    });
 
-    std::vector<float> n_cpd, c_cpd;
-    for (auto itr = links_.begin();
-            itr != links_.end();
-            itr++) {
+    for (auto& link : links_) {
+        DEBUG(nullptr == link->module_);
 
-        ProtoLink const* link_ptr = *itr;
-        DEBUG(nullptr == link_ptr->module_);
+        ProtoLink const* row_link_ptr = link.get();
+        link_set_.insert(row_link_ptr);
 
-        link_set_.insert(link_ptr);
-
-        ProtoModule const* target_prot = link_ptr->module_;
+        ProtoModule const* target_prot = link->module_;
 
         /*
          * Note: assigning 0 probability for ProtoLinks that have more than 2
@@ -104,33 +92,34 @@ void ProtoTerminus::finalize() {
          * hubs > 2 interfaces can also be drawn from a ProtoModule's
          * ProtoLinks.
          */
-        if (target_prot->counts().all_interfaces() > 2) {
-            // Fill the rest of the roulette with total probability (can't be
-            // picked by random::pick())
-            n_cpd.push_back(0);
-            c_cpd.push_back(0);
-        }
-        else {
+        size_t n_cpd = 0, c_cpd = 0;
+
+        // Fill the rest of the roulette with 0 probability (can't be
+        // picked by random::pick())
+        if (target_prot->counts().all_interfaces() <= 2) {
             size_t const ncount = target_prot->counts().n_links;
             size_t const ccount = target_prot->counts().c_links;
 
             if (ncount == 0)
             {
                 // zero N-count means all interfaces are C type
-                n_cpd.push_back(ccount);
-                c_cpd.push_back(ccount);
+                n_cpd = ccount;
+                c_cpd = ccount;
             }
             else if (ccount == 0)
             {
                 // zero C-count means all interfaces are N type
-                n_cpd.push_back(ncount);
-                c_cpd.push_back(ncount);
+                n_cpd = ncount;
+                c_cpd = ncount;
             }
             else {
-                n_cpd.push_back(ncount);
-                c_cpd.push_back(ccount);
+                n_cpd = ncount;
+                c_cpd = ccount;
             }
         }
+
+        n_roulette_.push_back(n_cpd, row_link_ptr);
+        c_roulette_.push_back(c_cpd, row_link_ptr);
 
 #ifdef PRINT_FINALIZE
         wrn("ProtoLink to %s into chain %lu with %lu interfaces\n",
@@ -139,8 +128,5 @@ void ProtoTerminus::finalize() {
             link_ptr->module_->counts().all_interfaces());
 #endif  /* ifdef PRINT_FINALIZE */
     }
-
-    n_roulette_ = ProtoLinkRoulette(links_, n_cpd);
-    c_roulette_ = ProtoLinkRoulette(links_, c_cpd);
 }
 }  /* elfin */

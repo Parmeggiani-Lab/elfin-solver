@@ -2,6 +2,7 @@
 #define PROTO_LINK_H_
 
 #include <unordered_set>
+#include <memory>
 
 #include "geometry.h"
 #include "vector_utils.h"
@@ -35,8 +36,9 @@ public:
 
 /* types */
 typedef ProtoLink const* ConstProtoLinkPtr;
-
-typedef ProtoModule const* ConstProtoModulePtr;
+typedef std::shared_ptr<ProtoLink> ProtoLinkSP;
+typedef std::vector<ProtoLinkSP> ProtoLinkSPList;
+typedef ProtoModule const* ConstProtoModulePtr; 
 
 struct HashProtoLinkWithoutTx {
     size_t operator()(ConstProtoLinkPtr const& link) const;
@@ -63,13 +65,6 @@ typedef typename ProtoLinkPtrSet::const_iterator
 ProtoLinkPtrSetCItr;
 
 typedef elfin::Vector<ConstProtoLinkPtr> ProtoLinkPtrList;
-
-struct ProtoLinkInterfacesComparator {
-    bool operator() (
-        ProtoLink const* lhs, ProtoLink const* rhs) const;
-    bool operator() (
-        ProtoLink const& lhs, ProtoLink const& rhs) const;
-};
 
 }  /* elfin */
 

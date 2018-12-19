@@ -39,7 +39,7 @@ FreeChain::BridgeList FreeChain::find_bridges(
         node->prototype_->chains().at(chain_id).get_term(term);
 
     // For each middle ProtoModule that ptterm_src connects to...
-    for (ProtoLink const* ptlink1 : ptterm_src.links()) {
+    for (auto& ptlink1 : ptterm_src.links()) {
         ProtoModule const* middle_mod = ptlink1->module_;
 
         // Skip non basic modules
@@ -62,7 +62,7 @@ FreeChain::BridgeList FreeChain::find_bridges(
 
             if (itr != ptterm_out.link_set().end()) {
                 // We have found a ptlink2
-                res.emplace_back(ptlink1, *itr);
+                res.emplace_back(ptlink1.get(), *itr);
             }
         }
     }

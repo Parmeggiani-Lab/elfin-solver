@@ -39,18 +39,4 @@ bool EqualProtoLinkWithoutTx::operator()(
            lh_link->chain_id_ == rh_link->chain_id_;
 }
 
-bool ProtoLinkInterfacesComparator::operator() (
-    ProtoLink const& lhs,
-    ProtoLink const& rhs) const {
-    return lhs.module_->counts().all_interfaces() <
-           rhs.module_->counts().all_interfaces();
-}
-
-bool ProtoLinkInterfacesComparator::operator() (
-    ProtoLink const* lhs,
-    ProtoLink const* rhs) const {
-    return lhs->module_->counts().all_interfaces() <
-           rhs->module_->counts().all_interfaces();
-}
-
 }  /* elfin */
