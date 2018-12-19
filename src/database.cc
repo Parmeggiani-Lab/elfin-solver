@@ -39,7 +39,7 @@ std::string Database::ModPtrRoulette::to_string() const {
  */
 void Database::categorize() {
     for (auto mod : all_mods_.items()) {
-        const size_t n_itf = mod->counts().all_interfaces();
+        size_t const n_itf = mod->counts().all_interfaces();
         if (n_itf < 2) {
             die("mod[%s] has fewer interfaces(%lu) than expected(2)\n",
                 mod->name.c_str(), n_itf);
@@ -71,7 +71,7 @@ void Database::print_roulettes() {
 
 void Database::print_db() {
     wrn("---DB Proto Link Parse Debug---\n");
-    const size_t n_mods = all_mods_.items().size();
+    size_t const n_mods = all_mods_.items().size();
     wrn("Database has %lu mods, of which...\n", n_mods);
     wrn("%lu are singles\n", singles_.items().size());
     wrn("%lu are hubs\n", hubs_.items().size());
@@ -80,8 +80,8 @@ void Database::print_db() {
 
     for (size_t i = 0; i < n_mods; ++i)
     {
-        const ProtoModule* mod = all_mods_.items().at(i);
-        const size_t n_chains = mod->chains().size();
+        ProtoModule const* mod = all_mods_.items().at(i);
+        size_t const n_chains = mod->chains().size();
         wrn("xdb_[#%lu:%s] has %lu chains\n",
             i, mod->name.c_str(), n_chains);
 
@@ -111,9 +111,9 @@ void Database::print_db() {
 #define JSON_MOD_PARAMS JSON::const_iterator jit, ModuleType mod_type
 typedef std::function<void(JSON_MOD_PARAMS)> JsonModTypeLambda;
 
-void Database::parse_from_json(const JSON& xdb) {
+void Database::parse_from_json(JSON const& xdb) {
     // Define lambas for code reuse
-    const JSON& singles = xdb["modules"]["singles"];
+    JSON const& singles = xdb["modules"]["singles"];
     auto for_each_double_json = [&](JsonModTypeLambda const & lambda) {
         for (JSON::const_iterator jit = singles.begin();
                 jit != singles.end();
@@ -122,7 +122,7 @@ void Database::parse_from_json(const JSON& xdb) {
         }
     };
 
-    const JSON& hubs = xdb["modules"]["hubs"];
+    JSON const& hubs = xdb["modules"]["hubs"];
     auto for_each_hub_json = [&](JsonModTypeLambda const & lambda) {
         for (JSON::const_iterator jit = hubs.begin();
                 jit != hubs.end();
@@ -143,7 +143,7 @@ void Database::parse_from_json(const JSON& xdb) {
     std::unordered_map<std::string, size_t> name_id_map;
     auto init_module = [&](JSON_MOD_PARAMS) {
         const std::string& name = jit.key();
-        const size_t mod_id = nf_mod_list.size();
+        size_t const mod_id = nf_mod_list.size();
         name_id_map[name] = mod_id;
 
 #ifdef PRINT_NAME_ID_MAP
@@ -151,23 +151,23 @@ void Database::parse_from_json(const JSON& xdb) {
 #endif  /* ifndef PRINT_NAME_ID_MAP */
 
         StrList chain_names;
-        const JSON& chains_json = (*jit)["chains"];
+        JSON const& chains_json = (*jit)["chains"];
         for (auto chain_it = chains_json.begin();
                 chain_it != chains_json.end();
                 ++chain_it) {
             chain_names.push_back(chain_it.key());
         }
 
-        const float radius = (*jit)["radii"][OPTIONS.radius_type];
+        float const radius = (*jit)["radii"][OPTIONS.radius_type];
         nf_mod_list.push_back(new ProtoModule(name, mod_type, radius, chain_names));
     };
     for_each_module_json(init_module);
 
     auto parse_link = [&](JSON_MOD_PARAMS) {
-        const size_t mod_a_id = name_id_map[jit.key()];
+        size_t const mod_a_id = name_id_map[jit.key()];
         ProtoModule* const mod_a = nf_mod_list.at(mod_a_id);
 
-        const JSON& chains_json = (*jit)["chains"];
+        JSON const& chains_json = (*jit)["chains"];
         for (auto a_chain_it = chains_json.begin();
                 a_chain_it != chains_json.end();
                 ++a_chain_it) {
@@ -176,24 +176,24 @@ void Database::parse_from_json(const JSON& xdb) {
             // No need to run through "n" because xdb contains only n-c
             // transforms. In create_proto_link(), an inversed version for c-n
             // transform is created.
-            const JSON& c_json = (*a_chain_it)["c"];
+            JSON const& c_json = (*a_chain_it)["c"];
             for (auto c_it = c_json.begin();
                     c_it != c_json.end();
                     ++c_it) {
-                const size_t mod_b_id = name_id_map[c_it.key()];
+                size_t const mod_b_id = name_id_map[c_it.key()];
                 ProtoModule* const mod_b = nf_mod_list.at(mod_b_id);
 
-                const JSON& b_chains_json = (*c_it);
+                JSON const& b_chains_json = (*c_it);
                 for (auto b_chain_it = b_chains_json.begin();
                         b_chain_it != b_chains_json.end();
                         ++b_chain_it) {
-                    const size_t tx_id = (*b_chain_it).get<size_t>();
+                    size_t const tx_id = (*b_chain_it).get<size_t>();
                     NICE_PANIC(tx_id >= xdb["n_to_c_tx"].size(),
                                ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
                                 "\tEither xdb.json is corrupted or "
                                 "there is an error in dbgen.py.\n"));
 
-                    const JSON& tx_json = xdb["n_to_c_tx"][tx_id];
+                    JSON const& tx_json = xdb["n_to_c_tx"][tx_id];
                     ProtoModule::create_proto_link_pair(
                         tx_json,
                         mod_a,

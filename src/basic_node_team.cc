@@ -96,6 +96,10 @@ struct BasicNodeTeam::CrossPoint {
 };
 
 /* accessors */
+BasicNodeTeam* BasicNodeTeam::clone_impl() const {
+    return new BasicNodeTeam(*this);
+}
+
 Crc32 BasicNodeTeam::calc_checksum() const {
     /*
      * We want the same checksum for two node teams that consist of the same
@@ -129,7 +133,7 @@ Crc32 BasicNodeTeam::calc_checksum() const {
     return crc;
 }
 
-float BasicNodeTeam::calc_score(WorkArea const* wa) const {
+float BasicNodeTeam::calc_score() const {
     /*
      * In a BasicNodeTeam there are either 0 or 2 tips at any given time. The
      * nodes network is thus a simple path. We walk the path to collect the 3D
@@ -158,7 +162,7 @@ float BasicNodeTeam::calc_score(WorkArea const* wa) const {
               string_format("points.size()=%lu, size()=%lu\n",
                             points.size(), this->size()));
 
-        float const new_score = kabsch::score(points, wa);
+        float const new_score = kabsch::score(points, work_area_);
         score = new_score < score ? new_score : score;
     }
 
@@ -212,7 +216,7 @@ Node* BasicNodeTeam::nip_tip(
      */
 
     // Verify tip node
-    const size_t num_links = tip_node->links().size();
+    size_t const num_links = tip_node->links().size();
     NICE_PANIC(num_links != 1);
 
     Node* new_tip = nullptr;
@@ -419,7 +423,7 @@ bool BasicNodeTeam::erode_mutate() {
             next_loop = random::get_dice_0to1() <= p;
 
             // Verify tip node
-            const size_t num_links = tip_node->links().size();
+            size_t const num_links = tip_node->links().size();
             NICE_PANIC(num_links != 1);
 
             Node* new_tip = nullptr;
@@ -775,20 +779,20 @@ bool BasicNodeTeam::swap_mutate() {
 }
 
 bool BasicNodeTeam::cross_mutate(
-    NodeTeam const* father) {
+    NodeTeam const& father) {
     bool mutate_success = false;
 
 #ifndef NO_CROSS
     if (not free_chains_.empty() and
-            not father->free_chains().empty()) {
+            not father.free_chains().empty()) {
         // First collect arrows from both sides
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
         auto m_arrows = BasicNodeGenerator::collect_arrows(
                             free_chains_[0].node);
-        DEBUG(father->free_chains().size() != 2);
+        DEBUG(father.free_chains().size() != 2);
         auto f_arrows = BasicNodeGenerator::collect_arrows(
-                            father->free_chains()[0].node);
+                            father.free_chains()[0].node);
 
         // Walk through all link pairs to collect cross points.
         Vector<CrossPoint> cross_points;
@@ -864,7 +868,7 @@ bool BasicNodeTeam::regenerate() {
     }
 
     FreeChain free_chain_a = free_chains_.pick_random();
-    while (size() < Candidate::MAX_LEN) {
+    while (size() < work_area_.target_size()) {
         grow_tip(free_chain_a);
 
         // Pick next tip chain
@@ -884,53 +888,12 @@ bool BasicNodeTeam::randomize_mutate() {
 
 
 /* public */
-/* ctors */
-BasicNodeTeam::BasicNodeTeam(BasicNodeTeam const& other) {
-    deep_copy_from(&other);
-}
-
-BasicNodeTeam* BasicNodeTeam::clone() const {
-    return new BasicNodeTeam(*this);
-}
-
 /* modifiers */
-void BasicNodeTeam::deep_copy_from(
-    NodeTeam const* other) {
-    if (this != other) {
-        disperse();
-
-        // Clone nodes (heap) and create address mapping
-        std::vector<Node *> new_nodes;
-        NodeAddrMap addr_map; // old addr -> new addr
-
-        for (auto node_ptr : other->nodes()) {
-            new_nodes.push_back(node_ptr->clone());
-            addr_map[node_ptr] = new_nodes.back();
-        }
-
-        free_chains_ = other->free_chains();
-
-        // Fix pointer addresses and assign to my own nodes
-        for (auto node_ptr : new_nodes) {
-            node_ptr->update_link_ptrs(addr_map);
-            nodes_.push_back(node_ptr);
-        }
-
-        for (auto& fc : free_chains_) {
-            fc.node = addr_map.at(fc.node);
-        }
-
-        checksum_ = other->checksum();
-        score_ = other->score();
-    }
-}
-
 MutationMode BasicNodeTeam::mutate_and_score(
-    NodeTeam const* mother,
-    NodeTeam const* father,
-    WorkArea const* wa) {
+    NodeTeam const& mother,
+    NodeTeam const& father) {
     // Inherit from mother
-    deep_copy_from(mother);
+    NodeTeam::operator=(mother);
 
     MutationModeList modes = gen_mutation_mode_list();
 
@@ -973,7 +936,7 @@ MutationMode BasicNodeTeam::mutate_and_score(
     checksum_ = calc_checksum();
 
     // Update score
-    score_ = calc_score(wa);
+    score_ = calc_score();
 
     return mode;
 }

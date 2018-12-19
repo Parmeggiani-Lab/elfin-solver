@@ -47,35 +47,35 @@ void OutputManager::write_output(
     mkdir_ifn_exists(output_dir_str.c_str());
 
     JSON data;
-    for (auto itr : SPEC.work_areas()) {
+    for (auto& itr : SPEC.work_areas()) {
         std::string const& wa_name = itr.first;
-        WorkArea const* wa = itr.second;
+        auto& wa = itr.second;
         JSON waj;
 
         try {
-            std::vector<std::shared_ptr<Candidate>> const& candidates =
-                    solver.best_sols().at(wa_name);
-            for (size_t i = 0; i < candidates.size(); ++i)
+            std::vector<NodeTeamSP> const& solutions =
+                solver.best_sols().at(wa_name);
+            for (size_t i = 0; i < solutions.size(); ++i)
             {
-                JSON cand_json;
-                std::shared_ptr<Candidate> const cand_ptr = candidates.at(i);
+                JSON sol_json;
+                auto& team = solutions.at(i);
 
-                if (cand_ptr) {
-                    auto node_names = cand_ptr->get_node_names();
-                    cand_json["nodes"] = node_names;
+                if (team) {
+                    auto node_names = team->get_node_names();
+                    sol_json["nodes"] = node_names;
                     wrn("Output format not complete\n");
                     /*
                     TODO:
                     1. Nodes need to express 4x4 tx in result
                     2. Nodes need to be transformed to solution frame
                     */
-                    cand_json["score"] = cand_ptr->score();
+                    sol_json["score"] = team->score();
                 }
                 else {
                     err("Null candidate in work area \"%s\"\n", wa_name.c_str());
                 }
 
-                waj[i] = cand_json;
+                waj[i] = sol_json;
             }
             data[wa_name] = waj;
         }

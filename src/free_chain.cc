@@ -33,7 +33,7 @@ FreeChain::BridgeList FreeChain::find_bridges(
     FreeChain const& dst) const {
     BridgeList res;
     ProtoModule const* dst_mod = dst.node->prototype();
-    const size_t dst_chain_id = dst.chain_id;
+    size_t const dst_chain_id = dst.chain_id;
 
     ProtoTerminus const& ptterm_src =
         node->prototype()->chains().at(chain_id).get_term(term);

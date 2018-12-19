@@ -2,10 +2,10 @@
 #define UI_OBJECT_H_
 
 #include <string>
-#include <unordered_map>
 
 #include "json.h"
 #include "geometry.h"
+#include "map_utils.h"
 
 namespace elfin {
 
@@ -25,7 +25,7 @@ public:
     Transform const& tx() const { return tx_; }
 };
 
-typedef std::unordered_map<std::string, UIObject> UIObjects;
+typedef SPMap<UIObject> UIObjectMap;
 
 }
 

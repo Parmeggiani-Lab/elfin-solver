@@ -22,8 +22,8 @@ ProtoTerminus::~ProtoTerminus() {
 }
 
 /* accessors */
-const ProtoLink& ProtoTerminus::pick_random_link(
-    const TerminusType term) const {
+ProtoLink const& ProtoTerminus::pick_random_link(
+    TerminusType const term) const {
     if (term == TerminusType::N) {
         return *n_roulette_.draw();
     }
@@ -38,7 +38,7 @@ const ProtoLink& ProtoTerminus::pick_random_link(
 
 ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
     ConstProtoModulePtr dst_module,
-    const size_t dst_chain_id) const {
+    size_t const dst_chain_id) const {
     /*
      * Note:
      *  - This assumes that links are identical as long as their module and
@@ -52,7 +52,7 @@ ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
      * In c++20 we could search without creating a new instance, by
      * implementing specialized comparators with custom key type.
      */
-    const ProtoLink key_link(Transform(), dst_module, dst_chain_id);
+    ProtoLink const key_link(Transform(), dst_module, dst_chain_id);
     return link_set_.find(&key_link);
 }
 
@@ -86,7 +86,7 @@ void ProtoTerminus::finalize() {
 
         link_set_.insert(link_ptr);
 
-        const ProtoModule* target_prot = link_ptr->module();
+        ProtoModule const* target_prot = link_ptr->module();
 
         /*
          * Note: assigning 0 probability for ProtoLinks that have more than 2
@@ -111,8 +111,8 @@ void ProtoTerminus::finalize() {
             c_cpd.push_back(0);
         }
         else {
-            const size_t ncount = target_prot->counts().n_links;
-            const size_t ccount = target_prot->counts().c_links;
+            size_t const ncount = target_prot->counts().n_links;
+            size_t const ccount = target_prot->counts().c_links;
 
             if (ncount == 0)
             {

@@ -32,30 +32,25 @@ std::string timing_msg_format =
 #include <ittnotify.h>
 #endif
 
-void
-EvolutionSolver::collect_gen_data(
-    const Population& pop,
-    const size_t gen_id,
-    const double gen_start_time,
+void EvolutionSolver::collect_gen_data(
+    Population const& pop,
+    size_t const gen_id,
+    double const gen_start_time,
     double& tot_gen_time,
     size_t& stagnant_count,
     float& lastgen_best_score,
-    CandidateSharedPtrs& best_sols,
+    NodeTeamSPList& best_sols,
     bool& should_break) {
-    // Stat collection
-    const Candidate* best_candidate =
-        pop.front_buffer()->front();
-    const Candidate* worst_candidate =
-        pop.front_buffer()->back();
 
-    const float gen_best_score =
-        best_candidate->score();
-    const size_t gen_best_len =
-        best_candidate->size();
-    const float gen_worst_score =
-        worst_candidate->score();
-    const double gen_time =
-        ((get_timestamp_us() - gen_start_time) / 1e3);
+    // Stat collection
+    auto& best_team = pop.front_buffer()->front();
+    auto& worst_team = pop.front_buffer()->back();
+
+    float const gen_best_score = best_team->score();
+    size_t const gen_best_len = best_team->size();
+    float const gen_worst_score = worst_team->score();
+    double const gen_time =
+        (get_timestamp_us() - gen_start_time) / 1e3;
 
     tot_gen_time += gen_time;
 
@@ -67,7 +62,7 @@ EvolutionSolver::collect_gen_data(
         gen_worst_score,
         gen_time);
 
-    // Compute stagnancy& check inverted scores
+    // Compute stagnancy & check inverted scores
     if (float_approximates(gen_best_score, lastgen_best_score)) {
         stagnant_count++;
     }
@@ -83,7 +78,7 @@ EvolutionSolver::collect_gen_data(
     lastgen_best_score = gen_best_score;
 
     // Print timing stats
-    const size_t n_gens = gen_id + 1;
+    size_t const n_gens = gen_id + 1;
     msg(timing_msg_format.c_str(),
         (double) GA_TIMES.evolve_time / n_gens,
         (double) GA_TIMES.score_time / n_gens,
@@ -92,11 +87,9 @@ EvolutionSolver::collect_gen_data(
         (double) tot_gen_time / n_gens);
 
     // update best sols
+    best_sols = NodeTeamSPList();
     for (size_t j = 0; j < OPTIONS.keep_n; j++) {
-        Candidate* best_cand_clone =
-            pop.front_buffer()->at(j)->clone();
-        best_sols[j] =
-            std::shared_ptr<Candidate>(best_cand_clone);
+        best_sols.emplace_back(pop.front_buffer()->at(j)->clone());
         has_result_ |= true;
     }
 
@@ -118,19 +111,20 @@ EvolutionSolver::collect_gen_data(
     msg("Current stagnancy: %d, max: %d\n", stagnant_count, OPTIONS.ga_stop_stagnancy);
 }
 
-void
-EvolutionSolver::print_start_msg(const V3fList& shape) const {
-    for (auto& p : shape)
+void EvolutionSolver::print_start_msg(WorkArea const& wa) const {
+    V3fList const shape = wa.to_points();
+    for (auto& p : shape) {
         dbg("Work Area Point: %s\n", p.to_string().c_str());
+    }
 
     msg("Length guess: < %lu; Spec has %d points\n",
-        Candidate::MAX_LEN,
+        wa.target_size(),
         shape.size());
     msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
 
     // Format big numbers nicely
     std::string pop_size_str;
-    const size_t pop_size = OPTIONS.ga_pop_size;
+    size_t const pop_size = OPTIONS.ga_pop_size;
     if (pop_size >= 1e6) {
         pop_size_str = string_format("%.1fM", (float) (pop_size / 1e6));
     }
@@ -158,8 +152,8 @@ EvolutionSolver::print_start_msg(const V3fList& shape) const {
         max_iters_str.c_str(),
         CUTOFFS.survivors);
 
-    const int n_omp_devices = omp_get_num_devices();
-    const int host_device_id = omp_get_initial_device();
+    int const n_omp_devices = omp_get_num_devices();
+    int const host_device_id = omp_get_initial_device();
     msg("There are %d devices. Host ID=%d; currently using #%d\n", n_omp_devices, host_device_id, OPTIONS.device);
     omp_set_default_device(OPTIONS.device);
 
@@ -172,48 +166,44 @@ EvolutionSolver::print_start_msg(const V3fList& shape) const {
     }
 }
 
-void
-EvolutionSolver::print_end_msg() const {
+void EvolutionSolver::print_end_msg() const {
     msg("EvolutionSolver finished: ");
-    this->print_timing();
+    print_timing();
 }
 
-void
-EvolutionSolver::print_timing() const {
-    const double time_elapsed_in_us = get_timestamp_us() - start_time_in_us_;
-    const uint64_t minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
-    const uint64_t seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
-    const uint64_t milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
+void EvolutionSolver::print_timing() const {
+    double const time_elapsed_in_us = get_timestamp_us() - start_time_in_us_;
+    uint64_t const minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
+    uint64_t const seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
+    uint64_t const milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
     raw("%um %us %ums\n",
         minutes, seconds, milliseconds);
 }
 
-void
-EvolutionSolver::debug_print_pop(
-    const Population& pop,
-    const size_t cutoff) const {
-    const size_t i_max =
+void EvolutionSolver::debug_print_pop(
+    Population const& pop,
+    size_t const cutoff) const {
+    size_t const i_max =
         std::min(cutoff, pop.front_buffer()->size());
 
     for (size_t i = 0; i < i_max; ++i)
     {
         auto& c = pop.front_buffer()->at(i);
         wrn("curr  [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
-            i, c, c->checksum(), c->score(), c->size());
+            i, c.get(), c->checksum(), c->score(), c->size());
     }
 
     for (size_t i = 0; i < i_max; ++i)
     {
         auto& c = pop.back_buffer()->at(i);
         wrn("buff  [#%lu:%p] [cksm:%p] [score:%.2f] [len:%lu]\n",
-            i, c, c->checksum(), c->score(), c->size());
+            i, c.get(), c->checksum(), c->score(), c->size());
     }
 }
 
 /* Public Methods */
 
-void
-EvolutionSolver::run() {
+void EvolutionSolver::run() {
     static bool run_entered = false;
 
     if (run_entered) {
@@ -223,7 +213,7 @@ EvolutionSolver::run() {
     run_entered = true;
 
     start_time_in_us_ = get_timestamp_us();
-    for (auto itr : SPEC.work_areas()) {
+    for (auto& itr : SPEC.work_areas()) {
 
         // if this was a complex work area, we need to break it down to
         // multiple simple ones by first choosing hubs and their orientations.
@@ -231,7 +221,7 @@ EvolutionSolver::run() {
         TODO: Break complex work area
         */
         std::string const wa_name = itr.first;
-        WorkArea const* wa = itr.second;
+        auto& wa = itr.second;
         if (wa->type() != WorkType::FREE) {
             std::ostringstream ss;
             ss << "Skipping work_area: ";
@@ -240,13 +230,9 @@ EvolutionSolver::run() {
             continue;
         }
 
-        Population population = Population(wa);
+        Population population = Population(*wa);
 
-        V3fList const shape = itr.second->to_points();
-        this->print_start_msg(shape);
-
-        best_sols_[wa_name] = CandidateSharedPtrs();
-        best_sols_[wa_name].resize(OPTIONS.keep_n);
+        print_start_msg(*wa);
 
         double tot_gen_time = 0.0f;
         size_t stagnant_count = 0;
@@ -254,7 +240,7 @@ EvolutionSolver::run() {
 
         if (!OPTIONS.dry_run) {
             for (size_t gen_id = 0; gen_id < OPTIONS.ga_iters; gen_id++) {
-                const double gen_start_time = get_timestamp_us();
+                double const gen_start_time = get_timestamp_us();
 
                 wrn("Before evolve\n");
                 debug_print_pop(population);
@@ -290,7 +276,7 @@ EvolutionSolver::run() {
         }
     }
 
-    this->print_end_msg();
+    print_end_msg();
 }
 
 } // namespace elfin

@@ -2,8 +2,6 @@
 
 #include <sstream>
 
-#include "candidate.h"
-
 #define FREE_CHAIN_VM_RESERVE_SIZE 16
 
 namespace elfin {
@@ -31,6 +29,18 @@ bool NodeTeam::collides(
     }
 
     return false;
+}
+
+void NodeTeam::check_work_area(NodeTeam const& other) const {
+    NICE_PANIC(
+        &work_area_ != &other.work_area_,
+        string_format(
+            "Trying to move NodeTeam of "
+            "different work area: %s(%p) and %s(%p)\n",
+            work_area_.name().c_str(),
+            &work_area_,
+            other.work_area_.name().c_str(),
+            &other.work_area_));
 }
 
 /* modifiers */
@@ -76,13 +86,20 @@ void NodeTeam::remove_free_chains(Node* node) {
 
 /* public */
 /* ctors */
-NodeTeam::NodeTeam() {
-    nodes_.reserve(Candidate::MAX_LEN);
+NodeTeam::NodeTeam(WorkArea const& work_area) :
+    work_area_(work_area) {
+    nodes_.reserve(work_area.target_size());
     free_chains_.reserve(FREE_CHAIN_VM_RESERVE_SIZE);
 }
 
-NodeTeam::NodeTeam(NodeTeam && other) {
-    *this = std::move(other); // Call operator=(T&&)
+NodeTeam::NodeTeam(NodeTeam const& other) :
+    NodeTeam(other.work_area_) {
+    *this = other; // Calls operator=(T const&)
+}
+
+NodeTeam::NodeTeam(NodeTeam&& other) :
+    NodeTeam(other.work_area_) {
+    *this = std::move(other); // Calls operator=(T&&)
 }
 
 /* dtors */
@@ -91,18 +108,54 @@ NodeTeam::~NodeTeam() {
 }
 
 /* accessors */
+NodeTeamSP NodeTeam::clone() const {
+    return NodeTeamSP(clone_impl());
+}
 
 /* modifiers */
-NodeTeam& NodeTeam::operator=(NodeTeam && other) {
+NodeTeam& NodeTeam::operator=(NodeTeam const& other) {
     if (this != &other) {
         disperse();
 
-        // Take over the already allocated resourcse
-        nodes_ = other.nodes_;
-        free_chains_ = other.free_chains_;
+        // Clone nodes (heap) and create address mapping
+        std::vector<Node *> new_nodes;
+        NodeAddrMap addr_map; // old addr -> new addr
 
-        other.nodes_.clear();
-        other.free_chains_.clear();
+        for (auto node_ptr : other.nodes()) {
+            new_nodes.push_back(node_ptr->clone());
+            addr_map[node_ptr] = new_nodes.back();
+        }
+
+        free_chains_ = other.free_chains();
+
+        // Fix pointer addresses and assign to my own nodes
+        for (auto node_ptr : new_nodes) {
+            node_ptr->update_link_ptrs(addr_map);
+            nodes_.push_back(node_ptr);
+        }
+
+        for (auto& fc : free_chains_) {
+            fc.node = addr_map.at(fc.node);
+        }
+
+        checksum_ = other.checksum_;
+        score_ = other.score_;
+    }
+
+    return *this;
+}
+
+NodeTeam& NodeTeam::operator=(NodeTeam&& other) {
+    if (this != &other) {
+        NICE_PANIC(&work_area_ != &other.work_area_);
+
+        disperse();
+
+        std::swap(nodes_, other.nodes_);
+        std::swap(free_chains_, other.free_chains_);
+
+        std::swap(checksum_, other.checksum_);
+        std::swap(score_, other.score_);
     }
 
     return *this;

@@ -5,6 +5,7 @@
 
 #include "debug_utils.h"
 #include "input_manager.h"
+#include "fixed_area.h"
 
 namespace elfin {
 
@@ -16,22 +17,26 @@ void bad_work_type(WorkType type) {
 
 /* private */
 struct WorkArea::PImpl {
+    /* types */
+    typedef std::vector<std::shared_ptr<UIJoint>> UIJointSPList;
+
     /* data */
     const std::string name;
     WorkType type = WorkType::FREE;
     UIJointMap joints;
-    std::vector<UIJoint *> occupied_joints;
-    std::vector<UIJoint *> hinged_joints;
-    std::vector<UIJoint *> leaf_joints;
+    UIJointSPList occupied_joints;
+    UIJointSPList leaf_joints;
     size_t target_size = 0;
+    V3fList points;
 
     PImpl() = delete;
     PImpl(std::string const& _name) : name(_name) {}
 
     /* accessors */
-    WorkType _determine_type(size_t const n_branches) const {
+    WorkType _determine_type(
+        size_t const num_branch_points) const {
         WorkType res = WorkType::NONE;
-        if (n_branches == 0) {
+        if (num_branch_points == 0) {
             switch (occupied_joints.size()) {
             case 0: {
                 res = WorkType::FREE;
@@ -84,8 +89,8 @@ struct WorkArea::PImpl {
                                  "exactly 2 in work_area: %s\n",
                                  name.c_str()));
 
-        UIJoint const* prev = nullptr;
-        UIJoint const* j = leaf_joints.at(0);
+        std::shared_ptr<UIJoint> prev = nullptr;
+        std::shared_ptr<UIJoint> j = leaf_joints.at(0);
         while (1) {
             res.emplace_back(j->tx().collapsed());
 
@@ -93,15 +98,15 @@ struct WorkArea::PImpl {
                 break;
             }
 
-            std::string next_name = j->neighbours().at(0);
+            std::string next_name = j->neighbors().at(0);
 
-            NICE_PANIC(j->neighbours().size() > 2);
+            NICE_PANIC(j->neighbors().size() > 2);
             if (prev and next_name == prev->name()) {
-                next_name = j->neighbours().at(1);
+                next_name = j->neighbors().at(1);
             }
 
             prev = j;
-            j = &joints.at(next_name);
+            j = joints.at(next_name);
         }
 
         return res;
@@ -110,49 +115,45 @@ struct WorkArea::PImpl {
     /* modifiers */
     void reset() {
         type = WorkType::FREE;
-        joints = UIJointMap();
-        occupied_joints = std::vector<UIJoint *>();
-        hinged_joints = std::vector<UIJoint *>();
-        leaf_joints = std::vector<UIJoint *>();
+        joints.clear();
+        leaf_joints.clear();
         target_size = 0;
     }
 
-    void parse_from_json(const JSON& j) {
+    void parse_from_json(
+        JSON const& j,
+        FixedAreaMap const& fam) {
         /*
          * Parse joints from JSON and collect special joints.
          */
         reset();
 
-        size_t n_branches = 0;
+        size_t num_branch_points = 0;
         for (auto it = j.begin(); it != j.end(); ++it) {
-            const JSON& jt_json = *it;
-            const std::string& joint_name = it.key();
-            auto j_itr = joints.emplace(joint_name, UIJoint(jt_json, joint_name));
-            const size_t n_nbs = jt_json["neighbours"].size();
-            n_branches += n_nbs > 2;
+            JSON const& joint_json = *it;
+            std::string const& joint_name = it.key();
 
-            auto& key_val = *j_itr.first;
-            UIJoint* ptr = &(key_val.second);
-            if (jt_json["occupant"] != "") {
-                ptr->occupant_triple_ =
-                    std::make_tuple(
-                        jt_json["occupant_parent"],
-                        jt_json["occupant"],
-                        nullptr);
-                occupied_joints.push_back(ptr);
+            // Create new joint and put it in map
+            joints.emplace(
+                joint_name,
+                std::make_shared<UIJoint>(joint_json, joint_name, fam));
+            auto& joint = joints.at(joint_name); // shared_ptr
+
+            // Count branch points
+            size_t const num_neighbors = joint->neighbors().size();
+            NICE_PANIC(num_neighbors != joint_json["neighbors"].size());
+
+            num_branch_points += num_neighbors > 2;
+            if (num_neighbors == 1) {
+                leaf_joints.push_back(joint);
             }
 
-            if (jt_json["hinge"] != "") {
-                ptr->hinge_tuple_ = std::make_tuple(jt_json["hinge"], nullptr);
-                hinged_joints.push_back(ptr);
-            }
-
-            if (n_nbs == 1) {
-                leaf_joints.push_back(ptr);
+            if (joint->occupant().name != "") {
+                occupied_joints.push_back(joint);
             }
         }
 
-        type = _determine_type(n_branches);
+        type = _determine_type(num_branch_points);
         target_size = _determine_target_size();
     }
 };
@@ -160,10 +161,12 @@ struct WorkArea::PImpl {
 /* public */
 /* ctors */
 WorkArea::WorkArea(
-    const JSON& j,
-    const std::string& name) {
+    JSON const& j,
+    std::string const& name,
+    FixedAreaMap const& fam) {
     p_impl_ = std::make_unique<PImpl>(name);
-    p_impl_->parse_from_json(j);
+    p_impl_->parse_from_json(j, fam);
+    p_impl_->points = p_impl_->to_points(); // Cache it
 }
 
 /* dtors */
@@ -183,16 +186,12 @@ UIJointMap const& WorkArea::joints() const {
     return p_impl_->joints;
 }
 
-std::vector<UIJoint *> const& WorkArea::occupied_joints() const {
-    return p_impl_->occupied_joints;
-}
-
-std::vector<UIJoint *> const& WorkArea::hinged_joints() const {
-    return p_impl_->hinged_joints;
+size_t WorkArea::target_size() const {
+    return p_impl_->target_size;
 }
 
 V3fList WorkArea::to_points() const {
-    return p_impl_->to_points();
+    return p_impl_->points;
 }
 
 }  /* elfin */

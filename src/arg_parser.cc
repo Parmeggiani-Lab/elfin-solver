@@ -10,12 +10,12 @@ namespace elfin {
 /* private */
 
 /* accessors */
-const ArgBundle* ArgParser::match_arg_bundle(const char *arg_in) const {
+ArgBundle const* ArgParser::match_arg_bundle(char const* arg_in) const {
     // anything shorter than 2 chars cannot match
     if (arg_in[0] == '-')
         arg_in++; // to skip "-"
 
-    for (const auto& ab : argb_) {
+    for (auto const& ab : argb_) {
         if (!ab.short_form.compare(arg_in) or
                 (arg_in[0] == '-' and !ab.long_form.compare((char *) (arg_in + 1)))
            ) {
@@ -76,7 +76,7 @@ void ArgParser::check_options() const {
 }
 
 /* modifiers */
-void ArgParser::parse_options(const int argc, char const *argv[]) {
+void ArgParser::parse_options(int const argc, char const *argv[]) {
     for (size_t i = 1; i < argc; ++i) {
         // iterate through argument bundle to match argument
         auto arg = argv[i];
@@ -124,7 +124,7 @@ ARG_PARSER_CALLBACK(parse_config) {
                string_format("Settings file does not exist: \"%s\"\n",
                              options_.config_file.c_str()));
 
-    const JSON j = parse_json(options_.config_file);
+    JSON const j = parse_json(options_.config_file);
 
     for (auto it = j.begin(); it != j.end(); ++it) {
         const std::string opt_name = "--" + it.key();
@@ -143,7 +143,7 @@ ARG_PARSER_CALLBACK(set_input_file) {
 
 /* printers */
 void ArgParser::print_args() const {
-    for (const auto& ab : argb_) {
+    for (auto const& ab : argb_) {
         set_leading_spaces(8);
         raw("%s, %s\n", ab.short_form.c_str(), ab.long_form.c_str());
         set_leading_spaces(12);
@@ -154,7 +154,7 @@ void ArgParser::print_args() const {
 
 /* public */
 /* ctors */
-ArgParser::ArgParser(const int argc, char const *argv[]) {
+ArgParser::ArgParser(int const argc, char const *argv[]) {
     parse_options(argc, argv);
     check_options();
 }

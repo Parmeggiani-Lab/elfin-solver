@@ -5,16 +5,16 @@
 
 namespace elfin {
 
-const Options& OPTIONS =
+Options const& OPTIONS =
     InputManager::options();
-const Cutoffs& CUTOFFS =
+Cutoffs const& CUTOFFS =
     InputManager::cutoffs();
-const Database& XDB =
+Database const& XDB =
     InputManager::xdb();
-const Spec& SPEC =
+Spec const& SPEC =
     InputManager::spec();
 
-const GATimes& GA_TIMES =
+GATimes const& GA_TIMES =
     InputManager::ga_times();
 
 /* protected */
@@ -36,7 +36,7 @@ void InputManager::setup_cutoffs() {
 }
 
 /* public */
-void InputManager::setup(const int argc, const char ** argv) {
+void InputManager::setup(int const argc, const char ** argv) {
     // Parse arguments into options struct
     instance().options_ = ArgParser(argc, argv).get_options();
 
@@ -73,8 +73,8 @@ void InputManager::test(size_t& tests, size_t& errors) {
     size_t const argc = sizeof(argv) / sizeof(argv[0]);
     InputManager::setup(argc, argv);
 
-    for (auto itr : SPEC.work_areas()) {
-        WorkArea const* wa = itr.second;
+    for (auto& itr : SPEC.work_areas()) {
+        auto& wa = itr.second;
         V3fList points = wa->to_points();
     }
 }

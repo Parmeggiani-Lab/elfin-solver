@@ -14,8 +14,9 @@ private:
     struct CrossPoint;
 
     /* accessors */
+    virtual BasicNodeTeam* clone_impl() const;
     Crc32 calc_checksum() const;
-    float calc_score(WorkArea const* wa) const;
+    float calc_score() const;
 
     /*modifiers */
     void fix_limb_transforms(Link const& arrow);
@@ -34,26 +35,21 @@ private:
     bool insert_mutate();
     bool swap_mutate();
     bool cross_mutate(
-        NodeTeam const* father);
+        NodeTeam const& father);
     bool regenerate();
     bool randomize_mutate();
 
 public:
     /* ctors */
     using NodeTeam::NodeTeam;
-    BasicNodeTeam() : NodeTeam() {}
-    BasicNodeTeam(BasicNodeTeam const& other);
-    virtual BasicNodeTeam* clone() const;
 
     /* dtors */
     virtual ~BasicNodeTeam() {}
 
     /* modifiers */
-    virtual void deep_copy_from(NodeTeam const* other);
     virtual MutationMode mutate_and_score(
-        NodeTeam const* mother,
-        NodeTeam const* father,
-        WorkArea const* wa);
+        NodeTeam const& mother,
+        NodeTeam const& father);
     virtual void randomize() { randomize_mutate(); }
 
     /* printers */

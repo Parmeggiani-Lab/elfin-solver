@@ -4,15 +4,14 @@
 #include <memory>
 
 #include "population.h"
+#include "work_area.h"
 
 #define DEBUG_PRINT_POP 4
 
-namespace elfin
-{
+namespace elfin {
 
-typedef std::vector<std::shared_ptr<Candidate>> CandidateSharedPtrs;
-typedef std::unordered_map<std::string,
-        CandidateSharedPtrs> SolutionMap;
+typedef std::vector<NodeTeamSP> NodeTeamSPList;
+typedef std::unordered_map <std::string, NodeTeamSPList > SolutionMap;
 
 class EvolutionSolver {
 protected:
@@ -29,11 +28,11 @@ protected:
 	    double& tot_gen_time,
 	    size_t& stagnant_count,
 	    float& lastgen_best_score,
-	    CandidateSharedPtrs& best_sols,
+	    NodeTeamSPList& best_sols,
 	    bool& should_break);
 
 	/* printers */
-	void print_start_msg(V3fList const& shape) const;
+	void print_start_msg(WorkArea const& wa) const;
 	void print_end_msg() const;
 	void print_timing() const;
 	void debug_print_pop(
@@ -41,10 +40,6 @@ protected:
 	    size_t const cutoff = DEBUG_PRINT_POP) const;
 
 public:
-	/* ctors */
-
-	/* dtors */
-
 	/* accessors */
 	bool has_result() const { return has_result_; }
 	SolutionMap const& best_sols() const { return best_sols_; }

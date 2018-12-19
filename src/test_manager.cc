@@ -39,14 +39,14 @@ size_t TestManager::test_integration() const {
     size_t total_tests = 0;
 
 //     for (auto itr : SPEC.work_areas()) {
-//         const WorkArea& wa = itr.second;
+//         WorkArea const& wa = itr.second;
 //         V3fList moved_spec = wa.to_points();
 
 //         // It seems that Kabsch cannot handle very large
 //         // translations, but in the scale we're working
 //         // at it should rarely, if ever, go beyond
 //         // one thousand Angstroms
-//         const float tx_ele[4][4] = {
+//         float const tx_ele[4][4] = {
 //             1.0f, .0f, .0f, -39.0f,
 //             .0f, -0.5177697998f, 0.855519979f, 999.3413f,
 //             .0f, -0.855519979f, -0.5177697998f, -400.11f,
@@ -60,7 +60,7 @@ size_t TestManager::test_integration() const {
 //         }
 
 //         // Test scoring a transformed version of spec
-//         const float trx_score = kabsch::score(moved_spec, wa.to_points());
+//         float const trx_score = kabsch::score(moved_spec, wa.to_points());
 //         total_tests++;
 //         if (!float_approximates(trx_score, 0)) {
 //             total_errors++;
@@ -68,14 +68,14 @@ size_t TestManager::test_integration() const {
 //         }
 
 //         // Test randomiser
-//         const int N = 10;
-//         const int rand_trials = 50000000;
-//         const int expect_avg = rand_trials / N;
-//         const float rand_dev_tolerance = 0.05f * expect_avg; // 5% deviation
+//         int const N = 10;
+//         int const rand_trials = 50000000;
+//         int const expect_avg = rand_trials / N;
+//         float const rand_dev_tolerance = 0.05f * expect_avg; // 5% deviation
 
 //         int rand_count[N] = {0};
 //         for (size_t i = 0; i < rand_trials; i++) {
-//             const size_t dice = random::get_dice(N);
+//             size_t const dice = random::get_dice(N);
 //             total_tests++;
 //             if (dice >= N) {
 //                 total_errors++;
@@ -88,7 +88,7 @@ size_t TestManager::test_integration() const {
 //         }
 
 //         for (size_t i = 0; i < N; i++) {
-//             const float rand_dev = static_cast<float>(
+//             float const rand_dev = static_cast<float>(
 //                                        abs(rand_count[i] - expect_avg) / (expect_avg));
 //             total_tests++;
 //             if (rand_dev > rand_dev_tolerance) {

@@ -22,7 +22,7 @@ void Elfin::crash_dump() const {
 }
 
 /* handlers */
-void Elfin::interrupt_handler(const int signal) {
+void Elfin::interrupt_handler(int const signal) {
     if (interrupt_caught) {
         raw("\n\n");
         die("Caught interrupt signal (second). Aborting NOW.\n");

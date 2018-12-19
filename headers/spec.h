@@ -15,21 +15,14 @@ protected:
     WorkAreaMap work_areas_;
     FixedAreaMap fixed_areas_;
 
-    /* modifiers */
-    void map_joints();
-    void release_resources();
-
 public:
-    /* data */
-    static char const* const pg_networks_name;
-    static char const* const networks_name;
-
     /* ctors */
     Spec() {}
     Spec(Spec const& other) = delete;
+    Spec(Spec&& other) = delete;
 
     /* dtors */
-    virtual ~Spec();
+    virtual ~Spec() {}
 
     /* accessors */
     WorkAreaMap const& work_areas() const {
@@ -38,6 +31,7 @@ public:
 
     /* modifiers */
     Spec& operator=(Spec const& other) = delete;
+    Spec& operator=(Spec&& other) = delete;
     void parse_from_json(JSON const& j);
 };
 

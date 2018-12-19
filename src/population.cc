@@ -6,45 +6,40 @@
 #include "input_manager.h"
 #include "mutation_modes.h"
 #include "parallel_utils.h"
+#include "basic_node_team.h"
 
 namespace elfin {
 
 /* protected */
-/* modifiers */
-void Population::release_resources() {
-    delete front_buffer_;
-    delete back_buffer_;
-}
-
-// static
-void Population::copy_buffer(const Buffer* src, Buffer* dst) {
-    NICE_PANIC(src == dst);
-
-    dst->clear();
-
-    const size_t src_size = src->size();
-    dst->resize(src_size);
-
-    OMP_PAR_FOR
-    for (size_t i = 0; i < src_size; i++) {
-        dst->at(i) = src->at(i)->clone();
+NodeTeamSP Population::create_team() const {
+    switch (work_area_.type()) {
+    case WorkType::FREE:
+        return std::make_shared<BasicNodeTeam>(work_area_);
+        break;
+    // case WorkType::ONE_HINGE:
+    //     return std::make_shared<OneHingeNodeTeam>(work_area_);
+    //     break;
+    // case WorkType::TWO_HINGE:
+    //     return std::make_shared<TwoHingeNodeTeam>(work_area_);
+    //     break;
+    default:
+        die("Unimplemented work type: %s\n",
+            WorkTypeToCStr(work_area_.type()));
+        return nullptr; // Suppress no return warning
     }
 }
 
 /* public */
 /* ctors */
-Population::Population(const WorkArea* work_area) :
+Population::Population(WorkArea const& work_area) :
     work_area_(work_area) {
     TIMING_START(init_start_time);
     {
-        const size_t pop_size = OPTIONS.ga_pop_size;
+        size_t const pop_size = OPTIONS.ga_pop_size;
         msg("Initializing population of %u...", pop_size);
 
-        Candidate::setup(*work_area);
-
-        // Initialize for front_buffer_
-        Buffer* new_front_buffer = new Buffer();
-        Buffer* new_back_buffer = new Buffer();
+        NodeTeams* new_front_buffer = &teams[0];
+        NodeTeams* new_back_buffer = &teams[1];
 
         // Must pre allocate for parallel assignment
         new_front_buffer->resize(pop_size);
@@ -52,9 +47,9 @@ Population::Population(const WorkArea* work_area) :
 
         OMP_PAR_FOR
         for (size_t i = 0; i < pop_size; i++) {
-            new_front_buffer->at(i) = new Candidate(work_area_->type());
+            new_front_buffer->at(i) = create_team();
             new_front_buffer->at(i)->randomize();
-            new_back_buffer->at(i) = new Candidate(work_area_->type());
+            new_back_buffer->at(i) = create_team();
         }
 
         front_buffer_ = new_front_buffer;
@@ -66,41 +61,7 @@ Population::Population(const WorkArea* work_area) :
     TIMING_END("init", init_start_time);
 }
 
-Population::Population(const Population& other) {
-    *this = other; // calls operator=(const T&)
-}
-
-Population::Population(Population && other) {
-    *this = other; // calls operator=(T&&)
-}
-
-/* dtors */
-Population::~Population() {
-    release_resources();
-}
-
 /* modifiers */
-Population& Population::operator=(const Population& other) {
-    release_resources();
-    front_buffer_ = new Buffer();
-    copy_buffer(other.back_buffer_, front_buffer_);
-    swap_buffer();
-    front_buffer_ = new Buffer();
-    copy_buffer(other.back_buffer_, front_buffer_);
-    swap_buffer();
-    return *this;
-}
-
-Population& Population::operator=(Population && other) {
-    release_resources();
-    front_buffer_ = other.front_buffer_;
-    other.front_buffer_ = nullptr;
-    back_buffer_ = other.back_buffer_;
-    other.back_buffer_ = nullptr;
-    work_area_ = other.work_area_;
-    return *this;
-}
-
 void Population::evolve() {
     TIMING_START(evolve_start_time);
     {
@@ -109,16 +70,33 @@ void Population::evolve() {
         MutationMode mutation_mode_tally[CUTOFFS.pop_size] = {};
 
         OMP_PAR_FOR
-        for (size_t i = 0; i < CUTOFFS.pop_size; i++) {
-            mutation_mode_tally[i] =
-                front_buffer_->at(i)->mutate_and_score(
-                    i,
-                    back_buffer_,
-                    work_area_);
+        for (size_t rank = 0; rank < CUTOFFS.pop_size; rank++) {
+            MutationMode mode = MutationMode::NONE;
+
+            auto& team = front_buffer_->at(rank);
+            // Rank is 0-indexed, hence <
+            if (rank < CUTOFFS.survivors) {
+                *team = *(back_buffer_->at(rank));
+                mode = MutationMode::NONE;
+            }
+            else {
+                // Replicate mother
+                size_t const mother_id =
+                    random::get_dice(CUTOFFS.survivors); // only elites
+                auto& mother_team = back_buffer_->at(mother_id);
+
+                size_t const father_id =
+                    random::get_dice(CUTOFFS.pop_size); // include all back_buffer_ teams
+                auto& father_team = back_buffer_->at(father_id);
+
+                mode = team->mutate_and_score(*mother_team, *father_team);
+            }
+
+            mutation_mode_tally[rank] = mode;
         }
 
         MutationCounter mc;
-        for (const MutationMode& mode : mutation_mode_tally) {
+        for (MutationMode const& mode : mutation_mode_tally) {
             mc[mode]++;
         }
 
@@ -132,7 +110,7 @@ void Population::evolve() {
         for (MutationMode mode : mutation_modes) {
             mutation_ss << "    " << MutationModeToCStr(mode) << ':';
 
-            const float mode_ratio = 100.f * mc[mode] / CUTOFFS.non_survivors;
+            float const mode_ratio = 100.f * mc[mode] / CUTOFFS.non_survivors;
             mutation_ss << " " << string_format("%.1f", mode_ratio) << "% ";
             mutation_ss << "(" << mc[mode] << "/" << CUTOFFS.non_survivors << ")\n";
         }
@@ -148,9 +126,9 @@ void Population::rank() {
     {
         msg("Ranking population...");
 
-        std::sort(front_buffer_->begin(),
-                  front_buffer_->end(),
-                  Candidate::PtrComparator);
+        std::sort(begin(*front_buffer_),
+                  end(*front_buffer_),
+                  NodeTeam::ScoreCompareSP);
 
         ERASE_LINE();
         msg("Ranking done\n");
@@ -169,34 +147,35 @@ void Population::select() {
     {
         msg("Selecting population...");
 
-        std::unordered_map<Crc32, Candidate *> crc_map;
+        std::unordered_map<Crc32, NodeTeamSP> crc_map;
         size_t unique_count = 0;
 
         // We don't want parallelism here because the low indexes must be
         // prioritized.
-        for (auto cand_ptr : *front_buffer_) {
-            const Crc32 crc = cand_ptr->checksum();
+        for (auto& team : *front_buffer_) {
+            Crc32 const crc = team->checksum();
             if (crc_map.find(crc) == crc_map.end()) {
-                // Record a new candidate
-                crc_map[crc] = cand_ptr->clone();
+                // Record a new team
+                crc_map[crc] = team->clone();
                 unique_count++;
 
-                if (unique_count >= CUTOFFS.survivors) break;
+                if (unique_count >= CUTOFFS.survivors) {
+                    break;
+                }
             }
         }
 
         // Insert map-value-indexed individual back into population
         size_t pop_index = 0;
         for (auto& kv : crc_map) {
-            delete front_buffer_->at(pop_index); // free candidate memory
-            front_buffer_->at(pop_index) = kv.second;
+            front_buffer_->at(pop_index) = std::move(kv.second);
             pop_index++;
         }
 
         // Sort survivors
-        std::sort(front_buffer_->begin(),
-                  front_buffer_->begin() + unique_count,
-                  Candidate::PtrComparator);
+        std::sort(begin(*front_buffer_),
+                  begin(*front_buffer_) + unique_count,
+                  NodeTeam::ScoreCompareSP);
 
         ERASE_LINE();
         msg("Selection done\n");
@@ -206,9 +185,9 @@ void Population::select() {
 }
 
 void Population::swap_buffer() {
-    const Buffer* tmp = back_buffer_;
+    NodeTeams const* tmp = back_buffer_;
     back_buffer_ = front_buffer_;
-    front_buffer_ = const_cast<Buffer *>(tmp);
+    front_buffer_ = const_cast<NodeTeams *>(tmp);
 }
 
 }  /* elfin */

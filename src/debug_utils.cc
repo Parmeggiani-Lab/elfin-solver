@@ -5,10 +5,10 @@
 namespace elfin {
 
 void __debug(
-    const bool result,
+    bool const result,
     const std::string& cond_expr,
-    const char *filename,
-    const int line,
+    char const* filename,
+    int const line,
     const std::string& msg) {
     if (result) {
         raw("\n\n");

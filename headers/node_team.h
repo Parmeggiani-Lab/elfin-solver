@@ -1,7 +1,7 @@
 #ifndef NODE_TEAM_H_
 #define NODE_TEAM_H_
 
-#include <deque>
+#include <memory>
 
 #include "node.h"
 #include "work_area.h"
@@ -19,24 +19,27 @@ namespace elfin {
 
 GEN_ENUM_AND_STRING(PointMutateMode, PointMutateModeNames, FOREACH_PMM);
 
+class NodeTeam;
+typedef std::shared_ptr<NodeTeam> NodeTeamSP;
+
 class NodeTeam {
 protected:
     /* types */
     typedef VectorMap<Node *> Nodes;
 
     /* data */
+    WorkArea const& work_area_;
     Nodes nodes_;
     FreeChainList free_chains_;
     Crc32 checksum_ = 0x0000;
     float score_ = INFINITY;
-    // checksum_ is to be calculated automatically after mutate()
-
-    /* ctors */
 
     /* accessors */
     bool collides(
         Vector3f const& new_com,
         float const mod_radius) const;
+    void check_work_area(NodeTeam const& other) const;
+    virtual NodeTeam * clone_impl() const = 0;
 
     /* modifiers */
     void disperse();
@@ -48,30 +51,33 @@ protected:
 
 public:
     /* ctors */
-    NodeTeam();
+    NodeTeam(WorkArea const& work_area);
+    NodeTeam(NodeTeam const& other);
     NodeTeam(NodeTeam && other);
-    NodeTeam(NodeTeam const& other) = delete;
-    virtual NodeTeam* clone() const = 0;
 
     /* dtors */
     virtual ~NodeTeam();
 
     /* accessors */
+    NodeTeamSP clone() const;
     Nodes const& nodes() const { return nodes_; }
     FreeChainList const& free_chains() const { return free_chains_; }
     size_t size() const { return nodes_.size(); }
     float score() const { return score_; }
     Crc32 checksum() const { return checksum_; }
+    static bool ScoreCompareSP(
+        NodeTeamSP const& lhs,
+        NodeTeamSP const& rhs) {
+        return lhs->score_ < rhs->score_;
+    }
 
     /* modifiers */
-    NodeTeam& operator=(NodeTeam const& other) = delete;
+    NodeTeam& operator=(NodeTeam const& other);
     NodeTeam& operator=(NodeTeam && other);
 
-    virtual void deep_copy_from(NodeTeam const* other) = 0;
     virtual MutationMode mutate_and_score(
-        NodeTeam const* mother,
-        NodeTeam const* father,
-        WorkArea const* wa) = 0;
+        NodeTeam const& mother,
+        NodeTeam const& father) = 0;
     virtual void randomize() = 0;
 
     /* printers */

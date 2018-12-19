@@ -40,7 +40,7 @@ Matrix<double> V3fList_to_vectors(V3fList const& pts) {
 
 void resample(V3fList& ref,
               V3fList& pts) {
-	const size_t N = ref.size();
+	size_t const N = ref.size();
 
 	// Compute  shape total lengths
 	float ref_tot_len = 0.0f;
@@ -60,16 +60,16 @@ void resample(V3fList& ref,
 	float ref_prop = 0.0f, pts_prop = 0.0f;
 	int mpi = 1;
 	for (size_t i = 1; i < pts.size(); i++) {
-		const Vector3f& base_fp_point = pts.at(i - 1);
-		const Vector3f& next_fp_point = pts.at(i);
-		const float base_fp_proportion = pts_prop;
-		const float fp_segment = next_fp_point.dist_to(base_fp_point)
+		Vector3f const& base_fp_point = pts.at(i - 1);
+		Vector3f const& next_fp_point = pts.at(i);
+		float const base_fp_proportion = pts_prop;
+		float const fp_segment = next_fp_point.dist_to(base_fp_point)
 		                         / pts_tot_len;
-		const Vector3f vec = next_fp_point - base_fp_point;
+		Vector3f const vec = next_fp_point - base_fp_point;
 
 		pts_prop += fp_segment;
 		while (ref_prop <= pts_prop && mpi < N) {
-			const float mpSegment =
+			float const mpSegment =
 			    ref.at(mpi).dist_to(ref.at(mpi - 1))
 			    / ref_tot_len;
 
@@ -77,7 +77,7 @@ void resample(V3fList& ref,
 				break;
 			ref_prop += mpSegment;
 
-			const float s = (ref_prop - base_fp_proportion)
+			float const s = (ref_prop - base_fp_proportion)
 			                / fp_segment;
 			resampled.push_back(base_fp_point + (vec * s));
 
@@ -412,8 +412,8 @@ bool rosetta_kabsch(
 
 // A Wrapper to call the unreadable Rosetta version
 bool kabsch(
-    const V3fList& mobile,
-    const V3fList& ref,
+    V3fList const& mobile,
+    V3fList const& ref,
     Matrix<double> & rot,
     Vector3f& tran,
     double& rms,
@@ -429,16 +429,16 @@ bool kabsch(
 		if (row.size() < 3)
 			row.resize(3);
 
-	const size_t n = mobile.size();
+	size_t const n = mobile.size();
 
-	const bool ret_val = rosetta_kabsch(xx, yy, n, mode, &rms, tt, rot);
+	bool const ret_val = rosetta_kabsch(xx, yy, n, mode, &rms, tt, rot);
 	tran = Vector3f(tt);
 
 	return ret_val;
 }
 
-float score(const V3fList& points, const WorkArea* wa) {
-	return score(points, wa->to_points());
+float score(V3fList const& points, WorkArea const& wa) {
+	return score(points, wa.to_points());
 }
 
 float score(V3fList mobile, V3fList ref) {
@@ -456,7 +456,7 @@ float score(V3fList mobile, V3fList ref) {
 	Vector3f tran;
 	double rms;
 
-	const bool ret_val = kabsch(mobile, ref, rot, tran, rms, 0);
+	bool const ret_val = kabsch(mobile, ref, rot, tran, rms, 0);
 
 	NICE_PANIC(!ret_val, "Kabsch failed!\n");
 
@@ -466,7 +466,7 @@ float score(V3fList mobile, V3fList ref) {
 void test(size_t& errors, size_t& tests) {
 	msg("Testing kabsch\n");
 
-	const Vector3f arr_a[] = {
+	Vector3f const arr_a[] = {
 		Vector3f(4.7008892286345, 42.938597096873, 14.4318130193692),
 		Vector3f(-20.3679194392227, 27.5712678608402, -12.1390617339732),
 		Vector3f(24.4692807074156, -1.32083675968276, 31.1580458282477),
@@ -479,7 +479,7 @@ void test(size_t& errors, size_t& tests) {
 		Vector3f(-41.8874231134215, 29.4831416883453, 8.70447045314168),
 	};
 
-	const Vector3f arr_b[] = {
+	Vector3f const arr_b[] = {
 		Vector3f(-29.2257707266972, -18.8897713349587, 9.48960740086143),
 		Vector3f(-19.8753669720509, 42.3379642103244, -23.7788252219155),
 		Vector3f(-2.90766514824093, -6.9792608670416, 10.2843089382083),
@@ -492,13 +492,13 @@ void test(size_t& errors, size_t& tests) {
 		Vector3f(-6.43013158961009, -9.12801538874479, 0.785828466111815),
 	};
 
-	const Vector3f actual_r[] = {
+	Vector3f const actual_r[] = {
 		Vector3f( 0.523673403299203, -0.276948392922051, -0.805646171923458),
 		Vector3f(-0.793788382691122, -0.501965361762521, -0.343410511043611),
 		Vector3f(-0.309299482996081, 0.819347522879342, -0.482704326238996),
 	};
 
-	const Vector3f actual_tran(-1.08234396236629,
+	Vector3f const actual_tran(-1.08234396236629,
 	                           5.08395199432057,
 	                           -13.0170407784248);
 
@@ -511,7 +511,7 @@ void test(size_t& errors, size_t& tests) {
 	double rms;
 
 	/* kabsch() call should return true */
-	const bool ret_val = kabsch(A, B, rot, tran, rms);
+	bool const ret_val = kabsch(A, B, rot, tran, rms);
 	tests++;
 	if (not ret_val) {
 		errors++;

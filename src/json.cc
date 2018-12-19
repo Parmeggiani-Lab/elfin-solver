@@ -8,7 +8,7 @@
 
 namespace elfin {
 
-std::string json_to_str(const JSON& j) {
+std::string json_to_str(JSON const& j) {
     std::ostringstream ss;
     if (j.is_string()) {
         ss << j.get<std::string>();

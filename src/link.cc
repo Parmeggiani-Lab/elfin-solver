@@ -7,9 +7,9 @@ namespace elfin {
 /* public */
 /* ctors */
 Link::Link(
-    const FreeChain& src_chain,
-    const ProtoLink* prototype,
-    const FreeChain& dst_chain) :
+    FreeChain const& src_chain,
+    ProtoLink const* prototype,
+    FreeChain const& dst_chain) :
     src_chain_(src_chain),
     prototype_(prototype),
     dst_chain_(dst_chain) {
@@ -17,13 +17,13 @@ Link::Link(
 }
 
 /* accessors */
-bool Link::operator==(const Link& other) const {
+bool Link::operator==(Link const& other) const {
     return src_chain_ == other.src_chain_ and
            dst_chain_ == other.dst_chain_;
 }
 
 /* modifiers */
-void Link::update_node_ptrs(const NodeAddrMap& nam) {
+void Link::update_node_ptrs(NodeAddrMap const& nam) {
     src_chain_.node = nam.at(src_chain_.node);
     dst_chain_.node = nam.at(dst_chain_.node);
 }

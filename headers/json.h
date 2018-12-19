@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "nlohmann_json.h"
+#include "nlohmann_json/nlohmann_json.h"
 
 namespace elfin {
 

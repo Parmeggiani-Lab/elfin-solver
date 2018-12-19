@@ -7,6 +7,7 @@
 
 #include "ui_joint.h"
 #include "geometry.h"
+#include "fixed_area.h"
 
 namespace elfin {
 
@@ -33,31 +34,27 @@ void bad_work_type(WorkType type);
 class WorkArea {
 public:
     /* ctors */
-    WorkArea(JSON const& j, const std::string& name);
-    // WorkArea() = delete;
-    // WorkArea(WorkArea const& other) = delete;
-    // WorkArea(WorkArea&& other) = delete;
+    WorkArea(
+        JSON const& j,
+        std::string const& name,
+        FixedAreaMap const& fam);
 
     /* dtors */
-    ~WorkArea();
+    virtual ~WorkArea();
 
     /* accessors */
-    virtual V3fList to_points() const;
     std::string name() const;
     WorkType type() const;
     UIJointMap const& joints() const;
-    std::vector<UIJoint *> const& occupied_joints() const;
-    std::vector<UIJoint *> const& hinged_joints() const;
-
-    /* modifiers */
-    WorkArea& operator=(WorkArea const& other) = delete;
+    size_t target_size() const;
+    V3fList to_points() const;
 
 private:
     struct PImpl;
     std::unique_ptr<PImpl> p_impl_;
 };
 
-typedef std::unordered_map<std::string, WorkArea*> WorkAreaMap;
+typedef UPMap<WorkArea> WorkAreaMap;
 
 }  /* elfin */
 
