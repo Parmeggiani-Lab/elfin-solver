@@ -3,40 +3,35 @@
 #include "kabsch.h"
 #include "random_utils.h"
 #include "input_manager.h"
+#include "test_stat.h"
 
 namespace elfin {
 
 /* private */
 size_t TestManager::test_units() const {
     msg("Running unit tests...\n");
-    size_t total_errors = 0;
-    size_t total_tests = 0;
+    TestStat total;
 
-    auto collect_stats = [&](void (*test_func)(size_t&, size_t&)) {
-        size_t errors = 0, tests = 0;
-        test_func(errors, tests);
-        total_errors += errors;
-        total_tests += tests;
-    };
-
-    collect_stats(random::test);
-    collect_stats(kabsch::test);
-    collect_stats(Transform::test);
-    collect_stats(Vector3f::test);
-    collect_stats(InputManager::test);
+    total += InputManager::test();
+    total += random::test();
+    total += Transform::test();
+    total += Vector3f::test();
+    total += kabsch::test();
 
     msg("%lu/%lu unit tests passed.\n",
-        (total_tests - total_errors), total_tests);
-    if (total_errors > 0) {
-        err("%lu unit tests failed!\n", total_errors);
+        (total.tests - total.errors), total.tests);
+    if (total.errors > 0) {
+        err("%lu unit tests failed!\n", total.errors);
     }
-    return total_errors;
+    return total.errors;
 }
 
 size_t TestManager::test_integration() const {
     msg("Running integration tests...\n");
-    size_t total_errors = 0;
-    size_t total_tests = 0;
+    TestStat total;
+
+    // Test solution -> kabsch -> score 0
+
 
 //     for (auto itr : SPEC.work_areas()) {
 //         WorkArea const& wa = itr.second;
@@ -100,11 +95,11 @@ size_t TestManager::test_integration() const {
 //     }
 
     msg("%lu/%lu integration tests passed.\n",
-        (total_tests - total_errors), total_tests);
-    if (total_errors > 0) {
-        err("%lu integration tests failed!\n", total_errors);
+        (total.tests - total.errors), total.tests);
+    if (total.errors > 0) {
+        err("%lu integration tests failed!\n", total.errors);
     }
-    return total_errors;
+    return total.errors;
 }
 
 /* public */

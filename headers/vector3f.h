@@ -15,6 +15,7 @@
 #endif  /* ifdef V3F_USE_EIGEN */
 
 #include "debug_utils.h"
+#include "test_stat.h"
 
 namespace elfin {
 
@@ -121,6 +122,8 @@ public:
 #endif  /* ifdef V3F_USE_EIGEN */
     }
 
+    bool operator==(Vector3f const& rhs) const { return is_approx(rhs); }
+
 #ifndef V3F_USE_EIGEN
 
     Vector3f operator+(Vector3f const& rhs) const {
@@ -178,7 +181,7 @@ public:
     }
 
     /* tests */
-    static void test(size_t& errors, size_t& tests);
+    static TestStat test();
 };
 typedef std::vector<Vector3f> V3fList;
 

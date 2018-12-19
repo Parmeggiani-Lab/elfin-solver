@@ -5,6 +5,7 @@
 
 #include "geometry.h"
 #include "work_area.h"
+#include "test_stat.h"
 
 namespace elfin
 {
@@ -14,7 +15,7 @@ namespace kabsch {
 float score(V3fList const& points, WorkArea const& wa);
 float score(V3fList mobile, V3fList ref);
 
-void test(size_t& errors, size_t& tests);
+TestStat test();
 
 }  /* kabsch */
 

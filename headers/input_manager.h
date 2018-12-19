@@ -4,6 +4,7 @@
 #include "options.h"
 #include "spec.h"
 #include "database.h"
+#include "test_stat.h"
 
 namespace elfin {
 
@@ -63,7 +64,7 @@ public:
     static void setup(int const argc, char const** argv);
 
     /* tests */
-    static void test(size_t& tests, size_t& errors);
+    static TestStat test();
 };
 
 extern Options const& OPTIONS;

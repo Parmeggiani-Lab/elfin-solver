@@ -6,6 +6,7 @@
 
 #include "parallel_utils.h"
 #include "debug_utils.h"
+#include "test_stat.h"
 
 namespace elfin {
 
@@ -56,7 +57,7 @@ static inline T& pick(std::vector<T> & v) {
     return v.at(idx);
 }
 
-void test(size_t& errors, size_t& tests);
+TestStat test();
 
 }
 

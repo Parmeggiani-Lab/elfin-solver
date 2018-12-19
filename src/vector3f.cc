@@ -5,7 +5,8 @@
 namespace elfin {
 
 /* tests */
-void Vector3f::test(size_t& errors, size_t& tests) {
+TestStat Vector3f::test() {
+    TestStat ts;
     using floats = std::vector<float> const;
 
     Vector3f a(10.123, -209.9382, 9.00002);
@@ -18,9 +19,9 @@ void Vector3f::test(size_t& errors, size_t& tests) {
 
     /* Test Vector3f * float */
     Vector3f a_mult_pi_test = a * pi;
-    tests++;
+    ts.tests++;
     if (not a_mult_pi_test.is_approx(a_mult_pi)) {
-        errors++;
+        ts.errors++;
         err("a(%s) * PI should be (%s) but got (%s)\n",
             a.to_string().c_str(),
             a_mult_pi.to_string().c_str(),
@@ -29,9 +30,9 @@ void Vector3f::test(size_t& errors, size_t& tests) {
 
     /* Test Vector3f + Vector3f */
     Vector3f a_plus_pi_test = a + Vector3f(pi, pi, pi);
-    tests++;
+    ts.tests++;
     if (not a_plus_pi_test.is_approx(a_plus_pi)) {
-        errors++;
+        ts.errors++;
         err("a(%s) + (PI, PI, PI) should be (%s) but got (%s)\n",
             a.to_string().c_str(),
             a_plus_pi.to_string().c_str(),
@@ -40,9 +41,9 @@ void Vector3f::test(size_t& errors, size_t& tests) {
 
     /* Test Vector3f - float * Vector3f */
     Vector3f a_minus_3pi_test = a - 3 * Vector3f(pi, pi, pi);
-    tests++;
+    ts.tests++;
     if (not a_minus_3pi_test.is_approx(a_minus_3pi)) {
-        errors++;
+        ts.errors++;
         err("a(%s) - 3*(PI, PI, PI) should be (%s) but got (%s)\n",
             a.to_string().c_str(),
             a_minus_3pi.to_string().c_str(),
@@ -51,20 +52,22 @@ void Vector3f::test(size_t& errors, size_t& tests) {
 
     /* Test norm */
     float const a_norm_test = a.dist_to(Vector3f());
-    tests++;
+    ts.tests++;
     if (not float_approximates_err(a_norm_test, a_norm, 1e-8)) {
-        errors++;
+        ts.errors++;
         err("a norm should be %f but got %f\n",
             a_norm, a_norm_test);
     }
 
     float const a_sq_norm_test = a.sq_dist_to(Vector3f());
-    tests++;
+    ts.tests++;
     if (not float_approximates_err(a_sq_norm_test, a_sq_norm, 1e-8)) {
-        errors++;
+        ts.errors++;
         err("a norm should be %f but got %f\n",
             a_sq_norm, a_sq_norm_test);
     }
+
+    return ts;
 }
 
 }  /* elfin */

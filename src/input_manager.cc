@@ -55,7 +55,9 @@ void InputManager::setup(int const argc, const char ** argv) {
     instance().spec_.parse_from_json(parse_json(OPTIONS.input_file));
 }
 
-void InputManager::test(size_t& tests, size_t& errors) {
+TestStat InputManager::test() {
+    TestStat ts;
+
     char const* argv[] = {
         "elfin", /* binary name */
         "--input_file", "examples/quarter_snake_free.json",
@@ -73,10 +75,45 @@ void InputManager::test(size_t& tests, size_t& errors) {
     size_t const argc = sizeof(argv) / sizeof(argv[0]);
     InputManager::setup(argc, argv);
 
-    for (auto& itr : SPEC.work_areas()) {
-        auto& wa = itr.second;
-        V3fList points = wa->to_points();
+    // Test spec parsing
+    ts.tests++;
+    if (SPEC.work_areas().size() != 1) {
+        ts.errors++;
+        err("Spec parsing should get 1 work area but got %lu\n",
+            SPEC.work_areas().size());
     }
+    else {
+        auto const& kv = *begin(SPEC.work_areas());
+        auto& wa = kv.second; // unique_ptr
+
+        // Test parsed points
+        V3fList points = {
+            Vector3f(82.54196166992188, 3.187546730041504, -44.660125732421875),
+            Vector3f(54.139976501464844, -23.924468994140625, -35.15853500366211),
+            Vector3f(26.635669708251953, -57.53522872924805, -29.187021255493164),
+            Vector3f(21.75318145751953, -63.43537139892578, -1.899409294128418),
+            Vector3f(12.520357131958008, -50.98127365112305, 13.686529159545898),
+            Vector3f(-4.097459316253662, -37.3050651550293, 18.167621612548828),
+            Vector3f(-40.844879150390625, -42.66680908203125, 7.421332359313965)
+        };
+        V3fList points_test = wa->to_points();
+
+        ts.tests++;
+        if (points != points_test) {
+            ts.errors++;
+            err("Work area point parsing test failed\n");
+            err("Expected:\n");
+            for (auto& p : points) {
+                raw_at(LOG_WARN, "%s\n", p.to_string().c_str());
+            }
+            err("But got:\n");
+            for (auto& p : points_test) {
+                raw_at(LOG_WARN, "%s\n", p.to_string().c_str());
+            }
+        }
+    }
+
+    return ts;
 }
 
 }  /* elfin */

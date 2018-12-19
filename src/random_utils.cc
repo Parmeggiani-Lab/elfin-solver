@@ -45,7 +45,9 @@ float get_dice_0to1() {
     return (float) mt() / mt.max();
 }
 
-void test(size_t& errors, size_t& tests) {
+TestStat test() {
+    TestStat ts;
+
     /* Set up OMP */
     omp_set_dynamic(0); // Explicitly disable dynamic thread teams
     size_t const num_threads = 9; // Use a weird number
@@ -73,11 +75,11 @@ void test(size_t& errors, size_t& tests) {
     std::mt19937 mt1(mt_seed);
     std::mt19937 mt2(mt_seed);
 
-    tests++;
+    ts.tests++;
     for (size_t i = 0; i < N; ++i) {
         size_t const v1 = mt1(), v2 = mt2();
         if (v1 != v2) {
-            errors++;
+            ts.errors++;
             err("MT19937 failed at #%lu: %lu vs %lu\n",
                 i, v1, v2);
             break;
@@ -103,15 +105,17 @@ void test(size_t& errors, size_t& tests) {
      * Check that all random values originated from the same seeds are
      * identical.
      */
-    tests++;
+    ts.tests++;
     for (size_t i = 0; i < N; ++i) {
         if (rand_vals1.at(i) != rand_vals2.at(i)) {
-            errors++;
+            ts.errors++;
             err("Parallel randomiser failed at #%lu: %lu vs %lu\n",
                 i, rand_vals1.at(i), rand_vals2.at(i));
             break;
         }
     }
+
+    return ts;
 }
 
 }  /* random */

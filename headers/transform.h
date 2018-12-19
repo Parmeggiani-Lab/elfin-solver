@@ -10,6 +10,7 @@
 #endif  /* ifdef USE_EIGEN */
 
 #include "json.h"
+#include "test_stat.h"
 
 namespace elfin {
 
@@ -116,7 +117,7 @@ public:
 #endif  /* ifndef USE_EIGEN */
 
     /* tests */
-    static void test(size_t& errors, size_t& tests);
+    static TestStat test();
 };
 
 }  /* elfin */

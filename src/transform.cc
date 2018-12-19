@@ -124,7 +124,9 @@ bool Transform::is_approx(
 }
 
 /* tests */
-void Transform::test(size_t& errors, size_t& tests) {
+TestStat Transform::test() {
+    TestStat ts;
+
     /* Frame Shift Test */
     JSON a_world_json = {
         {   "rot", {
@@ -183,9 +185,9 @@ void Transform::test(size_t& errors, size_t& tests) {
     Transform c_world(c_world_json);
 
     Transform b_test = a_world * a_to_b.inversed(); // C-term extrude "raise"
-    tests++;
+    ts.tests++;
     if (not b_test.is_approx(b_world)) {
-        errors++;
+        ts.errors++;
         err("Eigen frame shift test failed:\n"
             "b_test does not approximately equal to b_world\n");
         err("b_test: %s\n", b_test.to_string().c_str());
@@ -193,14 +195,16 @@ void Transform::test(size_t& errors, size_t& tests) {
     }
 
     Transform c_test = a_world * c_to_a; // N-term extrude "drop"
-    tests++;
+    ts.tests++;
     if (not c_test.is_approx(c_world)) {
-        errors++;
+        ts.errors++;
         err("Eigen frame shift test failed:\n"
             "c_test does not approximately equal to c_world\n");
         err("c_test: %s\n", c_test.to_string().c_str());
         err("c_world: %s\n", c_world.to_string().c_str());
     }
+
+    return ts;
 }
 
 }  /* elfin */

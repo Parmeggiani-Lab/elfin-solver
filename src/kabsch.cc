@@ -463,8 +463,9 @@ float score(V3fList mobile, V3fList ref) {
 	return rms;
 }
 
-void test(size_t& errors, size_t& tests) {
+TestStat test() {
 	msg("Testing kabsch\n");
+	TestStat ts;
 
 	Vector3f const arr_a[] = {
 		Vector3f(4.7008892286345, 42.938597096873, 14.4318130193692),
@@ -512,19 +513,19 @@ void test(size_t& errors, size_t& tests) {
 
 	/* kabsch() call should return true */
 	bool const ret_val = kabsch(A, B, rot, tran, rms);
-	tests++;
+	ts.tests++;
 	if (not ret_val) {
-		errors++;
+		ts.errors++;
 		err("kabsch() returned false\n");
 	}
 
 	/* Check kabsch() rotation */
-	tests++;
+	ts.tests++;
 	for (size_t i = 0; i < rot.size(); i++) {
 		auto const& row = rot.at(i);
 
 		if (!Vector3f(row.at(0), row.at(1), row.at(2)).is_approx(actual_r[i])) {
-			errors++;
+			ts.errors++;
 			err("Rotation test failed: "
 			    "row %lu does not approximate actual rotation row\n",
 			    i);
@@ -533,9 +534,9 @@ void test(size_t& errors, size_t& tests) {
 	}
 
 	/* Check kabsch() translation */
-	tests++;
+	ts.tests++;
 	if (!tran.is_approx(actual_tran)) {
-		errors++;
+		ts.errors++;
 		err("Translation test failed: "
 		    "does not approximate actual translation\n");
 	}
@@ -548,12 +549,14 @@ void test(size_t& errors, size_t& tests) {
 	assert(a_fewer.size() != B.size());
 
 	resample(a_fewer, B);
-	tests++;
+	ts.tests++;
 	if (a_fewer.size() != B.size()) {
-		errors++;
+		ts.errors++;
 		err("Upsampling failed: Lengths: a_fewer=%d B=%d\n",
 		    a_fewer.size(), B.size());
 	}
+
+	return ts;
 }
 
 }  /* kabsch */
