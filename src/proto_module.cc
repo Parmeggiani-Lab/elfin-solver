@@ -171,8 +171,8 @@ void ProtoModule::create_proto_link_pair(
 #endif  /* ifdef PRINT_CREATE_PROTO_LINK */
 
     // Create links and count
-    auto a_ptlink = std::make_shared<ProtoLink>(tx, &mod_b, b_chain_id);
-    auto b_ptlink = std::make_shared<ProtoLink>(tx_inv, &mod_a, a_chain_id);
+    auto a_ptlink = std::make_shared<ProtoLink>(tx_inv, &mod_b, b_chain_id);
+    auto b_ptlink = std::make_shared<ProtoLink>(tx, &mod_a, a_chain_id);
     ProtoLink::pair_links(a_ptlink.get(), b_ptlink.get());
 
     a_chain.c_term_.links_.push_back(a_ptlink);
