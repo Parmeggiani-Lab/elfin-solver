@@ -73,7 +73,7 @@ void InputManager::test(size_t& tests, size_t& errors) {
     size_t const argc = sizeof(argv) / sizeof(argv[0]);
     InputManager::setup(argc, argv);
 
-    for (auto itr: SPEC.work_areas()) {
+    for (auto itr : SPEC.work_areas()) {
         WorkArea const* wa = itr.second;
         V3fList points = wa->to_points();
     }

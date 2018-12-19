@@ -20,8 +20,7 @@ struct GATimes {
     double select_time = 0.0f;
 };
 
-class InputManager
-{
+class InputManager {
 protected:
     /* data */
     Options options_;

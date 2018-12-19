@@ -3,9 +3,9 @@
 
 #include <unordered_map>
 #include <string>
+#include <memory>
 
 #include "ui_joint.h"
-#include "debug_utils.h"
 #include "geometry.h"
 
 namespace elfin {
@@ -24,45 +24,37 @@ namespace elfin {
     MACRO(ONE_HINGE) \
     MACRO(TWO_HINGE) \
     MACRO(COMPLEX) \
+    MACRO(NONE) \
 
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 
-inline void bad_work_type(WorkType type) {
-    NICE_PANIC(type == type, string_format("Bad WorkType: %s\n",
-                                           WorkTypeToCStr(type)));
-}
+void bad_work_type(WorkType type);
 
 class WorkArea {
-protected:
-    /* data */
-    std::string name_ = "unamed_area";
-    WorkType type_ = WorkType::FREE;
-    UIJointMap joints_;
-    std::vector<UIJoint *> occupied_joints_;
-    std::vector<UIJoint *> hinged_joints_;
-    std::vector<UIJoint *> leaf_joints_;
-
-    void set_type();
 public:
     /* ctors */
     WorkArea(JSON const& j, const std::string& name);
-    WorkArea() {}
-    WorkArea(WorkArea const& other) = delete;
-    V3fList to_points() const;
+    // WorkArea() = delete;
+    // WorkArea(WorkArea const& other) = delete;
+    // WorkArea(WorkArea&& other) = delete;
+
+    /* dtors */
+    ~WorkArea();
 
     /* accessors */
-    std::string name() const { return name_; }
-    WorkType type() const { return type_; }
-    UIJointMap const& joints() const { return joints_; }
-    const std::vector<UIJoint *> & occupied_joints() const {
-        return occupied_joints_;
-    }
-    const std::vector<UIJoint *> & hinged_joints() const {
-        return hinged_joints_;
-    }
+    virtual V3fList to_points() const;
+    std::string name() const;
+    WorkType type() const;
+    UIJointMap const& joints() const;
+    std::vector<UIJoint *> const& occupied_joints() const;
+    std::vector<UIJoint *> const& hinged_joints() const;
 
     /* modifiers */
     WorkArea& operator=(WorkArea const& other) = delete;
+
+private:
+    struct PImpl;
+    std::unique_ptr<PImpl> p_impl_;
 };
 
 typedef std::unordered_map<std::string, WorkArea*> WorkAreaMap;
