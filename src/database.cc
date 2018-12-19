@@ -15,7 +15,6 @@
 namespace elfin {
 
 /* protected */
-
 std::string Database::ModPtrRoulette::to_string() const {
     std::ostringstream ss;
     for (size_t i = 0; i < items_.size(); ++i) {
@@ -38,21 +37,22 @@ std::string Database::ModPtrRoulette::to_string() const {
  * Note: Categorization must be done after link parsing.
  */
 void Database::categorize() {
-    for (auto mod : all_mods_.items()) {
+    for (auto& mod : all_mods_) {
         size_t const n_itf = mod->counts().all_interfaces();
+        ProtoModule* mod_raw_ptr = mod.get();
         if (n_itf < 2) {
             die("mod[%s] has fewer interfaces(%lu) than expected(2)\n",
                 mod->name.c_str(), n_itf);
         } else if (n_itf == 2) {
-            basic_mods_.push_back(mod->counts().all_links(), mod);
+            basic_mods_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
-            complex_mods_.push_back(mod->counts().all_links(), mod);
+            complex_mods_.push_back(mod->counts().all_links(), mod_raw_ptr);
         }
 
         if (mod->type == ModuleType::SINGLE) {
-            singles_.push_back(mod->counts().all_links(), mod);
+            singles_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else if (mod->type == ModuleType::HUB) {
-            hubs_.push_back(mod->counts().all_links(), mod);
+            hubs_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
             die("mod[%s] has unknown ModuleType: %s\n",
                 mod->name.c_str(), ModuleTypeToCStr(mod->type));
@@ -62,7 +62,10 @@ void Database::categorize() {
 
 void Database::print_roulettes() {
     wrn("---ProtoModule Roulettes Debug---\n");
-    wrn("All:\n%s", all_mods_.to_string().c_str());
+    wrn("All:\n");
+    for (auto& mod : all_mods_) {
+        raw_at(LOG_WARN, mod->to_string().c_str());
+    }
     wrn("Singles:\n%s", singles_.to_string().c_str());
     wrn("Hubs:\n%s", hubs_.to_string().c_str());
     wrn("Basic:\n%s", basic_mods_.to_string().c_str());
@@ -71,7 +74,7 @@ void Database::print_roulettes() {
 
 void Database::print_db() {
     wrn("---DB Proto Link Parse Debug---\n");
-    size_t const n_mods = all_mods_.items().size();
+    size_t const n_mods = all_mods_.size();
     wrn("Database has %lu mods, of which...\n", n_mods);
     wrn("%lu are singles\n", singles_.items().size());
     wrn("%lu are hubs\n", hubs_.items().size());
@@ -80,7 +83,7 @@ void Database::print_db() {
 
     for (size_t i = 0; i < n_mods; ++i)
     {
-        ProtoModule const* mod = all_mods_.items().at(i);
+        auto& mod = all_mods_.at(i);
         size_t const n_chains = mod->chains().size();
         wrn("xdb_[#%lu:%s] has %lu chains\n",
             i, mod->name.c_str(), n_chains);
@@ -94,14 +97,14 @@ void Database::print_db() {
             for (size_t k = 0; k < n_links.size(); ++k)
             {
                 wrn("\t\tn_links[%lu] -> xdb_[%s]\n",
-                    k, n_links[k]->module()->name.c_str());
+                    k, n_links[k]->module_->name.c_str());
             }
 
             auto& c_links = proto_chain.c_term().links();
             for (size_t k = 0; k < c_links.size(); ++k)
             {
                 wrn("\t\tc_links[%lu] -> xdb_[%s]\n",
-                    k, c_links[k]->module()->name.c_str());
+                    k, c_links[k]->module_->name.c_str());
             }
         }
     }
@@ -137,13 +140,11 @@ void Database::parse_from_json(JSON const& xdb) {
     };
 
     // Non-finalized module list
-    std::vector<ProtoModule *> nf_mod_list;
-
     // Build mapping between name and id
     std::unordered_map<std::string, size_t> name_id_map;
     auto init_module = [&](JSON_MOD_PARAMS) {
         const std::string& name = jit.key();
-        size_t const mod_id = nf_mod_list.size();
+        size_t const mod_id = all_mods_.size();
         name_id_map[name] = mod_id;
 
 #ifdef PRINT_NAME_ID_MAP
@@ -159,13 +160,18 @@ void Database::parse_from_json(JSON const& xdb) {
         }
 
         float const radius = (*jit)["radii"][OPTIONS.radius_type];
-        nf_mod_list.push_back(new ProtoModule(name, mod_type, radius, chain_names));
+        all_mods_.push_back(
+            std::make_unique<ProtoModule>(
+                name,
+                mod_type,
+                radius,
+                chain_names));
     };
     for_each_module_json(init_module);
 
     auto parse_link = [&](JSON_MOD_PARAMS) {
         size_t const mod_a_id = name_id_map[jit.key()];
-        ProtoModule* const mod_a = nf_mod_list.at(mod_a_id);
+        auto& mod_a = all_mods_.at(mod_a_id);
 
         JSON const& chains_json = (*jit)["chains"];
         for (auto a_chain_it = chains_json.begin();
@@ -181,7 +187,7 @@ void Database::parse_from_json(JSON const& xdb) {
                     c_it != c_json.end();
                     ++c_it) {
                 size_t const mod_b_id = name_id_map[c_it.key()];
-                ProtoModule* const mod_b = nf_mod_list.at(mod_b_id);
+                auto& mod_b = all_mods_.at(mod_b_id);
 
                 JSON const& b_chains_json = (*c_it);
                 for (auto b_chain_it = b_chains_json.begin();
@@ -196,9 +202,9 @@ void Database::parse_from_json(JSON const& xdb) {
                     JSON const& tx_json = xdb["n_to_c_tx"][tx_id];
                     ProtoModule::create_proto_link_pair(
                         tx_json,
-                        mod_a,
+                        *mod_a,
                         a_chain_name,
-                        mod_b,
+                        *mod_b,
                         b_chain_it.key());
                 }
             }
@@ -207,9 +213,8 @@ void Database::parse_from_json(JSON const& xdb) {
     for_each_module_json(parse_link);
 
     // Finalize modules and add to all_mods_
-    for (auto mod : nf_mod_list) {
+    for (auto& mod : all_mods_) {
         mod->finalize();
-        all_mods_.push_back(mod->counts().all_links(), mod);
     }
 
     categorize();
@@ -221,12 +226,6 @@ void Database::parse_from_json(JSON const& xdb) {
 #ifdef PRINT_ROULETTES
     print_roulettes();
 #endif  /* ifdef PRINT_ROULETTES */
-}
-
-Database::~Database() {
-    for (auto mod : all_mods_.items()) {
-        delete mod;
-    }
 }
 
 }  /* elfin */

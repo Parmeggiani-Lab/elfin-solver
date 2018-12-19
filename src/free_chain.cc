@@ -24,7 +24,7 @@ bool FreeChain::operator==(FreeChain const& other) const {
 
 ProtoLink const& FreeChain::random_proto_link() const {
     ProtoChain const& proto_chain =
-        node->prototype()->chains().at(chain_id);
+        node->prototype_->chains().at(chain_id);
 
     return proto_chain.pick_random_link(term);
 }
@@ -32,22 +32,22 @@ ProtoLink const& FreeChain::random_proto_link() const {
 FreeChain::BridgeList FreeChain::find_bridges(
     FreeChain const& dst) const {
     BridgeList res;
-    ProtoModule const* dst_mod = dst.node->prototype();
+    ProtoModule const* dst_mod = dst.node->prototype_;
     size_t const dst_chain_id = dst.chain_id;
 
     ProtoTerminus const& ptterm_src =
-        node->prototype()->chains().at(chain_id).get_term(term);
+        node->prototype_->chains().at(chain_id).get_term(term);
 
     // For each middle ProtoModule that ptterm_src connects to...
     for (ProtoLink const* ptlink1 : ptterm_src.links()) {
-        ProtoModule const* const middle_mod = ptlink1->module();
+        ProtoModule const* middle_mod = ptlink1->module_;
 
         // Skip non basic modules
         if (middle_mod->counts().all_interfaces() > 2) {
             continue;
         }
 
-        size_t const chain_in = ptlink1->chain_id();
+        size_t const chain_in = ptlink1->chain_id_;
 
         // Look for ptlink2 to dst_mod
         for (ProtoChain const& middle_chain : middle_mod->chains()) {
@@ -76,17 +76,17 @@ ProtoLink const* FreeChain::find_link_to(
         return nullptr;
     }
 
-    return node->prototype()->find_link_to(
+    return node->prototype_->find_link_to(
                chain_id,
                term,
-               dst.node->prototype(),
+               dst.node->prototype_,
                dst.chain_id);
 }
 
 /* printers */
 std::string FreeChain::to_string() const {
     return string_format("FreeChain[node: %s (%p), term: %s, chain: %lu]",
-                         node->prototype()->name.c_str(),
+                         node->prototype_->name.c_str(),
                          node,
                          TerminusTypeToCStr(term),
                          chain_id);

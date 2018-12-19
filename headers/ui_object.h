@@ -9,20 +9,19 @@
 
 namespace elfin {
 
-class UIObject
-{
-protected:
-    std::string name_ = "unamed_ui_object";
-    Transform tx_;
+struct UIObject {
+    /* data */
+    std::string const name;
+    Transform const tx;
 
-public:
-    UIObject(JSON const& j, const std::string& name);
-    UIObject(Transform const& tx, const std::string& name);
-    virtual ~UIObject() {}
-
-    // getters
-    const std::string& name() const { return name_; }
-    Transform const& tx() const { return tx_; }
+    UIObject(
+        Transform const& _tx,
+        const std::string& _name) :
+        tx(_tx), name(_name) {}
+    UIObject(
+        JSON const& json,
+        const std::string& _name) :
+        UIObject(Transform(json), _name) {}
 };
 
 typedef SPMap<UIObject> UIObjectMap;

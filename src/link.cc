@@ -13,7 +13,7 @@ Link::Link(
     src_chain_(src_chain),
     prototype_(prototype),
     dst_chain_(dst_chain) {
-    DEBUG(dst_chain_.node->prototype() != prototype_->module());
+    DEBUG(dst_chain_.node->prototype_ != this->prototype_->module_);
 }
 
 /* accessors */

@@ -26,12 +26,12 @@ protected:
      */
 
     /* data */
-    ProtoModule const* prototype_ = nullptr;
     LinkList links_;
 
 public:
     /* data */
     Transform tx_;
+    ProtoModule const* const prototype_;
 
     /* ctors */
     Node(ProtoModule const* prototype, Transform const& tx);
@@ -42,7 +42,6 @@ public:
     // virtual ~Node() {}
 
     /* accessors */
-    ProtoModule const* prototype() const { return prototype_; }
     LinkList const& links() const { return links_; }
     Link const* find_link_to(Node const* dst_node) const;
 

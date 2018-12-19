@@ -36,6 +36,7 @@ public:
     Occupant const& occupant() const { return occupant_; }
 };
 
+typedef std::shared_ptr<UIJoint> UIJointSP;
 typedef SPMap<UIJoint> UIJointMap;
 
 }  /* elfin */

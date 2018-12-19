@@ -82,11 +82,11 @@ void ProtoTerminus::finalize() {
             itr++) {
 
         ProtoLink const* link_ptr = *itr;
-        DEBUG(nullptr == link_ptr->module());
+        DEBUG(nullptr == link_ptr->module_);
 
         link_set_.insert(link_ptr);
 
-        ProtoModule const* target_prot = link_ptr->module();
+        ProtoModule const* target_prot = link_ptr->module_;
 
         /*
          * Note: assigning 0 probability for ProtoLinks that have more than 2
@@ -134,9 +134,9 @@ void ProtoTerminus::finalize() {
 
 #ifdef PRINT_FINALIZE
         wrn("ProtoLink to %s into chain %lu with %lu interfaces\n",
-            link_ptr->module()->name.c_str(),
-            link_ptr->chain_id(),
-            link_ptr->module()->counts().all_interfaces());
+            link_ptr->module_->name.c_str(),
+            link_ptr->chain_id_,
+            link_ptr->module_->counts().all_interfaces());
 #endif  /* ifdef PRINT_FINALIZE */
     }
 

@@ -22,7 +22,7 @@ bool NodeTeam::collides(
     for (auto const node_ptr : nodes_) {
         float const sq_com_dist = node_ptr->tx_.collapsed().sq_dist_to(new_com);
         float const required_com_dist = mod_radius +
-                                        node_ptr->prototype()->radius;
+                                        node_ptr->prototype_->radius;
         if (sq_com_dist < (required_com_dist * required_com_dist)) {
             return true;
         }
@@ -59,7 +59,7 @@ Node* NodeTeam::add_member(
     Node* new_node = new Node(prot, tx);
     nodes_.push_back(new_node);
 
-    for (auto& proto_chain : new_node->prototype()->chains()) {
+    for (auto& proto_chain : new_node->prototype_->chains()) {
         if (not proto_chain.n_term().links().empty()) {
             free_chains_.emplace_back(new_node, TerminusType::N, proto_chain.id);
         }

@@ -23,14 +23,13 @@ std::vector<Link const*> BasicNodeGenerator::collect_arrows(
 Node* BasicNodeGenerator::next() {
     Node* prev_node = curr_node_;
     curr_node_ = next_node_;
-
     next_node_ = nullptr;
     curr_link_ = nullptr;
 
     // Look for next node
     if (curr_node_) {
-        size_t const neighbor_size = curr_node_->links().size();
-        NICE_PANIC(neighbor_size > 2);
+        size_t const num_neighbors = curr_node_->links().size();
+        NICE_PANIC(num_neighbors > 2);
         for (auto& link : curr_node_->links()) {
             if (link.dst().node != prev_node) {
                 // curr_link links curr_node to next_node

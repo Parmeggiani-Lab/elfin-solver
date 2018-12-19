@@ -6,6 +6,7 @@
 #include "debug_utils.h"
 #include "input_manager.h"
 #include "fixed_area.h"
+#include "basic_ui_joint_generator.h"
 
 namespace elfin {
 
@@ -21,7 +22,7 @@ struct WorkArea::PImpl {
     typedef std::vector<std::shared_ptr<UIJoint>> UIJointSPList;
 
     /* data */
-    const std::string name;
+    std::string const name;
     WorkType type = WorkType::FREE;
     UIJointMap joints;
     UIJointSPList occupied_joints;
@@ -67,9 +68,10 @@ struct WorkArea::PImpl {
          * Calculate expected length as sum of point
          * displacements over avg pair module distance
          */
+        NICE_PANIC(points.size() == 0);
+
         float sum_dist = 0.0f;
-        V3fList const shape = to_points();
-        for (auto i = shape.begin() + 1; i != shape.end(); ++i) {
+        for (auto i = points.begin() + 1; i != points.end(); ++i) {
             sum_dist += (i - 1)->dist_to(*i);
         }
 
@@ -82,31 +84,17 @@ struct WorkArea::PImpl {
         return res;
     }
 
-    V3fList to_points() const {
+    V3fList _to_points() const {
         V3fList res;
         NICE_PANIC(leaf_joints.size() != 2,
                    string_format("Size of leaf_joints not "
                                  "exactly 2 in work_area: %s\n",
                                  name.c_str()));
+        BasicUIJointGenerator gen(&joints, leaf_joints.at(0));
 
-        std::shared_ptr<UIJoint> prev = nullptr;
-        std::shared_ptr<UIJoint> j = leaf_joints.at(0);
-        while (1) {
-            res.emplace_back(j->tx().collapsed());
-
-            if (j == leaf_joints.at(1)) {
-                break;
-            }
-
-            std::string next_name = j->neighbors().at(0);
-
-            NICE_PANIC(j->neighbors().size() > 2);
-            if (prev and next_name == prev->name()) {
-                next_name = j->neighbors().at(1);
-            }
-
-            prev = j;
-            j = joints.at(next_name);
+        while (not gen.is_done()) {
+            UIJointSP curr_joint = gen.next();
+            res.emplace_back(curr_joint->tx.collapsed());
         }
 
         return res;
@@ -116,12 +104,14 @@ struct WorkArea::PImpl {
     void reset() {
         type = WorkType::FREE;
         joints.clear();
+        occupied_joints.clear();
         leaf_joints.clear();
         target_size = 0;
+        points.clear();
     }
 
     void parse_from_json(
-        JSON const& j,
+        JSON const& json,
         FixedAreaMap const& fam) {
         /*
          * Parse joints from JSON and collect special joints.
@@ -129,7 +119,7 @@ struct WorkArea::PImpl {
         reset();
 
         size_t num_branch_points = 0;
-        for (auto it = j.begin(); it != j.end(); ++it) {
+        for (auto it = json.begin(); it != json.end(); ++it) {
             JSON const& joint_json = *it;
             std::string const& joint_name = it.key();
 
@@ -154,6 +144,7 @@ struct WorkArea::PImpl {
         }
 
         type = _determine_type(num_branch_points);
+        points = _to_points(); // Cache it
         target_size = _determine_target_size();
     }
 };
@@ -166,7 +157,6 @@ WorkArea::WorkArea(
     FixedAreaMap const& fam) {
     p_impl_ = std::make_unique<PImpl>(name);
     p_impl_->parse_from_json(j, fam);
-    p_impl_->points = p_impl_->to_points(); // Cache it
 }
 
 /* dtors */

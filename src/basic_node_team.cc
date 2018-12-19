@@ -119,7 +119,7 @@ Crc32 BasicNodeTeam::calc_checksum() const {
         Crc32 crc_half = 0xffff;
         while (not node_gtor.is_done()) {
             Node const* node = node_gtor.next();
-            ProtoModule const* prot = node->prototype();
+            ProtoModule const* prot = node->prototype_;
             checksum_cascade(&crc_half, &prot, sizeof(prot));
         }
 
@@ -176,7 +176,7 @@ void BasicNodeTeam::fix_limb_transforms(Link const& arrow) {
         Link const* curr_link = limb_gtor.curr_link();
         Node* curr_node = limb_gtor.curr_node();
         Node* next_node = limb_gtor.next();
-        next_node->tx_ = curr_node->tx_ * curr_link->prototype()->tx();
+        next_node->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
     }
 }
 
@@ -191,14 +191,14 @@ Node* BasicNodeTeam::grow_tip(
     DEBUG(node_a->links().size() > 1);
 
     Node* node_b = add_member(
-                       ptlink->module(),
-                       node_a->tx_ * ptlink->tx());
+                       ptlink->module_,
+                       node_a->tx_ * ptlink->tx_);
 
     TerminusType const term_a = free_chain_a.term;
     TerminusType const term_b = opposite_term(term_a);
 
     FreeChain const free_chain_b =
-        FreeChain(node_b, term_b, ptlink->chain_id());
+        FreeChain(node_b, term_b, ptlink->chain_id_);
 
     node_a->add_link(free_chain_a, ptlink, free_chain_b);
     node_b->add_link(free_chain_b, ptlink->reverse(), free_chain_a);
@@ -257,8 +257,8 @@ void BasicNodeTeam::build_bridge(
 
     // Create a new node in the middle.
     Node* new_node = new Node(
-        bridge->ptlink1->module(),
-        node1->tx_ * bridge->ptlink1->tx());
+        bridge->ptlink1->module_,
+        node1->tx_ * bridge->ptlink1->tx_);
     nodes_.push_back(new_node);
 
     /*
@@ -274,14 +274,14 @@ void BasicNodeTeam::build_bridge(
      * Prototype ---ptlink1--->              ---ptlink2--->
      */
     FreeChain nn_src1(
-        new_node, port2.term, bridge->ptlink1->chain_id());
+        new_node, port2.term, bridge->ptlink1->chain_id_);
     Link const new_link1_rev(port1, bridge->ptlink1, nn_src1);
 
     node1->add_link(new_link1_rev);
     new_node->add_link(new_link1_rev.reversed());
 
     FreeChain nn_src2(
-        new_node, port1.term, bridge->ptlink2->reverse()->chain_id());
+        new_node, port1.term, bridge->ptlink2->reverse()->chain_id_);
     Link const new_link2(nn_src2, bridge->ptlink2, port2);
 
     new_node->add_link(new_link2);
@@ -338,10 +338,10 @@ void BasicNodeTeam::copy_limb(
 
     // Form first link
     ProtoLink const* ptlink =
-        tip_node->prototype()->find_link_to(
+        tip_node->prototype_->find_link_to(
             m_arrow.src().chain_id,
             m_arrow.src().term,
-            f_arrow.dst().node->prototype(),
+            f_arrow.dst().node->prototype_,
             f_arrow.dst().chain_id);
     DEBUG(ptlink == nullptr);
 
@@ -355,16 +355,16 @@ void BasicNodeTeam::copy_limb(
     node_gtor.next(); // Same as f_arrow.dst().node
     while (not node_gtor.is_done()) {
         Link const* curr_link = node_gtor.curr_link();
-        DEBUG(curr_link->dst().node->prototype() !=
-              curr_link->prototype()->module());
+        DEBUG(curr_link->dst().node->prototype_ !=
+              curr_link->prototype()->module_);
 
         // Modify copy of curr_link->src()
         FreeChain src = curr_link->src();
 
-        DEBUG(src.node->prototype() != tip_node->prototype(),
+        DEBUG(src.node->prototype_ != tip_node->prototype_,
               string_format("%s vs %s\n",
-                            src.node->prototype()->name.c_str(),
-                            tip_node->prototype()->name.c_str()));
+                            src.node->prototype_->name.c_str(),
+                            tip_node->prototype_->name.c_str()));
         src.node = tip_node;
 
         // Occupy src chain
@@ -374,12 +374,12 @@ void BasicNodeTeam::copy_limb(
                             free_chains_.size()));
 
         tip_node = grow_tip(src, curr_link->prototype());
-        if (curr_link->dst().node->prototype() != tip_node->prototype()) {
+        if (curr_link->dst().node->prototype_ != tip_node->prototype_) {
             err("%s vs %s\n",
-                curr_link->dst().node->prototype()->name.c_str(),
-                tip_node->prototype()->name.c_str());
+                curr_link->dst().node->prototype_->name.c_str(),
+                tip_node->prototype_->name.c_str());
             err("curr_link->prototype(): %s\n",
-                curr_link->prototype()->module()->name.c_str());
+                curr_link->prototype()->module_->name.c_str());
             die("");
         }
 
@@ -723,7 +723,7 @@ bool BasicNodeTeam::swap_mutate() {
                 // Check that neighbor can indead grow into a different
                 // ProtoModule.
                 FreeChain const& tip_fc = curr_node->links().at(0).dst();
-                ProtoModule const* neighbor = tip_fc.node->prototype();
+                ProtoModule const* neighbor = tip_fc.node->prototype_;
                 ProtoChain const& chain = neighbor->chains().at(tip_fc.chain_id);
 
                 if (chain.get_term(tip_fc.term).links().size() > 1) {
@@ -973,7 +973,7 @@ StrList BasicNodeTeam::get_node_names() const {
         BasicNodeGenerator node_gtor(free_chains_.at(0).node);
 
         while (not node_gtor.is_done()) {
-            res.emplace_back(node_gtor.next()->prototype()->name);
+            res.emplace_back(node_gtor.next()->prototype_->name);
         }
 
         DEBUG(res.size() != size(),

@@ -10,7 +10,7 @@
 #include "json.h"
 #include "proto_module.h"
 #include "roulette.h"
-#include "jutil.h"
+#include "vector_utils.h"
 
 #include <string>
 
@@ -26,7 +26,7 @@ protected:
     };
 
     /* data */
-    ModPtrRoulette all_mods_; // This keeps the pointers to be freed
+    Vector<ProtoModuleUP> all_mods_;
     ModPtrRoulette singles_, hubs_, basic_mods_, complex_mods_;
 
     /* modifiers */
@@ -36,14 +36,7 @@ protected:
     void print_roulettes();
     void print_db();
 public:
-    /* ctors */
-    Database() {}
-
-    /* dtors */
-    virtual ~Database();
-
     /* getters */
-    ModPtrRoulette const& all_mods() const { return all_mods_; }
     ModPtrRoulette const& singles() const { return singles_; }
     ModPtrRoulette const& hubs() const { return hubs_; }
     ModPtrRoulette const& basic_mods() const { return basic_mods_; }

@@ -1,16 +1,11 @@
 #ifndef PROTO_MODULE_H_
 #define PROTO_MODULE_H_
 
-#include <vector>
-#include <unordered_map>
+#include <memory>
 #include <string>
-#include <tuple>
 
 #include "json.h"
 #include "proto_chain.h"
-#include "debug_utils.h"
-#include "vector_utils.h"
-#include "link.h"
 
 namespace elfin {
 
@@ -67,14 +62,16 @@ public:
     void finalize();
     static void create_proto_link_pair(
         JSON const& tx_json,
-        ProtoModule* mod_a,
+        ProtoModule& mod_a,
         std::string const& a_chain_name,
-        ProtoModule* mod_b,
+        ProtoModule& mod_b,
         std::string const& b_chain_name);
 
     /* printers */
     std::string to_string() const;
 };
+
+typedef std::unique_ptr<ProtoModule> ProtoModuleUP;
 
 }  /* elfin */
 
