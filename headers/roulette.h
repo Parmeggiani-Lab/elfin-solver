@@ -46,7 +46,7 @@ public:
     /* dtors */
     virtual ~Roulette() {}
 
-    /* getters */
+    /* accessors */
     ItemList const& items() const { return items_; }
     CummProbDist const& cpd() const { return cpd_; }
     size_t total() const { return total_; }
@@ -67,6 +67,12 @@ public:
     void push_back(float const prob, ItemType const& item) {
         accumulate_prob(prob);
         items_.push_back(item);
+    }
+
+    void clear() {
+        items_.clear();
+        cpd_.clear();
+        total_ = 0;
     }
 
     template <class ... Args>

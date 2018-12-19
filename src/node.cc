@@ -20,9 +20,9 @@ Node::Node(
 }
 
 /* accessors */
-Link const* Node::find_link_to(Node const* dst_node) const {
+Link const* Node::find_link_to(NodeSP const& dst_node) const {
     for (auto& link : links_) {
-        if (link.dst().node == dst_node) return &link;
+        if (link.dst().node_sp() == dst_node) return &link;
     }
     return nullptr;
 }

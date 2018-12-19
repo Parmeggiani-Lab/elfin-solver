@@ -25,11 +25,11 @@ typedef std::shared_ptr<NodeTeam> NodeTeamSP;
 class NodeTeam {
 protected:
     /* types */
-    typedef VectorMap<Node *> Nodes;
+    typedef VectorMap<NodeSP> NodeSPVMap;
 
     /* data */
     WorkArea const& work_area_;
-    Nodes nodes_;
+    NodeSPVMap nodes_;
     FreeChainList free_chains_;
     Crc32 checksum_ = 0x0000;
     float score_ = INFINITY;
@@ -42,12 +42,11 @@ protected:
     virtual NodeTeam * clone_impl() const = 0;
 
     /* modifiers */
-    void disperse();
-    Node* add_member(
+    void reset();
+    NodeSP add_member(
         ProtoModule const* prot,
         Transform const& tx = Transform());
-    void remove_member(Node* node);
-    void remove_free_chains(Node* node);
+    void remove_free_chains(NodeSP const& node);
 
 public:
     /* ctors */
@@ -60,7 +59,7 @@ public:
 
     /* accessors */
     NodeTeamSP clone() const;
-    Nodes const& nodes() const { return nodes_; }
+    NodeSPVMap const& nodes() const { return nodes_; }
     FreeChainList const& free_chains() const { return free_chains_; }
     size_t size() const { return nodes_.size(); }
     float score() const { return score_; }

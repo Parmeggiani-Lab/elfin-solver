@@ -12,6 +12,8 @@
 namespace elfin {
 
 class Node;
+typedef std::weak_ptr<Node> NodeWP;
+typedef std::shared_ptr<Node> NodeSP;
 
 struct FreeChain {
     /* types */
@@ -24,14 +26,15 @@ struct FreeChain {
     typedef Vector<Bridge> BridgeList;
 
     /* data */
-    Node* node;
+    NodeWP node;
     TerminusType term;
     size_t chain_id;
 
     /* ctors */
-    FreeChain() : FreeChain(nullptr, TerminusType::NONE, 0) {}
+    FreeChain() :
+        node(), term(TerminusType::NONE), chain_id(0) {}
     FreeChain(
-        Node* _node,
+        NodeWP const& _node,
         TerminusType const _term,
         size_t const _chain_id);
 
@@ -41,6 +44,7 @@ struct FreeChain {
     ProtoLink const& random_proto_link() const;
     BridgeList find_bridges(FreeChain const& dst) const;
     ProtoLink const* find_link_to(FreeChain const& dst) const;
+    NodeSP node_sp() const;
 
     /* printers */
     std::string to_string() const;
@@ -54,7 +58,7 @@ namespace std {
 
 template <> struct hash<elfin::FreeChain> {
     size_t operator()(elfin::FreeChain const& x) const {
-        return hash<void*>()((void*) x.node) ^
+        return hash<void*>()((void*) x.node_sp().get()) ^
                hash<size_t>()(static_cast<int>(x.term)) ^
                hash<size_t>()(x.chain_id);
     }

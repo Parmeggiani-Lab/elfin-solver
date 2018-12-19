@@ -10,7 +10,7 @@ namespace elfin {
 bool compare_free_chain_nodes(
     FreeChain const& a,
     FreeChain const& b) {
-    return a.node == b.node;
+    return a.node_sp() == b.node_sp();
 }
 
 /* protected */
@@ -19,10 +19,10 @@ bool NodeTeam::collides(
     Vector3f const& new_com,
     float const mod_radius) const {
 
-    for (auto const node_ptr : nodes_) {
-        float const sq_com_dist = node_ptr->tx_.collapsed().sq_dist_to(new_com);
-        float const required_com_dist = mod_radius +
-                                        node_ptr->prototype_->radius;
+    for (auto& node : nodes_) {
+        float const sq_com_dist = node->tx_.collapsed().sq_dist_to(new_com);
+        float const required_com_dist =
+            mod_radius + node->prototype_->radius;
         if (sq_com_dist < (required_com_dist * required_com_dist)) {
             return true;
         }
@@ -44,20 +44,18 @@ void NodeTeam::check_work_area(NodeTeam const& other) const {
 }
 
 /* modifiers */
-void NodeTeam::disperse() {
-    for (auto node_ptr : nodes_) {
-        delete node_ptr;
-    }
-
+void NodeTeam::reset() {
+    // work_area_ = nullptr;
     nodes_.clear();
     free_chains_.clear();
+    checksum_ = 0x0000;
+    score_ = INFINITY;
 }
 
-Node* NodeTeam::add_member(
+NodeSP NodeTeam::add_member(
     ProtoModule const* prot,
     Transform const& tx) {
-    Node* new_node = new Node(prot, tx);
-    nodes_.push_back(new_node);
+    auto new_node = std::make_shared<Node>(prot, tx);
 
     for (auto& proto_chain : new_node->prototype_->chains()) {
         if (not proto_chain.n_term().links().empty()) {
@@ -69,15 +67,11 @@ Node* NodeTeam::add_member(
         }
     }
 
+    nodes_.push_back(new_node);
     return new_node;
 }
 
-void NodeTeam::remove_member(Node* node) {
-    nodes_.erase(node);
-    delete node;
-}
-
-void NodeTeam::remove_free_chains(Node* node) {
+void NodeTeam::remove_free_chains(NodeSP const& node) {
     // Remove any FreeChain originating from node
     free_chains_.lift_erase_all(
         FreeChain(node, TerminusType::NONE, 0),
@@ -104,7 +98,7 @@ NodeTeam::NodeTeam(NodeTeam&& other) :
 
 /* dtors */
 NodeTeam::~NodeTeam() {
-    disperse();
+    reset();
 }
 
 /* accessors */
@@ -115,27 +109,26 @@ NodeTeamSP NodeTeam::clone() const {
 /* modifiers */
 NodeTeam& NodeTeam::operator=(NodeTeam const& other) {
     if (this != &other) {
-        disperse();
+        reset();
 
-        // Clone nodes (heap) and create address mapping
-        std::vector<Node *> new_nodes;
+        // Clone nodes and create address mapping
         NodeAddrMap addr_map; // old addr -> new addr
 
-        for (auto node_ptr : other.nodes()) {
-            new_nodes.push_back(node_ptr->clone());
-            addr_map[node_ptr] = new_nodes.back();
+        for (auto& other_node : other.nodes()) {
+            auto node_sp = other_node->clone();
+            nodes_.push_back(node_sp);
+            addr_map[other_node] = node_sp;
         }
 
         free_chains_ = other.free_chains();
 
         // Fix pointer addresses and assign to my own nodes
-        for (auto node_ptr : new_nodes) {
-            node_ptr->update_link_ptrs(addr_map);
-            nodes_.push_back(node_ptr);
+        for (auto& node : nodes_) {
+            node->update_link_ptrs(addr_map);
         }
 
         for (auto& fc : free_chains_) {
-            fc.node = addr_map.at(fc.node);
+            fc.node = addr_map.at(fc.node_sp());
         }
 
         checksum_ = other.checksum_;
@@ -149,7 +142,7 @@ NodeTeam& NodeTeam::operator=(NodeTeam&& other) {
     if (this != &other) {
         NICE_PANIC(&work_area_ != &other.work_area_);
 
-        disperse();
+        reset();
 
         std::swap(nodes_, other.nodes_);
         std::swap(free_chains_, other.free_chains_);

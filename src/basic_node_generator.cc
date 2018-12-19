@@ -5,7 +5,7 @@ namespace elfin {
 /* public */
 /* accessors */
 std::vector<Link const*> BasicNodeGenerator::collect_arrows(
-    Node* start_node) {
+    NodeSP const& start_node) {
     BasicNodeGenerator gen(start_node);
     std::vector<Link const*> arrows;
 
@@ -20,8 +20,8 @@ std::vector<Link const*> BasicNodeGenerator::collect_arrows(
 }
 
 /* modifiers */
-Node* BasicNodeGenerator::next() {
-    Node* prev_node = curr_node_;
+NodeSP BasicNodeGenerator::next() {
+    NodeSP prev_node = curr_node_;
     curr_node_ = next_node_;
     next_node_ = nullptr;
     curr_link_ = nullptr;
@@ -31,10 +31,11 @@ Node* BasicNodeGenerator::next() {
         size_t const num_neighbors = curr_node_->links().size();
         NICE_PANIC(num_neighbors > 2);
         for (auto& link : curr_node_->links()) {
-            if (link.dst().node != prev_node) {
+            NodeSP sp = link.dst().node_sp();
+            if (sp != prev_node) {
                 // curr_link links curr_node to next_node
                 curr_link_ = &link;
-                next_node_ = link.dst().node;
+                next_node_ = sp;
                 break;
             }
         }

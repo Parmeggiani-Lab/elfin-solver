@@ -30,6 +30,7 @@ protected:
     ModPtrRoulette singles_, hubs_, basic_mods_, complex_mods_;
 
     /* modifiers */
+    void reset();
     void categorize();
 
     /* printers */

@@ -8,7 +8,8 @@
 namespace elfin {
 
 class Node;
-typedef std::unordered_map<const Node *, Node *> NodeAddrMap;
+typedef std::shared_ptr<Node> NodeSP;
+typedef std::unordered_map<NodeSP, NodeSP> NodeAddrMap;
 
 class Link {
 private:

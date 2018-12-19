@@ -6,7 +6,7 @@ namespace elfin {
 
 /* ctors */
 FreeChain::FreeChain(
-    Node* _node,
+    NodeWP const& _node,
     TerminusType const _term,
     size_t const _chain_id) :
     node(_node),
@@ -17,14 +17,14 @@ FreeChain::FreeChain(
 
 /* accessors */
 bool FreeChain::operator==(FreeChain const& other) const {
-    return node == other.node and
+    return node_sp() == other.node_sp() and
            term == other.term and
            chain_id == other.chain_id;
 }
 
 ProtoLink const& FreeChain::random_proto_link() const {
     ProtoChain const& proto_chain =
-        node->prototype_->chains().at(chain_id);
+        node_sp()->prototype_->chains().at(chain_id);
 
     return proto_chain.pick_random_link(term);
 }
@@ -32,11 +32,11 @@ ProtoLink const& FreeChain::random_proto_link() const {
 FreeChain::BridgeList FreeChain::find_bridges(
     FreeChain const& dst) const {
     BridgeList res;
-    ProtoModule const* dst_mod = dst.node->prototype_;
+    ProtoModule const* dst_mod = dst.node_sp()->prototype_;
     size_t const dst_chain_id = dst.chain_id;
 
     ProtoTerminus const& ptterm_src =
-        node->prototype_->chains().at(chain_id).get_term(term);
+        node_sp()->prototype_->chains().at(chain_id).get_term(term);
 
     // For each middle ProtoModule that ptterm_src connects to...
     for (auto& ptlink1 : ptterm_src.links()) {
@@ -76,18 +76,27 @@ ProtoLink const* FreeChain::find_link_to(
         return nullptr;
     }
 
-    return node->prototype_->find_link_to(
+    return node_sp()->prototype_->find_link_to(
                chain_id,
                term,
-               dst.node->prototype_,
+               dst.node_sp()->prototype_,
                dst.chain_id);
+}
+
+NodeSP FreeChain::node_sp() const {
+    auto sp = node.lock();
+    if (sp)
+        return sp;
+    else
+        return nullptr;
 }
 
 /* printers */
 std::string FreeChain::to_string() const {
+    NodeSP sp = node_sp();
     return string_format("FreeChain[node: %s (%p), term: %s, chain: %lu]",
-                         node->prototype_->name.c_str(),
-                         node,
+                         sp->prototype_->name.c_str(),
+                         sp.get(),
                          TerminusTypeToCStr(term),
                          chain_id);
 }

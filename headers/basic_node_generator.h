@@ -9,13 +9,13 @@ namespace elfin {
 class BasicNodeGenerator {
 private:
     /* data */
-    Node* curr_node_ = nullptr;
+    NodeSP curr_node_ = nullptr;
     Link const* curr_link_ = nullptr;
-    Node* next_node_ = nullptr;
+    NodeSP next_node_ = nullptr;
 public:
     /* ctors */
     BasicNodeGenerator(
-        Node* start_node) :
+        NodeSP const& start_node) :
         next_node_(start_node) {}
 
     /*
@@ -39,13 +39,13 @@ public:
     bool is_done() const { return next_node_ == nullptr; }
 
     static std::vector<Link const*> collect_arrows(
-        Node* start_node);
+        NodeSP const& start_node);
 
-    Node* curr_node() const { return curr_node_; }
+    NodeSP curr_node() const { return curr_node_; }
     Link const* curr_link() const { return curr_link_; }
 
     /* modifiers */
-    Node* next();
+    NodeSP next();
 
     /* printers */
 

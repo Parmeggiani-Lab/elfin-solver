@@ -5,6 +5,7 @@
 #include "kabsch.h"
 #include "input_manager.h"
 #include "id_types.h"
+#include "pointer_utils.h"
 
 // #define NO_ERODE
 // #define NO_DELETE
@@ -32,11 +33,11 @@ struct BasicNodeTeam::DeletePoint {
                   (src)                           (dst)
                    --------------skipper------------->
     */
-    Node* delete_node;
+    NodeSP delete_node;
     FreeChain const src, dst;
     ProtoLink const* skipper;
     DeletePoint(
-        Node* _delete_node,
+        NodeSP const& _delete_node,
         FreeChain const&  _src,
         FreeChain const&  _dst,
         ProtoLink const* _skipper) :
@@ -61,16 +62,16 @@ struct BasicNodeTeam::InsertPoint {
         FreeChain const& _dst) :
         src(_src),
         dst(_dst),
-        bridges(dst.node == nullptr ?
+        bridges(is_uninitialized(dst.node) ?
                 FreeChain::BridgeList() :
                 src.find_bridges(dst)) { }
 };
 
 struct BasicNodeTeam::SwapPoint : public BasicNodeTeam::InsertPoint {
-    Node * const del_node;
+    NodeSP const del_node;
     SwapPoint(
         FreeChain const& _src,
-        Node * const _del_node,
+        NodeSP const& _del_node,
         FreeChain const& _dst) :
         InsertPoint(_src, _dst),
         del_node(_del_node) {}
@@ -113,12 +114,11 @@ Crc32 BasicNodeTeam::calc_checksum() const {
 
     Crc32 crc = 0x0000;
     for (auto& free_chain : free_chains_) {
-        Node* tip = free_chain.node;
-        BasicNodeGenerator node_gtor(tip);
+        BasicNodeGenerator node_gtor(free_chain.node_sp());
 
         Crc32 crc_half = 0xffff;
         while (not node_gtor.is_done()) {
-            Node const* node = node_gtor.next();
+            NodeSP const& node = node_gtor.next();
             ProtoModule const* prot = node->prototype_;
             checksum_cascade(&crc_half, &prot, sizeof(prot));
         }
@@ -150,8 +150,7 @@ float BasicNodeTeam::calc_score() const {
 
     float score = INFINITY;
     for (auto& free_chain : free_chains_) {
-        Node* tip = free_chain.node;
-        BasicNodeGenerator node_gtor(tip);
+        BasicNodeGenerator node_gtor(free_chain.node_sp());
 
         V3fList points;
         while (not node_gtor.is_done()) {
@@ -174,25 +173,25 @@ void BasicNodeTeam::fix_limb_transforms(Link const& arrow) {
     BasicNodeGenerator limb_gtor(&arrow);
     while (not limb_gtor.is_done()) {
         Link const* curr_link = limb_gtor.curr_link();
-        Node* curr_node = limb_gtor.curr_node();
-        Node* next_node = limb_gtor.next();
+        NodeSP const& curr_node = limb_gtor.curr_node();
+        NodeSP const& next_node = limb_gtor.next();
         next_node->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
     }
 }
 
-Node* BasicNodeTeam::grow_tip(
+NodeSP BasicNodeTeam::grow_tip(
     FreeChain const free_chain_a,
     ProtoLink const* ptlink) {
     if (ptlink == nullptr) {
         ptlink = &free_chain_a.random_proto_link();
     }
 
-    Node* node_a = free_chain_a.node;
+    NodeSP const& node_a = free_chain_a.node_sp();
     DEBUG(node_a->links().size() > 1);
 
-    Node* node_b = add_member(
-                       ptlink->module_,
-                       node_a->tx_ * ptlink->tx_);
+    auto node_b = add_member(
+                      ptlink->module_,
+                      node_a->tx_ * ptlink->tx_);
 
     TerminusType const term_a = free_chain_a.term;
     TerminusType const term_b = opposite_term(term_a);
@@ -209,8 +208,8 @@ Node* BasicNodeTeam::grow_tip(
     return node_b;
 }
 
-Node* BasicNodeTeam::nip_tip(
-    Node* tip_node) {
+void BasicNodeTeam::nip_tip(
+    NodeSP const& tip_node) {
     /*
      * Removes the selected tip.
      */
@@ -219,12 +218,12 @@ Node* BasicNodeTeam::nip_tip(
     size_t const num_links = tip_node->links().size();
     NICE_PANIC(num_links != 1);
 
-    Node* new_tip = nullptr;
+    NodeSP new_tip = nullptr;
     // new_free_chain scope
     {
         FreeChain const& new_free_chain =
             tip_node->links().at(0).dst();
-        new_tip = new_free_chain.node;
+        new_tip = new_free_chain.node_sp();
 
         // Unlink
         new_tip->remove_link(new_free_chain);
@@ -234,9 +233,7 @@ Node* BasicNodeTeam::nip_tip(
     }
 
     remove_free_chains(tip_node);
-    remove_member(tip_node);
-
-    return new_tip;
+    nodes_.erase(tip_node);
 }
 
 void BasicNodeTeam::build_bridge(
@@ -248,17 +245,17 @@ void BasicNodeTeam::build_bridge(
 
     FreeChain const& port1 = insert_point.src;
     FreeChain const& port2 = insert_point.dst;
-    Node* node1 = port1.node;
-    Node* node2 = port2.node;
+    NodeSP node1 = port1.node_sp();
+    NodeSP node2 = port2.node_sp();
 
     // Break link
     node1->remove_link(port1);
     node2->remove_link(port2);
 
     // Create a new node in the middle.
-    Node* new_node = new Node(
-        bridge->ptlink1->module_,
-        node1->tx_ * bridge->ptlink1->tx_);
+    auto new_node = std::make_shared<Node>(
+                        bridge->ptlink1->module_,
+                        node1->tx_ * bridge->ptlink1->tx_);
     nodes_.push_back(new_node);
 
     /*
@@ -292,14 +289,14 @@ void BasicNodeTeam::build_bridge(
 
 void BasicNodeTeam::sever_limb(Link const& arrow) {
     /* Delete the dst side of arrow */
-    DEBUG(arrow.src().node == nullptr);
-    DEBUG(arrow.dst().node == nullptr);
+    DEBUG(is_uninitialized(arrow.src().node));
+    DEBUG(is_uninitialized(arrow.dst().node));
 
     Link curr_arrow = arrow;
     size_t num_links = 0;
     do {
         // Unlink
-        Node* next_node = curr_arrow.dst().node;
+        NodeSP next_node = curr_arrow.dst().node_sp();
         next_node->remove_link(curr_arrow.dst());
 
         // Verify temporary tip node
@@ -314,10 +311,10 @@ void BasicNodeTeam::sever_limb(Link const& arrow) {
         }
 
         // Safe to delete node
-        remove_member(next_node);
+        nodes_.erase(next_node);
     } while (num_links > 0);
 
-    arrow.src().node->remove_link(arrow.src());
+    arrow.src().node_sp()->remove_link(arrow.src());
     free_chains_.push_back(arrow.src());
 }
 
@@ -329,7 +326,7 @@ void BasicNodeTeam::copy_limb(
      */
     DEBUG(size() == 0);
 
-    Node* tip_node = m_arrow.src().node;
+    NodeSP tip_node = m_arrow.src().node_sp();
     size_t num_links = tip_node->links().size();
     DEBUG(size() > 1 and num_links != 1);
 
@@ -341,7 +338,7 @@ void BasicNodeTeam::copy_limb(
         tip_node->prototype_->find_link_to(
             m_arrow.src().chain_id,
             m_arrow.src().term,
-            f_arrow.dst().node->prototype_,
+            f_arrow.dst().node_sp()->prototype_,
             f_arrow.dst().chain_id);
     DEBUG(ptlink == nullptr);
 
@@ -355,15 +352,15 @@ void BasicNodeTeam::copy_limb(
     node_gtor.next(); // Same as f_arrow.dst().node
     while (not node_gtor.is_done()) {
         Link const* curr_link = node_gtor.curr_link();
-        DEBUG(curr_link->dst().node->prototype_ !=
+        DEBUG(curr_link->dst().node_sp()->prototype_ !=
               curr_link->prototype()->module_);
 
         // Modify copy of curr_link->src()
         FreeChain src = curr_link->src();
 
-        DEBUG(src.node->prototype_ != tip_node->prototype_,
+        DEBUG(src.node_sp()->prototype_ != tip_node->prototype_,
               string_format("%s vs %s\n",
-                            src.node->prototype_->name.c_str(),
+                            src.node_sp()->prototype_->name.c_str(),
                             tip_node->prototype_->name.c_str()));
         src.node = tip_node;
 
@@ -374,9 +371,9 @@ void BasicNodeTeam::copy_limb(
                             free_chains_.size()));
 
         tip_node = grow_tip(src, curr_link->prototype());
-        if (curr_link->dst().node->prototype_ != tip_node->prototype_) {
+        if (curr_link->dst().node_sp()->prototype_ != tip_node->prototype_) {
             err("%s vs %s\n",
-                curr_link->dst().node->prototype_->name.c_str(),
+                curr_link->dst().node_sp()->prototype_->name.c_str(),
                 tip_node->prototype_->name.c_str());
             err("curr_link->prototype(): %s\n",
                 curr_link->prototype()->module_->name.c_str());
@@ -399,7 +396,7 @@ bool BasicNodeTeam::erode_mutate() {
     if (not free_chains_.empty() and
             size() > 1) {
         // Pick random tip node if not specified
-        Node* tip_node = free_chains_.pick_random().node;
+        NodeSP tip_node = free_chains_.pick_random().node_sp();
         remove_free_chains(tip_node);
 
         FreeChain last_free_chain;
@@ -426,12 +423,12 @@ bool BasicNodeTeam::erode_mutate() {
             size_t const num_links = tip_node->links().size();
             NICE_PANIC(num_links != 1);
 
-            Node* new_tip = nullptr;
+            NodeSP new_tip = nullptr;
             // new_free_chain scope
             {
                 FreeChain const& new_free_chain =
                     tip_node->links().at(0).dst();
-                new_tip = new_free_chain.node;
+                new_tip = new_free_chain.node_sp();
 
                 // Unlink
                 new_tip->remove_link(new_free_chain);
@@ -441,7 +438,7 @@ bool BasicNodeTeam::erode_mutate() {
                 }
             }
 
-            remove_member(tip_node);
+            nodes_.erase(tip_node);
 
             tip_node = new_tip;
         } while (next_loop);
@@ -468,11 +465,11 @@ bool BasicNodeTeam::delete_mutate() {
 
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
-        Node* start_node = free_chains_[0].node;
+        NodeSP start_node = free_chains_[0].node_sp();
         BasicNodeGenerator node_gtor(start_node);
 
-        Node* curr_node = nullptr;
-        Node* next_node = node_gtor.next(); // starts with start_node
+        NodeSP curr_node = nullptr;
+        NodeSP next_node = node_gtor.next(); // starts with start_node
         do {
             curr_node = next_node;
             next_node = node_gtor.next(); // can be nullptr
@@ -545,8 +542,8 @@ bool BasicNodeTeam::delete_mutate() {
              *                  ^^^                                 ^^^
              *                 (src)                               (dst)
              */
-            Node* neighbor1 = delete_point.src.node;
-            Node* neighbor2 = delete_point.dst.node;
+            NodeSP neighbor1 = delete_point.src.node_sp();
+            NodeSP neighbor2 = delete_point.dst.node_sp();
 
             neighbor1->remove_link(delete_point.src);
             neighbor2->remove_link(delete_point.dst);
@@ -574,7 +571,7 @@ bool BasicNodeTeam::delete_mutate() {
              */
 
             // From this point on, memory of link1 and link2 are invalid!!!
-            remove_member(delete_point.delete_node);
+            nodes_.erase(delete_point.delete_node);
 
             // delete_node is guranteed to not be a tip so no need to clean up
             // free_chains_
@@ -602,11 +599,11 @@ bool BasicNodeTeam::insert_mutate() {
 
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
-        Node* start_node = free_chains_[0].node;
+        NodeSP start_node = free_chains_[0].node_sp();
         BasicNodeGenerator node_gtor(start_node);
 
-        Node* curr_node = nullptr;
-        Node* next_node = node_gtor.next(); // starts with start_node
+        NodeSP curr_node = nullptr;
+        NodeSP next_node = node_gtor.next(); // starts with start_node
         do {
             curr_node = next_node;
             next_node = node_gtor.next(); // can be nullptr
@@ -625,8 +622,7 @@ bool BasicNodeTeam::insert_mutate() {
                  */
 
                 FreeChain const src(curr_node, TerminusType::NONE, 0);
-                FreeChain const dst(nullptr, TerminusType::NONE, 0);
-                insert_points.emplace_back(src, dst);
+                insert_points.emplace_back(src, FreeChain());
             }
 
             if (next_node) {
@@ -655,7 +651,7 @@ bool BasicNodeTeam::insert_mutate() {
 
         // Insert a node using a random insert point
         InsertPoint const& insert_point = insert_points.pick_random();
-        if (insert_point.dst.node) {
+        if (not is_uninitialized(insert_point.dst.node)) {
             // This is a non-tip node.
             build_bridge(insert_point);
         }
@@ -663,7 +659,7 @@ bool BasicNodeTeam::insert_mutate() {
             // This is a tip node. Inserting is the same as grow_tip().
             bool free_chain_found = false;
             for (FreeChain const& fc : free_chains_) {
-                if (fc.node == insert_point.src.node) {
+                if (fc.node_sp() == insert_point.src.node_sp()) {
                     grow_tip(fc);
                     free_chain_found = true;
                     break;
@@ -672,7 +668,7 @@ bool BasicNodeTeam::insert_mutate() {
 
             if (not free_chain_found) {
                 err("FreeChain not found for %s\n",
-                    insert_point.src.node->to_string().c_str());
+                    insert_point.src.node_sp()->to_string().c_str());
                 err("Available FreeChain(s):\n");
                 for (FreeChain const& fc : free_chains_) {
                     err("%s\n", fc.to_string().c_str());
@@ -698,11 +694,12 @@ bool BasicNodeTeam::swap_mutate() {
 
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
-        Node* start_node = free_chains_[0].node;
+        NodeSP start_node = free_chains_[0].node_sp();
         BasicNodeGenerator node_gtor(start_node);
 
-        Node* prev_node = nullptr, * curr_node = nullptr;
-        Node* next_node = node_gtor.next(); // starts with start_node
+        NodeSP prev_node = nullptr;
+        NodeSP curr_node = nullptr;
+        NodeSP next_node = node_gtor.next(); // starts with start_node
         do {
             prev_node = curr_node;
             curr_node = next_node;
@@ -723,7 +720,7 @@ bool BasicNodeTeam::swap_mutate() {
                 // Check that neighbor can indead grow into a different
                 // ProtoModule.
                 FreeChain const& tip_fc = curr_node->links().at(0).dst();
-                ProtoModule const* neighbor = tip_fc.node->prototype_;
+                ProtoModule const* neighbor = tip_fc.node_sp()->prototype_;
                 ProtoChain const& chain = neighbor->chains().at(tip_fc.chain_id);
 
                 if (chain.get_term(tip_fc.term).links().size() > 1) {
@@ -759,9 +756,9 @@ bool BasicNodeTeam::swap_mutate() {
         if (not swap_points.empty()) {
             // Insert a node using a random insert point
             SwapPoint const& swap_point = swap_points.pick_random();
-            if (swap_point.dst.node) {
+            if (not is_uninitialized(swap_point.dst.node)) {
                 // This is a non-tip node.
-                remove_member(swap_point.del_node);
+                nodes_.erase(swap_point.del_node);
                 build_bridge(swap_point);
             }
             else {
@@ -789,10 +786,10 @@ bool BasicNodeTeam::cross_mutate(
         // Starting at either end is fine.
         DEBUG(free_chains_.size() != 2);
         auto m_arrows = BasicNodeGenerator::collect_arrows(
-                            free_chains_[0].node);
+                            free_chains_[0].node_sp());
         DEBUG(father.free_chains().size() != 2);
         auto f_arrows = BasicNodeGenerator::collect_arrows(
-                            father.free_chains()[0].node);
+                            father.free_chains()[0].node_sp());
 
         // Walk through all link pairs to collect cross points.
         Vector<CrossPoint> cross_points;
@@ -881,9 +878,8 @@ bool BasicNodeTeam::regenerate() {
 }
 
 bool BasicNodeTeam::randomize_mutate() {
-    disperse();
-    bool const mutate_success = regenerate();
-    return mutate_success;
+    reset();
+    return regenerate();
 }
 
 
@@ -946,7 +942,7 @@ std::string BasicNodeTeam::to_string() const {
     std::ostringstream ss;
 
     NICE_PANIC(free_chains_.empty());
-    Node* start_node = free_chains_.at(0).node;
+    NodeSP start_node = free_chains_.at(0).node_sp();
     BasicNodeGenerator node_gtor(start_node);
 
     while (not node_gtor.is_done()) {
@@ -970,7 +966,7 @@ StrList BasicNodeTeam::get_node_names() const {
         NICE_PANIC(free_chains_.size() != 2);
 
         // Start at either tip
-        BasicNodeGenerator node_gtor(free_chains_.at(0).node);
+        BasicNodeGenerator node_gtor(free_chains_.at(0).node_sp());
 
         while (not node_gtor.is_done()) {
             res.emplace_back(node_gtor.next()->prototype_->name);

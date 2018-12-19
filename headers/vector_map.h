@@ -97,6 +97,10 @@ public:
         erase(item_to_id_map_.find(item));
     }
 
+    void erase(ItemType const& item) {
+        erase(item_to_id_map_.find(item));
+    }
+
     void pop_back() {
         item_to_id_map_.erase(item_to_id_map_.find(items_.back()));
         items_.pop_back();

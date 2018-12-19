@@ -36,6 +36,14 @@ std::string Database::ModPtrRoulette::to_string() const {
  *
  * Note: Categorization must be done after link parsing.
  */
+void Database::reset() {
+    all_mods_.clear();
+    singles_.clear();
+    hubs_.clear();
+    basic_mods_.clear();
+    complex_mods_.clear();
+}
+
 void Database::categorize() {
     for (auto& mod : all_mods_) {
         size_t const n_itf = mod->counts().all_interfaces();
@@ -115,6 +123,8 @@ void Database::print_db() {
 typedef std::function<void(JSON_MOD_PARAMS)> JsonModTypeLambda;
 
 void Database::parse_from_json(JSON const& xdb) {
+    reset();
+
     // Define lambas for code reuse
     JSON const& singles = xdb["modules"]["singles"];
     auto for_each_double_json = [&](JsonModTypeLambda const & lambda) {

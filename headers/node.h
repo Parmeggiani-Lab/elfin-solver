@@ -1,14 +1,17 @@
 #ifndef NODE_H_
 #define NODE_H_
 
-#include <unordered_set>
+#include <memory>
 
 #include "proto_module.h"
 #include "geometry.h"
-#include "terminus_type.h"
 #include "link.h"
 
 namespace elfin {
+
+class Node;
+typedef std::shared_ptr<Node> NodeSP;
+typedef std::weak_ptr<Node> NodeWP;
 
 class Node {
 protected:
@@ -36,14 +39,14 @@ public:
     /* ctors */
     Node(ProtoModule const* prototype, Transform const& tx);
     Node(ProtoModule const* prototype) : Node(prototype, Transform()) {}
-    virtual Node* clone() const { return new Node(*this); }
+    NodeSP clone() const { return std::make_shared<Node>(*this); }
 
     /* dtors */
     // virtual ~Node() {}
 
     /* accessors */
     LinkList const& links() const { return links_; }
-    Link const* find_link_to(Node const* dst_node) const;
+    Link const* find_link_to(NodeSP const& dst_node) const;
 
     /* modifiers */
     void add_link(
