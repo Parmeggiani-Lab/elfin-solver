@@ -61,7 +61,7 @@ struct WorkArea::PImpl {
         }
 
         type = _determine_type(num_branch_points);
-        points = _to_points(); // Cache it
+        points = _gen_points(); // Cache it
         target_size = _determine_target_size();
     }
 
@@ -116,7 +116,7 @@ struct WorkArea::PImpl {
         return res;
     }
 
-    V3fList _to_points() const {
+    V3fList _gen_points() const {
         V3fList res;
         NICE_PANIC(leaf_joints.size() != 2,
                    string_format("Size of leaf_joints not "
@@ -163,7 +163,7 @@ size_t WorkArea::target_size() const {
     return p_impl_->target_size;
 }
 
-V3fList WorkArea::to_points() const {
+V3fList const& WorkArea::points() const {
     return p_impl_->points;
 }
 

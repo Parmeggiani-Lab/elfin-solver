@@ -48,7 +48,7 @@ public:
     WorkType type() const;
     UIJointMap const& joints() const;
     size_t target_size() const;
-    V3fList to_points() const;
+    V3fList const& points() const;
 
 private:
     struct PImpl;

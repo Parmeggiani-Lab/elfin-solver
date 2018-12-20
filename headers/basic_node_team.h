@@ -18,6 +18,11 @@ private:
     /* accessors */
     Crc32 calc_checksum() const;
     float calc_score() const;
+    //
+    // In a BasicNodeTeam there are either 0 or 2 tips at any given time. The
+    // nodes network is thus a simple path. We walk the path to collect the 3D
+    // points in order.
+    //
     V3fList collect_points(NodeSP const& tip_node) const;
 
     /*modifiers */
@@ -47,7 +52,7 @@ public:
 
     /* printers */
     virtual std::string to_string() const;
-    virtual StrList get_node_names() const;
+    virtual JSON gen_nodes_json() const;
 
     /* tests */
     static BasicNodeTeam build_team(StepList const& steps);

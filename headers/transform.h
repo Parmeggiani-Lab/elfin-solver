@@ -14,6 +14,7 @@
 namespace elfin {
 
 class Vector3f;
+typedef Vector3f Mat3f[3];
 struct TestStat;
 
 #ifdef USE_EIGEN
@@ -56,6 +57,7 @@ public:
     Transform(JSON const& tx_json);
     // Convenience ctor for testing purposes.
     Transform(Vector3f const& vec);
+    Transform(elfin::Mat3f const& rot, Vector3f const& vec);
 
     /* accessors */
     Vector3f collapsed() const;
@@ -79,6 +81,9 @@ public:
      */
     bool is_approx(Transform const& other,
                    float const tolerance = 1e-4) const;
+
+    JSON rot_json() const;
+    JSON tran_json() const;
 
     /* modifiers */
 #ifdef USE_EIGEN

@@ -14,7 +14,7 @@ TestStat InputManager::test() {
 
     load_test_input();
 
-    // Test spec parsing
+    // Test spec parsing.
     ts.tests++;
     if (SPEC.work_areas().size() != 1) {
         ts.errors++;
@@ -24,8 +24,8 @@ TestStat InputManager::test() {
     else {
         auto& wa = begin(SPEC.work_areas())->second; // unique_ptr
 
-        // Test parsed points
-        V3fList points_test = wa->to_points();
+        // Test parsed points.
+        V3fList const& points_test = wa->points();
 
         ts.tests++;
         if (quarter_snake_free_coordinates != points_test) {

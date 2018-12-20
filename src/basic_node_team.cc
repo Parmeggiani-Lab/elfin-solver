@@ -120,11 +120,11 @@ struct BasicNodeTeam::PImpl {
 
         Crc32 crc = 0x0000;
         for (auto& free_chain : that->free_chains_) {
-            BasicNodeGenerator node_gtor(free_chain.node_sp());
+            BasicNodeGenerator node_gen(free_chain.node_sp());
 
             Crc32 crc_half = 0xffff;
-            while (not node_gtor.is_done()) {
-                NodeSP node = node_gtor.next();
+            while (not node_gen.is_done()) {
+                NodeSP node = node_gen.next();
                 ProtoModule const* prot = node->prototype_;
                 checksum_cascade(&crc_half, &prot, sizeof(prot));
             }
@@ -141,13 +141,9 @@ struct BasicNodeTeam::PImpl {
 
     float calc_score() const {
         //
-        // In a BasicNodeTeam there are either 0 or 2 tips at any given time. The
-        // nodes network is thus a simple path. We walk the path to collect the 3D
-        // points in order.
-        //
-        // In addition, we walk the path forward and backward, because the Kabsch
-        // algorithm relies on point-wise correspondance. Different ordering can
-        // yield different RMSD scores.
+        // We score the path forward and backward, because the Kabsch
+        // algorithm relies on point-wise correspondance. Different ordering
+        // can yield different RMSD scores.
         //
         DEBUG(that->free_chains_.size() != 2,
               string_format("There are %lu free chains!\n",
@@ -162,7 +158,8 @@ struct BasicNodeTeam::PImpl {
                   string_format("points.size()=%lu, size()=%lu\n",
                                 points.size(), that->size()));
 
-            float const new_score = kabsch::score(points, *that->work_area_);
+            float const new_score =
+                kabsch::score(points, that->work_area_->points());
             score = new_score < score ? new_score : score;
         }
 
@@ -173,11 +170,11 @@ struct BasicNodeTeam::PImpl {
         // Verify node is a tip node.
         NICE_PANIC(tip_node->links().size() > 1);
 
-        BasicNodeGenerator node_gtor(tip_node);
+        BasicNodeGenerator node_gen(tip_node);
 
         V3fList points;
-        while (not node_gtor.is_done()) {
-            points.push_back(node_gtor.next()->tx_.collapsed());
+        while (not node_gen.is_done()) {
+            points.push_back(node_gen.next()->tx_.collapsed());
         }
 
         return points;
@@ -185,11 +182,11 @@ struct BasicNodeTeam::PImpl {
 
     /*modifiers */
     void fix_limb_transforms(Link const& arrow) {
-        BasicNodeGenerator limb_gtor(&arrow);
-        while (not limb_gtor.is_done()) {
-            Link const* curr_link = limb_gtor.curr_link();
-            NodeSP curr_node = limb_gtor.curr_node();
-            NodeSP next_node = limb_gtor.next();
+        BasicNodeGenerator limb_gen(&arrow);
+        while (not limb_gen.is_done()) {
+            Link const* curr_link = limb_gen.curr_link();
+            NodeSP curr_node = limb_gen.curr_node();
+            NodeSP next_node = limb_gen.next();
             next_node->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
         }
     }
@@ -357,10 +354,10 @@ struct BasicNodeTeam::PImpl {
         DEBUG(num_links != 1,
               string_format("There are %lu links!\n", num_links));
 
-        BasicNodeGenerator node_gtor(&f_arrow);
-        node_gtor.next(); // Same as f_arrow.dst().node.
-        while (not node_gtor.is_done()) {
-            Link const* curr_link = node_gtor.curr_link();
+        BasicNodeGenerator node_gen(&f_arrow);
+        node_gen.next(); // Same as f_arrow.dst().node.
+        while (not node_gen.is_done()) {
+            Link const* curr_link = node_gen.curr_link();
             DEBUG(curr_link->dst().node_sp()->prototype_ !=
                   curr_link->prototype()->module_);
 
@@ -393,7 +390,7 @@ struct BasicNodeTeam::PImpl {
             DEBUG(num_links != 1,
                   string_format("There are %lu links!\n", num_links));
 
-            node_gtor.next();
+            node_gen.next();
         }
     }
 
@@ -470,13 +467,13 @@ struct BasicNodeTeam::PImpl {
             // Starting at either end is fine.
             DEBUG(that->free_chains_.size() != 2);
             NodeSP start_node = that->free_chains_[0].node_sp();
-            BasicNodeGenerator node_gtor(start_node);
+            BasicNodeGenerator node_gen(start_node);
 
             NodeSP curr_node = nullptr;
-            NodeSP next_node = node_gtor.next(); // Starts with start_node.
+            NodeSP next_node = node_gen.next(); // Starts with start_node.
             do {
                 curr_node = next_node;
-                next_node = node_gtor.next(); // Can be nullptr.
+                next_node = node_gen.next(); // Can be nullptr.
                 size_t const num_links = curr_node->links().size();
 
                 if (num_links == 1) {
@@ -527,7 +524,7 @@ struct BasicNodeTeam::PImpl {
                                string_format(
                                    "Number of links: %lu\n", num_links));
                 }
-            } while (not node_gtor.is_done());
+            } while (not node_gen.is_done());
 
             // delete_points will at least contain the tip nodes.
             DEBUG(delete_points.empty());
@@ -602,13 +599,13 @@ struct BasicNodeTeam::PImpl {
             // Starting at either end is fine.
             DEBUG(that->free_chains_.size() != 2);
             NodeSP start_node = that->free_chains_[0].node_sp();
-            BasicNodeGenerator node_gtor(start_node);
+            BasicNodeGenerator node_gen(start_node);
 
             NodeSP curr_node = nullptr;
-            NodeSP next_node = node_gtor.next(); // Starts with start_node.
+            NodeSP next_node = node_gen.next(); // Starts with start_node.
             do {
                 curr_node = next_node;
-                next_node = node_gtor.next(); // Can be nullptr.
+                next_node = node_gen.next(); // Can be nullptr.
                 size_t const num_links = curr_node->links().size();
 
                 if (num_links == 1) {
@@ -646,7 +643,7 @@ struct BasicNodeTeam::PImpl {
                         insert_points.pop_back();
                     }
                 }
-            } while (not node_gtor.is_done());
+            } while (not node_gen.is_done());
 
             // insert_points will at least contain the tip nodes.
             DEBUG(insert_points.empty());
@@ -696,15 +693,15 @@ struct BasicNodeTeam::PImpl {
             // Starting at either end is fine.
             DEBUG(that->free_chains_.size() != 2);
             NodeSP start_node = that->free_chains_[0].node_sp();
-            BasicNodeGenerator node_gtor(start_node);
+            BasicNodeGenerator node_gen(start_node);
 
             NodeSP prev_node = nullptr;
             NodeSP curr_node = nullptr;
-            NodeSP next_node = node_gtor.next(); // Starts with start_node/
+            NodeSP next_node = node_gen.next(); // Starts with start_node/
             do {
                 prev_node = curr_node;
                 curr_node = next_node;
-                next_node = node_gtor.next(); // Can be nullptr.
+                next_node = node_gen.next(); // Can be nullptr.
                 size_t const num_links = curr_node->links().size();
 
                 if (num_links == 1) {
@@ -750,7 +747,7 @@ struct BasicNodeTeam::PImpl {
                         swap_points.pop_back();
                     }
                 }
-            } while (not node_gtor.is_done());
+            } while (not node_gen.is_done());
 
             // swap_points may not even contain tip nodes if they can't possibly
             // be swapped.
@@ -987,11 +984,11 @@ std::string BasicNodeTeam::to_string() const {
 
     NICE_PANIC(free_chains_.empty());
     NodeSP start_node = free_chains_.at(0).node_sp();
-    BasicNodeGenerator node_gtor(start_node);
+    BasicNodeGenerator node_gen(start_node);
 
-    while (not node_gtor.is_done()) {
-        ss << node_gtor.next()->to_string();
-        Link const* link_ptr = node_gtor.curr_link();
+    while (not node_gen.is_done()) {
+        ss << node_gen.next()->to_string();
+        Link const* link_ptr = node_gen.curr_link();
         if (link_ptr) {
             TerminusType const src_term = link_ptr->src().term;
             TerminusType const dst_term = link_ptr->dst().term;
@@ -1003,28 +1000,67 @@ std::string BasicNodeTeam::to_string() const {
     return ss.str();
 }
 
-StrList BasicNodeTeam::get_node_names() const {
-    StrList res;
+JSON BasicNodeTeam::gen_nodes_json() const {
+    std::vector<JSON> nodes_output;
 
     if (not free_chains_.empty()) {
         NICE_PANIC(free_chains_.size() != 2);
 
-        // Starting at either tip is fine (?)
-        BasicNodeGenerator node_gtor(free_chains_.at(0).node_sp());
+        // Kabsch outputs for forward and backward paths.
+        elfin::Mat3f rot[2];
+        Vector3f tran[2];
+        double rms[2];
 
-        while (not node_gtor.is_done()) {
-            res.emplace_back(node_gtor.next()->prototype_->name);
+        for (size_t i = 0; i < 2; ++i) {
+            kabsch::rosetta_kabsch(
+                /* mobile */ collect_points(free_chains_.at(i).node_sp()),
+                /* ref */ work_area_->points(),
+                rot[i],
+                tran[i],
+                rms[i],
+                /*mode=*/1);
         }
 
-        DEBUG(res.size() != size(),
-              string_format("res.size()=%lu, size()=%lu\n",
-                            res.size(), this->size()));
+        // Starting at tip that yields lower score.
+        size_t const better_tip_id = rms[0] < rms[1] ? 0 : 1;
+
+        NodeSP tip_node = free_chains_.at(better_tip_id).node_sp();
+        Transform kabsch_alignment(rot[better_tip_id], tran[better_tip_id]);
+
+        size_t member_id = 0;  // UID for node in team.
+        BasicNodeGenerator node_gen(tip_node);
+        while (not node_gen.is_done()) {
+            NodeSP curr_node = node_gen.next();
+
+            JSON node_output;
+            node_output["name"] = curr_node->prototype_->name;
+            node_output["member_id"] = member_id;
+
+            Transform tx = curr_node->tx_;
+
+            // Apply Kabsch alignment
+            tx = kabsch_alignment * tx;
+
+            node_output["rot"] = tx.rot_json();
+            node_output["tran"] = tx.tran_json();
+
+            member_id++;
+            nodes_output.emplace_back(node_output);
+        }
+
+        DEBUG(nodes_output.size() != size(),
+              string_format("nodes_output.size()=%lu, size()=%lu\n",
+                            nodes_output.size(), this->size()));
     }
     else {
-        res.emplace_back("[Empty]");
+        nodes_output.emplace_back("[Empty]");
     }
 
-    return res;
+    JSON output(nodes_output);
+
+    wrn("DEBUG output:\n%s\n", output.dump(4).c_str());
+
+    return output;
 }
 
 }  /* elfin */

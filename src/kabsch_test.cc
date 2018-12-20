@@ -53,14 +53,14 @@ TestStat test_basics() {
     TestStat ts;
 
     // kabsch() return variables
-    MatXf rot;
+    elfin::Mat3f rot;
     Vector3f tran;
     double rms;
 
-    // Test that kabsch() call returns true
+    // Test that kabsch() call returns true.
     {
         bool const ret_val =
-            _kabsch(points10a, points10b, rot, tran, rms);
+            rosetta_kabsch(points10a, points10b, rot, tran, rms, /*mode=*/1);
 
         ts.tests++;
         if (not ret_val) {
@@ -72,8 +72,8 @@ TestStat test_basics() {
     // Test kabsch() rotation.
     {
         ts.tests++;
-        for (size_t i = 0; i < rot.size(); i++) {
-            auto const& row = rot.at(i);
+        for (size_t i = 0; i < 3; i++) {
+            auto const& row = rot[i];
             Vector3f row_vec(row);
             if (not row_vec.is_approx(points10ab_rot[i])) {
                 ts.errors++;
@@ -117,7 +117,7 @@ TestStat test_resample() {
                       begin(a_fewer) + (a_fewer.size() / 2) + 1);
         assert(a_fewer.size() != points10a.size());
 
-        _resample(points10a, a_fewer);
+        a_fewer = _resample(points10a, a_fewer);
 
         ts.tests++;
         if (a_fewer.size() != points10a.size()) {
@@ -140,7 +140,8 @@ TestStat test_score() {
 
     // Identity (no transform) score 0.
     {
-        float const kscore = score(quarter_snake_free_coordinates, *wa);
+        V3fList const& wa_points = wa->points();
+        float const kscore = score(quarter_snake_free_coordinates, wa_points);
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
@@ -153,8 +154,7 @@ TestStat test_score() {
             }
 
             err("Input file points:\n");
-            V3fList const& input_points = wa->to_points();
-            for (auto const& point : input_points) {
+            for (auto const& point : wa_points) {
                 raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
             }
         }
@@ -177,7 +177,8 @@ TestStat test_score() {
             point = trans_tx * point;
         }
 
-        float const kscore = score(points_test, *wa);
+        V3fList const& wa_points = wa->points();
+        float const kscore = score(points_test, wa_points);
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
@@ -190,8 +191,7 @@ TestStat test_score() {
             }
 
             err("Input file points:\n");
-            V3fList const& input_points = wa->to_points();
-            for (auto const& point : input_points) {
+            for (auto const& point : wa_points) {
                 raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
             }
         }
@@ -214,7 +214,8 @@ TestStat test_score() {
             point = rot_tx * point;
         }
 
-        float const kscore = score(points_test, *wa);
+        V3fList const& wa_points = wa->points();
+        float const kscore = score(points_test, wa_points);
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
@@ -227,8 +228,7 @@ TestStat test_score() {
             }
 
             err("Input file points:\n");
-            V3fList const& input_points = wa->to_points();
-            for (auto const& point : input_points) {
+            for (auto const& point : wa_points) {
                 raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
             }
         }
@@ -253,7 +253,8 @@ TestStat test_score() {
             point = random_tx * point;
         }
 
-        float const kscore = score(points_test, *wa);
+        V3fList const& wa_points = wa->points();
+        float const kscore = score(points_test, wa_points);
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
@@ -266,8 +267,7 @@ TestStat test_score() {
             }
 
             err("Input file points:\n");
-            V3fList const& input_points = wa->to_points();
-            for (auto const& point : input_points) {
+            for (auto const& point : wa_points) {
                 raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
             }
         }
@@ -275,7 +275,8 @@ TestStat test_score() {
 
     // Test Blender origin transform score 0.
     {
-        float const kscore = score(quarter_snake_free_coordinates_origin, *wa);
+        V3fList const& wa_points = wa->points();
+        float const kscore = score(quarter_snake_free_coordinates_origin, wa_points);
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
@@ -288,8 +289,28 @@ TestStat test_score() {
             }
 
             err("Input file points:\n");
-            V3fList const& input_points = wa->to_points();
-            for (auto const& point : input_points) {
+            for (auto const& point : wa_points) {
+                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+            }
+        }
+    }
+
+    // Test unrelated point Kabsch score > 0;
+    {
+        float const kscore = score(points10a, points10b);
+        ts.tests++;
+        if (kscore < 1.0) {
+            ts.errors++;
+            err("kabsch unrelated point score test failed.\n"
+                "Expected >> 0\nGot %f\n", kscore);
+
+            err("points10a:\n");
+            for (auto const& point : points10a) {
+                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+            }
+
+            err("points10b:\n");
+            for (auto const& point : points10b) {
                 raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
             }
         }

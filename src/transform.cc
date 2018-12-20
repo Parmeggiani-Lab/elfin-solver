@@ -1,6 +1,7 @@
 #include "transform.h"
 
 #include <cmath>
+#include <vector>
 
 #include "debug_utils.h"
 #include "vector3f.h"
@@ -38,6 +39,22 @@ Transform::Transform(Vector3f const& vec) {
     0.f, 0.f, 0.f, 1.f;
 #else
     for (size_t i = 0; i < 3; ++i) {
+        tran_[i] = vec[i];
+    }
+#endif  /* ifdef USE_EIGEN */
+}
+
+Transform::Transform(elfin::Mat3f const& rot, Vector3f const& vec) {
+#ifdef USE_EIGEN
+    (*this) << rot[0][0], rot[0][1], rot[0][2], vec[0],
+    rot[1][0], rot[1][1], rot[1][2], vec[1],
+    rot[2][0], rot[2][1], rot[2][2], vec[2],
+    0.f, 0.f, 0.f, 1.f;
+#else
+    for (size_t i = 0; i < 3; ++i) {
+        for (size_t j = 0; j < 3; ++j) {
+            rot_[i][j] = rot[i][j];
+        }
         tran_[i] = vec[i];
     }
 #endif  /* ifdef USE_EIGEN */
@@ -136,6 +153,29 @@ bool Transform::is_approx(
 
     return true;
 #endif  /* ifdef USE_EIGEN */
+}
+
+JSON Transform::rot_json() const {
+    JSON out;
+#ifdef USE_EIGEN
+    out = {
+
+    };
+#else
+    for (size_t i = 0; i < 3; ++i) {
+        out[i] = std::vector<float>(rot_[i], rot_[i] + 3);
+    }
+#endif  /* ifdef USE_EIGEN */
+    return out;
+}
+
+JSON Transform::tran_json() const {
+    JSON out;
+#ifdef USE_EIGEN
+#else
+    out = std::vector<float>(tran_, tran_ + 3);
+#endif  /* ifdef USE_EIGEN */
+    return out;
 }
 
 }  /* elfin */

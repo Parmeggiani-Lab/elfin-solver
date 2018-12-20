@@ -136,6 +136,11 @@ public:
         return data_[i];
     }
 
+    float& operator[](size_t const i) {
+        DEBUG(i >= 3);
+        return data_[i];
+    }
+
     Vector3f operator+(Vector3f const& rhs) const {
         return Vector3f(
                    data_[0] + rhs.data_[0],
@@ -191,7 +196,9 @@ public:
     /* tests */
     static TestStat test();
 };
+
 typedef std::vector<Vector3f> V3fList;
+typedef Vector3f Mat3f[3] ;
 
 template<typename T>
 static inline Vector3f operator*(

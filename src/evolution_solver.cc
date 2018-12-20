@@ -112,7 +112,7 @@ void EvolutionSolver::collect_gen_data(
 }
 
 void EvolutionSolver::print_start_msg(WorkArea const& wa) const {
-    V3fList const shape = wa.to_points();
+    V3fList const& shape = wa.points();
     for (auto& p : shape) {
         dbg("Work Area Point: %s\n", p.to_string().c_str());
     }

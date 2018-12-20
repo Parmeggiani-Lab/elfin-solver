@@ -54,8 +54,6 @@ BasicNodeTeam BasicNodeTeam::build_team(StepList const& steps) {
                                step.src_term,
                                dst_mod,
                                dst_chain_id);
-            wrn("%s to %s\n", step.mod_name.c_str(), (itr + 1)->mod_name.c_str());
-            wrn("Tx: %s", pt_link->tx_.to_string().c_str());
 
             // Find FreeChain
             NICE_PANIC(team.free_chains_.size() != 2);
@@ -84,11 +82,6 @@ TestStat BasicNodeTeam::test() {
         NICE_PANIC(team.free_chains_.size() != 2);
 
         V3fList team_points = team.collect_points(team.free_chains_[0].node_sp());
-
-        wrn("Team points (from recipe):\n");
-        for (Vector3f const& point : team_points) {
-            wrn("%s\n", point.to_string().c_str());
-        }
 
         ts.tests++;
         float const score = team.calc_score();
