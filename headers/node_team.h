@@ -28,7 +28,7 @@ protected:
     typedef VectorMap<NodeSP> NodeSPVMap;
 
     /* data */
-    WorkArea const& work_area_;
+    WorkArea const* work_area_ = nullptr;
     NodeSPVMap nodes_;
     FreeChainList free_chains_;
     Crc32 checksum_ = 0x0000;
@@ -38,7 +38,6 @@ protected:
     bool collides(
         Vector3f const& new_com,
         float const mod_radius) const;
-    void check_work_area(NodeTeam const& other) const;
     virtual NodeTeam * clone_impl() const = 0;
 
     /* modifiers */
@@ -50,7 +49,7 @@ protected:
 
 public:
     /* ctors */
-    NodeTeam(WorkArea const& work_area);
+    NodeTeam(WorkArea const* work_area);
     NodeTeam(NodeTeam const& other);
     NodeTeam(NodeTeam && other);
 

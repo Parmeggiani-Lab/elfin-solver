@@ -15,17 +15,13 @@ protected:
     typedef std::vector<NodeTeamSP> NodeTeams;
 
     /* data */
-    WorkArea const& work_area_;
     NodeTeams teams[2];
     NodeTeams* front_buffer_ = nullptr;
     NodeTeams const* back_buffer_ = nullptr;
 
-    /* accessors */
-    NodeTeamSP create_team() const;
-
 public:
     /* ctors */
-    Population(WorkArea const& work_area);
+    Population(WorkArea const* work_area);
 
     /* accessors */
     NodeTeams const* front_buffer() const { return front_buffer_; }

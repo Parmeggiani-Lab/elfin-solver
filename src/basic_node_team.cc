@@ -161,7 +161,7 @@ float BasicNodeTeam::calc_score() const {
               string_format("points.size()=%lu, size()=%lu\n",
                             points.size(), this->size()));
 
-        float const new_score = kabsch::score(points, work_area_);
+        float const new_score = kabsch::score(points, *work_area_);
         score = new_score < score ? new_score : score;
     }
 
@@ -846,14 +846,14 @@ bool BasicNodeTeam::cross_mutate(
 
 bool BasicNodeTeam::regenerate() {
     bool mutate_success = false;
-
+    
     if (nodes_.empty()) {
         // Pick random initial member.
         add_member(XDB.basic_mods().draw());
     }
 
     FreeChain free_chain_a = free_chains_.pick_random();
-    while (size() < work_area_.target_size()) {
+    while (size() < work_area_->target_size()) {
         grow_tip(free_chain_a);
 
         // Pick next tip chain.
@@ -866,12 +866,21 @@ bool BasicNodeTeam::regenerate() {
 }
 
 bool BasicNodeTeam::randomize_mutate() {
-    reset();
+    nodes_.clear();
+    free_chains_.clear();
+    checksum_ = 0x0000;
+    score_ = INFINITY;
     return regenerate();
 }
 
 
 /* public */
+/* ctors */
+BasicNodeTeam::BasicNodeTeam(NodeTeamRecipe const& recipe) :
+    NodeTeam(nullptr) {
+
+}
+
 /* modifiers */
 MutationMode BasicNodeTeam::mutate_and_score(
     NodeTeam const& mother,

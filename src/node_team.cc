@@ -31,21 +31,9 @@ bool NodeTeam::collides(
     return false;
 }
 
-void NodeTeam::check_work_area(NodeTeam const& other) const {
-    NICE_PANIC(
-        &work_area_ != &other.work_area_,
-        string_format(
-            "Trying to move NodeTeam of "
-            "different work area: %s(%p) and %s(%p)\n",
-            work_area_.name().c_str(),
-            &work_area_,
-            other.work_area_.name().c_str(),
-            &other.work_area_));
-}
-
 /* modifiers */
 void NodeTeam::reset() {
-    // work_area_ = nullptr;
+    work_area_ = nullptr;
     nodes_.clear();
     free_chains_.clear();
     checksum_ = 0x0000;
@@ -80,19 +68,17 @@ void NodeTeam::remove_free_chains(NodeSP const& node) {
 
 /* public */
 /* ctors */
-NodeTeam::NodeTeam(WorkArea const& work_area) :
+NodeTeam::NodeTeam(WorkArea const* work_area) :
     work_area_(work_area) {
-    nodes_.reserve(work_area.target_size());
+    nodes_.reserve(work_area_->target_size());
     free_chains_.reserve(FREE_CHAIN_VM_RESERVE_SIZE);
 }
 
-NodeTeam::NodeTeam(NodeTeam const& other) :
-    NodeTeam(other.work_area_) {
+NodeTeam::NodeTeam(NodeTeam const& other) {
     *this = other; // Calls operator=(T const&)
 }
 
-NodeTeam::NodeTeam(NodeTeam&& other) :
-    NodeTeam(other.work_area_) {
+NodeTeam::NodeTeam(NodeTeam&& other) {
     *this = std::move(other); // Calls operator=(T&&)
 }
 
@@ -111,28 +97,32 @@ NodeTeam& NodeTeam::operator=(NodeTeam const& other) {
     if (this != &other) {
         reset();
 
-        // Clone nodes and create address mapping
-        NodeAddrMap addr_map; // old addr -> new addr
-
-        for (auto& other_node : other.nodes()) {
-            auto node_sp = other_node->clone();
-            nodes_.push_back(node_sp);
-            addr_map[other_node] = node_sp;
-        }
-
-        free_chains_ = other.free_chains();
-
-        // Fix pointer addresses and assign to my own nodes
-        for (auto& node : nodes_) {
-            node->update_link_ptrs(addr_map);
-        }
-
-        for (auto& fc : free_chains_) {
-            fc.node = addr_map.at(fc.node_sp());
-        }
-
+        // Copy simple fields.
+        work_area_ = other.work_area_;
         checksum_ = other.checksum_;
         score_ = other.score_;
+
+        // Clone nodes and create address mapping for remapping pointers.
+        {
+            NodeAddrMap addr_map; // old addr -> new addr
+
+            for (auto& other_node : other.nodes()) {
+                auto node_sp = other_node->clone();
+                nodes_.push_back(node_sp);
+                addr_map[other_node] = node_sp;
+            }
+
+            free_chains_ = other.free_chains();
+
+            // Fix pointer addresses and assign to my own nodes
+            for (auto& node : nodes_) {
+                node->update_link_ptrs(addr_map);
+            }
+
+            for (auto& fc : free_chains_) {
+                fc.node = addr_map.at(fc.node_sp());
+            }
+        }
     }
 
     return *this;
@@ -140,10 +130,9 @@ NodeTeam& NodeTeam::operator=(NodeTeam const& other) {
 
 NodeTeam& NodeTeam::operator=(NodeTeam&& other) {
     if (this != &other) {
-        NICE_PANIC(&work_area_ != &other.work_area_);
-
         reset();
 
+        std::swap(work_area_, other.work_area_);
         std::swap(nodes_, other.nodes_);
         std::swap(free_chains_, other.free_chains_);
 

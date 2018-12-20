@@ -6,8 +6,8 @@
 
 #include "input_manager.h"
 #include "output_manager.h"
-#include "test_manager.h"
 #include "parallel_utils.h"
+#include "tests.h"
 
 namespace elfin {
 
@@ -70,7 +70,7 @@ Elfin::~Elfin() {
 int Elfin::run() {
 
     if (OPTIONS.run_unit_tests) {
-        TestManager().run();
+        tests::run_all();
     } else {
         solver_.run();
         OutputManager::write_output(solver_);

@@ -10,29 +10,25 @@
 
 namespace elfin {
 
-/* protected */
-NodeTeamSP Population::create_team() const {
-    switch (work_area_.type()) {
+/* free */
+NodeTeamSP create_team(WorkArea const* wa) {
+    switch (wa->type()) {
     case WorkType::FREE:
-        return std::make_shared<BasicNodeTeam>(work_area_);
-        break;
+        return std::make_shared<BasicNodeTeam>(wa);
     // case WorkType::ONE_HINGE:
-    //     return std::make_shared<OneHingeNodeTeam>(work_area_);
-    //     break;
+    //     return std::make_shared<OneHingeNodeTeam>(wa);
     // case WorkType::TWO_HINGE:
-    //     return std::make_shared<TwoHingeNodeTeam>(work_area_);
-    //     break;
+    //     return std::make_shared<TwoHingeNodeTeam>(wa);
     default:
         die("Unimplemented work type: %s\n",
-            WorkTypeToCStr(work_area_.type()));
+            WorkTypeToCStr(wa->type()));
         return nullptr; // Suppress no return warning
     }
 }
 
 /* public */
 /* ctors */
-Population::Population(WorkArea const& work_area) :
-    work_area_(work_area) {
+Population::Population(WorkArea const* work_area) {
     TIMING_START(init_start_time);
     {
         size_t const pop_size = OPTIONS.ga_pop_size;
@@ -47,9 +43,9 @@ Population::Population(WorkArea const& work_area) :
 
         OMP_PAR_FOR
         for (size_t i = 0; i < pop_size; i++) {
-            new_front_buffer->at(i) = create_team();
+            new_front_buffer->at(i) = create_team(work_area);
             new_front_buffer->at(i)->randomize();
-            new_back_buffer->at(i) = create_team();
+            new_back_buffer->at(i) = create_team(work_area);
         }
 
         front_buffer_ = new_front_buffer;

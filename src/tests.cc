@@ -1,4 +1,4 @@
-#include "test_manager.h"
+#include "tests.h"
 
 #include "test_stat.h"
 #include "test_consts.h"
@@ -9,8 +9,9 @@
 
 namespace elfin {
 
-/* private */
-size_t TestManager::test_units() const {
+namespace tests {
+
+size_t test_units() {
     msg("Running unit tests...\n");
     TestStat total;
 
@@ -28,7 +29,7 @@ size_t TestManager::test_units() const {
     return total.errors;
 }
 
-size_t TestManager::test_integration() const {
+size_t test_integration() {
     msg("Running integration tests...\n");
     TestStat total;
 
@@ -42,9 +43,7 @@ size_t TestManager::test_integration() const {
     return total.errors;
 }
 
-/* public */
-/* accessors */
-void TestManager::run() const {
+void run_all() {
     size_t const unit_test_errors = test_units();
 
     if (unit_test_errors > 0) {
@@ -63,5 +62,7 @@ void TestManager::run() const {
         }
     }
 }
+
+}  /* tests */
 
 }  /* elfin */

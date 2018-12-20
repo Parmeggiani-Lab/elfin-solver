@@ -230,7 +230,7 @@ void EvolutionSolver::run() {
             continue;
         }
 
-        Population population = Population(*wa);
+        Population population = Population(wa.get());
 
         print_start_msg(*wa);
 

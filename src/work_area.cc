@@ -152,18 +152,17 @@ struct WorkArea::PImpl {
 /* public */
 /* ctors */
 WorkArea::WorkArea(
-    JSON const& j,
+    JSON const& json,
     std::string const& name,
     FixedAreaMap const& fam) {
     p_impl_ = std::make_unique<PImpl>(name);
-    p_impl_->parse_from_json(j, fam);
+    p_impl_->parse_from_json(json, fam);
 }
 
 /* dtors */
 WorkArea::~WorkArea() {}
 
 /* accessors */
-
 std::string WorkArea::name() const {
     return p_impl_->name;
 }
