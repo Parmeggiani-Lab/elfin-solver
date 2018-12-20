@@ -18,9 +18,9 @@ typedef std::shared_ptr<Node> NodeSP;
 struct FreeChain {
     /* types */
     struct Bridge {
-        ProtoLink const* const ptlink1, * const ptlink2;
-        Bridge(ProtoLink const* _ptlink1, ProtoLink const*_ptlink2) :
-            ptlink1(_ptlink1), ptlink2(_ptlink2) {}
+        ProtoLink const* const pt_link1, * const pt_link2;
+        Bridge(ProtoLink const* _pt_link1, ProtoLink const*_pt_link2) :
+            pt_link1(_pt_link1), pt_link2(_pt_link2) {}
     };
 
     typedef Vector<Bridge> BridgeList;

@@ -62,8 +62,8 @@ struct BasicNodeTeam::PImpl {
         // [  node1 ] --------------link-------------> [ node2  ]
         //            src                          dst
         //
-        // Each bridge has ptlink1 and ptlink2 that:
-        // [  node1 ] -ptlink1-> [new_node] -ptlink2-> [ node2  ]
+        // Each bridge has pt_link1 and pt_link2 that:
+        // [  node1 ] -pt_link1-> [new_node] -pt_link2-> [ node2  ]
         //
         FreeChain const src, dst;
         FreeChain::BridgeList const bridges;
@@ -88,18 +88,18 @@ struct BasicNodeTeam::PImpl {
     };
 
     struct CrossPoint {
-        ProtoLink const* ptlink;
+        ProtoLink const* pt_link;
         Link const* m_arrow;
         bool m_rev;
         Link const* f_arrow;
         bool f_rev;
         CrossPoint(
-            ProtoLink const* _ptlink,
+            ProtoLink const* _pt_link,
             Link const* _m_arrow,
             bool const _m_rev,
             Link const* _f_arrow,
             bool const _f_rev) :
-            ptlink(_ptlink),
+            pt_link(_pt_link),
             m_arrow(_m_arrow),
             m_rev(_m_rev),
             f_arrow(_f_arrow),
@@ -171,7 +171,7 @@ struct BasicNodeTeam::PImpl {
 
     V3fList collect_points(NodeSP tip_node) const {
         // Verify node is a tip node.
-        NICE_PANIC(tip_node->links().size() != 1);
+        NICE_PANIC(tip_node->links().size() > 1);
 
         BasicNodeGenerator node_gtor(tip_node);
 
@@ -196,26 +196,26 @@ struct BasicNodeTeam::PImpl {
 
     NodeSP grow_tip(
         FreeChain const free_chain_a,
-        ProtoLink const* ptlink = nullptr) {
-        if (ptlink == nullptr) {
-            ptlink = &free_chain_a.random_proto_link();
+        ProtoLink const* pt_link = nullptr) {
+        if (pt_link == nullptr) {
+            pt_link = &free_chain_a.random_proto_link();
         }
 
         NodeSP node_a = free_chain_a.node_sp();
         DEBUG(node_a->links().size() > 1);
 
         auto node_b = that->add_member(
-                          ptlink->module_,
-                          node_a->tx_ * ptlink->tx_);
+                          pt_link->module_,
+                          node_a->tx_ * pt_link->tx_);
 
         TerminusType const term_a = free_chain_a.term;
         TerminusType const term_b = opposite_term(term_a);
 
         FreeChain const free_chain_b =
-            FreeChain(node_b, term_b, ptlink->chain_id_);
+            FreeChain(node_b, term_b, pt_link->chain_id_);
 
-        node_a->add_link(free_chain_a, ptlink, free_chain_b);
-        node_b->add_link(free_chain_b, ptlink->reverse(), free_chain_a);
+        node_a->add_link(free_chain_a, pt_link, free_chain_b);
+        node_b->add_link(free_chain_b, pt_link->reverse(), free_chain_a);
 
         that->free_chains_.lift_erase(free_chain_a);
         that->free_chains_.lift_erase(free_chain_b);
@@ -265,8 +265,8 @@ struct BasicNodeTeam::PImpl {
 
         // Create a new node in the middle.
         auto new_node = std::make_shared<Node>(
-                            bridge->ptlink1->module_,
-                            node1->tx_ * bridge->ptlink1->tx_);
+                            bridge->pt_link1->module_,
+                            node1->tx_ * bridge->pt_link1->tx_);
         that->nodes_.push_back(new_node);
 
         //
@@ -279,18 +279,18 @@ struct BasicNodeTeam::PImpl {
         //          port1 --- nn_src1          nn_src2 --- port2
         //         --new_link1_rev-->
         //
-        // Prototype ---ptlink1--->              ---ptlink2--->
+        // Prototype ---pt_link1--->              ---pt_link2--->
         //
         FreeChain nn_src1(
-            new_node, port2.term, bridge->ptlink1->chain_id_);
-        Link const new_link1_rev(port1, bridge->ptlink1, nn_src1);
+            new_node, port2.term, bridge->pt_link1->chain_id_);
+        Link const new_link1_rev(port1, bridge->pt_link1, nn_src1);
 
         node1->add_link(new_link1_rev);
         new_node->add_link(new_link1_rev.reversed());
 
         FreeChain nn_src2(
-            new_node, port1.term, bridge->ptlink2->reverse()->chain_id_);
-        Link const new_link2(nn_src2, bridge->ptlink2, port2);
+            new_node, port1.term, bridge->pt_link2->reverse()->chain_id_);
+        Link const new_link2(nn_src2, bridge->pt_link2, port2);
 
         new_node->add_link(new_link2);
         node2->add_link(new_link2.reversed());
@@ -343,15 +343,15 @@ struct BasicNodeTeam::PImpl {
         that->free_chains_.lift_erase(m_arrow.src());
 
         // Form first link.
-        ProtoLink const* ptlink =
+        ProtoLink const* pt_link =
             tip_node->prototype_->find_link_to(
                 m_arrow.src().chain_id,
                 m_arrow.src().term,
                 f_arrow.dst().node_sp()->prototype_,
                 f_arrow.dst().chain_id);
-        DEBUG(ptlink == nullptr);
+        DEBUG(pt_link == nullptr);
 
-        tip_node = grow_tip(m_arrow.src(), ptlink);
+        tip_node = grow_tip(m_arrow.src(), pt_link);
 
         num_links = tip_node->links().size();
         DEBUG(num_links != 1,
@@ -632,8 +632,8 @@ struct BasicNodeTeam::PImpl {
                     // curr_node and next_node are linked.
                     // [curr_node] -------------link1-------------> [next_node]
                     //
-                    // Find all ptlink1, ptlink2 that:
-                    // [curr_node] -ptlink1-> [new_node] -ptlink2-> [next_node]
+                    // Find all pt_link1, pt_link2 that:
+                    // [curr_node] -pt_link1-> [new_node] -pt_link2-> [next_node]
                     //
                     // Where src chain_id and term are known for curr_node, and
                     // dst chain_id and term are known for next_node.
@@ -735,8 +735,8 @@ struct BasicNodeTeam::PImpl {
                     // [prev_node] --link1--> [curr_node] --link2--> [next_node]
                     //             src                           dst
                     //
-                    // Find all ptlink1, ptlink2 that:
-                    // [prev_node] -ptlink1-> [diff_node] -ptlink2-> [next_node]
+                    // Find all pt_link1, pt_link2 that:
+                    // [prev_node] -pt_link1-> [diff_node] -pt_link2-> [next_node]
                     //
                     // Where src chain_id and term are known for curr_node, and
                     // dst chain_id and term are known for next_node.
@@ -893,9 +893,20 @@ V3fList BasicNodeTeam::collect_points(NodeSP const& tip_node) const {
     return p_impl_->collect_points(tip_node);
 }
 
+/* modifiers */
+std::unique_ptr<BasicNodeTeam::PImpl> BasicNodeTeam::init_pimpl() {
+    return std::make_unique<PImpl>(this);
+}
+
+NodeSP BasicNodeTeam::grow_tip(
+    FreeChain const free_chain_a,
+    ProtoLink const* pt_link) {
+    return p_impl_->grow_tip(free_chain_a, pt_link);
+}
+
 /* protected */
 /* accessors */
-BasicNodeTeam* BasicNodeTeam::clone_impl() const {
+BasicNodeTeam * BasicNodeTeam::clone_impl() const {
     return new BasicNodeTeam(*this);
 }
 
@@ -914,10 +925,6 @@ BasicNodeTeam::BasicNodeTeam(BasicNodeTeam&& other) :
 BasicNodeTeam::~BasicNodeTeam() {}
 
 /* modifiers */
-std::unique_ptr<BasicNodeTeam::PImpl> BasicNodeTeam::init_pimpl() {
-    return std::make_unique<PImpl>(this);
-}
-
 MutationMode BasicNodeTeam::mutate_and_score(
     NodeTeam const& mother,
     NodeTeam const& father) {

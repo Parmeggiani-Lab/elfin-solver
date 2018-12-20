@@ -27,6 +27,7 @@ protected:
 
     /* data */
     Vector<ProtoModuleUP> all_mods_;
+    StrIndexMap mod_idx_map_;
     ModPtrRoulette singles_, hubs_, basic_mods_, complex_mods_;
 
     /* modifiers */
@@ -37,11 +38,12 @@ protected:
     void print_roulettes();
     void print_db();
 public:
-    /* getters */
+    /* accessors */
     ModPtrRoulette const& singles() const { return singles_; }
     ModPtrRoulette const& hubs() const { return hubs_; }
     ModPtrRoulette const& basic_mods() const { return basic_mods_; }
     ModPtrRoulette const& complex_mods() const { return complex_mods_; }
+    ProtoModule const* get_module(std::string const& name) const;
 
     /* modifiers */
     void parse_from_json(JSON const& xdb);

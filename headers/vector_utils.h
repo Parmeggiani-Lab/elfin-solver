@@ -16,13 +16,9 @@ private:
     typedef typename std::vector<T>::iterator ItrType;
     typedef typename std::vector<T>::const_iterator CItrType;
 
-    /* data */
-
 public:
     /* ctors */
     using ContainerType::ContainerType;
-
-    /* dtors */
 
     /* accessors */
     CItrType find(T const& item) const {

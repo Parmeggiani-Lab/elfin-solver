@@ -36,7 +36,7 @@ struct WorkArea::PImpl {
         JSON const& json,
         FixedAreaMap const& fam) {
         size_t num_branch_points = 0;
-        for (auto it = json.begin(); it != json.end(); ++it) {
+        for (auto it = begin(json); it != end(json); ++it) {
             JSON const& joint_json = *it;
             std::string const& joint_name = it.key();
 
@@ -103,7 +103,7 @@ struct WorkArea::PImpl {
         NICE_PANIC(points.size() == 0);
 
         float sum_dist = 0.0f;
-        for (auto i = points.begin() + 1; i != points.end(); ++i) {
+        for (auto i = begin(points) + 1; i != end(points); ++i) {
             sum_dist += (i - 1)->dist_to(*i);
         }
 

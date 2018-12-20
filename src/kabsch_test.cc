@@ -113,8 +113,8 @@ TestStat test_resample() {
         V3fList a_fewer(points10a);
 
         // Erase half of the points.
-        a_fewer.erase(a_fewer.begin() + (a_fewer.size() / 2),
-                      a_fewer.begin() + (a_fewer.size() / 2) + 1);
+        a_fewer.erase(begin(a_fewer) + (a_fewer.size() / 2),
+                      begin(a_fewer) + (a_fewer.size() / 2) + 1);
         assert(a_fewer.size() != points10a.size());
 
         _resample(points10a, a_fewer);
@@ -234,7 +234,7 @@ TestStat test_score() {
         }
     }
 
-    // Random transformation score 0.
+    // Test random transformation score 0.
     {
         // This tx is produced by taking the matrix_world of a transformed
         // Blender object.
@@ -262,6 +262,28 @@ TestStat test_score() {
 
             err("Hard coded points:\n");
             for (auto const& point : points_test) {
+                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+            }
+
+            err("Input file points:\n");
+            V3fList const& input_points = wa->to_points();
+            for (auto const& point : input_points) {
+                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+            }
+        }
+    }
+
+    // Test Blender origin transform score 0.
+    {
+        float const kscore = score(quarter_snake_free_coordinates_origin, *wa);
+        ts.tests++;
+        if (kscore > 1e-6) {
+            ts.errors++;
+            err("kabsch Blender origin transform score test failed.\n"
+                "Expected 0\nGot %f\n", kscore);
+
+            err("Blender origin points:\n");
+            for (auto const& point : quarter_snake_free_coordinates_origin) {
                 raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
             }
 

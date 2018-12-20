@@ -39,7 +39,7 @@ public:
     bool has_link_to(
         ConstProtoModulePtr dst_module,
         size_t const dst_chain_id) const {
-        return find_link_to(dst_module, dst_chain_id) != link_set_.end();
+        return find_link_to(dst_module, dst_chain_id) != end(link_set_);
     }
 
     /* modifiers */

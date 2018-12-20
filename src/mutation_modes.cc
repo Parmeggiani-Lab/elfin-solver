@@ -10,7 +10,7 @@ MutationModeList gen_mutation_mode_list() {
         static_cast<int>(MutationMode::_ENUM_SIZE) - 1);
 
     int int_mode = static_cast<int>(MutationMode::NONE);
-    std::generate(res.begin(), res.end(), [&] {
+    std::generate(begin(res), end(res), [&] {
         return static_cast<MutationMode>(++int_mode);
     });
 

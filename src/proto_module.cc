@@ -7,14 +7,23 @@
 #include "node.h"
 
 // #define PRINT_INIT
-// #define PRINT_CREATE_PROTO_LINK
 // #define PRINT_FINALIZE
 
 namespace elfin {
 
-/* ProtoModule::Counts */
+/* free */
+Transform get_tx(
+    JSON const& xdb,
+    size_t const tx_id) {
+    NICE_PANIC(
+        tx_id >= xdb["n_to_c_tx"].size(),
+        ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
+         "\tEither xdb.json is corrupted or "
+         "there is an error in dbgen.py.\n"));
 
-/* ProtoModule */
+    return Transform(xdb["n_to_c_tx"][tx_id]);
+}
+
 /* public */
 /* ctors */
 ProtoModule::ProtoModule(
@@ -67,7 +76,7 @@ size_t ProtoModule::find_chain_id(
     }
 
     NICE_PANIC("Chain Not Found");
-    exit(1); // suppress no return warning
+    exit(1); // Suppress no return warning.
 }
 ProtoLink const* ProtoModule::find_link_to(
     size_t const src_chain_id,
@@ -112,67 +121,68 @@ void ProtoModule::finalize() {
  * (static)
  */
 void ProtoModule::create_proto_link_pair(
-    JSON const& tx_json,
+    JSON const& xdb,
+    size_t const tx_id,
     ProtoModule& mod_a,
     std::string const& a_chain_name,
     ProtoModule& mod_b,
     std::string const& b_chain_name) {
-    // Create transforms
-    Transform const tx(tx_json);
-    Transform const tx_inv = tx.inversed();
 
-    // Find chains
+    // Find A chains.
     ProtoChainList& a_chains = mod_a.chains_;
     size_t const a_chain_id = mod_a.find_chain_id(a_chain_name);
     ProtoChain& a_chain = a_chains.at(a_chain_id);
 
-#ifdef PRINT_CREATE_PROTO_LINK
-    wrn(("mod_a[%p:%s] size: %lu, proto_chain[%p:%s:%lu], "
-         "counts: links(%lu, %lu), interface(%lu, %lu)\n"),
-        &mod_a,
-        mod_a.name.c_str(),
-        a_chains.size(),
-        &a_chain,
-        a_chain.name.c_str(),
-        a_chain_id,
-        mod_a.counts().n_link,
-        mod_a.counts().c_link,
-        mod_a.counts().n_interfaces,
-        mod_a.counts().c_interfaces);
-    wrn("a_chain: %p, %p, %p, %p\n",
-        &a_chain.c_term_,
-        &a_chain.c_term_.links_,
-        &a_chain.n_term_,
-        &a_chain.n_term_.links_);
-#endif  /* ifdef PRINT_CREATE_PROTO_LINK */
-
+    // Find B chains.
     ProtoChainList& b_chains = mod_b.chains_;
     size_t const b_chain_id = mod_b.find_chain_id(b_chain_name);
     ProtoChain& b_chain = b_chains.at(b_chain_id);
 
-#ifdef PRINT_CREATE_PROTO_LINK
-    wrn("mod_b[%p:%s] size: %lu, proto_chain[%p:%s:%lu], "
-        "counts: links(%lu, %lu), interface(%lu, %lu)\n",
-        &mod_b,
-        mod_b.name.c_str(),
-        b_chains.size(),
-        &b_chain,
-        b_chain.name.c_str(),
-        b_chain_id,
-        mod_b.counts().n_link,
-        mod_b.counts().c_link,
-        mod_b.counts().n_interfaces,
-        mod_b.counts().c_interfaces);
-    wrn("b_chain: %p, %p, %p, %p\n",
-        &b_chain.c_term_,
-        &b_chain.c_term_.links_,
-        &b_chain.n_term_,
-        &b_chain.n_term_.links_);
-#endif  /* ifdef PRINT_CREATE_PROTO_LINK */
+    // Resolve transformation matrix: C-term extrusion style.
+    Transform tx = get_tx(xdb, tx_id);
 
-    // Create links and count
-    auto a_ptlink = std::make_shared<ProtoLink>(tx_inv, &mod_b, b_chain_id);
-    auto b_ptlink = std::make_shared<ProtoLink>(tx, &mod_a, a_chain_id);
+    if (mod_a.type == ModuleType::SINGLE and
+            mod_b.type == ModuleType::SINGLE) {
+        // Raise frame = inverse tx.
+        tx = tx.inversed();
+    }
+    else if (mod_a.type == ModuleType::SINGLE and
+             mod_b.type == ModuleType::HUB) {
+        // Drop frame = do nothing.
+    }
+    else if (mod_a.type == ModuleType::HUB and
+             mod_b.type == ModuleType::SINGLE) {
+
+        // First find tx from hub to single
+
+        JSON const& hub_json = xdb["modules"]["hubs"][mod_a.name];
+        std::string const& hub_single_name =
+            hub_json["chains"][a_chain_name]["single_name"];
+
+        JSON const& singles_json = xdb["modules"]["singles"];
+        std::string const& hub_single_chain_name =
+            begin(singles_json[hub_single_name]["chains"]).key();
+
+        JSON const& hub_single_json = singles_json[hub_single_name];
+
+        size_t const hub_to_single_tx_id =
+            hub_single_json["chains"][hub_single_chain_name]
+            ["c"][mod_b.name][b_chain_name];
+
+        Transform const tx_hub = get_tx(xdb, hub_to_single_tx_id);
+
+        // Raise to hub component frame
+        // Double raise - NOT associative!!!
+        tx = tx.inversed() * tx_hub.inversed();
+    }
+    else {
+        die("mod_a.type == ModuleType::HUB and "
+            "mod_b.type == ModuleType::HUB\n");
+    }
+
+    // Create links and count.
+    auto a_ptlink = std::make_shared<ProtoLink>(tx, &mod_b, b_chain_id);
+    auto b_ptlink = std::make_shared<ProtoLink>(tx.inversed(), &mod_a, a_chain_id);
     ProtoLink::pair_links(a_ptlink.get(), b_ptlink.get());
 
     a_chain.c_term_.links_.push_back(a_ptlink);

@@ -150,7 +150,7 @@ void Population::select() {
         // prioritized.
         for (auto& team : *front_buffer_) {
             Crc32 const crc = team->checksum();
-            if (crc_map.find(crc) == crc_map.end()) {
+            if (crc_map.find(crc) == end(crc_map)) {
                 // Record a new team
                 crc_map[crc] = team->clone();
                 unique_count++;

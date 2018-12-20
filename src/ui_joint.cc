@@ -12,8 +12,8 @@ UIJoint::UIJoint(
     try {
         // Parse neighbor names
         JSON const& neighbors_json = json["neighbors"];
-        for (auto it = neighbors_json.begin();
-                it != neighbors_json.end();
+        for (auto it = begin(neighbors_json);
+                it != end(neighbors_json);
                 ++it) {
             neighbors_.push_back(*it);
         }

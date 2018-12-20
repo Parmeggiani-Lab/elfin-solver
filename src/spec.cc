@@ -20,14 +20,14 @@ void Spec::parse_from_json(JSON const& j) {
 
         // Initialize fixed areas first so work areas can refer to fixed
         // modules as occupants or hinges.
-        for (auto it = networks.begin(); it != networks.end(); ++it) {
+        for (auto it = begin(networks); it != end(networks); ++it) {
             std::string const& network_name = it.key();
             fixed_areas_.emplace(
                 network_name,
                 std::make_unique<FixedArea>(*it, network_name));
         }
 
-        for (auto it = pg_networks.begin(); it != pg_networks.end(); ++it) {
+        for (auto it = begin(pg_networks); it != end(pg_networks); ++it) {
             std::string const& pgn_name = it.key();
             work_areas_.emplace(
                 pgn_name,

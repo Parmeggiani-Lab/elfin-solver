@@ -6,6 +6,8 @@
 namespace elfin {
 
 struct TestStat;
+class Step;
+typedef std::vector<Step> StepList;
 
 class BasicNodeTeam : public NodeTeam {
 private:
@@ -20,6 +22,9 @@ private:
 
     /*modifiers */
     std::unique_ptr<PImpl> init_pimpl();
+    NodeSP grow_tip(
+        FreeChain const free_chain_a,
+        ProtoLink const* ptlink = nullptr);
 protected:
     /* accessors */
     virtual BasicNodeTeam* clone_impl() const;
@@ -45,6 +50,7 @@ public:
     virtual StrList get_node_names() const;
 
     /* tests */
+    static BasicNodeTeam build_team(StepList const& steps);
     static TestStat test();
 };  /* class BasicNodeTeam */
 

@@ -10,7 +10,7 @@
 
 // #define PRINT_ROULETTES
 // #define PRINT_DB
-// #define PRINT_NAME_ID_MAP
+// #define PRINT_MOD_IDX_MAP_
 
 namespace elfin {
 
@@ -27,23 +27,24 @@ std::string Database::ModPtrRoulette::to_string() const {
     return ss.str();
 }
 
-/*
- * Divides modules in the following categories:
- *   basic (2 termini)
- *   complex (>2 termini)
- *   singles
- *   hubs
- *
- * Note: Categorization must be done after link parsing.
- */
 void Database::reset() {
     all_mods_.clear();
+    mod_idx_map_.clear();
     singles_.clear();
     hubs_.clear();
     basic_mods_.clear();
     complex_mods_.clear();
 }
 
+//
+// Divides modules in the following categories:
+//   basic (2 termini)
+//   complex (>2 termini)
+//   singles
+//   hubs
+//
+// Note: categorize() MUST be called after parsing links.
+//
 void Database::categorize() {
     for (auto& mod : all_mods_) {
         size_t const n_itf = mod->counts().all_interfaces();
@@ -119,8 +120,25 @@ void Database::print_db() {
 }
 
 /* public */
+/* accessors */
+ProtoModule const* Database::get_module(
+    std::string const& name) const {
+    auto itr = mod_idx_map_.find(name);
+
+    ProtoModule const* mod = nullptr;
+
+    if (itr != end(mod_idx_map_)) {
+        mod = all_mods_.at(itr->second).get();
+    }
+
+    return mod;
+}
+
+/* modifiers */
 #define JSON_MOD_PARAMS JSON::const_iterator jit, ModuleType mod_type
 typedef std::function<void(JSON_MOD_PARAMS)> JsonModTypeLambda;
+#define FOR_JSON(child, parent) \
+    for(auto child = begin(parent); child != end(parent); ++child)
 
 void Database::parse_from_json(JSON const& xdb) {
     reset();
@@ -128,18 +146,14 @@ void Database::parse_from_json(JSON const& xdb) {
     // Define lambas for code reuse
     JSON const& singles = xdb["modules"]["singles"];
     auto for_each_double_json = [&](JsonModTypeLambda const & lambda) {
-        for (JSON::const_iterator jit = singles.begin();
-                jit != singles.end();
-                ++jit) {
+        FOR_JSON (jit, singles) {
             lambda(jit, ModuleType::SINGLE);
         }
     };
 
     JSON const& hubs = xdb["modules"]["hubs"];
     auto for_each_hub_json = [&](JsonModTypeLambda const & lambda) {
-        for (JSON::const_iterator jit = hubs.begin();
-                jit != hubs.end();
-                ++jit) {
+        FOR_JSON (jit, hubs) {
             lambda(jit, ModuleType::HUB);
         }
     };
@@ -151,25 +165,23 @@ void Database::parse_from_json(JSON const& xdb) {
 
     // Non-finalized module list
     // Build mapping between name and id
-    std::unordered_map<std::string, size_t> name_id_map;
     auto init_module = [&](JSON_MOD_PARAMS) {
-        const std::string& name = jit.key();
+        std::string const& name = jit.key();
         size_t const mod_id = all_mods_.size();
-        name_id_map[name] = mod_id;
+        mod_idx_map_[name] = mod_id;
 
-#ifdef PRINT_NAME_ID_MAP
+#ifdef PRINT_MOD_IDX_MAP_
         wrn("Module %s maps to id %lu\n", name.c_str(), mod_id);
-#endif  /* ifndef PRINT_NAME_ID_MAP */
+#endif  /* ifndef PRINT_MOD_IDX_MAP_ */
 
         StrList chain_names;
         JSON const& chains_json = (*jit)["chains"];
-        for (auto chain_it = chains_json.begin();
-                chain_it != chains_json.end();
-                ++chain_it) {
+        FOR_JSON(chain_it, chains_json) {
             chain_names.push_back(chain_it.key());
         }
 
         float const radius = (*jit)["radii"][OPTIONS.radius_type];
+
         all_mods_.push_back(
             std::make_unique<ProtoModule>(
                 name,
@@ -180,38 +192,27 @@ void Database::parse_from_json(JSON const& xdb) {
     for_each_module_json(init_module);
 
     auto parse_link = [&](JSON_MOD_PARAMS) {
-        size_t const mod_a_id = name_id_map[jit.key()];
+        size_t const mod_a_id = mod_idx_map_[jit.key()];
         auto& mod_a = all_mods_.at(mod_a_id);
 
         JSON const& chains_json = (*jit)["chains"];
-        for (auto a_chain_it = chains_json.begin();
-                a_chain_it != chains_json.end();
-                ++a_chain_it) {
-            const std::string& a_chain_name = a_chain_it.key();
+        FOR_JSON(a_chain_it, chains_json) {
+            std::string const& a_chain_name = a_chain_it.key();
 
             // No need to run through "n" because xdb contains only n-c
-            // transforms. In create_proto_link(), an inversed version for c-n
-            // transform is created.
-            JSON const& c_json = (*a_chain_it)["c"];
-            for (auto c_it = c_json.begin();
-                    c_it != c_json.end();
-                    ++c_it) {
-                size_t const mod_b_id = name_id_map[c_it.key()];
+            // transforms, i.e. "C-term extrusion" transforms.
+            FOR_JSON(c_term_it, (*a_chain_it)["c"]) {
+                size_t const mod_b_id = mod_idx_map_[c_term_it.key()];
                 auto& mod_b = all_mods_.at(mod_b_id);
 
-                JSON const& b_chains_json = (*c_it);
-                for (auto b_chain_it = b_chains_json.begin();
-                        b_chain_it != b_chains_json.end();
-                        ++b_chain_it) {
+                FOR_JSON (b_chain_it, (*c_term_it)) {
                     size_t const tx_id = (*b_chain_it).get<size_t>();
-                    NICE_PANIC(tx_id >= xdb["n_to_c_tx"].size(),
-                               ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
-                                "\tEither xdb.json is corrupted or "
-                                "there is an error in dbgen.py.\n"));
 
-                    JSON const& tx_json = xdb["n_to_c_tx"][tx_id];
+                    // In create_proto_link(), an inversed version for c-n
+                    // transform is created.
                     ProtoModule::create_proto_link_pair(
-                        tx_json,
+                        xdb,
+                        tx_id,
                         *mod_a,
                         a_chain_name,
                         *mod_b,

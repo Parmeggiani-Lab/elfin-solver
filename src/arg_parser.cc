@@ -126,7 +126,7 @@ ARG_PARSER_CALLBACK(parse_config) {
 
     JSON const j = parse_json(options_.config_file);
 
-    for (auto it = j.begin(); it != j.end(); ++it) {
+    for (auto it = begin(j); it != end(j); ++it) {
         const std::string opt_name = "--" + it.key();
         auto ab = match_arg_bundle(opt_name.c_str());
         if (ab) {

@@ -34,14 +34,14 @@ public:
         DEBUG(items_.empty());
 
         auto map_itr = item_to_id_map_.find(item);
-        DEBUG(map_itr == item_to_id_map_.end());
+        DEBUG(map_itr == end(item_to_id_map_));
 
         return items_.begin() + map_itr.second;
     }
     bool empty() const { return items_.empty(); }
     size_t size() const { return items_.size(); }
     bool has(ItemType const& item) const {
-        return item_to_id_map_.find(item) != item_to_id_map_.end();
+        return item_to_id_map_.find(item) != end(item_to_id_map_);
     }
     ItemListCItr begin() const { return items_.begin(); }
     ItemListCItr end() const { return items_.end(); }

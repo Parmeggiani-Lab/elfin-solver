@@ -12,7 +12,7 @@ namespace elfin {
 #define FOREACH_MODULETYPE(MACRO) \
     MACRO(SINGLE) \
     MACRO(HUB) \
-    MACRO(NOT_MODULE) \
+    MACRO(UNKNOWN) \
 
 GEN_ENUM_AND_STRING(ModuleType, ModuleTypeNames, FOREACH_MODULETYPE);
 
@@ -61,7 +61,8 @@ public:
     /* modifiers */
     void finalize();
     static void create_proto_link_pair(
-        JSON const& tx_json,
+        JSON const& xdb,
+        size_t const tx_id,
         ProtoModule& mod_a,
         std::string const& a_chain_name,
         ProtoModule& mod_b,

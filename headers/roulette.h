@@ -56,11 +56,11 @@ public:
               string_format("cml_sum size=%lu but container size=%lu\n",
                             cpd_.size(), items_.size()));
         auto itr = std::upper_bound(
-                       cpd_.begin(),
-                       cpd_.end(),
+                       begin(cpd_),
+                       end(cpd_),
                        random::get_dice(total_)
                    );
-        return items_.at(itr - cpd_.begin());
+        return items_.at(itr - begin(cpd_));
     }
 
     /* modifiers */
