@@ -18,6 +18,7 @@ extern std::vector<std::mt19937> TWISTERS;
 
 }  /* (anonymous) */
 
+// Create per-thread Mersenne Twisters with different seeds.
 void init();
 
 float get_dice_0to1();

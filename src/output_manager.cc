@@ -7,15 +7,16 @@
 
 namespace elfin {
 
-/*
- * Resolves file name from path string.
- * https://stackoverflow.com/questions/8520560/get-a-file-name-from-a-path
- * (wild)
- */
+//
+// Resolves file name from path string.
+// https://stackoverflow.com/questions/8520560/get-a-file-name-from-a-path
+// (wild)
+//
 std::string get_filename(const std::string& path) {
     std::string filename = path;
     // Remove directory if present.
-    // Do this before extension removal incase directory has a period character.
+
+    // Do this before extension removal in case directory has a period character.
     size_t const last_slash_idx = filename.find_last_of("\\/");
     if (std::string::npos != last_slash_idx) {
         filename.erase(0, last_slash_idx + 1);
@@ -29,7 +30,7 @@ std::string get_filename(const std::string& path) {
     return filename;
 }
 
-// static
+
 void OutputManager::write_output(
     EvolutionSolver const& solver,
     std::string extra_dir,
@@ -39,7 +40,7 @@ void OutputManager::write_output(
         return;
     }
 
-    // Compute final output dir string
+    // Compute final output dir string.
     std::ostringstream output_dir_ss;
     output_dir_ss << OPTIONS.output_dir << "/"
                   << extra_dir;
@@ -64,11 +65,11 @@ void OutputManager::write_output(
                     auto node_names = team->get_node_names();
                     sol_json["nodes"] = node_names;
                     wrn("Output format not complete\n");
-                    /*
-                    TODO:
-                    1. Nodes need to express 4x4 tx in result
-                    2. Nodes need to be transformed to solution frame
-                    */
+                    //
+                    // TODO(@joy13975):
+                    // 1. Nodes need to express 4x4 tx in result.
+                    // 2. Nodes need to be transformed to solution frame.
+                    //
                     sol_json["score"] = team->score();
                 }
                 else {
@@ -85,7 +86,7 @@ void OutputManager::write_output(
         }
     }
 
-    // Generate JSON output path
+    // Generate JSON output path.
     std::ostringstream json_output_path_ss;
     json_output_path_ss << output_dir_str << "/"
                         << get_filename(OPTIONS.input_file)
@@ -94,7 +95,7 @@ void OutputManager::write_output(
     std::string json_out_path_str = json_output_path_ss.str();
     char const* json_output_path = json_out_path_str.c_str();
 
-    // At last, write JSON
+    // At last, write JSON.
     std::string dump = data.dump(indent_size);
     write_binary(json_output_path,
                  dump.c_str(),

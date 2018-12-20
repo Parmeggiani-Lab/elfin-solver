@@ -13,9 +13,6 @@ std::vector<std::mt19937> TWISTERS;
 }  /* (anonymous) */
 
 void init() {
-    /*
-     * Create per-thread Mersenne Twisters with different seeds.
-     */
     TWISTERS.clear();
 
     #pragma omp parallel
@@ -48,10 +45,10 @@ float get_dice_0to1() {
 TestStat test() {
     TestStat ts;
 
-    /* Set up OMP */
-    omp_set_dynamic(0); // Explicitly disable dynamic thread teams
-    size_t const num_threads = 9; // Use a weird number
-    omp_set_num_threads(num_threads); // Use exactly N threads
+    // Set up OMP.
+    omp_set_dynamic(0);                 // Explicitly disable dynamic thread teams.
+    size_t const num_threads = 9;       // Use a weird number.
+    omp_set_num_threads(num_threads);   // Use exactly N threads.
 
     #pragma omp parallel
     {
@@ -67,7 +64,7 @@ TestStat test() {
         }
     }
 
-    /* Test single thread mt consistency */
+    // Test single thread mt consistency.
     size_t const N = 3719;
     size_t const dice_max = 13377331;
     uint32_t const mt_seed = 0xeeee;
@@ -101,10 +98,8 @@ TestStat test() {
         rand_vals2.at(i) = get_dice(dice_max);
     }
 
-    /*
-     * Check that all random values originated from the same seeds are
-     * identical.
-     */
+    // Check that all random values originated from the same seeds are
+    // identical.
     ts.tests++;
     for (size_t i = 0; i < N; ++i) {
         if (rand_vals1.at(i) != rand_vals2.at(i)) {
