@@ -135,7 +135,7 @@ TestStat test_score() {
     TestStat ts;
 
     // Test randomly transformed solution results in kabsch score 0.
-    InputManager::load_test_input();
+    NICE_PANIC(SPEC.work_areas().size() != 1);
     auto& wa = begin(SPEC.work_areas())->second;
 
     // Identity (no transform) score 0.

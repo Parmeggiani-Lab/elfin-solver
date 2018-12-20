@@ -39,7 +39,7 @@ public:
         std::string const& name,
         FixedAreaMap const& fam);
     WorkArea() = delete;
-
+    
     /* dtors */
     virtual ~WorkArea();
 

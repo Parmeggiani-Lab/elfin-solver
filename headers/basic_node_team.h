@@ -2,7 +2,6 @@
 #define BASIC_NODE_TEAM_H_
 
 #include "node_team.h"
-#include "recipe.h"
 
 namespace elfin {
 
@@ -10,52 +9,36 @@ struct TestStat;
 
 class BasicNodeTeam : public NodeTeam {
 private:
-    /* types */
-    struct DeletePoint;
-    struct InsertPoint;
-    struct SwapPoint;
-    struct CrossPoint;
+    /* data */
+    class PImpl;
+    std::unique_ptr<PImpl> p_impl_;
 
     /* accessors */
-    virtual BasicNodeTeam* clone_impl() const;
     Crc32 calc_checksum() const;
     float calc_score() const;
+    V3fList collect_points(NodeSP const& tip_node) const;
 
     /*modifiers */
-    void fix_limb_transforms(Link const& arrow);
-    NodeSP grow_tip(
-        FreeChain const free_chain_a,
-        ProtoLink const* ptlink = nullptr);
-    void nip_tip(NodeSP const& tip_node);
-    void build_bridge(
-        InsertPoint const& insert_point,
-        FreeChain::Bridge const* bridge = nullptr);
-    void sever_limb(Link const& arrow);
-    void copy_limb(Link const& m_arrow, Link const& f_arrow);
-
-    bool erode_mutate();
-    bool delete_mutate();
-    bool insert_mutate();
-    bool swap_mutate();
-    bool cross_mutate(
-        NodeTeam const& father);
-    bool regenerate();
-    bool randomize_mutate();
+    std::unique_ptr<PImpl> init_pimpl();
+protected:
+    /* accessors */
+    virtual BasicNodeTeam* clone_impl() const;
 
 public:
     /* ctors */
     using NodeTeam::NodeTeam;
-    // A ctor used to artificially create test teams
-    BasicNodeTeam(Recipe const& recipe);
+    BasicNodeTeam(WorkArea const* wa);
+    BasicNodeTeam(BasicNodeTeam const& other);
+    BasicNodeTeam(BasicNodeTeam&& other);
 
     /* dtors */
-    virtual ~BasicNodeTeam() {}
+    virtual ~BasicNodeTeam();
 
     /* modifiers */
     virtual MutationMode mutate_and_score(
         NodeTeam const& mother,
         NodeTeam const& father);
-    virtual void randomize() { randomize_mutate(); }
+    virtual void randomize();
 
     /* printers */
     virtual std::string to_string() const;

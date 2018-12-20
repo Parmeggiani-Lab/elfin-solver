@@ -1,8 +1,9 @@
+// Shared test data.
+
 #ifndef TEST_CONSTS_H_
 #define TEST_CONSTS_H_
 
 #include "geometry.h"
-#include "recipe.h"
 
 namespace elfin {
 
@@ -15,17 +16,6 @@ static V3fList const quarter_snake_free_coordinates = {
     {12.520357131958008, -50.98127365112305, 13.686529159545898},
     { -4.097459316253662, -37.3050651550293, 18.167621612548828},
     { -40.844879150390625, -42.66680908203125, 7.421332359313965}
-};
-
-/* Recipes */
-static Recipe const quarter_snake_free_recipe {
-    {"D79_aC2_04", TerminusType::C, 1},
-    {"D79", TerminusType::C, 0},
-    {"D79", TerminusType::C, 0},
-    {"D79", TerminusType::C, 0},
-    {"D79_j1_D54", TerminusType::C, 0},
-    {"D54_j1_D79", TerminusType::C, 0},
-    {"D79_j2_D14", TerminusType::C, 0},
 };
 
 }  /* elfin */

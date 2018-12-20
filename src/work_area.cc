@@ -22,7 +22,7 @@ struct WorkArea::PImpl {
     typedef std::vector<std::shared_ptr<UIJoint>> UIJointSPList;
 
     /* data */
-    std::string const name;
+    std::string name;
     WorkType type = WorkType::FREE;
     UIJointMap joints;
     UIJointSPList occupied_joints;
@@ -30,8 +30,40 @@ struct WorkArea::PImpl {
     size_t target_size = 0;
     V3fList points;
 
-    PImpl() = delete;
-    PImpl(std::string const& _name) : name(_name) {}
+    /* ctors */
+    // Parse joints from JSON and collect special joints.
+    PImpl(
+        JSON const& json,
+        FixedAreaMap const& fam) {
+        size_t num_branch_points = 0;
+        for (auto it = json.begin(); it != json.end(); ++it) {
+            JSON const& joint_json = *it;
+            std::string const& joint_name = it.key();
+
+            // Create new joint and put it in map
+            joints.emplace(
+                joint_name,
+                std::make_shared<UIJoint>(joint_json, joint_name, fam));
+            auto& joint = joints.at(joint_name); // shared_ptr
+
+            // Count branch points
+            size_t const num_neighbors = joint->neighbors().size();
+            NICE_PANIC(num_neighbors != joint_json["neighbors"].size());
+
+            num_branch_points += num_neighbors > 2;
+            if (num_neighbors == 1) {
+                leaf_joints.push_back(joint);
+            }
+
+            if (joint->occupant().name != "") {
+                occupied_joints.push_back(joint);
+            }
+        }
+
+        type = _determine_type(num_branch_points);
+        points = _to_points(); // Cache it
+        target_size = _determine_target_size();
+    }
 
     /* accessors */
     WorkType _determine_type(
@@ -99,54 +131,6 @@ struct WorkArea::PImpl {
 
         return res;
     }
-
-    /* modifiers */
-    void reset() {
-        type = WorkType::FREE;
-        joints.clear();
-        occupied_joints.clear();
-        leaf_joints.clear();
-        target_size = 0;
-        points.clear();
-    }
-
-    void parse_from_json(
-        JSON const& json,
-        FixedAreaMap const& fam) {
-        /*
-         * Parse joints from JSON and collect special joints.
-         */
-        reset();
-
-        size_t num_branch_points = 0;
-        for (auto it = json.begin(); it != json.end(); ++it) {
-            JSON const& joint_json = *it;
-            std::string const& joint_name = it.key();
-
-            // Create new joint and put it in map
-            joints.emplace(
-                joint_name,
-                std::make_shared<UIJoint>(joint_json, joint_name, fam));
-            auto& joint = joints.at(joint_name); // shared_ptr
-
-            // Count branch points
-            size_t const num_neighbors = joint->neighbors().size();
-            NICE_PANIC(num_neighbors != joint_json["neighbors"].size());
-
-            num_branch_points += num_neighbors > 2;
-            if (num_neighbors == 1) {
-                leaf_joints.push_back(joint);
-            }
-
-            if (joint->occupant().name != "") {
-                occupied_joints.push_back(joint);
-            }
-        }
-
-        type = _determine_type(num_branch_points);
-        points = _to_points(); // Cache it
-        target_size = _determine_target_size();
-    }
 };
 
 /* public */
@@ -155,8 +139,8 @@ WorkArea::WorkArea(
     JSON const& json,
     std::string const& name,
     FixedAreaMap const& fam) {
-    p_impl_ = std::make_unique<PImpl>(name);
-    p_impl_->parse_from_json(json, fam);
+    p_impl_ = std::make_unique<PImpl>(json, fam);
+    p_impl_->name = name;
 }
 
 /* dtors */
