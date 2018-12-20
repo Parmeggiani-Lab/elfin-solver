@@ -2,10 +2,11 @@
 #define BASIC_NODE_TEAM_H_
 
 #include "node_team.h"
-#include "node_team_recipe.h"
-#include "test_stat.h"
+#include "recipe.h"
 
 namespace elfin {
+
+struct TestStat;
 
 class BasicNodeTeam : public NodeTeam {
 private:
@@ -45,7 +46,7 @@ public:
     /* ctors */
     using NodeTeam::NodeTeam;
     // A ctor used to artificially create test teams
-    BasicNodeTeam(NodeTeamRecipe const& recipe);
+    BasicNodeTeam(Recipe const& recipe);
 
     /* dtors */
     virtual ~BasicNodeTeam() {}

@@ -6,9 +6,10 @@
 
 #include "parallel_utils.h"
 #include "debug_utils.h"
-#include "test_stat.h"
 
 namespace elfin {
+    
+struct TestStat;
 
 namespace random {
 

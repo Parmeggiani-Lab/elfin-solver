@@ -5,9 +5,8 @@
 
 #include "kabsch.h"
 
-#include "work_area.h"
-#include "input_manager.h"
 #include <jutil/jutil.h>
+#include "work_area.h"
 #include "debug_utils.h"
 #include "test_consts.h"
 
@@ -29,8 +28,8 @@ std::vector<double> Vector3f_to_vector(Vector3f const& pt) {
 	return v;
 }
 
-Matrix<double> V3fList_to_vectors(V3fList const& pts) {
-	Matrix<double> out;
+MatXf V3fList_to_vectors(V3fList const& pts) {
+	MatXf out;
 
 	out.resize(pts.size());
 	for (size_t i = 0; i < out.size(); i++)
@@ -39,8 +38,9 @@ Matrix<double> V3fList_to_vectors(V3fList const& pts) {
 	return out;
 }
 
-void resample(V3fList const& ref,
-              V3fList& pts) {
+void _resample(
+    V3fList const& ref,
+    V3fList& pts) {
 	size_t const N = ref.size();
 
 	// Compute shape total lengths.
@@ -413,15 +413,15 @@ bool rosetta_kabsch(
 }
 
 // A Wrapper to call the wonderfully commented Rosetta version.
-bool kabsch(
+bool _kabsch(
     V3fList const& mobile,
     V3fList const& ref,
-    Matrix<double> & rot,
+    MatXf & rot,
     Vector3f& tran,
     double& rms,
-    int mode = 1) {
-	Matrix<double> xx = V3fList_to_vectors(mobile);
-	Matrix<double> yy = V3fList_to_vectors(ref);
+    int mode) {
+	MatXf xx = V3fList_to_vectors(mobile);
+	MatXf yy = V3fList_to_vectors(ref);
 
 	std::vector<double> tt = Vector3f_to_vector(tran);
 
@@ -448,260 +448,21 @@ float score(V3fList mobile, V3fList ref) {
 		return INFINITY;
 
 	if (ref.size() != mobile.size())
-		resample(ref, mobile);
+		_resample(ref, mobile);
 
 	if (ref.size() != mobile.size())
 		return INFINITY;
 
 	// Run Kabsch to get RMS
-	Matrix<double> rot;
+	MatXf rot;
 	Vector3f tran;
 	double rms;
 
-	bool const ret_val = kabsch(mobile, ref, rot, tran, rms, 0);
+	bool const ret_val = _kabsch(mobile, ref, rot, tran, rms, 0);
 
 	NICE_PANIC(!ret_val, "Kabsch failed!\n");
 
 	return rms;
-}
-
-TestStat test_basics() {
-	msg("Testing kabsch basics\n");
-	TestStat ts;
-
-	// kabsch() return variables
-	Matrix<double> rot;
-	Vector3f tran;
-	double rms;
-
-	// Test that kabsch() call returns true
-	{
-		bool const ret_val =
-		    kabsch(points10a, points10b, rot, tran, rms);
-
-		ts.tests++;
-		if (not ret_val) {
-			ts.errors++;
-			err("kabsch() returned false\n");
-		}
-	}
-
-	// Test kabsch() rotation.
-	{
-		ts.tests++;
-		for (size_t i = 0; i < rot.size(); i++) {
-			auto const& row = rot.at(i);
-			Vector3f row_vec(row);
-			if (not row_vec.is_approx(points10ab_rot[i])) {
-				ts.errors++;
-				err("Rotation test failed: "
-				    "row %lu does not approximate actual rotation row.\n"
-				    "Expeced: %s\nGot: %s\n",
-				    i,
-				    points10ab_rot[i].to_string().c_str(),
-				    row_vec.to_string().c_str());
-				break;
-			}
-		}
-	}
-
-	// Test kabsch() translation.
-	{
-		ts.tests++;
-		if (not tran.is_approx(points10ab_tran)) {
-			ts.errors++;
-			err("Translation test failed: "
-			    "does not approximate actual translation.\n"
-			    "Expected: %s\nGot: %s\n",
-			    points10ab_tran.to_string().c_str(),
-			    tran.to_string().c_str());
-		}
-	}
-
-	return ts;
-}
-
-TestStat test_resample() {
-	msg("Testing kabsch resample\n");
-	TestStat ts;
-
-	// Test upsampling a_fewer to B.size()
-	{
-		V3fList a_fewer(points10a);
-
-		// Erase half of the points.
-		a_fewer.erase(a_fewer.begin() + (a_fewer.size() / 2),
-		              a_fewer.begin() + (a_fewer.size() / 2) + 1);
-		assert(a_fewer.size() != points10a.size());
-
-		resample(points10a, a_fewer);
-
-		ts.tests++;
-		if (a_fewer.size() != points10a.size()) {
-			ts.errors++;
-			err("Upsampling failed.\nSizes: a_fewer=%lu points10a=%lu\n",
-			    a_fewer.size(), points10a.size());
-		}
-	}
-
-	return ts;
-}
-
-TestStat test_score() {
-	msg("Testing kabsch score\n");
-	TestStat ts;
-
-	// Test randomly transformed solution results in kabsch score 0.
-	InputManager::load_test_input();
-	auto& wa = begin(SPEC.work_areas())->second;
-
-	// Identity (no transform) score 0.
-	{
-		float const kscore = score(quarter_snake_free_coordinates, *wa);
-		ts.tests++;
-		if (kscore > 1e-6) {
-			ts.errors++;
-			err("kabsch identity score test failed.\n"
-			    "Expected 0\nGot %f\n", kscore);
-
-			err("Hard coded points:\n");
-			for (auto const& point : quarter_snake_free_coordinates) {
-				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-			}
-
-			err("Input file points:\n");
-			V3fList const& input_points = wa->to_points();
-			for (auto const& point : input_points) {
-				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-			}
-		}
-	}
-
-	// Test translation score 0.
-	{
-		Transform trans_tx({
-			{	"rot", {
-					{1, 0, 0},
-					{0, 1, 0},
-					{0, 0, 1}
-				}
-			},
-			{"tran", {-7.7777, -30, 150.12918}}
-		});
-
-		V3fList points_test = quarter_snake_free_coordinates;
-		for (auto& point : points_test) {
-			point = trans_tx * point;
-		}
-
-		float const kscore = score(points_test, *wa);
-		ts.tests++;
-		if (kscore > 1e-6) {
-			ts.errors++;
-			err("kabsch translation score test failed.\n"
-			    "Expected 0\nGot %f\n", kscore);
-
-			err("Hard coded points:\n");
-			for (auto const& point : points_test) {
-				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-			}
-
-			err("Input file points:\n");
-			V3fList const& input_points = wa->to_points();
-			for (auto const& point : input_points) {
-				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-			}
-		}
-	}
-
-	// Test rotation score 0.
-	{
-		Transform rot_tx({
-			{	"rot", {
-					{0.28878074884414673, -0.9471790194511414, -0.13949079811573029},
-					{-0.5077904462814331, -0.27504783868789673, 0.8163931369781494},
-					{-0.8116370439529419, -0.16492657363414764, -0.5603969693183899}
-				}
-			},
-			{"tran", {0, 0, 0}}
-		});
-
-		V3fList points_test = quarter_snake_free_coordinates;
-		for (auto& point : points_test) {
-			point = rot_tx * point;
-		}
-
-		float const kscore = score(points_test, *wa);
-		ts.tests++;
-		if (kscore > 1e-6) {
-			ts.errors++;
-			err("kabsch rotation score test failed.\n"
-			    "Expected 0\nGot %f\n", kscore);
-
-			err("Hard coded points:\n");
-			for (auto const& point : points_test) {
-				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-			}
-
-			err("Input file points:\n");
-			V3fList const& input_points = wa->to_points();
-			for (auto const& point : input_points) {
-				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-			}
-		}
-	}
-
-	// Random transformation score 0.
-	{
-		// This tx is produced by taking the matrix_world of a transformed
-		// Blender object.
-		Transform random_tx({
-			{	"rot", {
-					{0.2617338001728058, 0.08983021974563599, 0.9609506130218506},
-					{0.9230813384056091, 0.26742106676101685, -0.27641811966896057},
-					{-0.2818091809749603, 0.959383487701416, -0.012927504256367683}
-				}
-			},
-			{"tran", {3.15165638923645, -5.339916229248047, 3.290015935897827}}
-		});
-
-		V3fList points_test = quarter_snake_free_coordinates;
-		for (auto& point : points_test) {
-			point = random_tx * point;
-		}
-
-		float const kscore = score(points_test, *wa);
-		ts.tests++;
-		if (kscore > 1e-6) {
-			ts.errors++;
-			err("kabsch random transform score test failed.\n"
-			    "Expected 0\nGot %f\n", kscore);
-
-			err("Hard coded points:\n");
-			for (auto const& point : points_test) {
-				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-			}
-
-			err("Input file points:\n");
-			V3fList const& input_points = wa->to_points();
-			for (auto const& point : input_points) {
-				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-			}
-		}
-	}
-
-	return ts;
-}
-
-TestStat test() {
-	msg("Testing kabsch\n");
-	TestStat ts;
-
-	ts += test_basics();
-	ts += test_resample();
-	ts += test_score();
-
-	return ts;
 }
 
 }  /* kabsch */

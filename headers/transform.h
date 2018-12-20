@@ -10,11 +10,11 @@
 #endif  /* ifdef USE_EIGEN */
 
 #include "json.h"
-#include "test_stat.h"
 
 namespace elfin {
 
 class Vector3f;
+struct TestStat;
 
 #ifdef USE_EIGEN
 using Matrix4f = Eigen::Matrix4f;

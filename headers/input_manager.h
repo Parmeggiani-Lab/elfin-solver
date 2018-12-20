@@ -4,9 +4,10 @@
 #include "options.h"
 #include "spec.h"
 #include "database.h"
-#include "test_stat.h"
 
 namespace elfin {
+
+struct TestStat;
 
 struct Cutoffs {
     size_t pop_size = 0;

@@ -876,7 +876,7 @@ bool BasicNodeTeam::randomize_mutate() {
 
 /* public */
 /* ctors */
-BasicNodeTeam::BasicNodeTeam(NodeTeamRecipe const& recipe) :
+BasicNodeTeam::BasicNodeTeam(Recipe const& recipe) :
     NodeTeam(nullptr) {
 
 }
@@ -978,15 +978,6 @@ StrList BasicNodeTeam::get_node_names() const {
     }
 
     return res;
-}
-
-/* tests */
-TestStat BasicNodeTeam::test() {
-    TestStat ts;
-
-
-
-    return ts;
 }
 
 }  /* elfin */

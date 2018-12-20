@@ -4,7 +4,6 @@
 
 #include "debug_utils.h"
 #include "vector3f.h"
-#include "test_consts.h"
 
 namespace elfin {
 
@@ -137,41 +136,6 @@ bool Transform::is_approx(
 
     return true;
 #endif  /* ifdef USE_EIGEN */
-}
-
-/* tests */
-TestStat Transform::test() {
-    TestStat ts;
-
-    // Frame Shift Tests
-
-    // Test C-term extrude "raise".
-    {
-        Transform b_test = a_world * a_to_b.inversed();
-        ts.tests++;
-        if (not b_test.is_approx(b_world)) {
-            ts.errors++;
-            err("Frame raise test failed:\n"
-                "b_test does not approximately equal to b_world\n");
-            err("Expected b_world: %s\n", b_world.to_string().c_str());
-            err("Got b_test: %s\n", b_test.to_string().c_str());
-        }
-    }
-
-    // Test N-term extrude "drop".
-    {
-        Transform c_test = a_world * c_to_a;
-        ts.tests++;
-        if (not c_test.is_approx(c_world)) {
-            ts.errors++;
-            err("Frame drop test failed:\n"
-                "c_test does not approximately equal to c_world\n");
-            err("Expected c_world: %s\n", c_world.to_string().c_str());
-            err("Got c_test: %s\n", c_test.to_string().c_str());
-        }
-    }
-
-    return ts;
 }
 
 }  /* elfin */

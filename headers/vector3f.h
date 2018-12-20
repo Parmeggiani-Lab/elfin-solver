@@ -15,9 +15,12 @@
 #endif  /* ifdef V3F_USE_EIGEN */
 
 #include "debug_utils.h"
-#include "test_stat.h"
 
 namespace elfin {
+
+
+
+struct TestStat;
 
 #ifdef V3F_USE_EIGEN
 typedef Eigen::Vector3f EigenV3f;
@@ -25,6 +28,8 @@ typedef Eigen::Vector3f EigenV3f;
 #else
 #define V3F_INHERIT
 #endif  /* ifdef V3F_USE_EIGEN */
+
+
 
 class Vector3f V3F_INHERIT {
 private:
