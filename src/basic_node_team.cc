@@ -1001,7 +1001,7 @@ std::string BasicNodeTeam::to_string() const {
 }
 
 JSON BasicNodeTeam::gen_nodes_json() const {
-    std::vector<JSON> nodes_output;
+    JSON output;
 
     if (not free_chains_.empty()) {
         NICE_PANIC(free_chains_.size() != 2);
@@ -1021,10 +1021,11 @@ JSON BasicNodeTeam::gen_nodes_json() const {
                 /*mode=*/1);
         }
 
-        // Starting at tip that yields lower score.
+        // Start at tip that yields lower score.
         size_t const better_tip_id = rms[0] < rms[1] ? 0 : 1;
 
         NodeSP tip_node = free_chains_.at(better_tip_id).node_sp();
+        DEBUG(not tip_node);
         Transform kabsch_alignment(rot[better_tip_id], tran[better_tip_id]);
 
         size_t member_id = 0;  // UID for node in team.
@@ -1036,6 +1037,23 @@ JSON BasicNodeTeam::gen_nodes_json() const {
             node_output["name"] = curr_node->prototype_->name;
             node_output["member_id"] = member_id;
 
+            auto link = node_gen.curr_link();
+            if (link) {  //  Not reached end of nodes yet.
+                node_output["src_term"] =
+                    TerminusTypeToCStr(link->src().term);
+                node_output["src_chain_id"] =
+                    link->src().chain_id;
+                node_output["dst_chain_id"] =
+                    link->dst().chain_id;
+            }
+            else
+            {
+                node_output["src_term"] =
+                    TerminusTypeToCStr(TerminusType::NONE);
+                node_output["src_chain_id"] = -1;
+                node_output["dst_chain_id"] = -1;
+            }
+
             Transform tx = curr_node->tx_;
 
             // Apply Kabsch alignment
@@ -1045,20 +1063,13 @@ JSON BasicNodeTeam::gen_nodes_json() const {
             node_output["tran"] = tx.tran_json();
 
             member_id++;
-            nodes_output.emplace_back(node_output);
+            output.emplace_back(node_output);
         }
 
-        DEBUG(nodes_output.size() != size(),
-              string_format("nodes_output.size()=%lu, size()=%lu\n",
-                            nodes_output.size(), this->size()));
+        DEBUG(output.size() != size(),
+              string_format("output.size()=%lu, size()=%lu\n",
+                            output.size(), this->size()));
     }
-    else {
-        nodes_output.emplace_back("[Empty]");
-    }
-
-    JSON output(nodes_output);
-
-    wrn("DEBUG output:\n%s\n", output.dump(4).c_str());
 
     return output;
 }
