@@ -18,7 +18,7 @@ protected:
     typedef std::unordered_map<ItemType, size_t> ItemMap;
     typedef typename ItemMap::iterator ItemMapIterator;
 
-    /* data members*/
+    /* data members */
     ItemList items_;
     ItemMap item_to_id_map_;
 public:
@@ -82,7 +82,7 @@ public:
     }
 
     void erase(ItemMapIterator itr) {
-        // itr->second is value, which is index to items_
+        // itr->second is value, which is index to items_.
         ItemType const& back_val = items_.back();
         item_to_id_map_[back_val] = itr->second;
 

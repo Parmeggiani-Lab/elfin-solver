@@ -3,6 +3,7 @@
 
 #include "node_team.h"
 #include "node_team_recipe.h"
+#include "test_stat.h"
 
 namespace elfin {
 
@@ -58,7 +59,10 @@ public:
     /* printers */
     virtual std::string to_string() const;
     virtual StrList get_node_names() const;
-};  /* class BasicNodeTeam*/
+
+    /* tests */
+    static TestStat test();
+};  /* class BasicNodeTeam */
 
 }  /* elfin */
 

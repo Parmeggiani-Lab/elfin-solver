@@ -57,7 +57,7 @@ public:
             if (item_comparator(this->at(i), item)) {
                 this->at(i) = this->back();
                 this->pop_back();
-                i--; // need to check same index again
+                i--;  // Need to check same index again.
             }
         }
     }
@@ -74,9 +74,7 @@ public:
         return random::pop(*this);
     }
 
-    /* printers */
-
-};  /* class Vector*/
+};  /* class Vector */
 
 }  /* elfin */
 

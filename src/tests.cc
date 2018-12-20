@@ -3,9 +3,11 @@
 #include "test_stat.h"
 #include "test_consts.h"
 
+// Test subjects.
 #include "kabsch.h"
 #include "random_utils.h"
 #include "input_manager.h"
+#include  "basic_node_team.h"
 
 namespace elfin {
 
@@ -16,10 +18,21 @@ size_t test_units() {
     TestStat total;
 
     total += InputManager::test();
-    total += random::test();
-    total += Transform::test();
-    total += Vector3f::test();
-    total += kabsch::test();
+
+    if (total.errors == 0)
+        total += random::test();
+
+    if (total.errors == 0)
+        total += Transform::test();
+
+    if (total.errors == 0)
+        total += Vector3f::test();
+
+    if (total.errors == 0)
+        total += kabsch::test();
+
+    if (total.errors == 0)
+        total += BasicNodeTeam::test();
 
     msg("%lu/%lu unit tests passed.\n",
         (total.tests - total.errors), total.tests);

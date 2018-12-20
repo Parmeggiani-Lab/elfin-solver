@@ -25,7 +25,7 @@ struct ArgBundle {
     std::string short_form;
     std::string long_form;
     std::string description;
-    bool exp_val; // will argument be followed by a value?
+    bool exp_val;  // Will argument be followed by a value?
     ArgBundleCallback callback;
 };
 
@@ -34,7 +34,7 @@ private:
     /* data */
     Options options_;
 
-    /* Matching ArgBundle is O(n). Would be nice to do a map instead. */
+    // Matching ArgBundle is O(n). Would be nice to do a map instead.
     std::vector<ArgBundle> argb_ = {
         {   "h",
             "help",
@@ -166,7 +166,7 @@ private:
     ArgBundle const* match_arg_bundle(char const* arg_in) const;
     void check_options() const;
 
-    /* modifiers*/
+    /* modifiers */
     void parse_options(int const argc, char const *argv[]);
 
     ARG_PARSER_CALLBACK_IN_HEADER(help_and_exit);

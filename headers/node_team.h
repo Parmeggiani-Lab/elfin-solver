@@ -82,7 +82,7 @@ public:
     virtual std::string to_string() const = 0;
     virtual StrList get_node_names() const = 0;
 
-};  /* class NodeTeam*/
+};  /* class NodeTeam */
 
 }  /* elfin */
 

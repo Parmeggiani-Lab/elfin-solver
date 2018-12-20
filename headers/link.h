@@ -28,9 +28,6 @@ public:
         return Link(dst_chain_, prototype_->reverse(), src_chain_);
     }
 
-    /* dtors */
-    // virtual ~Link() {}
-
     /* accessors */
     FreeChain const& src() const { return src_chain_; }
     FreeChain const& dst() const { return dst_chain_; }
@@ -44,7 +41,7 @@ public:
 
     /* printers */
     std::string to_string() const;
-};  /* class Link*/
+};  /* class Link */
 
 typedef Vector<Link> LinkList;
 
@@ -60,11 +57,5 @@ template <> struct hash<elfin::Link> {
 };
 
 }  /* std */
-
-// namespace elfin {
-
-// typedef VectorMap<Link> LinkVM;
-
-// }  /* elfin */
 
 #endif  /* end of include guard: LINK_H_ */

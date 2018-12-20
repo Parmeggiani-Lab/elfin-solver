@@ -1,6 +1,8 @@
 #ifndef NODE_TEAM_RECIPE_H_
 #define NODE_TEAM_RECIPE_H_
 
+#include <vector>
+
 namespace elfin {
 
 class NodeTeamRecipe {
@@ -20,7 +22,9 @@ public:
 
     /* printers */
     
-};  /* class NodeTeamRecipe*/
+};  /* class NodeTeamRecipe */
+
+
 
 }  /* elfin */
 

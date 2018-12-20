@@ -35,7 +35,7 @@ public:
     /* modifiers */
     UIJointSP next();
 
-};  /* class BasicUIJointGenerator*/
+};  /* class BasicUIJointGenerator */
 
 }  /* elfin */
 

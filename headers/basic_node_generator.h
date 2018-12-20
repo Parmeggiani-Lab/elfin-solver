@@ -18,15 +18,13 @@ public:
         NodeSP const& start_node) :
         next_node_(start_node) {}
 
-    /*
-     * Constructor for starting mid-way in a basic node team.
-     *
-     * Note:
-     *  - curr_node_ i.e. arrow source node is not included.
-     *  - arrow must be a valid pointer that lives longer than the genereator
-     *    itself.
-     *
-     */
+    //
+    // Constructor for starting mid-way in a basic node team.
+    //  - curr_node_ i.e. arrow source node is not included.
+    //  - arrow must be a valid pointer that lives longer than the genereator
+    //    itself.
+    //
+    //
     BasicNodeGenerator(Link const* arrow) :
         curr_node_(arrow->src().node),
         curr_link_(arrow),
@@ -49,7 +47,7 @@ public:
 
     /* printers */
 
-};  /* class BasicNodeGenerator*/
+};  /* class BasicNodeGenerator */
 
 }  /* elfin */
 

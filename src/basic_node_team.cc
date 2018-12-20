@@ -846,7 +846,7 @@ bool BasicNodeTeam::cross_mutate(
 
 bool BasicNodeTeam::regenerate() {
     bool mutate_success = false;
-    
+
     if (nodes_.empty()) {
         // Pick random initial member.
         add_member(XDB.basic_mods().draw());
@@ -978,6 +978,15 @@ StrList BasicNodeTeam::get_node_names() const {
     }
 
     return res;
+}
+
+/* tests */
+TestStat BasicNodeTeam::test() {
+    TestStat ts;
+
+
+
+    return ts;
 }
 
 }  /* elfin */
