@@ -1,0 +1,3 @@
+[submodule "lib/jutil"]
+	path = lib/jutil
+	url = git@github.com:joy13975/jutil.git

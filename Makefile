@@ -9,8 +9,8 @@ OBJ_TREE 		:= $(addprefix $(OBJ_DIR)/, $(SRC_TREE))
 BIN_DIR 		:= ./bin/
 $(shell mkdir -p $(OBJ_TREE) $(BIN_DIR))
 
-C_SRC 			:= $(shell find src jutil -name '*.c')
-CC_SRC 			:= $(shell find src jutil -name '*.cc')
+C_SRC 			:= $(shell find src -name '*.c')
+CC_SRC 			:= $(shell find src -name '*.cc')
 
 OBJS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.o) $(CC_SRC:%.cc=$(OBJ_DIR)/%.o)
 DEPS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.d) $(CC_SRC:%.cc=$(OBJ_DIR)/%.d)
@@ -57,7 +57,7 @@ else
 	TIMING_FLAGS=
 endif
 
-INCS += -I./lib -I./headers -I./jutil/src/ -I.
+INCS += -I./lib -I./headers -I.
 
 ifeq ($(CXX), clang++)
 	ifeq ($(OS),Windows_NT)
