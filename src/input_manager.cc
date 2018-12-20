@@ -3,6 +3,8 @@
 #include "arg_parser.h"
 #include "random_utils.h"
 
+#include "test_consts.h"
+
 namespace elfin {
 
 Options const& OPTIONS =
@@ -55,8 +57,9 @@ void InputManager::setup(int const argc, const char ** argv) {
     instance().spec_.parse_from_json(parse_json(OPTIONS.input_file));
 }
 
-TestStat InputManager::test() {
-    TestStat ts;
+/* tests */
+void InputManager::load_test_input() {
+    msg("Loading test input\n");
 
     char const* argv[] = {
         "elfin", /* binary name */
@@ -74,6 +77,12 @@ TestStat InputManager::test() {
 
     size_t const argc = sizeof(argv) / sizeof(argv[0]);
     InputManager::setup(argc, argv);
+}
+
+TestStat InputManager::test() {
+    TestStat ts;
+
+    load_test_input();
 
     // Test spec parsing
     ts.tests++;
@@ -83,27 +92,17 @@ TestStat InputManager::test() {
             SPEC.work_areas().size());
     }
     else {
-        auto const& kv = *begin(SPEC.work_areas());
-        auto& wa = kv.second; // unique_ptr
+        auto& wa = begin(SPEC.work_areas())->second; // unique_ptr
 
         // Test parsed points
-        V3fList points = {
-            Vector3f(82.54196166992188, 3.187546730041504, -44.660125732421875),
-            Vector3f(54.139976501464844, -23.924468994140625, -35.15853500366211),
-            Vector3f(26.635669708251953, -57.53522872924805, -29.187021255493164),
-            Vector3f(21.75318145751953, -63.43537139892578, -1.899409294128418),
-            Vector3f(12.520357131958008, -50.98127365112305, 13.686529159545898),
-            Vector3f(-4.097459316253662, -37.3050651550293, 18.167621612548828),
-            Vector3f(-40.844879150390625, -42.66680908203125, 7.421332359313965)
-        };
         V3fList points_test = wa->to_points();
 
         ts.tests++;
-        if (points != points_test) {
+        if (quarter_snake_free_coordinates != points_test) {
             ts.errors++;
             err("Work area point parsing test failed\n");
             err("Expected:\n");
-            for (auto& p : points) {
+            for (auto& p : quarter_snake_free_coordinates) {
                 raw_at(LOG_WARN, "%s\n", p.to_string().c_str());
             }
             err("But got:\n");

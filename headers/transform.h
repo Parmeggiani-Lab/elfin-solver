@@ -54,6 +54,8 @@ public:
 #endif  /* ifdef USE_EIGEN */
 
     Transform(JSON const& tx_json);
+    // Convenience ctor for testing purposes.
+    Transform(Vector3f const& vec);
 
     /* accessors */
     Vector3f collapsed() const;
@@ -68,6 +70,8 @@ public:
 #else
     Transform operator*(Transform const& rhs) const;
 #endif  /* ifdef USE_EIGEN */
+
+    Vector3f operator*(Vector3f const& rhs) const;
 
     /*
      * We use 0.0001 as tolerance here because that's the highest precision

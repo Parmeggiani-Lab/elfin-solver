@@ -64,6 +64,7 @@ public:
     static void setup(int const argc, char const** argv);
 
     /* tests */
+    static void load_test_input();
     static TestStat test();
 };
 

@@ -5,10 +5,11 @@
 
 #include "kabsch.h"
 
+#include "work_area.h"
 #include "input_manager.h"
-#include "json.h"
 #include "jutil.h"
 #include "debug_utils.h"
+#include "test_consts.h"
 
 namespace elfin {
 
@@ -38,11 +39,11 @@ Matrix<double> V3fList_to_vectors(V3fList const& pts) {
 	return out;
 }
 
-void resample(V3fList& ref,
+void resample(V3fList const& ref,
               V3fList& pts) {
 	size_t const N = ref.size();
 
-	// Compute  shape total lengths
+	// Compute shape total lengths.
 	float ref_tot_len = 0.0f;
 	for (size_t i = 1; i < N; i++)
 		ref_tot_len += ref.at(i).dist_to(ref.at(i - 1));
@@ -51,10 +52,10 @@ void resample(V3fList& ref,
 	for (size_t i = 1; i < pts.size(); i++)
 		pts_tot_len += pts.at(i).dist_to(pts.at(i - 1));
 
-	// Upsample pts
+	// Upsample pts.
 	V3fList resampled;
 
-	// First and last points are the same
+	// First and last points are the same.
 	resampled.push_back(pts.at(0));
 
 	float ref_prop = 0.0f, pts_prop = 0.0f;
@@ -86,8 +87,9 @@ void resample(V3fList& ref,
 	}
 
 	// Sometimes the last node is automatically added
-	if (resampled.size() < N)
+	if (resampled.size() < N) {
 		resampled.push_back(pts.back());
+	}
 
 	pts = resampled;
 }
@@ -410,7 +412,7 @@ bool rosetta_kabsch(
 	return true;
 }
 
-// A Wrapper to call the unreadable Rosetta version
+// A Wrapper to call the wonderfully commented Rosetta version.
 bool kabsch(
     V3fList const& mobile,
     V3fList const& ref,
@@ -463,98 +465,241 @@ float score(V3fList mobile, V3fList ref) {
 	return rms;
 }
 
-TestStat test() {
-	msg("Testing kabsch\n");
+TestStat test_basics() {
+	msg("Testing kabsch basics\n");
 	TestStat ts;
 
-	Vector3f const arr_a[] = {
-		Vector3f(4.7008892286345, 42.938597096873, 14.4318130193692),
-		Vector3f(-20.3679194392227, 27.5712678608402, -12.1390617339732),
-		Vector3f(24.4692807074156, -1.32083675968276, 31.1580458282477),
-		Vector3f(-31.1044984967455, -6.41414114190809, 3.28255887994549),
-		Vector3f(18.6775433365315, -5.32162505701938, -14.9272896423117),
-		Vector3f(-31.648884426273, -19.3650527983443, 43.9001561999887),
-		Vector3f(-13.1515403509663, 0.850865538112699, 37.5942811492984),
-		Vector3f(12.561856072969, 1.07715641721097, 5.01563428984222),
-		Vector3f(28.0227435151377, 31.7627708322262, 12.2475086001227),
-		Vector3f(-41.8874231134215, 29.4831416883453, 8.70447045314168),
-	};
-
-	Vector3f const arr_b[] = {
-		Vector3f(-29.2257707266972, -18.8897713349587, 9.48960740086143),
-		Vector3f(-19.8753669720509, 42.3379642103244, -23.7788252219155),
-		Vector3f(-2.90766514824093, -6.9792608670416, 10.2843089382083),
-		Vector3f(-26.9511839788441, -31.5183679875864, 21.1215780433683),
-		Vector3f(34.4308792695389, 40.4880968679893, -27.825326598276),
-		Vector3f(-30.5235710432951, 47.9748378356085, -38.2582349144194),
-		Vector3f(-27.4078219027601, -6.11300268738968, -20.3324126781673),
-		Vector3f(-32.9291952852141, -38.8880776559401, -18.1221698074118),
-		Vector3f(-27.2335702183446, -24.1935304087933, -7.58332402861928),
-		Vector3f(-6.43013158961009, -9.12801538874479, 0.785828466111815),
-	};
-
-	Vector3f const actual_r[] = {
-		Vector3f( 0.523673403299203, -0.276948392922051, -0.805646171923458),
-		Vector3f(-0.793788382691122, -0.501965361762521, -0.343410511043611),
-		Vector3f(-0.309299482996081, 0.819347522879342, -0.482704326238996),
-	};
-
-	Vector3f const actual_tran(-1.08234396236629,
-	                           5.08395199432057,
-	                           -13.0170407784248);
-
-	V3fList A(arr_a, arr_a + sizeof(arr_a) / sizeof(arr_a[0]));
-	V3fList B(arr_b, arr_b + sizeof(arr_b) / sizeof(arr_b[0]));
-
-	/* kabsch() return variables */
+	// kabsch() return variables
 	Matrix<double> rot;
 	Vector3f tran;
 	double rms;
 
-	/* kabsch() call should return true */
-	bool const ret_val = kabsch(A, B, rot, tran, rms);
-	ts.tests++;
-	if (not ret_val) {
-		ts.errors++;
-		err("kabsch() returned false\n");
-	}
+	// Test that kabsch() call returns true
+	{
+		bool const ret_val =
+		    kabsch(points10a, points10b, rot, tran, rms);
 
-	/* Check kabsch() rotation */
-	ts.tests++;
-	for (size_t i = 0; i < rot.size(); i++) {
-		auto const& row = rot.at(i);
-
-		if (!Vector3f(row.at(0), row.at(1), row.at(2)).is_approx(actual_r[i])) {
+		ts.tests++;
+		if (not ret_val) {
 			ts.errors++;
-			err("Rotation test failed: "
-			    "row %lu does not approximate actual rotation row\n",
-			    i);
-			break;
+			err("kabsch() returned false\n");
 		}
 	}
 
-	/* Check kabsch() translation */
-	ts.tests++;
-	if (!tran.is_approx(actual_tran)) {
-		ts.errors++;
-		err("Translation test failed: "
-		    "does not approximate actual translation\n");
+	// Test kabsch() rotation.
+	{
+		ts.tests++;
+		for (size_t i = 0; i < rot.size(); i++) {
+			auto const& row = rot.at(i);
+			Vector3f row_vec(row);
+			if (not row_vec.is_approx(points10ab_rot[i])) {
+				ts.errors++;
+				err("Rotation test failed: "
+				    "row %lu does not approximate actual rotation row.\n"
+				    "Expeced: %s\nGot: %s\n",
+				    i,
+				    points10ab_rot[i].to_string().c_str(),
+				    row_vec.to_string().c_str());
+				break;
+			}
+		}
 	}
 
-	/* Test upsampling */
-	V3fList a_fewer = A;
-	a_fewer.erase(a_fewer.begin() + (a_fewer.size() / 2),
-	              a_fewer.begin() + (a_fewer.size() / 2) + 1);
-
-	assert(a_fewer.size() != B.size());
-
-	resample(a_fewer, B);
-	ts.tests++;
-	if (a_fewer.size() != B.size()) {
-		ts.errors++;
-		err("Upsampling failed: Lengths: a_fewer=%d B=%d\n",
-		    a_fewer.size(), B.size());
+	// Test kabsch() translation.
+	{
+		ts.tests++;
+		if (not tran.is_approx(points10ab_tran)) {
+			ts.errors++;
+			err("Translation test failed: "
+			    "does not approximate actual translation.\n"
+			    "Expected: %s\nGot: %s\n",
+			    points10ab_tran.to_string().c_str(),
+			    tran.to_string().c_str());
+		}
 	}
+
+	return ts;
+}
+
+TestStat test_resample() {
+	msg("Testing kabsch resample\n");
+	TestStat ts;
+
+	// Test upsampling a_fewer to B.size()
+	{
+		V3fList a_fewer(points10a);
+
+		// Erase half of the points.
+		a_fewer.erase(a_fewer.begin() + (a_fewer.size() / 2),
+		              a_fewer.begin() + (a_fewer.size() / 2) + 1);
+		assert(a_fewer.size() != points10a.size());
+
+		resample(points10a, a_fewer);
+
+		ts.tests++;
+		if (a_fewer.size() != points10a.size()) {
+			ts.errors++;
+			err("Upsampling failed.\nSizes: a_fewer=%lu points10a=%lu\n",
+			    a_fewer.size(), points10a.size());
+		}
+	}
+
+	return ts;
+}
+
+TestStat test_score() {
+	msg("Testing kabsch score\n");
+	TestStat ts;
+
+	// Test randomly transformed solution results in kabsch score 0.
+	InputManager::load_test_input();
+	auto& wa = begin(SPEC.work_areas())->second;
+
+	// Identity (no transform) score 0.
+	{
+		float const kscore = score(quarter_snake_free_coordinates, *wa);
+		ts.tests++;
+		if (kscore > 1e-6) {
+			ts.errors++;
+			err("kabsch identity score test failed.\n"
+			    "Expected 0\nGot %f\n", kscore);
+
+			err("Hard coded points:\n");
+			for (auto const& point : quarter_snake_free_coordinates) {
+				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+			}
+
+			err("Input file points:\n");
+			V3fList const& input_points = wa->to_points();
+			for (auto const& point : input_points) {
+				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+			}
+		}
+	}
+
+	// Test translation score 0.
+	{
+		Transform trans_tx({
+			{	"rot", {
+					{1, 0, 0},
+					{0, 1, 0},
+					{0, 0, 1}
+				}
+			},
+			{"tran", {-7.7777, -30, 150.12918}}
+		});
+
+		V3fList points_test = quarter_snake_free_coordinates;
+		for (auto& point : points_test) {
+			point = trans_tx * point;
+		}
+
+		float const kscore = score(points_test, *wa);
+		ts.tests++;
+		if (kscore > 1e-6) {
+			ts.errors++;
+			err("kabsch translation score test failed.\n"
+			    "Expected 0\nGot %f\n", kscore);
+
+			err("Hard coded points:\n");
+			for (auto const& point : points_test) {
+				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+			}
+
+			err("Input file points:\n");
+			V3fList const& input_points = wa->to_points();
+			for (auto const& point : input_points) {
+				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+			}
+		}
+	}
+
+	// Test rotation score 0.
+	{
+		Transform rot_tx({
+			{	"rot", {
+					{0.28878074884414673, -0.9471790194511414, -0.13949079811573029},
+					{-0.5077904462814331, -0.27504783868789673, 0.8163931369781494},
+					{-0.8116370439529419, -0.16492657363414764, -0.5603969693183899}
+				}
+			},
+			{"tran", {0, 0, 0}}
+		});
+
+		V3fList points_test = quarter_snake_free_coordinates;
+		for (auto& point : points_test) {
+			point = rot_tx * point;
+		}
+
+		float const kscore = score(points_test, *wa);
+		ts.tests++;
+		if (kscore > 1e-6) {
+			ts.errors++;
+			err("kabsch rotation score test failed.\n"
+			    "Expected 0\nGot %f\n", kscore);
+
+			err("Hard coded points:\n");
+			for (auto const& point : points_test) {
+				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+			}
+
+			err("Input file points:\n");
+			V3fList const& input_points = wa->to_points();
+			for (auto const& point : input_points) {
+				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+			}
+		}
+	}
+
+	// Random transformation score 0.
+	{
+		// This tx is produced by taking the matrix_world of a transformed
+		// Blender object.
+		Transform random_tx({
+			{	"rot", {
+					{0.2617338001728058, 0.08983021974563599, 0.9609506130218506},
+					{0.9230813384056091, 0.26742106676101685, -0.27641811966896057},
+					{-0.2818091809749603, 0.959383487701416, -0.012927504256367683}
+				}
+			},
+			{"tran", {3.15165638923645, -5.339916229248047, 3.290015935897827}}
+		});
+
+		V3fList points_test = quarter_snake_free_coordinates;
+		for (auto& point : points_test) {
+			point = random_tx * point;
+		}
+
+		float const kscore = score(points_test, *wa);
+		ts.tests++;
+		if (kscore > 1e-6) {
+			ts.errors++;
+			err("kabsch random transform score test failed.\n"
+			    "Expected 0\nGot %f\n", kscore);
+
+			err("Hard coded points:\n");
+			for (auto const& point : points_test) {
+				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+			}
+
+			err("Input file points:\n");
+			V3fList const& input_points = wa->to_points();
+			for (auto const& point : input_points) {
+				raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+			}
+		}
+	}
+
+	return ts;
+}
+
+TestStat test() {
+	msg("Testing kabsch\n");
+	TestStat ts;
+
+	ts += test_basics();
+	ts += test_resample();
+	ts += test_score();
 
 	return ts;
 }

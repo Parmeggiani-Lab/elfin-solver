@@ -4,11 +4,12 @@
 #include <vector>
 
 #include "geometry.h"
-#include "work_area.h"
 #include "test_stat.h"
 
 namespace elfin
 {
+
+class WorkArea;
 
 namespace kabsch {
 

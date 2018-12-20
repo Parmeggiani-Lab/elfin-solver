@@ -126,28 +126,31 @@ public:
 
 #ifndef V3F_USE_EIGEN
 
+    float operator[](size_t const i) const {
+        DEBUG(i >= 3);
+        return data_[i];
+    }
+
     Vector3f operator+(Vector3f const& rhs) const {
         return Vector3f(
                    data_[0] + rhs.data_[0],
                    data_[1] + rhs.data_[1],
                    data_[2] + rhs.data_[2]);
     }
+
     Vector3f operator-(Vector3f const& rhs) const {
         return Vector3f(
                    data_[0] - rhs.data_[0],
                    data_[1] - rhs.data_[1],
                    data_[2] - rhs.data_[2]);
     }
+
     template <typename ScalarType>
     Vector3f operator*(ScalarType const scalar) const {
         return Vector3f(
                    data_[0] * scalar,
                    data_[1] * scalar,
                    data_[2] * scalar);
-    }
-    float operator[](size_t const i) const {
-        DEBUG(i >= 3);
-        return data_[i];
     }
 
 #endif  /* ifndef V3F_USE_EIGEN */
