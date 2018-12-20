@@ -1,6 +1,6 @@
 #include "basic_node_team.h"
 
-#include "jutil.h"
+#include <jutil/jutil.h>
 #include "basic_node_generator.h"
 #include "kabsch.h"
 #include "input_manager.h"

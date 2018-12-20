@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "jutil.h"
+#include <jutil/jutil.h>
 #include "string_utils.h"
 
 namespace elfin {

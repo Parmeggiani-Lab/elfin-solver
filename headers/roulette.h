@@ -4,7 +4,7 @@
 #include <vector>
 #include <sstream>
 
-#include "jutil.h"
+#include <jutil/jutil.h>
 #include "random_utils.h"
 #include "string_utils.h"
 #include "debug_utils.h"

@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include "json.h"
-#include "jutil.h"
+#include <jutil/jutil.h>
 
 namespace elfin {
 

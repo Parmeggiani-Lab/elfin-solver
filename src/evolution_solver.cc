@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <limits>
 
-#include "jutil.h"
+#include <jutil/jutil.h>
 #include "input_manager.h"
 #include "parallel_utils.h"
 

@@ -7,7 +7,7 @@
 
 #include "work_area.h"
 #include "input_manager.h"
-#include "jutil.h"
+#include <jutil/jutil.h>
 #include "debug_utils.h"
 #include "test_consts.h"
 

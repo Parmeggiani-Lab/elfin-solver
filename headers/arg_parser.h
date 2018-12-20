@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-#include "jutil.h"
+#include <jutil/jutil.h>
 #include "options.h"
 
 #define ARG_PARSER_CALLBACK_PARAMETERS \
