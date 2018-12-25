@@ -1041,17 +1041,22 @@ JSON BasicNodeTeam::gen_nodes_json() const {
             if (link) {  //  Not reached end of nodes yet.
                 node_output["src_term"] =
                     TerminusTypeToCStr(link->src().term);
-                node_output["src_chain_id"] =
-                    link->src().chain_id;
-                node_output["dst_chain_id"] =
-                    link->dst().chain_id;
+
+                std::string const& src_chain_name =
+                    curr_node->prototype_->chains().at(
+                        link->src().chain_id).name;
+                std::string const& dst_chain_name =
+                    node_gen.peek()->prototype_->chains().at(
+                        link->dst().chain_id).name;
+                node_output["src_chain_name"] = src_chain_name;
+                node_output["dst_chain_name"] = dst_chain_name;
             }
             else
             {
                 node_output["src_term"] =
                     TerminusTypeToCStr(TerminusType::NONE);
-                node_output["src_chain_id"] = -1;
-                node_output["dst_chain_id"] = -1;
+                node_output["src_chain_name"] = "NONE";
+                node_output["dst_chain_name"] = "NONE";
             }
 
             Transform tx = curr_node->tx_;

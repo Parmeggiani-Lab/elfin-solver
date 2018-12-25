@@ -40,6 +40,7 @@ public:
         NodeSP const& start_node);
 
     NodeSP curr_node() const { return curr_node_; }
+    NodeSP peek() const { return next_node_; }
     Link const* curr_link() const { return curr_link_; }
 
     /* modifiers */
