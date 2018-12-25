@@ -9,7 +9,7 @@ OBJ_TREE 		:= $(addprefix $(OBJ_DIR)/, $(SRC_TREE))
 BIN_DIR 		:= ./bin/
 $(shell mkdir -p $(OBJ_TREE) $(BIN_DIR))
 
-C_SRC 			:= $(shell find src -name '*.c')
+C_SRC 			:= $(shell find src lib/jutil/src/jutil.c -name '*.c')
 CC_SRC 			:= $(shell find src -name '*.cc')
 
 OBJS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.o) $(CC_SRC:%.cc=$(OBJ_DIR)/%.o)
