@@ -119,29 +119,29 @@ void _rosetta_kabsch_align(
     size_t m = 0;
     int l = 0;
     int k = 0;
-    float e0 = 0.0f;
-    float d = 0.0f;
-    float h = 0.0f;
-    float g = 0.0f;
-    float cth = 0.0f;
-    float sth = 0.0f;
-    float sqrth = 0.0f;
-    float p = 0.0f;
-    float det = 0.0f;
-    float sigma = 0.0f;
-    float xc[3] = { 0 }, yc[3] = { 0 };
-    float a[3][3] = {0};
-    float b[3][3] = {0};
-    float r[3][3] = {0};
-    float e[3] = {0};
-    float rr[6] = {0};
-    float ss[6] = {0};
-    float sqrt3 = 1.73205080756888, tol = 0.01;
+    double e0 = 0.0f;
+    double d = 0.0f;
+    double h = 0.0f;
+    double g = 0.0f;
+    double cth = 0.0f;
+    double sth = 0.0f;
+    double sqrth = 0.0f;
+    double p = 0.0f;
+    double det = 0.0f;
+    double sigma = 0.0f;
+    double xc[3] = { 0 }, yc[3] = { 0 };
+    double a[3][3] = {0};
+    double b[3][3] = {0};
+    double r[3][3] = {0};
+    double e[3] = {0};
+    double rr[6] = {0};
+    double ss[6] = {0};
+    double sqrt3 = 1.73205080756888, tol = 0.01;
     int ip[] = {0, 1, 3, 1, 2, 4, 3, 4, 5};
     int ip2312[] = {1, 2, 0, 1};
 
     bool a_success = true, b_success = true;
-    float epsilon = 0.00000001;
+    double epsilon = 0.00000001;
 
     // Compute centers for vector sets x, y
     for (size_t i = 0; i < n; ++i) {
@@ -186,8 +186,8 @@ void _rosetta_kabsch_align(
         }
     }
 
-    float spur = (rr[0] + rr[2] + rr[5]) / 3.0;
-    float cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
+    double spur = (rr[0] + rr[2] + rr[5]) / 3.0;
+    double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
                     - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
     det = det * det;
 
@@ -403,30 +403,30 @@ float _rosetta_kabsch_rms(
     size_t m = 0;
     int l = 0;
     int k = 0;
-    float e0 = 0.0f;
+    double e0 = 0.0f;
     float rms = 0.0f;
-    float d = 0.0f;
-    float h = 0.0f;
-    float g = 0.0f;
-    float cth = 0.0f;
-    float sth = 0.0f;
-    float sqrth = 0.0f;
-    float p = 0.0f;
-    float det = 0.0f;
-    float sigma = 0.0f;
-    float xc[3] = { 0 }, yc[3] = { 0 };
-    float a[3][3] = {0};
-    float b[3][3] = {0};
-    float r[3][3] = {0};
-    float e[3] = {0};
-    float rr[6] = {0};
-    float ss[6] = {0};
-    float sqrt3 = 1.73205080756888, tol = 0.01;
+    double d = 0.0f;
+    double h = 0.0f;
+    double g = 0.0f;
+    double cth = 0.0f;
+    double sth = 0.0f;
+    double sqrth = 0.0f;
+    double p = 0.0f;
+    double det = 0.0f;
+    double sigma = 0.0f;
+    double xc[3] = { 0 }, yc[3] = { 0 };
+    double a[3][3] = {0};
+    double b[3][3] = {0};
+    double r[3][3] = {0};
+    double e[3] = {0};
+    double rr[6] = {0};
+    double ss[6] = {0};
+    double sqrt3 = 1.73205080756888, tol = 0.01;
     int ip[] = {0, 1, 3, 1, 2, 4, 3, 4, 5};
     int ip2312[] = {1, 2, 0, 1};
 
     bool a_success = true, b_success = true;
-    float epsilon = 0.00000001;
+    double epsilon = 0.00000001;
 
     // Compute centers for vector sets x, y
     for (size_t i = 0; i < n; ++i) {
@@ -471,8 +471,8 @@ float _rosetta_kabsch_rms(
         }
     }
 
-    float spur = (rr[0] + rr[2] + rr[5]) / 3.0;
-    float cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
+    double spur = (rr[0] + rr[2] + rr[5]) / 3.0;
+    double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
                     - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
     det = det * det;
 
