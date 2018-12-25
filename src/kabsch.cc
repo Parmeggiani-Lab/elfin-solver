@@ -5,7 +5,6 @@
 
 #include "kabsch.h"
 
-#include <jutil/jutil.h>
 #include "work_area.h"
 #include "debug_utils.h"
 #include "test_consts.h"
@@ -13,6 +12,31 @@
 namespace elfin {
 
 namespace kabsch {
+
+void calc_alignment(
+    V3fList const& mobile,
+    V3fList const& ref,
+    elfin::Mat3f& rot,
+    Vector3f& tran,
+    float& rms) {
+    V3fList const& mobile_resampled =
+        mobile.size() == ref.size() ?
+        mobile : _resample(ref, mobile);
+
+    _rosetta_kabsch_align(mobile_resampled, ref, rot, tran, rms);
+}
+
+float score(V3fList const& mobile, V3fList const& ref) {
+    if (mobile.empty() or ref.empty()) {
+        return INFINITY;
+    }
+
+    V3fList const& mobile_resampled =
+        mobile.size() == ref.size() ?
+        mobile : _resample(ref, mobile);
+
+    return _rosetta_kabsch_rms(mobile_resampled, ref);
+}
 
 V3fList _resample(
     V3fList const& ref,
@@ -70,66 +94,54 @@ V3fList _resample(
         resampled.push_back(pts.back());
     }
 
+    // Is something wrong with the resampling algorithm?
+    NICE_PANIC(resampled.size() != ref.size());
+
     return resampled;
 }
 
-// Caller is responsible for zero-initializing rot and tran.
-bool rosetta_kabsch(
+void _rosetta_kabsch_align(
     V3fList const& mobile,
     V3fList const& ref,
     elfin::Mat3f& rot,
     Vector3f& tran,
-    double& rms,
-    size_t const mode /* default=0 */) {
-    size_t const n = mobile.size();  // Number of atom pairs.
-    if (n < 1 or n != ref.size()) return false;
+    float& rms)
+{
+    size_t const n = mobile.size();
+    size_t const ref_n = ref.size();
+
+    // Check sample sizes.
+    NICE_PANIC(n < 1);
+    NICE_PANIC(ref_n < 1);
+    NICE_PANIC(n != ref_n);
 
     size_t j = 0;
     size_t m = 0;
     int l = 0;
     int k = 0;
-    double e0 = 0.0f;
-    double rms1 = 0.0f;
-    double d = 0.0f;
-    double h = 0.0f;
-    double g = 0.0f;
-    double cth = 0.0f;
-    double sth = 0.0f;
-    double sqrth = 0.0f;
-    double p = 0.0f;
-    double det = 0.0f;
-    double sigma = 0.0f;
-    double xc[3], yc[3];
-    double a[3][3] = {0};
-    double b[3][3] = {0};
-    double r[3][3] = {0};
-    double e[3] = {0};
-    double rr[6] = {0};
-    double ss[6] = {0};
-    double sqrt3 = 1.73205080756888, tol = 0.01;
+    float e0 = 0.0f;
+    float d = 0.0f;
+    float h = 0.0f;
+    float g = 0.0f;
+    float cth = 0.0f;
+    float sth = 0.0f;
+    float sqrth = 0.0f;
+    float p = 0.0f;
+    float det = 0.0f;
+    float sigma = 0.0f;
+    float xc[3] = { 0 }, yc[3] = { 0 };
+    float a[3][3] = {0};
+    float b[3][3] = {0};
+    float r[3][3] = {0};
+    float e[3] = {0};
+    float rr[6] = {0};
+    float ss[6] = {0};
+    float sqrt3 = 1.73205080756888, tol = 0.01;
     int ip[] = {0, 1, 3, 1, 2, 4, 3, 4, 5};
     int ip2312[] = {1, 2, 0, 1};
 
-    int a_failed = 0, b_failed = 0;
-    double epsilon = 0.00000001;
-
-    //initializtation
-    rms1 = 0;
-    e0 = 0;
-    for (size_t i = 0; i < 3; ++i) {
-        xc[i] = 0.0;
-        yc[i] = 0.0;
-        // tran[i] = 0.0;
-        for (j = 0; j < 3; j++) {
-            // rot[i][j] = 0.0;
-            r[i][j] = 0.0;
-            a[i][j] = 0.0;
-            if (i == j) {
-                // rot[i][j] = 1.0;
-                a[i][j] = 1.0;
-            }
-        }
-    }
+    bool a_success = true, b_success = true;
+    float epsilon = 0.00000001;
 
     // Compute centers for vector sets x, y
     for (size_t i = 0; i < n; ++i) {
@@ -141,12 +153,13 @@ bool rosetta_kabsch(
         yc[1] += ref[i][1];
         yc[2] += ref[i][2];
     }
+
     for (size_t i = 0; i < 3; ++i) {
         xc[i] = xc[i] / n;
         yc[i] = yc[i] / n;
     }
 
-    // Compute e0 and matrix r
+    // Compute e0 and matrix r.
     for (m = 0; m < n; m++) {
         for (size_t i = 0; i < 3; ++i) {
             e0 += (mobile[m][i] - xc[i]) * (mobile[m][i] - xc[i]) + \
@@ -158,13 +171,13 @@ bool rosetta_kabsch(
         }
     }
 
-    // Compute determinat of matrix r
+    // Compute determinat of matrix r.
     det = r[0][0] * ( r[1][1] * r[2][2] - r[1][2] * r[2][1] )\
           - r[0][1] * ( r[1][0] * r[2][2] - r[1][2] * r[2][0] )\
           + r[0][2] * ( r[1][0] * r[2][1] - r[1][1] * r[2][0] );
     sigma = det;
 
-    // Compute tras(r)*r
+    // Compute tras(r)*r.
     m = 0;
     for (j = 0; j < 3; j++) {
         for (size_t i = 0; i <= j; ++i) {
@@ -173,8 +186,8 @@ bool rosetta_kabsch(
         }
     }
 
-    double spur = (rr[0] + rr[2] + rr[5]) / 3.0;
-    double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
+    float spur = (rr[0] + rr[2] + rr[5]) / 3.0;
+    float cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
                     - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
     det = det * det;
 
@@ -198,98 +211,96 @@ bool rosetta_kabsch(
             e[1] = (spur - cth) + sth;
             e[2] = (spur - cth) - sth;
 
-            if (mode != 0) {
-                for (l = 0; l < 3; l = l + 2) {
-                    d = e[l];
-                    ss[0] = (d - rr[2]) * (d - rr[5])  - rr[4] * rr[4];
-                    ss[1] = (d - rr[5]) * rr[1]      + rr[3] * rr[4];
-                    ss[2] = (d - rr[0]) * (d - rr[5])  - rr[3] * rr[3];
-                    ss[3] = (d - rr[2]) * rr[3]      + rr[1] * rr[4];
-                    ss[4] = (d - rr[0]) * rr[4]      + rr[1] * rr[3];
-                    ss[5] = (d - rr[0]) * (d - rr[2])  - rr[1] * rr[1];
+            for (l = 0; l < 3; l = l + 2) {
+                d = e[l];
+                ss[0] = (d - rr[2]) * (d - rr[5])  - rr[4] * rr[4];
+                ss[1] = (d - rr[5]) * rr[1]      + rr[3] * rr[4];
+                ss[2] = (d - rr[0]) * (d - rr[5])  - rr[3] * rr[3];
+                ss[3] = (d - rr[2]) * rr[3]      + rr[1] * rr[4];
+                ss[4] = (d - rr[0]) * rr[4]      + rr[1] * rr[3];
+                ss[5] = (d - rr[0]) * (d - rr[2])  - rr[1] * rr[1];
 
-                    if (fabs(ss[0]) <= epsilon ) ss[0] = 0.0;
-                    if (fabs(ss[1]) <= epsilon ) ss[1] = 0.0;
-                    if (fabs(ss[2]) <= epsilon ) ss[2] = 0.0;
-                    if (fabs(ss[3]) <= epsilon ) ss[3] = 0.0;
-                    if (fabs(ss[4]) <= epsilon ) ss[4] = 0.0;
-                    if (fabs(ss[5]) <= epsilon ) ss[5] = 0.0;
+                if (fabs(ss[0]) <= epsilon ) ss[0] = 0.0;
+                if (fabs(ss[1]) <= epsilon ) ss[1] = 0.0;
+                if (fabs(ss[2]) <= epsilon ) ss[2] = 0.0;
+                if (fabs(ss[3]) <= epsilon ) ss[3] = 0.0;
+                if (fabs(ss[4]) <= epsilon ) ss[4] = 0.0;
+                if (fabs(ss[5]) <= epsilon ) ss[5] = 0.0;
 
-                    if (fabs(ss[0]) >= fabs(ss[2])) {
-                        j = 0;
-                        if (fabs(ss[0]) < fabs(ss[5])) {
-                            j = 2;
-                        }
-                    } else if (fabs(ss[2]) >= fabs(ss[5])) {
-                        j = 1;
-                    } else {
+                if (fabs(ss[0]) >= fabs(ss[2])) {
+                    j = 0;
+                    if (fabs(ss[0]) < fabs(ss[5])) {
                         j = 2;
                     }
-
-                    d = 0.0;
-                    j = 3 * j;
-                    for (size_t i = 0; i < 3; ++i) {
-                        k = ip[i + j];
-                        a[i][l] = ss[k];
-                        d = d + ss[k] * ss[k];
-                    }
-
-                    if (d > epsilon ) d = 1.0 / sqrt(d);
-                    else d = 0.0;
-                    for (size_t i = 0; i < 3; ++i) {
-                        a[i][l] = a[i][l] * d;
-                    }
-                }  // for l
-
-                d = a[0][0] * a[0][2] + a[1][0] * a[1][2] + a[2][0] * a[2][2];
-
-                size_t m1 = 0, m = 0;
-                if ((e[0] - e[1]) > (e[1] - e[2])) {
-                    m1 = 2; m = 0;
+                } else if (fabs(ss[2]) >= fabs(ss[5])) {
+                    j = 1;
                 } else {
-                    m1 = 0; m = 2;
+                    j = 2;
                 }
-                p = 0;
+
+                d = 0.0;
+                j = 3 * j;
                 for (size_t i = 0; i < 3; ++i) {
-                    a[i][m1] = a[i][m1] - d * a[i][m];
-                    p = p + a[i][m1] * a[i][m1];
+                    k = ip[i + j];
+                    a[i][l] = ss[k];
+                    d = d + ss[k] * ss[k];
                 }
-                if (p <= tol) {
-                    p = 1.0;
-                    for (size_t i = 0; i < 3; ++i) {
-                        if (p < fabs(a[i][m])) {
-                            continue;
-                        }
-                        p = fabs( a[i][m] );
-                        j = i;
+
+                if (d > epsilon ) d = 1.0 / sqrt(d);
+                else d = 0.0;
+                for (size_t i = 0; i < 3; ++i) {
+                    a[i][l] = a[i][l] * d;
+                }
+            }  // for l
+
+            d = a[0][0] * a[0][2] + a[1][0] * a[1][2] + a[2][0] * a[2][2];
+
+            size_t m1 = 0, m = 0;
+            if ((e[0] - e[1]) > (e[1] - e[2])) {
+                m1 = 2; m = 0;
+            } else {
+                m1 = 0; m = 2;
+            }
+            p = 0;
+            for (size_t i = 0; i < 3; ++i) {
+                a[i][m1] = a[i][m1] - d * a[i][m];
+                p = p + a[i][m1] * a[i][m1];
+            }
+            if (p <= tol) {
+                p = 1.0;
+                for (size_t i = 0; i < 3; ++i) {
+                    if (p < fabs(a[i][m])) {
+                        continue;
                     }
-                    k = ip2312[j];
-                    l = ip2312[j + 1];
-                    p = sqrt( a[k][m] * a[k][m] + a[l][m] * a[l][m] );
-                    if (p > tol) {
-                        a[j][m1] = 0.0;
-                        a[k][m1] = -a[l][m] / p;
-                        a[l][m1] =  a[k][m] / p;
-                    } else {
-                        a_failed = 1;
-                    }
+                    p = fabs( a[i][m] );
+                    j = i;
+                }
+                k = ip2312[j];
+                l = ip2312[j + 1];
+                p = sqrt( a[k][m] * a[k][m] + a[l][m] * a[l][m] );
+                if (p > tol) {
+                    a[j][m1] = 0.0;
+                    a[k][m1] = -a[l][m] / p;
+                    a[l][m1] =  a[k][m] / p;
                 } else {
-                    p = 1.0 / sqrt(p);
-                    for (size_t i = 0; i < 3; ++i) {
-                        a[i][m1] = a[i][m1] * p;
-                    }
+                    a_success = false;
                 }
-                if (a_failed != 1) {
-                    a[0][1] = a[1][2] * a[2][0] - a[1][0] * a[2][2];
-                    a[1][1] = a[2][2] * a[0][0] - a[2][0] * a[0][2];
-                    a[2][1] = a[0][2] * a[1][0] - a[0][0] * a[1][2];
+            } else {
+                p = 1.0 / sqrt(p);
+                for (size_t i = 0; i < 3; ++i) {
+                    a[i][m1] = a[i][m1] * p;
                 }
-            }  //if(mode!=0)
+            }
+            if (a_success) {
+                a[0][1] = a[1][2] * a[2][0] - a[1][0] * a[2][2];
+                a[1][1] = a[2][2] * a[0][0] - a[2][0] * a[0][2];
+                a[2][1] = a[0][2] * a[1][0] - a[0][0] * a[1][2];
+            }
+
         }  //h>0
 
-        // Compute b anyway
-        if (mode != 0 && a_failed != 1) {  //a is computed correctly
-            //compute b
+        if (a_success) {
+            // Compute b.
             for (l = 0; l < 2; ++l) {
                 d = 0.0;
                 for (size_t i = 0; i < 3; ++i) {
@@ -330,7 +341,7 @@ bool rosetta_kabsch(
                     b[k][1] = -b[l][0] / p;
                     b[l][1] =  b[k][0] / p;
                 } else {
-                    b_failed = 1;
+                    b_success = false;
                 }
             } else {
                 p = 1.0 / sqrt(p);
@@ -338,72 +349,173 @@ bool rosetta_kabsch(
                     b[i][1] = b[i][1] * p;
                 }
             }
-            if (b_failed != 1) {
+            if (b_success) {
                 b[0][2] = b[1][0] * b[2][1] - b[1][1] * b[2][0];
                 b[1][2] = b[2][0] * b[0][1] - b[2][1] * b[0][0];
                 b[2][2] = b[0][0] * b[1][1] - b[0][1] * b[1][0];
-                // Compute rot
-                for (size_t i = 0; i < 3; ++i) {
-                    for (j = 0; j < 3; j++) {
-                        rot[i][j] = b[i][0] * a[j][0] + b[i][1] * a[j][1]\
-                                    + b[i][2] * a[j][2];
-                    }
-                }
             }
+        }  // if(a_success)
+    }
 
-            // Compute t
-            for (size_t i = 0; i < 3; ++i) {
-                tran[i] = ((yc[i] - rot[i][0] * xc[0]) - rot[i][1] * xc[1])\
-                          - rot[i][2] * xc[2];
-            }
-        }  // if(mode!=0 && a_failed!=1)
-    } else {
-        // Compute t
-        for (size_t i = 0; i < 3; ++i) {
-            tran[i] = ((yc[i] - rot[i][0] * xc[0]) - rot[i][1] * xc[1]) - rot[i][2] * xc[2];
+    // Compute rot.
+    for (size_t i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; j++) {
+            rot[i][j] = b[i][0] * a[j][0] +
+                        b[i][1] * a[j][1] +
+                        b[i][2] * a[j][2];
         }
     }
 
-    // Compute rms
+    // Compute t.
+    for (size_t i = 0; i < 3; ++i) {
+        tran[i] = ((yc[i] - rot[i][0] * xc[0]) - rot[i][1] * xc[1]) -
+                  rot[i][2] * xc[2];
+    }
+
+    // Compute rms.
     for (size_t i = 0; i < 3; ++i) {
         if (e[i] < 0 ) e[i] = 0;
         e[i] = sqrt( e[i] );
     }
+
     d = e[2];
+
     if (sigma < 0.0) {
         d = - d;
     }
-    d = (d + e[1]) + e[0];
-    rms1 = (e0 - d) - d;
-    if (rms1 < 0.0 ) rms1 = 0.0;
 
-    rms = rms1;
-    return true;
+    d = (d + e[1]) + e[0];
 }
 
-float score(V3fList const& mobile, V3fList const& ref) {
-    if (mobile.empty() or ref.empty()) {
-        return INFINITY;
+float _rosetta_kabsch_rms(
+    V3fList const& mobile,
+    V3fList const& ref)
+{
+    size_t const n = mobile.size();
+    size_t const ref_n = ref.size();
+
+    // Check sample sizes.
+    NICE_PANIC(n < 1);
+    NICE_PANIC(ref_n < 1);
+    NICE_PANIC(n != ref_n);
+
+    size_t j = 0;
+    size_t m = 0;
+    int l = 0;
+    int k = 0;
+    float e0 = 0.0f;
+    float rms = 0.0f;
+    float d = 0.0f;
+    float h = 0.0f;
+    float g = 0.0f;
+    float cth = 0.0f;
+    float sth = 0.0f;
+    float sqrth = 0.0f;
+    float p = 0.0f;
+    float det = 0.0f;
+    float sigma = 0.0f;
+    float xc[3] = { 0 }, yc[3] = { 0 };
+    float a[3][3] = {0};
+    float b[3][3] = {0};
+    float r[3][3] = {0};
+    float e[3] = {0};
+    float rr[6] = {0};
+    float ss[6] = {0};
+    float sqrt3 = 1.73205080756888, tol = 0.01;
+    int ip[] = {0, 1, 3, 1, 2, 4, 3, 4, 5};
+    int ip2312[] = {1, 2, 0, 1};
+
+    bool a_success = true, b_success = true;
+    float epsilon = 0.00000001;
+
+    // Compute centers for vector sets x, y
+    for (size_t i = 0; i < n; ++i) {
+        xc[0] += mobile[i][0];
+        xc[1] += mobile[i][1];
+        xc[2] += mobile[i][2];
+
+        yc[0] += ref[i][0];
+        yc[1] += ref[i][1];
+        yc[2] += ref[i][2];
     }
 
-    V3fList const& mobile_resampled =
-        mobile.size() == ref.size() ?
-        mobile : _resample(ref, mobile);
-
-    if (ref.size() != mobile_resampled.size()) {
-        wrn("_resample() failed to equalize ref and mobile sizes\n");
-        return INFINITY;
+    for (size_t i = 0; i < 3; ++i) {
+        xc[i] = xc[i] / n;
+        yc[i] = yc[i] / n;
     }
 
-    // Run Kabsch to get RMS.
-    elfin::Mat3f rot;
-    Vector3f tran;
-    double rms;
+    // Compute e0 and matrix r.
+    for (m = 0; m < n; m++) {
+        for (size_t i = 0; i < 3; ++i) {
+            e0 += (mobile[m][i] - xc[i]) * (mobile[m][i] - xc[i]) + \
+                  (ref[m][i] - yc[i]) * (ref[m][i] - yc[i]);
+            d = ref[m][i] - yc[i];
+            for (j = 0; j < 3; j++) {
+                r[i][j] += d * (mobile[m][j] - xc[j]);
+            }
+        }
+    }
 
-    bool const ret_val =
-        rosetta_kabsch(mobile_resampled, ref, rot, tran, rms);
+    // Compute determinat of matrix r.
+    det = r[0][0] * ( r[1][1] * r[2][2] - r[1][2] * r[2][1] )\
+          - r[0][1] * ( r[1][0] * r[2][2] - r[1][2] * r[2][0] )\
+          + r[0][2] * ( r[1][0] * r[2][1] - r[1][1] * r[2][0] );
+    sigma = det;
 
-    DEBUG(not ret_val, "Kabsch failed!\n");
+    // Compute tras(r)*r.
+    m = 0;
+    for (j = 0; j < 3; j++) {
+        for (size_t i = 0; i <= j; ++i) {
+            rr[m] = r[0][i] * r[0][j] + r[1][i] * r[1][j] + r[2][i] * r[2][j];
+            m++;
+        }
+    }
+
+    float spur = (rr[0] + rr[2] + rr[5]) / 3.0;
+    float cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
+                    - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
+    det = det * det;
+
+    for (size_t i = 0; i < 3; ++i) {
+        e[i] = spur;
+    }
+
+    if (spur > 0) {
+        d = spur * spur;
+        h = d - cof;
+        g = (spur * cof - det) / 2.0 - spur * h;
+
+        if (h > 0) {
+            sqrth = sqrt(h);
+            d = h * h * h - g * g;
+            if (d < 0.0 ) d = 0.0;
+            d = atan2( sqrt(d), -g ) / 3.0;
+            cth = sqrth * cos(d);
+            sth = sqrth * sqrt3 * sin(d);
+            e[0] = (spur + cth) + cth;
+            e[1] = (spur - cth) + sth;
+            e[2] = (spur - cth) - sth;
+        }  //h>0
+    }
+
+    // Compute rms.
+    for (size_t i = 0; i < 3; ++i) {
+        if (e[i] < 0 ) e[i] = 0;
+        e[i] = sqrt( e[i] );
+    }
+
+    d = e[2];
+
+    if (sigma < 0.0) {
+        d = - d;
+    }
+
+    d = (d + e[1]) + e[0];
+    rms = (e0 - d) - d;
+
+    if (rms < 0.0 ) {
+        rms = 0.0;
+    }
 
     return rms;
 }

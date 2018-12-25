@@ -13,6 +13,18 @@ namespace kabsch {
 
 float score(V3fList const& mobile, V3fList const& ref);
 
+void calc_alignment(
+    V3fList const& mobile,
+    V3fList const& ref,
+    elfin::Mat3f& rot,
+    Vector3f& tran,
+    float& rms);
+
+TestStat test();
+
+// The following functions a prefixed by underscore because they're not meant
+// to be called from other modules except for testing.
+
 V3fList _resample(V3fList const& ref, V3fList const& pts);
 
 // Implemetation of Kabsch algoritm for finding the best rotation matrix.
@@ -24,15 +36,16 @@ V3fList _resample(V3fList const& ref, V3fList const& pts);
 // rms    - sum of w*(ux+t-y)**2 over all atom pairs              (output)
 // mode   - 0:calculate rms only                                  (input)
 //          1:calculate rms,u,t (takes longer)
-bool rosetta_kabsch(
+void _rosetta_kabsch_align(
     V3fList const& mobile,
     V3fList const& ref,
     elfin::Mat3f& rot,
     Vector3f& tran,
-    double& rms,
-    size_t const mode = 0);
+    float& rms);
 
-TestStat test();
+float _rosetta_kabsch_rms(
+    V3fList const& mobile,
+    V3fList const& ref);
 
 }  /* kabsch */
 

@@ -55,18 +55,12 @@ TestStat test_basics() {
     // kabsch() return variables
     elfin::Mat3f rot;
     Vector3f tran;
-    double rms;
+    float rms;
 
-    // Test that kabsch() call returns true.
+    // Test that kabsch computation doesn't fail NICE_PANIC assertions.
     {
-        bool const ret_val =
-            rosetta_kabsch(points10a, points10b, rot, tran, rms, /*mode=*/1);
-
         ts.tests++;
-        if (not ret_val) {
-            ts.errors++;
-            err("kabsch() returned false\n");
-        }
+        _rosetta_kabsch_align(points10a, points10b, rot, tran, rms);
     }
 
     // Test kabsch() rotation.
