@@ -1,0 +1,56 @@
+// Need to implement:
+//  - pick_tip_node(): returns tip node, may be random. For 1H, it must not
+//    return the fixed tip.
+//
+//  - mutation_entry_check(): checks free_chains_.size() etc. are correct on
+//    entry to a mutation method. Called before calling mutation methods, from
+//    mutate_and_score().
+//
+//  - mutation_exit_check(): checks free_chains_.size() etc. are correct on
+//    entry to a mutation method. Called before calling mutation methods, from
+//    mutate_and_score().
+
+
+calc_checksum():
+    // Only enforce (DEBUG) 0 < free_chains_.size() <= 2
+    // Compute & cascade checksum starting from each tip
+
+calc_score():
+    // Only enforce (DEBUG) 0 < free_chains_.size() <= 2
+    // NO NEED KABSCH - resample & calc RMS
+    // Simply loop through each tip and get min score
+
+fix_limb_transforms():
+    // Input arrow must not point towards fixed end
+
+grow_tip():
+nip_tip():
+    // No change
+
+sever_limb():
+    // Input arrow must not point towards fixed end
+
+copy_limb():
+    // No change
+
+erode_mutate():
+    // Receive tip node choice from virtual pick_tip_node()
+
+delete_mutate():
+    // Receive tip node choice from virtual pick_tip_node()
+    // Must not include fixed end as deletable
+
+insert_mutate():
+    // Receive tip node choice from virtual pick_tip_node()
+    // Must not include fixed end as insertable
+
+swap_mutate():
+    // Receive tip node choice from virtual pick_tip_node()
+    // Must not include fixed end as swappable
+
+cross_mutate():
+    // Receive tip node choice from virtual pick_tip_node(), also call for father team
+    // The portion near to fixed end must not be deleted as a result of cross
+
+regenerate():
+    // Receive tip node choice from virtual pick_tip_node()

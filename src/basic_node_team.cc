@@ -28,8 +28,9 @@ namespace elfin {
 struct BasicNodeTeam::PImpl {
     /* data */
     BasicNodeTeam* that;
-    // Do not declare any other member so PImpl doesn't need to be
-    // copied/moved.
+
+    // If there is any other data member then PImpl needs to implement
+    // copiers.
 
     /* ctors */
     PImpl(BasicNodeTeam* const _that) : that(_that) {}
@@ -154,10 +155,6 @@ struct BasicNodeTeam::PImpl {
         for (auto& free_chain : that->free_chains_) {
             V3fList points = collect_points(free_chain.node_sp());
 
-            DEBUG(points.size() != that->size(),
-                  string_format("points.size()=%lu, size()=%lu\n",
-                                points.size(), that->size()));
-
             float const new_score =
                 kabsch::score(points, that->work_area_->points());
             score = new_score < score ? new_score : score;
@@ -176,6 +173,10 @@ struct BasicNodeTeam::PImpl {
         while (not node_gen.is_done()) {
             points.push_back(node_gen.next()->tx_.collapsed());
         }
+
+        DEBUG(points.size() != that->size(),
+              string_format("points.size()=%lu, size()=%lu\n",
+                            points.size(), that->size()));
 
         return points;
     }
@@ -199,6 +200,9 @@ struct BasicNodeTeam::PImpl {
         }
 
         NodeSP node_a = free_chain_a.node_sp();
+
+        // Verify that provided free chain is attached a node that is a tip
+        // node.
         DEBUG(node_a->links().size() > 1);
 
         auto node_b = that->add_member(
@@ -399,8 +403,7 @@ struct BasicNodeTeam::PImpl {
 
         bool mutate_success = false;
 #ifndef NO_ERODE
-        if (not that->free_chains_.empty() and
-                that->size() > 1) {
+        if (not that->free_chains_.empty()) {
             // Pick random tip node if not specified.
             NodeSP tip_node = that->free_chains_.pick_random().node_sp();
             that->remove_free_chains(tip_node);
@@ -457,15 +460,14 @@ struct BasicNodeTeam::PImpl {
     }
 
     bool delete_mutate() {
-        bool mutate_success = false;
 
+        bool mutate_success = false;
 #ifndef NO_DELETE
         if (not that->free_chains_.empty()) {
             // Walk through all nodes to collect delete points.
             Vector<DeletePoint> delete_points;
 
             // Starting at either end is fine.
-            DEBUG(that->free_chains_.size() != 2);
             NodeSP start_node = that->free_chains_[0].node_sp();
             BasicNodeGenerator node_gen(start_node);
 
@@ -597,7 +599,6 @@ struct BasicNodeTeam::PImpl {
             Vector<InsertPoint> insert_points;
 
             // Starting at either end is fine.
-            DEBUG(that->free_chains_.size() != 2);
             NodeSP start_node = that->free_chains_[0].node_sp();
             BasicNodeGenerator node_gen(start_node);
 
@@ -691,7 +692,6 @@ struct BasicNodeTeam::PImpl {
             Vector<SwapPoint> swap_points;
 
             // Starting at either end is fine.
-            DEBUG(that->free_chains_.size() != 2);
             NodeSP start_node = that->free_chains_[0].node_sp();
             BasicNodeGenerator node_gen(start_node);
 
@@ -772,16 +772,15 @@ struct BasicNodeTeam::PImpl {
         return mutate_success;
     }
 
-    bool cross_mutate(
-        NodeTeam const& father) {
+    bool cross_mutate(NodeTeam const& father) {
 
         bool mutate_success = false;
 #ifndef NO_CROSS
         if (not that->free_chains_.empty() and
                 not father.free_chains().empty()) {
             // First, collect arrows from both parents.
+
             // Starting at either end is fine.
-            DEBUG(that->free_chains_.size() != 2);
             auto m_arrows = BasicNodeGenerator::collect_arrows(
                                 that->free_chains_[0].node_sp());
             DEBUG(father.free_chains().size() != 2);
@@ -865,6 +864,7 @@ struct BasicNodeTeam::PImpl {
             // Pick next tip chain.
             free_chain_a = that->free_chains_.pick_random();
         }
+
         return true;
     }
 
@@ -873,7 +873,11 @@ struct BasicNodeTeam::PImpl {
         that->free_chains_.clear();
         that->checksum_ = 0x0000;
         that->score_ = INFINITY;
-        return regenerate();
+        bool const mutate_success = regenerate();
+
+        NICE_PANIC(that->free_chains_.size() != 2); // Replace with mutation_exit_check()
+
+        return mutate_success;
     }
 };
 
@@ -934,6 +938,9 @@ MutationMode BasicNodeTeam::mutate_and_score(
     MutationMode mode;
 
     while (not mutate_success and not modes.empty()) {
+        NICE_PANIC(size() == 0);
+        NICE_PANIC(free_chains_.size() != 2); // Replace with mutation_entry_check()
+
         mode = modes.pop_random();
         switch (mode) {
         case MutationMode::ERODE:
@@ -957,6 +964,8 @@ MutationMode BasicNodeTeam::mutate_and_score(
         default:
             bad_mutation_mode(mode);
         }
+
+        NICE_PANIC(free_chains_.size() != 2); // Replace with mutation_exit_check()
     }
 
     if (not mutate_success) {
@@ -1004,7 +1013,7 @@ JSON BasicNodeTeam::gen_nodes_json() const {
     JSON output;
 
     if (not free_chains_.empty()) {
-        NICE_PANIC(free_chains_.size() != 2);
+        DEBUG(free_chains_.size() != 2);
 
         // Kabsch outputs for forward and backward paths.
         elfin::Mat3f rot[2];

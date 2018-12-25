@@ -29,7 +29,9 @@ NodeSP BasicNodeGenerator::next() {
     // Look for next node
     if (curr_node_) {
         size_t const num_neighbors = curr_node_->links().size();
-        NICE_PANIC(num_neighbors > 2);
+        DEBUG(num_neighbors > 2);
+        DEBUG(num_neighbors == 0);
+        
         for (auto& link : curr_node_->links()) {
             NodeSP sp = link.dst().node_sp();
             if (sp != prev_node) {
