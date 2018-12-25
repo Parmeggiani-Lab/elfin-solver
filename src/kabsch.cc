@@ -172,8 +172,8 @@ void _rosetta_kabsch_align(
     }
 
     // Compute determinat of matrix r.
-    det = r[0][0] * ( r[1][1] * r[2][2] - r[1][2] * r[2][1] )\
-          - r[0][1] * ( r[1][0] * r[2][2] - r[1][2] * r[2][0] )\
+    det = r[0][0] * ( r[1][1] * r[2][2] - r[1][2] * r[2][1] )
+          - r[0][1] * ( r[1][0] * r[2][2] - r[1][2] * r[2][0] )
           + r[0][2] * ( r[1][0] * r[2][1] - r[1][1] * r[2][0] );
     sigma = det;
 
@@ -187,7 +187,7 @@ void _rosetta_kabsch_align(
     }
 
     double spur = (rr[0] + rr[2] + rr[5]) / 3.0;
-    double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
+    double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])
                     - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
     det = det * det;
 
@@ -371,20 +371,6 @@ void _rosetta_kabsch_align(
         tran[i] = ((yc[i] - rot[i][0] * xc[0]) - rot[i][1] * xc[1]) -
                   rot[i][2] * xc[2];
     }
-
-    // Compute rms.
-    for (size_t i = 0; i < 3; ++i) {
-        if (e[i] < 0 ) e[i] = 0;
-        e[i] = sqrt( e[i] );
-    }
-
-    d = e[2];
-
-    if (sigma < 0.0) {
-        d = - d;
-    }
-
-    d = (d + e[1]) + e[0];
 }
 
 float _rosetta_kabsch_rms(
@@ -404,29 +390,21 @@ float _rosetta_kabsch_rms(
     int l = 0;
     int k = 0;
     double e0 = 0.0f;
-    float rms = 0.0f;
     double d = 0.0f;
     double h = 0.0f;
     double g = 0.0f;
     double cth = 0.0f;
     double sth = 0.0f;
     double sqrth = 0.0f;
-    double p = 0.0f;
     double det = 0.0f;
     double sigma = 0.0f;
     double xc[3] = { 0 }, yc[3] = { 0 };
-    double a[3][3] = {0};
-    double b[3][3] = {0};
     double r[3][3] = {0};
     double e[3] = {0};
     double rr[6] = {0};
-    double ss[6] = {0};
-    double sqrt3 = 1.73205080756888, tol = 0.01;
-    int ip[] = {0, 1, 3, 1, 2, 4, 3, 4, 5};
-    int ip2312[] = {1, 2, 0, 1};
+    double sqrt3 = 1.73205080756888;
 
     bool a_success = true, b_success = true;
-    double epsilon = 0.00000001;
 
     // Compute centers for vector sets x, y
     for (size_t i = 0; i < n; ++i) {
@@ -457,8 +435,8 @@ float _rosetta_kabsch_rms(
     }
 
     // Compute determinat of matrix r.
-    det = r[0][0] * ( r[1][1] * r[2][2] - r[1][2] * r[2][1] )\
-          - r[0][1] * ( r[1][0] * r[2][2] - r[1][2] * r[2][0] )\
+    det = r[0][0] * ( r[1][1] * r[2][2] - r[1][2] * r[2][1] )
+          - r[0][1] * ( r[1][0] * r[2][2] - r[1][2] * r[2][0] )
           + r[0][2] * ( r[1][0] * r[2][1] - r[1][1] * r[2][0] );
     sigma = det;
 
@@ -472,7 +450,7 @@ float _rosetta_kabsch_rms(
     }
 
     double spur = (rr[0] + rr[2] + rr[5]) / 3.0;
-    double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])\
+    double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])
                     - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
     det = det * det;
 
@@ -511,7 +489,7 @@ float _rosetta_kabsch_rms(
     }
 
     d = (d + e[1]) + e[0];
-    rms = (e0 - d) - d;
+    float rms = (e0 - d) - d;
 
     if (rms < 0.0 ) {
         rms = 0.0;
