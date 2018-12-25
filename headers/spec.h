@@ -32,7 +32,7 @@ public:
     /* modifiers */
     Spec& operator=(Spec const& other) = delete;
     Spec& operator=(Spec&& other) = delete;
-    void parse_from_json(JSON const& j);
+    void parse_from_json(JSON const& json);
 };
 
 }  /* elfin */

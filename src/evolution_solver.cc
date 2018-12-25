@@ -214,15 +214,10 @@ void EvolutionSolver::run() {
 
     start_time_in_us_ = get_timestamp_us();
     for (auto& itr : SPEC.work_areas()) {
-
-        // if this was a complex work area, we need to break it down to
-        // multiple simple ones by first choosing hubs and their orientations.
-        /*
-        TODO: Break complex work area
-        */
         std::string const wa_name = itr.first;
         auto& wa = itr.second;
-        if (wa->type() != WorkType::FREE) {
+        if (wa->type() != WorkType::FREE and
+            wa->type() != WorkType::ONE_HINGE) {
             std::ostringstream ss;
             ss << "Skipping work_area: ";
             ss << WorkTypeToCStr(wa->type()) << std::endl;

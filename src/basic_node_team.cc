@@ -1009,23 +1009,23 @@ JSON BasicNodeTeam::gen_nodes_json() const {
         // Kabsch outputs for forward and backward paths.
         elfin::Mat3f rot[2];
         Vector3f tran[2];
-        double rms[2];
+        float rms[2];
 
         for (size_t i = 0; i < 2; ++i) {
-            kabsch::rosetta_kabsch(
-                /* mobile */ collect_points(free_chains_.at(i).node_sp()),
+            V3fList const& points = collect_points(free_chains_.at(i).node_sp());
+
+            kabsch::calc_alignment(
+                /* mobile */ points,
                 /* ref */ work_area_->points(),
                 rot[i],
                 tran[i],
-                rms[i],
-                /*mode=*/1);
+                rms[i]);
         }
 
         // Start at tip that yields lower score.
         size_t const better_tip_id = rms[0] < rms[1] ? 0 : 1;
 
         NodeSP tip_node = free_chains_.at(better_tip_id).node_sp();
-        DEBUG(not tip_node);
         Transform kabsch_alignment(rot[better_tip_id], tran[better_tip_id]);
 
         size_t member_id = 0;  // UID for node in team.

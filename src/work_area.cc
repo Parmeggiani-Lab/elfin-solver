@@ -33,8 +33,10 @@ struct WorkArea::PImpl {
     /* ctors */
     // Parse joints from JSON and collect special joints.
     PImpl(
+        std::string const& _name,
         JSON const& json,
-        FixedAreaMap const& fam) {
+        FixedAreaMap const& fam) :
+        name(_name) {
         size_t num_branch_points = 0;
         for (auto it = begin(json); it != end(json); ++it) {
             JSON const& joint_json = *it;
@@ -44,11 +46,10 @@ struct WorkArea::PImpl {
             joints.emplace(
                 joint_name,
                 std::make_shared<UIJoint>(joint_json, joint_name, fam));
-            auto& joint = joints.at(joint_name); // shared_ptr
+            auto& joint = joints.at(joint_name);
 
             // Count branch points
             size_t const num_neighbors = joint->neighbors().size();
-            NICE_PANIC(num_neighbors != joint_json["neighbors"].size());
 
             num_branch_points += num_neighbors > 2;
             if (num_neighbors == 1) {
@@ -136,11 +137,10 @@ struct WorkArea::PImpl {
 /* public */
 /* ctors */
 WorkArea::WorkArea(
-    JSON const& json,
     std::string const& name,
+    JSON const& json,
     FixedAreaMap const& fam) {
-    p_impl_ = std::make_unique<PImpl>(json, fam);
-    p_impl_->name = name;
+    p_impl_ = std::make_unique<PImpl>(name, json, fam);
 }
 
 /* dtors */

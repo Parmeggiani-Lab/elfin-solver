@@ -35,8 +35,8 @@ class WorkArea {
 public:
     /* ctors */
     WorkArea(
-        JSON const& json,
         std::string const& name,
+        JSON const& json,
         FixedAreaMap const& fam);
     WorkArea() = delete;
     

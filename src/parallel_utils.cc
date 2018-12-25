@@ -11,10 +11,10 @@ void init() {
     omp_set_dynamic(0);
 
     if (OPTIONS.n_workers == 0) {
-        dbg("Using number of threads set by OMP_NUM_THREADS\n");
+        msg("Using number of threads set by OMP_NUM_THREADS\n");
     }
     else {
-        dbg("Using %lu threads\n", OPTIONS.n_workers);
+        msg("Using %lu threads\n", OPTIONS.n_workers);
         omp_set_num_threads(OPTIONS.n_workers);
     }
 }

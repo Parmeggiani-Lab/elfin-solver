@@ -10,7 +10,7 @@ namespace elfin {
 //
 // Resolves file name from path string.
 // https://stackoverflow.com/questions/8520560/get-a-file-name-from-a-path
-// (wild)
+// (free)
 //
 std::string get_filename(const std::string& path) {
     std::string filename = path;
