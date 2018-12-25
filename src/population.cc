@@ -43,9 +43,9 @@ Population::Population(WorkArea const* work_area) {
 
         OMP_PAR_FOR
         for (size_t i = 0; i < pop_size; i++) {
-            new_front_buffer->at(i) = create_team(work_area);
-            new_front_buffer->at(i)->randomize();
             new_back_buffer->at(i) = create_team(work_area);
+            new_back_buffer->at(i)->randomize();
+            new_front_buffer->at(i) = create_team(work_area);
         }
 
         front_buffer_ = new_front_buffer;
