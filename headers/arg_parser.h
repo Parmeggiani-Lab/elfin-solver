@@ -219,7 +219,7 @@ private:
     }
 
     ARG_PARSER_CALLBACK_IN_HEADER(set_log_level) {
-        ::set_log_level((Log_Level) parse_long(arg_in.c_str()));
+        ::set_log_level((LogLvl) parse_long(arg_in.c_str()));
     }
 
     ARG_PARSER_CALLBACK_IN_HEADER(set_run_unit_tests) {
