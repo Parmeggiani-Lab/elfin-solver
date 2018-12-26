@@ -45,7 +45,7 @@ public:
     virtual ~BasicNodeTeam();
 
     /* modifiers */
-    virtual MutationMode mutate_and_score(
+    virtual mutation::Mode mutate_and_score(
         NodeTeam const& mother,
         NodeTeam const& father);
     virtual void randomize();

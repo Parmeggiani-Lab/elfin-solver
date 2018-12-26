@@ -15,21 +15,21 @@ bool compare_free_chain_nodes(
 
 /* protected */
 /* accessors */
-bool NodeTeam::collides(
-    Vector3f const& new_com,
-    float const mod_radius) const {
+// bool NodeTeam::collides(
+//     Vector3f const& new_com,
+//     float const mod_radius) const {
 
-    for (auto& node : nodes_) {
-        float const sq_com_dist = node->tx_.collapsed().sq_dist_to(new_com);
-        float const required_com_dist =
-            mod_radius + node->prototype_->radius;
-        if (sq_com_dist < (required_com_dist * required_com_dist)) {
-            return true;
-        }
-    }
+//     for (auto& node : nodes_) {
+//         float const sq_com_dist = node->tx_.collapsed().sq_dist_to(new_com);
+//         float const required_com_dist =
+//             mod_radius + node->prototype_->radius;
+//         if (sq_com_dist < (required_com_dist * required_com_dist)) {
+//             return true;
+//         }
+//     }
 
-    return false;
-}
+//     return false;
+// }
 
 /* modifiers */
 void NodeTeam::reset() {

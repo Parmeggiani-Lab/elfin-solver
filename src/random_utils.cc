@@ -20,7 +20,7 @@ void init() {
         #pragma omp single
         {
             size_t const num_threads = omp_get_num_threads();
-            msg("Creating %lu Mersenne Twisters\n", num_threads);
+            dbg("Creating %lu Mersenne Twisters\n", num_threads);
 
             uint32_t global_seed = OPTIONS.rand_seed;
             if (global_seed == 0) {

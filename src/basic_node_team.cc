@@ -926,16 +926,16 @@ BasicNodeTeam::BasicNodeTeam(BasicNodeTeam&& other) :
 BasicNodeTeam::~BasicNodeTeam() {}
 
 /* modifiers */
-MutationMode BasicNodeTeam::mutate_and_score(
+mutation::Mode BasicNodeTeam::mutate_and_score(
     NodeTeam const& mother,
     NodeTeam const& father) {
     // Inherit from mother.
     NodeTeam::operator=(mother);
 
-    MutationModeList modes = gen_mutation_mode_list();
+    auto modes = mutation::gen_mode_list();
 
     bool mutate_success = false;
-    MutationMode mode;
+    mutation::Mode mode;
 
     while (not mutate_success and not modes.empty()) {
         NICE_PANIC(size() == 0);
@@ -943,26 +943,26 @@ MutationMode BasicNodeTeam::mutate_and_score(
 
         mode = modes.pop_random();
         switch (mode) {
-        case MutationMode::ERODE:
+        case mutation::Mode::ERODE:
             mutate_success = p_impl_->erode_mutate();
             break;
-        case MutationMode::DELETE:
+        case mutation::Mode::DELETE:
             mutate_success = p_impl_->delete_mutate();
             break;
-        case MutationMode::INSERT:
+        case mutation::Mode::INSERT:
             mutate_success = p_impl_->insert_mutate();
             break;
-        case MutationMode::SWAP:
+        case mutation::Mode::SWAP:
             mutate_success = p_impl_->swap_mutate();
             break;
-        case MutationMode::CROSS:
+        case mutation::Mode::CROSS:
             mutate_success = p_impl_->cross_mutate(father);
             break;
-        case MutationMode::REGENERATE:
+        case mutation::Mode::REGENERATE:
             mutate_success = p_impl_->regenerate();
             break;
         default:
-            bad_mutation_mode(mode);
+            mutation::bad_mode(mode);
         }
 
         NICE_PANIC(free_chains_.size() != 2); // Replace with mutation_exit_check()

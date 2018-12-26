@@ -4,7 +4,6 @@
 #include <sstream>
 
 #include "input_manager.h"
-#include "mutation_modes.h"
 #include "parallel_utils.h"
 #include "basic_node_team.h"
 
@@ -26,13 +25,35 @@ NodeTeamSP create_team(WorkArea const* wa) {
     }
 }
 
+void print_mutation_ratios(mutation::ModeList mode_tally) {
+    if (get_log_level() <= LOG_DEBUG) {
+        mutation::Counter mc;
+        for (mutation::Mode const& mode : mode_tally) {
+            mc[mode]++;
+        }
+
+        auto mutation_modes = mutation::gen_mode_list();
+        std::ostringstream mutation_ss;
+        mutation_ss << "Mutation Ratios (out of " << CUTOFFS.non_survivors << "):\n";
+        for (mutation::Mode mode : mutation_modes) {
+            mutation_ss << "  " << mutation::ModeToCStr(mode) << ':';
+
+            float const mode_ratio = 100.f * mc[mode] / CUTOFFS.non_survivors;
+            mutation_ss << " " << string_format("%.1f", mode_ratio) << "% ";
+            mutation_ss << "(" << mc[mode] << ")\n";
+        }
+
+        dbg("%s\n", mutation_ss.str().c_str());
+    }
+}
+
 /* public */
 /* ctors */
 Population::Population(WorkArea const* work_area) {
     TIMING_START(init_start_time);
     {
         size_t const pop_size = OPTIONS.ga_pop_size;
-        msg("Initializing population of %u...", pop_size);
+        msg("Initializing population of %u...\n", pop_size);
 
         NodeTeams* new_front_buffer = &teams[0];
         NodeTeams* new_back_buffer = &teams[1];
@@ -50,30 +71,28 @@ Population::Population(WorkArea const* work_area) {
 
         front_buffer_ = new_front_buffer;
         back_buffer_ = new_back_buffer;
-
-        ERASE_LINE();
-        msg("Initialization done\n");
     }
-    TIMING_END("init", init_start_time);
+    TIMING_END("initialization", init_start_time);
 }
 
 /* modifiers */
 void Population::evolve() {
     TIMING_START(evolve_start_time);
     {
-        msg("Evolving population...");
+        msg("Evolving population...\n");
 
-        MutationMode mutation_mode_tally[CUTOFFS.pop_size] = {};
+        mutation::ModeList mutation_mode_tally;
+        mutation_mode_tally.reserve(CUTOFFS.pop_size);
 
         OMP_PAR_FOR
         for (size_t rank = 0; rank < CUTOFFS.pop_size; rank++) {
-            MutationMode mode = MutationMode::NONE;
+            mutation::Mode mode = mutation::Mode::NONE;
 
             auto& team = front_buffer_->at(rank);
             // Rank is 0-indexed, hence <
             if (rank < CUTOFFS.survivors) {
                 *team = *(back_buffer_->at(rank));
-                mode = MutationMode::NONE;
+                mode = mutation::Mode::NONE;
             }
             else {
                 // Replicate mother
@@ -91,43 +110,20 @@ void Population::evolve() {
             mutation_mode_tally[rank] = mode;
         }
 
-        MutationCounter mc;
-        for (MutationMode const& mode : mutation_mode_tally) {
-            mc[mode]++;
-        }
-
-        ERASE_LINE();
-        msg("Evolution done\n");
-
-        // RNG instrumentation
-        MutationModeList mutation_modes = gen_mutation_mode_list();
-        std::ostringstream mutation_ss;
-        mutation_ss << "Mutation Ratios:\n";
-        for (MutationMode mode : mutation_modes) {
-            mutation_ss << "    " << MutationModeToCStr(mode) << ':';
-
-            float const mode_ratio = 100.f * mc[mode] / CUTOFFS.non_survivors;
-            mutation_ss << " " << string_format("%.1f", mode_ratio) << "% ";
-            mutation_ss << "(" << mc[mode] << "/" << CUTOFFS.non_survivors << ")\n";
-        }
-
-        msg("%s\n", mutation_ss.str().c_str());
+        print_mutation_ratios(mutation_mode_tally);
     }
     InputManager::ga_times().evolve_time +=
-        TIMING_END("evolving", evolve_start_time);
+        TIMING_END("evolution", evolve_start_time);
 }
 
 void Population::rank() {
     TIMING_START(rank_start_time);
     {
-        msg("Ranking population...");
+        msg("Ranking population...\n");
 
         std::sort(begin(*front_buffer_),
                   end(*front_buffer_),
                   NodeTeam::ScoreCompareSP);
-
-        ERASE_LINE();
-        msg("Ranking done\n");
     }
     InputManager::ga_times().rank_time +=
         TIMING_END("ranking", rank_start_time);
@@ -141,7 +137,7 @@ void Population::select() {
 
     TIMING_START(start_time_select);
     {
-        msg("Selecting population...");
+        msg("Selecting population...\n");
 
         std::unordered_map<Crc32, NodeTeamSP> crc_map;
         size_t unique_count = 0;
@@ -172,12 +168,9 @@ void Population::select() {
         std::sort(begin(*front_buffer_),
                   begin(*front_buffer_) + unique_count,
                   NodeTeam::ScoreCompareSP);
-
-        ERASE_LINE();
-        msg("Selection done\n");
     }
     InputManager::ga_times().select_time +=
-        TIMING_END("selecting", start_time_select);
+        TIMING_END("variety selection", start_time_select);
 }
 
 void Population::swap_buffer() {

@@ -7,17 +7,9 @@
 #include "work_area.h"
 #include "vector_map.h"
 #include "checksum.h"
-#include "mutation_modes.h"
+#include "mutation.h"
 
 namespace elfin {
-
-#define FOREACH_PMM(MACRO) \
-    MACRO(SWAP_MODE) \
-    MACRO(INSERT_MODE) \
-    MACRO(DELETE_MODE) \
-    MACRO(ENUM_SIZE) \
-
-GEN_ENUM_AND_STRING(PointMutateMode, PointMutateModeNames, FOREACH_PMM);
 
 class NodeTeam;
 typedef std::shared_ptr<NodeTeam> NodeTeamSP;
@@ -35,9 +27,9 @@ protected:
     float score_ = INFINITY;
 
     /* accessors */
-    bool collides(
-        Vector3f const& new_com,
-        float const mod_radius) const;
+    // bool collides(
+    //     Vector3f const& new_com,
+    //     float const mod_radius) const;
     virtual NodeTeam * clone_impl() const = 0;
 
     /* modifiers */
@@ -51,7 +43,7 @@ public:
     /* ctors */
     NodeTeam(WorkArea const* work_area);
     NodeTeam(NodeTeam const& other);
-    NodeTeam(NodeTeam && other);
+    NodeTeam(NodeTeam&& other);
 
     /* dtors */
     virtual ~NodeTeam();
@@ -73,7 +65,7 @@ public:
     NodeTeam& operator=(NodeTeam const& other);
     NodeTeam& operator=(NodeTeam && other);
 
-    virtual MutationMode mutate_and_score(
+    virtual mutation::Mode mutate_and_score(
         NodeTeam const& mother,
         NodeTeam const& father) = 0;
     virtual void randomize() = 0;
@@ -82,6 +74,9 @@ public:
     virtual std::string to_string() const = 0;
     virtual JSON gen_nodes_json() const = 0;
 
+    /* tests */
+    // static BasicNodeTeam build_team(StepList const& steps);
+    // static TestStat test();
 };  /* class NodeTeam */
 
 }  /* elfin */
