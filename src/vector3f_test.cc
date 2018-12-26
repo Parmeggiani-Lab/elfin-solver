@@ -6,7 +6,6 @@
 namespace elfin {
 
 /* test data */
-
 Vector3f const vec_a {10.123, -209.9382, 9.00002};
 Vector3f const vec_a_mult_pi {31.80234243, -659.54030683, 28.27439671};
 Vector3f const vec_a_plus_pi {13.26459265, -206.79660735, 12.14161265};

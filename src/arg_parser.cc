@@ -7,8 +7,32 @@
 
 namespace elfin {
 
-/* private */
+/* free */
+void failure_callback(
+    std::string const& arg_in,
+    ArgBundle const* argb) {
+    err("Argument parsing failed on string: \"%s\"\n", arg_in.c_str());
 
+    if (argb) {
+        err("Specific argument help:\n%s", argb->to_string().c_str());
+    } else {
+        err("No related argument found.\n");
+    }
+
+    err("Use -h flag for full help.\n");
+    exit(1);
+}
+
+/* ArgBundle */
+std::string ArgBundle::to_string() const {
+    std::ostringstream ss;
+    ss << "  -" << short_form;
+    ss << ", --" << long_form << '\n';
+    ss << "    " << description << "\n";
+    return ss.str();
+}
+
+/* ArgParser */
 /* accessors */
 ArgBundle const* ArgParser::match_arg_bundle(char const* arg_in) const {
     // anything shorter than 2 chars cannot match
@@ -34,10 +58,10 @@ void ArgParser::check_options() const {
     NICE_PANIC(!file_exists(options_.xdb.c_str()),
                "xdb file could not be found.");
 
-    NICE_PANIC(options_.input_file == "",
+    NICE_PANIC(options_.spec_file == "",
                "No input spec file given.");
 
-    NICE_PANIC(!file_exists(options_.input_file.c_str()),
+    NICE_PANIC(!file_exists(options_.spec_file.c_str()),
                "Input file could not be found.");
 
     if (options_.config_file != "") {
@@ -60,7 +84,7 @@ void ArgParser::check_options() const {
 
     NICE_PANIC(options_.ga_iters < 0, "Number of iterations cannot be < 0");
 
-    NICE_PANIC(options_.len_dev_alw < 0,
+    NICE_PANIC(options_.len_dev < 0,
                "Gene length deviation must be an integer > 0");
 
     // GA params
@@ -73,6 +97,11 @@ void ArgParser::check_options() const {
     NICE_PANIC(options_.keep_n < 0 ||
                options_.keep_n > options_.ga_pop_size,
                "Number of best solutions to output must be > 0 and < ga_pop_size");
+
+    NICE_PANIC(options_.radius_type != "max_heavy_dist" and
+               options_.radius_type != "average_all" and
+               options_.radius_type != "max_ca_dist",
+               string_format("In valid radius type: \"%s\"", options_.radius_type.c_str()));
 }
 
 /* modifiers */
@@ -85,7 +114,7 @@ void ArgParser::parse_options(int const argc, char const *argv[]) {
             if (ab->exp_val) {
                 if (i + 1 > argc - 1) {
                     err("Argument %s expects to be followed by a value\n", arg);
-                    failure_callback(arg);
+                    failure_callback(arg, ab);
                 }
                 else {
                     (this->*ab->callback)(argv[++i]); // passes next arg string
@@ -97,27 +126,16 @@ void ArgParser::parse_options(int const argc, char const *argv[]) {
         }
         else {
             err("Unknown argument: %s\n", arg);
-            failure_callback(arg);
+            failure_callback(arg, ab);
         }
     }
 }
 
-ARG_PARSER_CALLBACK(help_and_exit) {
-    raw("elfin: An Automatic Protein Designer\n");
-    raw("Usage: ./elfin [OPTIONS]\n");
-    raw("Note: Setting an option will override the same setting in the json file\n");
-    raw("Help:\n");
-    print_args();
-    exit(1);
-}
 
-ARG_PARSER_CALLBACK(failure_callback) {
-    printf("Argument parsing failed on string: \"%s\"\n", arg_in.c_str());
-    help_and_exit();
-    exit(1);
-}
+#define ARG_PARSER_CALLBACK_DEF(name) \
+    void ArgParser::name(std::string const& arg_in)
 
-ARG_PARSER_CALLBACK(parse_config) {
+ARG_PARSER_CALLBACK_DEF(parse_config) {
     options_.config_file = arg_in;
 
     NICE_PANIC(!file_exists(options_.config_file.c_str()),
@@ -137,20 +155,24 @@ ARG_PARSER_CALLBACK(parse_config) {
     }
 }
 
-ARG_PARSER_CALLBACK(set_input_file) {
-    options_.input_file = arg_in;
+ARG_PARSER_CALLBACK_DEF(set_spec_file) {
+    options_.spec_file = arg_in;
 }
 
 /* printers */
-void ArgParser::print_args() const {
+ARG_PARSER_CALLBACK_DEF(help_and_exit) {
+    raw("\nelfin-solver: an protein structure design solver\n");
+    raw("Report issues at: https://github.com/joy13975/elfin-solver/issues\n\n");
+    raw("Usage: ./elfin [OPTIONS]\n");
+    raw("Note: settings are parsed and overridden in the order they're written\n");
+    raw("OPTIONS:\n");
     for (auto const& ab : argb_) {
-        set_leading_spaces(8);
-        raw("%s, %s\n", ab.short_form.c_str(), ab.long_form.c_str());
-        set_leading_spaces(12);
-        raw("%s\n", ab.description.c_str());
+        raw("%s", ab.to_string().c_str());
     }
-    reset_leading_spaces();
+    exit(1);
 }
+
+#undef ARG_PARSER_CALLBACK_DEF
 
 /* public */
 /* ctors */

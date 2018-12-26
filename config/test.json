@@ -1,14 +1,14 @@
 {
-    "input_file": "examples/quarter_snake_free.json",
+    "spec_file": "examples/H_1h.json",
     "xdb": "xdb.json",
     "output_dir": "./output/",
 
-    "rand_seed": "0xbeef1337",
+    "seed": "0xbeef1337",
 
-    "len_dev_alw": 1,
+    "len_dev": 1,
 
     "keep_n": 1,
-    "ga_pop_size": 1024,
+    "ga_pop_size": 16000,
     "ga_iters": 100,
 
     "ga_survive_rate": 0.02,

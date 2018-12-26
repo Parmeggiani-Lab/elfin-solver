@@ -7,8 +7,6 @@ namespace elfin {
 
 namespace random {
 
-/* test data */
-
 /* tests */
 TestStat test() {
     TestStat ts;

@@ -83,7 +83,7 @@ void OutputManager::write_output(
     // Generate JSON output path.
     std::ostringstream json_output_path_ss;
     json_output_path_ss << output_dir_str << "/"
-                        << get_filename(OPTIONS.input_file)
+                        << get_filename(OPTIONS.spec_file)
                         << ".json";
 
     std::string json_out_path_str = json_output_path_ss.str();

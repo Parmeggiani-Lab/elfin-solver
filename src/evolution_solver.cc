@@ -14,7 +14,7 @@ namespace elfin {
 auto get_score_msg_format = []() {
     size_t gen_digits = std::ceil(std::log(OPTIONS.ga_iters) / std::log(10));
     return string_format(
-               ("Generation #%%%zulu: "
+               ("Generation #%%%zuzu: "
                 "best=%%.2f (%%.2f/module), "
                 "worst=%%.2f, time taken=%%.0fms\n"),
                gen_digits);
@@ -124,7 +124,7 @@ struct EvolutionSolver::PImpl {
     void print_start_msg(WorkArea const& wa) const {
         msg("Length guess: < %zu; Spec has %d points\n",
             wa.target_size(), wa.points().size());
-        msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
+        msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
         msg("Max Iterations: %zu\n", OPTIONS.ga_iters);
         msg("Surviors: %u\n", CUTOFFS.survivors);
 

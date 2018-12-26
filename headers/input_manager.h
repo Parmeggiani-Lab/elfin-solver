@@ -65,7 +65,8 @@ public:
     static void setup(int const argc, char const** argv);
 
     /* tests */
-    static void load_test_input();
+    static void load_unit_test_config(
+        std::string const& spec_file = "examples/quarter_snake_free.json");
     static TestStat test();
 };
 

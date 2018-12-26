@@ -9,18 +9,18 @@ struct Options {
     bool valid = true;
 
     std::string xdb = "xdb.json";
-    std::string input_file = "";
+    std::string spec_file = "";
     std::string config_file = "";
     std::string output_dir = "output";
     std::string radius_type = "max_ca_dist";
 
-    size_t len_dev_alw = 3;
+    size_t len_dev = 3;
 
     // Run elfinpy/stat_xdb.py to find this number with the latest xdb.json
     float avg_pair_dist = 37.709864956942226f;
 
     /* GA parameters */
-    uint32_t rand_seed = 0x1337cafe;
+    uint32_t seed = 0x1337cafe;
     size_t ga_pop_size = 10000;
     size_t ga_iters = 1000;
     float ga_survive_rate = 0.05f;

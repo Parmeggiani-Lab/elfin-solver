@@ -5,14 +5,25 @@
 
 
 namespace elfin {
-    
-/* tests data */
+
+void InputManager::load_unit_test_config(std::string const& spec_file) {
+    msg("Loading test input\n");
+
+    char const* argv[] = {
+        "elfin", /* binary name */
+        "--config_file", "config/unit_test.json",
+        "--spec_file", spec_file.c_str()
+    };
+
+    size_t const argc = sizeof(argv) / sizeof(argv[0]);
+    InputManager::setup(argc, argv);
+}
 
 /* tests */
 TestStat InputManager::test() {
     TestStat ts;
 
-    load_test_input();
+    load_unit_test_config();
 
     // Test spec parsing.
     ts.tests++;

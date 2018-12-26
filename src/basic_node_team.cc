@@ -6,6 +6,7 @@
 #include "input_manager.h"
 #include "id_types.h"
 #include "pointer_utils.h"
+#include "mutation.h"
 
 // #define NO_ERODE
 // #define NO_DELETE
@@ -29,83 +30,8 @@ struct BasicNodeTeam::PImpl {
     /* data */
     BasicNodeTeam* that;
 
-    // If there is any other data member then PImpl needs to implement
-    // copiers.
-
     /* ctors */
     PImpl(BasicNodeTeam* const _that) : that(_that) {}
-
-    /* types */
-    struct DeletePoint {
-        //
-        // [neighbor1] <--link1-- [delete_node] --link2--> [neighbor2]
-        //             dst----src               src----dst
-        //             ^^^                             ^^^
-        //            (src)                           (dst)
-        //             --------------skipper------------->
-        //
-        NodeSP delete_node;
-        FreeChain const src, dst;
-        ProtoLink const* skipper;
-        DeletePoint(
-            NodeSP const& _delete_node,
-            FreeChain const&  _src,
-            FreeChain const&  _dst,
-            ProtoLink const* _skipper) :
-            src(_src),
-            dst(_dst),
-            delete_node(_delete_node),
-            skipper(_skipper) {}
-    };
-
-    struct InsertPoint {
-        //
-        // [  node1 ] --------------link-------------> [ node2  ]
-        //            src                          dst
-        //
-        // Each bridge has pt_link1 and pt_link2 that:
-        // [  node1 ] -pt_link1-> [new_node] -pt_link2-> [ node2  ]
-        //
-        FreeChain const src, dst;
-        FreeChain::BridgeList const bridges;
-        InsertPoint(
-            FreeChain const& _src,
-            FreeChain const& _dst) :
-            src(_src),
-            dst(_dst),
-            bridges(is_uninitialized(dst.node) ?
-                    FreeChain::BridgeList() :
-                    src.find_bridges(dst)) { }
-    };
-
-    struct SwapPoint : public InsertPoint {
-        NodeSP const del_node;
-        SwapPoint(
-            FreeChain const& _src,
-            NodeSP const& _del_node,
-            FreeChain const& _dst) :
-            InsertPoint(_src, _dst),
-            del_node(_del_node) {}
-    };
-
-    struct CrossPoint {
-        ProtoLink const* pt_link;
-        Link const* m_arrow;
-        bool m_rev;
-        Link const* f_arrow;
-        bool f_rev;
-        CrossPoint(
-            ProtoLink const* _pt_link,
-            Link const* _m_arrow,
-            bool const _m_rev,
-            Link const* _f_arrow,
-            bool const _f_rev) :
-            pt_link(_pt_link),
-            m_arrow(_m_arrow),
-            m_rev(_m_rev),
-            f_arrow(_f_arrow),
-            f_rev(_f_rev) {}
-    };
 
     /* accessors */
     Crc32 calc_checksum() const {
@@ -249,7 +175,7 @@ struct BasicNodeTeam::PImpl {
     }
 
     void build_bridge(
-        InsertPoint const& insert_point,
+        mutation::InsertPoint const& insert_point,
         FreeChain::Bridge const* bridge = nullptr) {
         if (bridge == nullptr) {
             bridge = &insert_point.bridges.pick_random();
@@ -465,7 +391,7 @@ struct BasicNodeTeam::PImpl {
 #ifndef NO_DELETE
         if (not that->free_chains_.empty()) {
             // Walk through all nodes to collect delete points.
-            Vector<DeletePoint> delete_points;
+            Vector<mutation::DeletePoint> delete_points;
 
             // Starting at either end is fine.
             NodeSP start_node = that->free_chains_[0].node_sp();
@@ -532,7 +458,7 @@ struct BasicNodeTeam::PImpl {
             DEBUG(delete_points.empty());
 
             // Delete a node using a random deletable point.
-            DeletePoint const& delete_point = delete_points.pick_random();
+            auto const& delete_point = delete_points.pick_random();
             if (delete_point.skipper) {
                 //
                 // This is NOT a tip node. Need to do some clean up
@@ -596,7 +522,7 @@ struct BasicNodeTeam::PImpl {
 #ifndef NO_INSERT
         if (not that->free_chains_.empty()) {
             // Walk through all links to collect insert points.
-            Vector<InsertPoint> insert_points;
+            Vector<mutation::InsertPoint> insert_points;
 
             // Starting at either end is fine.
             NodeSP start_node = that->free_chains_[0].node_sp();
@@ -639,7 +565,7 @@ struct BasicNodeTeam::PImpl {
                     Link const* link1 = curr_node->find_link_to(next_node);
 
                     insert_points.emplace_back(link1->src(), link1->dst());
-                    InsertPoint const& ip = insert_points.back();
+                    auto const& ip = insert_points.back();
                     if (ip.bridges.size() == 0) {
                         insert_points.pop_back();
                     }
@@ -650,7 +576,7 @@ struct BasicNodeTeam::PImpl {
             DEBUG(insert_points.empty());
 
             // Insert a node using a random insert point/
-            InsertPoint const& insert_point = insert_points.pick_random();
+            auto const& insert_point = insert_points.pick_random();
             if (not is_uninitialized(insert_point.dst.node)) {
                 // This is a non-tip node.
                 build_bridge(insert_point);
@@ -689,7 +615,7 @@ struct BasicNodeTeam::PImpl {
 #ifndef NO_SWAP
         if (not that->free_chains_.empty()) {
             // Walk through all links to collect swap points.
-            Vector<SwapPoint> swap_points;
+            Vector<mutation::SwapPoint> swap_points;
 
             // Starting at either end is fine.
             NodeSP start_node = that->free_chains_[0].node_sp();
@@ -742,7 +668,7 @@ struct BasicNodeTeam::PImpl {
                     Link const* link2 = curr_node->find_link_to(next_node);
 
                     swap_points.emplace_back(link1->src(), curr_node, link2->dst());
-                    SwapPoint const& sp = swap_points.back();
+                    auto const& sp = swap_points.back();
                     if (sp.bridges.size() == 0) {
                         swap_points.pop_back();
                     }
@@ -753,7 +679,7 @@ struct BasicNodeTeam::PImpl {
             // be swapped.
             if (not swap_points.empty()) {
                 // Insert a node using a random insert point.
-                SwapPoint const& swap_point = swap_points.pick_random();
+                auto const& swap_point = swap_points.pick_random();
                 if (not is_uninitialized(swap_point.dst.node)) {
                     // This is a non-tip node.
                     that->nodes_.erase(swap_point.del_node);
@@ -788,7 +714,7 @@ struct BasicNodeTeam::PImpl {
                                 father.free_chains()[0].node_sp());
 
             // Walk through all link pairs to collect cross points.
-            Vector<CrossPoint> cross_points;
+            Vector<mutation::CrossPoint> cross_points;
             for (Link const* m_arrow : m_arrows) {
                 for (Link const* f_arrow : f_arrows) {
                     ProtoLink const* sd =
@@ -830,7 +756,7 @@ struct BasicNodeTeam::PImpl {
             }
 
             if (not cross_points.empty()) {
-                CrossPoint const& cp = cross_points.pick_random();
+                auto const& cp = cross_points.pick_random();
 
                 Link m_arrow = cp.m_rev ?
                                cp.m_arrow->reversed() :

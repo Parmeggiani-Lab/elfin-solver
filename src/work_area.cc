@@ -112,7 +112,7 @@ struct WorkArea::PImpl {
         size_t const expected_len =
             1 + round(sum_dist / OPTIONS.avg_pair_dist);
 
-        size_t const res = expected_len + OPTIONS.len_dev_alw;
+        size_t const res = expected_len + OPTIONS.len_dev;
 
         return res;
     }

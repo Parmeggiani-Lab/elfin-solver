@@ -22,7 +22,7 @@ void init() {
             size_t const num_threads = omp_get_num_threads();
             dbg("Creating %zu Mersenne Twisters\n", num_threads);
 
-            uint32_t global_seed = OPTIONS.rand_seed;
+            uint32_t global_seed = OPTIONS.seed;
             if (global_seed == 0) {
                 global_seed = get_timestamp_us();
             }
