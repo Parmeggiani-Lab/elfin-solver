@@ -8,9 +8,6 @@
 /* OMP Macros */
 #define OMP_PAR_FOR _Pragma("omp parallel for simd schedule(runtime)")
 
-/* Timing Macros */
-#ifdef DO_TIMING
-
 #define TIMING_START(var_name) \
     double const var_name = get_timestamp_us();
 
@@ -19,13 +16,6 @@ inline long TIMING_END(char const* section_name, double const start_time) {
     msg("Section (%s) time: %ldms\n", section_name, diff);
     return diff;
 }
-
-#else //ifdef DO_TIMING
-
-#define TIMING_START(var_name)
-#define TIMING_END(section_name, var_name)
-
-#endif //ifdef DO_TIMING
 
 namespace elfin {
 
