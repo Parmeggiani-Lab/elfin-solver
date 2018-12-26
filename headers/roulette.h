@@ -53,7 +53,7 @@ public:
     ItemType const& draw() const {
         NICE_PANIC(cpd_.empty());
         DEBUG(cpd_.size() != items_.size(),
-              string_format("cml_sum size=%lu but container size=%lu\n",
+              string_format("cml_sum size=%zu but container size=%zu\n",
                             cpd_.size(), items_.size()));
         auto itr = std::upper_bound(
                        begin(cpd_),

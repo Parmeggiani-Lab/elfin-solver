@@ -94,7 +94,7 @@ NodeSP FreeChain::node_sp() const {
 /* printers */
 std::string FreeChain::to_string() const {
     NodeSP sp = node_sp();
-    return string_format("FreeChain[node: %s (%p), term: %s, chain: %lu]",
+    return string_format("FreeChain[node: %s (%p), term: %s, chain: %zu]",
                          sp->prototype_->name.c_str(),
                          sp.get(),
                          TerminusTypeToCStr(term),

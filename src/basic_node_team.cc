@@ -115,7 +115,7 @@ struct BasicNodeTeam::PImpl {
         // achieved by XOR'ing the forward and backward checksums.
         //
         DEBUG(that->free_chains_.size() != 2,
-              string_format("There are %lu free chains!",
+              string_format("There are %zu free chains!",
                             that->free_chains_.size()));
         DEBUG(that->size() == 0);
 
@@ -147,7 +147,7 @@ struct BasicNodeTeam::PImpl {
         // can yield different RMSD scores.
         //
         DEBUG(that->free_chains_.size() != 2,
-              string_format("There are %lu free chains!\n",
+              string_format("There are %zu free chains!\n",
                             that->free_chains_.size()));
         DEBUG(that->size() == 0);
 
@@ -175,7 +175,7 @@ struct BasicNodeTeam::PImpl {
         }
 
         DEBUG(points.size() != that->size(),
-              string_format("points.size()=%lu, size()=%lu\n",
+              string_format("points.size()=%zu, size()=%zu\n",
                             points.size(), that->size()));
 
         return points;
@@ -356,7 +356,7 @@ struct BasicNodeTeam::PImpl {
 
         num_links = tip_node->links().size();
         DEBUG(num_links != 1,
-              string_format("There are %lu links!\n", num_links));
+              string_format("There are %zu links!\n", num_links));
 
         BasicNodeGenerator node_gen(&f_arrow);
         node_gen.next(); // Same as f_arrow.dst().node.
@@ -377,7 +377,7 @@ struct BasicNodeTeam::PImpl {
             // Occupy src chain.
             that->free_chains_.lift_erase(src);
             DEBUG(that->free_chains_.size() != 1,
-                  string_format("There are %lu free chains!",
+                  string_format("There are %zu free chains!",
                                 that->free_chains_.size()));
 
             tip_node = grow_tip(src, curr_link->prototype());
@@ -392,7 +392,7 @@ struct BasicNodeTeam::PImpl {
 
             num_links = tip_node->links().size();
             DEBUG(num_links != 1,
-                  string_format("There are %lu links!\n", num_links));
+                  string_format("There are %zu links!\n", num_links));
 
             node_gen.next();
         }
@@ -524,7 +524,7 @@ struct BasicNodeTeam::PImpl {
                 else {
                     NICE_PANIC("Unexpected num_links",
                                string_format(
-                                   "Number of links: %lu\n", num_links));
+                                   "Number of links: %zu\n", num_links));
                 }
             } while (not node_gen.is_done());
 
@@ -1081,7 +1081,7 @@ JSON BasicNodeTeam::gen_nodes_json() const {
         }
 
         DEBUG(output.size() != size(),
-              string_format("output.size()=%lu, size()=%lu\n",
+              string_format("output.size()=%zu, size()=%zu\n",
                             output.size(), this->size()));
     }
 

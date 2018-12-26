@@ -18,7 +18,7 @@ TestStat InputManager::test() {
     ts.tests++;
     if (SPEC.work_areas().size() != 1) {
         ts.errors++;
-        err("Spec parsing should get 1 work area but got %lu\n",
+        err("Spec parsing should get 1 work area but got %zu\n",
             SPEC.work_areas().size());
     }
     else {

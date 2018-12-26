@@ -23,11 +23,11 @@ TestStat test() {
         #pragma omp single
         {
             size_t const n = omp_get_num_threads();
-            msg("Testing random_utils (forcing %lu threads)\n", n);
+            msg("Testing random_utils (forcing %zu threads)\n", n);
 
             NICE_PANIC(n != num_threads,
             string_format(
-                "Faild to set number of threads! Set %lu, got %lu",
+                "Faild to set number of threads! Set %zu, got %zu",
                 num_threads, n));
         }
     }
@@ -45,7 +45,7 @@ TestStat test() {
         size_t const v1 = mt1(), v2 = mt2();
         if (v1 != v2) {
             ts.errors++;
-            err("MT19937 failed at #%lu: %lu vs %lu\n",
+            err("MT19937 failed at #%zu: %zu vs %zu\n",
                 i, v1, v2);
             break;
         }
@@ -72,7 +72,7 @@ TestStat test() {
     for (size_t i = 0; i < N; ++i) {
         if (rand_vals1.at(i) != rand_vals2.at(i)) {
             ts.errors++;
-            err("Parallel randomiser failed at #%lu: %lu vs %lu\n",
+            err("Parallel randomiser failed at #%zu: %zu vs %zu\n",
                 i, rand_vals1.at(i), rand_vals2.at(i));
             break;
         }

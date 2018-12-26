@@ -34,10 +34,10 @@ size_t test_units() {
     if (total.errors == 0)
         total += BasicNodeTeam::test();
 
-    msg("%lu/%lu unit tests passed.\n",
+    msg("%zu/%zu unit tests passed.\n",
         (total.tests - total.errors), total.tests);
     if (total.errors > 0) {
-        err("%lu unit tests failed!\n", total.errors);
+        err("%zu unit tests failed!\n", total.errors);
     }
     return total.errors;
 }
@@ -48,10 +48,10 @@ size_t test_integration() {
 
     wrn("TODO: Integration tests\n");
 
-    msg("%lu/%lu integration tests passed.\n",
+    msg("%zu/%zu integration tests passed.\n",
         (total.tests - total.errors), total.tests);
     if (total.errors > 0) {
-        err("%lu integration tests failed!\n", total.errors);
+        err("%zu integration tests failed!\n", total.errors);
     }
     return total.errors;
 }
@@ -60,14 +60,14 @@ void run_all() {
     size_t const unit_test_errors = test_units();
 
     if (unit_test_errors > 0) {
-        die("%lu unit tests failed. Not continuing to integration tests.\n",
+        die("%zu unit tests failed. Not continuing to integration tests.\n",
             unit_test_errors);
     }
     else {
         size_t const int_test_errors = test_integration();
 
         if (int_test_errors > 0) {
-            die("%lu integration tests failed.\n",
+            die("%zu integration tests failed.\n",
                 int_test_errors);
         } else {
             msg("All Tests Passed. \\*O*/\n");

@@ -14,7 +14,7 @@ void init() {
         msg("Using number of threads set by OMP_NUM_THREADS\n");
     }
     else {
-        msg("Using %lu threads\n", OPTIONS.n_workers);
+        msg("Using %zu threads\n", OPTIONS.n_workers);
         omp_set_num_threads(OPTIONS.n_workers);
     }
 }

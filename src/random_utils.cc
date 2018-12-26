@@ -20,7 +20,7 @@ void init() {
         #pragma omp single
         {
             size_t const num_threads = omp_get_num_threads();
-            dbg("Creating %lu Mersenne Twisters\n", num_threads);
+            dbg("Creating %zu Mersenne Twisters\n", num_threads);
 
             uint32_t global_seed = OPTIONS.rand_seed;
             if (global_seed == 0) {
@@ -36,7 +36,7 @@ void init() {
 
 float get_dice_0to1() {
     DEBUG(omp_get_thread_num() >= TWISTERS.size(),
-          string_format("Thread #%d; TWISTERS size: %lu\n",
+          string_format("Thread #%d; TWISTERS size: %zu\n",
                         omp_get_thread_num(), TWISTERS.size()));
     std::mt19937& mt = TWISTERS.at(omp_get_thread_num());
     return (float) mt() / mt.max();

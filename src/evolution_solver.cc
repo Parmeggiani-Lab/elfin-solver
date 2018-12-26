@@ -14,7 +14,7 @@ namespace elfin {
 auto get_score_msg_format = []() {
     size_t gen_digits = std::ceil(std::log(OPTIONS.ga_iters) / std::log(10));
     return string_format(
-               ("Generation #%%%lulu: "
+               ("Generation #%%%zulu: "
                 "best=%%.2f (%%.2f/module), "
                 "worst=%%.2f, time taken=%%.0fms\n"),
                gen_digits);
@@ -32,7 +32,7 @@ struct EvolutionSolver::PImpl {
     double start_time_in_us_ = 0;
     size_t const debug_pop_print_n_;
     char const* const print_pop_fmt_ =
-        "%s #%lu [cksm:%p] [len:%lu] [score:%.2f]\n";
+        "%s #%zu [cksm:%p] [len:%zu] [score:%.2f]\n";
 
     /* ctors */
     PImpl(size_t const debug_pop_print_n) :
@@ -122,10 +122,10 @@ struct EvolutionSolver::PImpl {
 
     /* printers */
     void print_start_msg(WorkArea const& wa) const {
-        msg("Length guess: < %lu; Spec has %d points\n",
+        msg("Length guess: < %zu; Spec has %d points\n",
             wa.target_size(), wa.points().size());
         msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev_alw);
-        msg("Max Iterations: %lu\n", OPTIONS.ga_iters);
+        msg("Max Iterations: %zu\n", OPTIONS.ga_iters);
         msg("Surviors: %u\n", CUTOFFS.survivors);
 
         msg("There are %d devices. Host ID=%d; currently using ID=%d\n",
@@ -145,10 +145,10 @@ struct EvolutionSolver::PImpl {
         msg("EvolutionSolver finished in ");
 
         double const time_elapsed_in_us = get_timestamp_us() - start_time_in_us_;
-        uint64_t const minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
-        uint64_t const seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
-        uint64_t const milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
-        raw("%um %us %ums\n",
+        size_t const minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
+        size_t const seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
+        size_t const milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
+        raw("%zum %zus %zums\n",
             minutes, seconds, milliseconds);
     }
 

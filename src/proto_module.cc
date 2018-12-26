@@ -42,7 +42,7 @@ ProtoModule::ProtoModule(
         chains_.emplace_back(cn, chains_.size());
 #ifdef PRINT_INIT
         Chain& actual = chains_.back();
-        wrn("Created chain[%s] chains_.size()=%lu at %p; actual: %p, %p, %p, %p\n",
+        wrn("Created chain[%s] chains_.size()=%zu at %p; actual: %p, %p, %p, %p\n",
             cn.c_str(),
             chains_.size(),
             &actual,

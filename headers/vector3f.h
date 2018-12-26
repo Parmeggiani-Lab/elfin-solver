@@ -46,7 +46,7 @@ private:
         RandomAccessIterator end) {
         NICE_PANIC((end - begin) < 3,
                    string_format(
-                       "Invalid Argument Size: %lu, should be <3\n",
+                       "Invalid Argument Size: %zu, should be < 3\n",
                        end - begin));
         auto itr = begin;
 

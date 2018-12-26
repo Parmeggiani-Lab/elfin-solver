@@ -72,7 +72,7 @@ TestStat test_basics() {
             if (not row_vec.is_approx(points10ab_rot[i])) {
                 ts.errors++;
                 err("Rotation test failed: "
-                    "row %lu does not approximate actual rotation row.\n"
+                    "row %zu does not approximate actual rotation row.\n"
                     "Expeced: %s\nGot: %s\n",
                     i,
                     points10ab_rot[i].to_string().c_str(),
@@ -116,7 +116,7 @@ TestStat test_resample() {
         ts.tests++;
         if (a_fewer.size() != points10a.size()) {
             ts.errors++;
-            err("Upsampling failed.\nSizes: a_fewer=%lu points10a=%lu\n",
+            err("Upsampling failed.\nSizes: a_fewer=%zu points10a=%zu\n",
                 a_fewer.size(), points10a.size());
         }
     }

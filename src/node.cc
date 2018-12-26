@@ -50,7 +50,7 @@ void Node::remove_link(FreeChain const& src) {
         print_stacktrace();
         err("Trying to remove link that does not exist. Links:\n");
         for (size_t i = 0; i < links_.size(); ++i) {
-            err("Link #%lu: %s\n",
+            err("Link #%zu: %s\n",
                 i, links_[i].to_string().c_str());
         }
         err("%s\n", to_string().c_str());
