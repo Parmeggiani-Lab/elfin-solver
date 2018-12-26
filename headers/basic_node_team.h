@@ -6,8 +6,13 @@
 namespace elfin {
 
 struct TestStat;
+
+namespace tests {
+
 class Step;
 typedef std::vector<Step> StepList;
+
+}  /* tests */
 
 class BasicNodeTeam : public NodeTeam {
 private:
@@ -55,7 +60,7 @@ public:
     virtual JSON gen_nodes_json() const;
 
     /* tests */
-    static BasicNodeTeam build_team(StepList const& steps);
+    static BasicNodeTeam build_team(tests::StepList const& steps);
     static TestStat test();
 };  /* class BasicNodeTeam */
 

@@ -1,7 +1,7 @@
 #include "kabsch.h"
 
 #include "test_stat.h"
-#include "test_consts.h"
+#include "test_data.h"
 #include "input_manager.h"
 
 namespace elfin {
@@ -135,7 +135,7 @@ TestStat test_score() {
     // Identity (no transform) score 0.
     {
         V3fList const& wa_points = wa->points();
-        float const kscore = score(quarter_snake_free_coordinates, wa_points);
+        float const kscore = score(tests::quarter_snake_free_coordinates, wa_points);
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
@@ -143,7 +143,7 @@ TestStat test_score() {
                 "Expected 0\nGot %f\n", kscore);
 
             err("Hard coded points:\n");
-            for (auto const& point : quarter_snake_free_coordinates) {
+            for (auto const& point : tests::quarter_snake_free_coordinates) {
                 raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
             }
 
@@ -166,7 +166,7 @@ TestStat test_score() {
             {"tran", { -7.7777, -30, 150.12918}}
         });
 
-        V3fList points_test = quarter_snake_free_coordinates;
+        V3fList points_test = tests::quarter_snake_free_coordinates;
         for (auto& point : points_test) {
             point = trans_tx * point;
         }
@@ -203,7 +203,7 @@ TestStat test_score() {
             {"tran", {0, 0, 0}}
         });
 
-        V3fList points_test = quarter_snake_free_coordinates;
+        V3fList points_test = tests::quarter_snake_free_coordinates;
         for (auto& point : points_test) {
             point = rot_tx * point;
         }
@@ -242,7 +242,7 @@ TestStat test_score() {
             {"tran", {3.15165638923645, -5.339916229248047, 3.290015935897827}}
         });
 
-        V3fList points_test = quarter_snake_free_coordinates;
+        V3fList points_test = tests::quarter_snake_free_coordinates;
         for (auto& point : points_test) {
             point = random_tx * point;
         }
@@ -270,7 +270,7 @@ TestStat test_score() {
     // Test Blender origin transform score 0.
     {
         V3fList const& wa_points = wa->points();
-        float const kscore = score(quarter_snake_free_coordinates_origin, wa_points);
+        float const kscore = score(tests::quarter_snake_free_coordinates_origin, wa_points);
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
@@ -278,7 +278,7 @@ TestStat test_score() {
                 "Expected 0\nGot %f\n", kscore);
 
             err("Blender origin points:\n");
-            for (auto const& point : quarter_snake_free_coordinates_origin) {
+            for (auto const& point : tests::quarter_snake_free_coordinates_origin) {
                 raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
             }
 
