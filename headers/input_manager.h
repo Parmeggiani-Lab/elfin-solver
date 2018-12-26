@@ -62,10 +62,11 @@ public:
     }
 
     /* modifiers */
-    static void setup(int const argc, char const** argv);
+    static void parse_options(int const argc, char const** argv);
+    static void setup();
 
     /* tests */
-    static void load_unit_test_config(
+    static void load_test_config(
         std::string const& spec_file = "examples/quarter_snake_free.json");
     static TestStat test();
 };

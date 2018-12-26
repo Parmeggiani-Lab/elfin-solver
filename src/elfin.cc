@@ -14,11 +14,49 @@ namespace elfin {
 Elfin::InstanceMap Elfin::instances_;
 bool interrupt_caught = false;
 
+/* public */
+/* ctors */
+Elfin::Elfin(int const argc, char const** argv) {
+    instances_.insert(this);
+
+    std::signal(SIGINT, interrupt_handler);
+
+    set_log_level(LOG_WARN);
+
+    // Parse arguments and configuration
+    InputManager::parse_options(argc, argv);
+}
+
+/* dtors */
+Elfin::~Elfin() {
+    instances_.erase(this);
+}
+
+/* modifiers */
+int Elfin::run() {
+    if (OPTIONS.run_tests) {
+        tests::run_all();
+    }
+    else {
+        init();
+        solver_.run();
+        OutputManager::write_output(solver_);
+    }
+
+    return 0;
+}
+
 /* private */
 /* accessors */
 void Elfin::crash_dump() const {
     wrn("Crash-dumping results...\n");
     OutputManager::write_output(solver_, "crash_dump");
+}
+
+void Elfin::init() const {
+    InputManager::setup();
+    parallel::init();
+    random::init();
 }
 
 /* handlers */
@@ -42,41 +80,5 @@ void Elfin::interrupt_handler(int const signal) {
     }
 }
 
-/* public */
-/* ctors */
-Elfin::Elfin(int const argc, char const** argv) {
-    instances_.insert(this);
-
-    std::signal(SIGINT, interrupt_handler);
-
-    set_log_level(LOG_WARN);
-
-    // Parse arguments and configuration
-    InputManager::setup(argc, argv);
-
-    // Set up parallel utils after parsing number of threads into OPTIONS
-    parallel::init();
-
-    // Give per-thread Mersenne Twisters
-    random::init();
-}
-
-/* dtors */
-Elfin::~Elfin() {
-    instances_.erase(this);
-}
-
-/* modifiers */
-int Elfin::run() {
-
-    if (OPTIONS.run_unit_tests) {
-        tests::run_all();
-    } else {
-        solver_.run();
-        OutputManager::write_output(solver_);
-    }
-
-    return 0;
-}
 
 }  // namespace elfin

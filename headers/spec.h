@@ -28,6 +28,9 @@ public:
     WorkAreaMap const& work_areas() const {
         return work_areas_;
     }
+    FixedAreaMap const& fixed_areas() const {
+        return fixed_areas_;
+    }
 
     /* modifiers */
     Spec& operator=(Spec const& other) = delete;

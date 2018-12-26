@@ -10,6 +10,8 @@
 
 namespace elfin {
 
+/* types */
+struct TestStat;
 typedef std::vector<NodeTeamSP> NodeTeamSPList;
 typedef std::unordered_map <std::string, NodeTeamSPList > SolutionMap;
 
@@ -31,6 +33,9 @@ public:
 
 	/* modifiers */
 	void run();
+
+	/* tests */
+	static TestStat test();
 };
 
 } // namespace elfin

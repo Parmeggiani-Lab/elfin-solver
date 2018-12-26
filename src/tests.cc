@@ -7,7 +7,8 @@
 #include "kabsch.h"
 #include "random_utils.h"
 #include "input_manager.h"
-#include  "basic_node_team.h"
+#include "basic_node_team.h"
+#include "evolution_solver.h"
 
 namespace elfin {
 
@@ -19,6 +20,7 @@ size_t test_units() {
 
     total += InputManager::test();
 
+    // Stop doing more tests if there are failures.
     if (total.errors == 0)
         total += random::test();
 
@@ -36,23 +38,25 @@ size_t test_units() {
 
     msg("%zu/%zu unit tests passed.\n",
         (total.tests - total.errors), total.tests);
+
     if (total.errors > 0) {
         err("%zu unit tests failed!\n", total.errors);
     }
+
     return total.errors;
 }
 
 size_t test_integration() {
     msg("Running integration tests...\n");
-    TestStat total;
-
-    wrn("TODO: Integration tests\n");
+    TestStat total = EvolutionSolver::test();
 
     msg("%zu/%zu integration tests passed.\n",
         (total.tests - total.errors), total.tests);
+    
     if (total.errors > 0) {
         err("%zu integration tests failed!\n", total.errors);
     }
+
     return total.errors;
 }
 

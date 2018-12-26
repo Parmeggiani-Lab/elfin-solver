@@ -36,23 +36,25 @@ void InputManager::setup_cutoffs() {
 }
 
 /* public */
-void InputManager::setup(int const argc, const char ** argv) {
+void InputManager::parse_options(int const argc, const char ** argv) {
     // Parse arguments into options struct
     instance().options_ = ArgParser(argc, argv).get_options();
 
     // Create output dir if not exists
     mkdir_ifn_exists(OPTIONS.output_dir.c_str());
 
-    // Always report seed
-    msg("Using master seed: %d\n", OPTIONS.seed);
-
     // Setup data members
     setup_cutoffs();
+}
 
+void InputManager::setup() {
     instance().xdb_.parse_from_json(parse_json(OPTIONS.xdb));
 
     msg("Using spec file: %s\n", OPTIONS.spec_file.c_str());
     instance().spec_.parse_from_json(parse_json(OPTIONS.spec_file));
+
+    msg("Spec has %lu fixed areas and %lu work areas\n",
+        SPEC.fixed_areas().size(), SPEC.work_areas().size());
 }
 
 }  /* elfin */

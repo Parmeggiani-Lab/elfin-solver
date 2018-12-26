@@ -6,8 +6,8 @@
 
 namespace elfin {
 
-void InputManager::load_unit_test_config(std::string const& spec_file) {
-    msg("Loading test input\n");
+void InputManager::load_test_config(std::string const& spec_file) {
+    msg("Loading test config\n");
 
     char const* argv[] = {
         "elfin", /* binary name */
@@ -16,14 +16,15 @@ void InputManager::load_unit_test_config(std::string const& spec_file) {
     };
 
     size_t const argc = sizeof(argv) / sizeof(argv[0]);
-    InputManager::setup(argc, argv);
+    InputManager::parse_options(argc, argv);
+    InputManager::setup();
 }
 
 /* tests */
 TestStat InputManager::test() {
     TestStat ts;
 
-    load_unit_test_config();
+    load_test_config();
 
     // Test spec parsing.
     ts.tests++;

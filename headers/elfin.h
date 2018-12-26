@@ -29,6 +29,7 @@ private:
 
     /* accessors */
     void crash_dump() const;
+    void init() const;
 
     /* handlers */
     static void interrupt_handler(int const signal);

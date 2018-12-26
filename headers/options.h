@@ -31,7 +31,7 @@ struct Options {
 
     long ga_stop_stagnancy = 50;
 
-    bool run_unit_tests = false;
+    bool run_tests = false;
 
     size_t n_workers = 0;
     int device = 0;

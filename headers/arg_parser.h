@@ -121,7 +121,7 @@ private:
             "test",
             "Run unit tests",
             false,
-            &ArgParser::set_run_unit_tests
+            &ArgParser::set_run_tests
         },
         {   "d",
             "device",
@@ -215,8 +215,8 @@ private:
         ::set_log_level((LogLvl) parse_long(arg_in.c_str()));
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_run_unit_tests) {
-        options_.run_unit_tests = true;
+    ARG_PARSER_CALLBACK_DECL(set_run_tests) {
+        options_.run_tests = true;
         options_.spec_file = "examples/quarter_snake_free.json";
     }
 

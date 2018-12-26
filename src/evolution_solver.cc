@@ -28,6 +28,7 @@ std::string timing_msg_format =
 struct EvolutionSolver::PImpl {
     /* data */
     bool has_result_ = false;
+    bool run_called = false;
     SolutionMap best_sols_;
     double start_time_in_us_ = 0;
     size_t const debug_pop_print_n_;
@@ -100,7 +101,7 @@ struct EvolutionSolver::PImpl {
 
         // Check stop conditions.
         if (gen_best_score < OPTIONS.ga_stop_score) {
-            raw("\n");
+            raw_at(LOG_MESSAGE, "\n");
             msg("Score stopping threshold %.2f reached\n",
                 OPTIONS.ga_stop_score);
             should_stop_ga = true;
@@ -108,7 +109,7 @@ struct EvolutionSolver::PImpl {
         else {
             if (OPTIONS.ga_stop_stagnancy != -1 and
                     stagnant_count >= OPTIONS.ga_stop_stagnancy) {
-                raw("\n");
+                raw_at(LOG_MESSAGE, "\n");
                 wrn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.ga_stop_stagnancy);
                 should_stop_ga = true;
             }
@@ -142,13 +143,11 @@ struct EvolutionSolver::PImpl {
     }
 
     void print_end_msg() const {
-        msg("EvolutionSolver finished in ");
-
         double const time_elapsed_in_us = get_timestamp_us() - start_time_in_us_;
         size_t const minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
         size_t const seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
         size_t const milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
-        raw("%zum %zus %zums\n",
+        msg("EvolutionSolver finished in %zum %zus %zums\n",
             minutes, seconds, milliseconds);
     }
 
@@ -176,13 +175,8 @@ struct EvolutionSolver::PImpl {
     }
 
     void run() {
-        static bool run_entered = false;
-
-        if (run_entered) {
-            NICE_PANIC("GA run() called more than once.\n");
-        }
-
-        run_entered = true;
+        NICE_PANIC(run_called, "GA run() called more than once.\n");
+        run_called = true;
 
         start_time_in_us_ = get_timestamp_us();
         for (auto& itr : SPEC.work_areas()) {
