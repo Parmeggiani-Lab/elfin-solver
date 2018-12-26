@@ -52,26 +52,26 @@ ArgBundle const* ArgParser::match_arg_bundle(char const* arg_in) const {
 
 void ArgParser::check_options() const {
     // Files
-    NICE_PANIC(options_.xdb == "",
-               "No xdb path provided.");
+    if (options_.xdb == "")
+        die("No xdb path provided.\n");
 
-    NICE_PANIC(!file_exists(options_.xdb.c_str()),
-               "xdb file could not be found.");
+    if (!file_exists(options_.xdb.c_str()))
+        die("xdb file could not be found.\n");
 
-    NICE_PANIC(options_.spec_file == "",
-               "No input spec file given.");
+    if (options_.spec_file == "")
+        die("No input spec file given.\n");
 
-    NICE_PANIC(!file_exists(options_.spec_file.c_str()),
-               "Input file could not be found.");
+    if (!file_exists(options_.spec_file.c_str()))
+        die("Input file could not be found.\n");
 
     if (options_.config_file != "") {
-        NICE_PANIC(!file_exists(options_.config_file.c_str()),
-                   string_format("Settings file \"%s\" could not be found",
-                                 options_.config_file.c_str()));
+        if (!file_exists(options_.config_file.c_str()))
+            die("Settings file \"%s\" could not be found\n",
+                options_.config_file.c_str());
     }
 
-    NICE_PANIC(options_.output_dir == "",
-               "No output directory given.");
+    if (options_.output_dir == "",
+            "No output directory given.");
 
     if (!file_exists(options_.output_dir.c_str())) {
         wrn("Output directory does not exist; creating...");
@@ -80,28 +80,30 @@ void ArgParser::check_options() const {
 
     // Settings
 
-    NICE_PANIC(options_.ga_pop_size < 0, "Population size cannot be < 0");
+    if (options_.ga_pop_size < 0)
+        die("Population size cannot be < 0.\n");
 
-    NICE_PANIC(options_.ga_iters < 0, "Number of iterations cannot be < 0");
+    if (options_.ga_iters < 0)
+        die("Number of iterations cannot be < 0.\n");
 
-    NICE_PANIC(options_.len_dev < 0,
-               "Gene length deviation must be an integer > 0");
+    if (options_.len_dev < 0)
+        die("Gene length deviation must be an integer > 0.\n");
 
     // GA params
-    NICE_PANIC(options_.ga_survive_rate <= 0.0 ||
-               options_.ga_survive_rate >= 1.0,
-               "GA survive rate must be between 0 and 1 exclusive");
+    if (options_.ga_survive_rate <= 0.0 ||
+            options_.ga_survive_rate >= 1.0)
+        die("GA survive rate must be between 0 and 1 exclusive.\n");
 
-    NICE_PANIC(options_.avg_pair_dist < 0, "Average CoM distance must be > 0");
+    if (options_.avg_pair_dist < 0, "Average CoM distance must be > 0");
 
-    NICE_PANIC(options_.keep_n < 0 ||
-               options_.keep_n > options_.ga_pop_size,
-               "Number of best solutions to output must be > 0 and < ga_pop_size");
+    if (options_.keep_n < 0 ||
+            options_.keep_n > options_.ga_pop_size)
+        die("Number of best solutions to output must be > 0 and < ga_pop_size.\n");
 
-    NICE_PANIC(options_.radius_type != "max_heavy_dist" and
-               options_.radius_type != "average_all" and
-               options_.radius_type != "max_ca_dist",
-               string_format("In valid radius type: \"%s\"", options_.radius_type.c_str()));
+    if (options_.radius_type != "max_heavy_dist" and
+            options_.radius_type != "average_all" and
+            options_.radius_type != "max_ca_dist")
+        die("In valid radius type: \"%s\"\n", options_.radius_type.c_str());
 }
 
 /* modifiers */
@@ -138,9 +140,9 @@ void ArgParser::parse_options(int const argc, char const *argv[]) {
 ARG_PARSER_CALLBACK_DEF(parse_config) {
     options_.config_file = arg_in;
 
-    NICE_PANIC(!file_exists(options_.config_file.c_str()),
-               string_format("Settings file does not exist: \"%s\"\n",
-                             options_.config_file.c_str()));
+    if (!file_exists(options_.config_file.c_str()))
+        die("Settings file does not exist: \"%s\"\n",
+            options_.config_file.c_str());
 
     JSON const j = parse_json(options_.config_file);
 
