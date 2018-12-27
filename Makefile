@@ -51,7 +51,7 @@ else
 	OMP_FLAGS     += -fopenmp -D_GLIBCXX_PARALLEL
 endif
 
-INCLUDES += -I./lib -I./headers -I.
+INCLUDES += -I. -I./headers -I./lib/jutil/headers -I./lib 
 
 ifeq ($(CXX), clang++)
 	ifeq ($(OS), Windows_NT)

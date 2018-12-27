@@ -43,7 +43,7 @@ TestStat test() {
         size_t const v1 = mt1(), v2 = mt2();
         if (v1 != v2) {
             ts.errors++;
-            err("MT19937 failed at #%zu: %zu vs %zu\n",
+            JUtil.error("MT19937 failed at #%zu: %zu vs %zu\n",
                 i, v1, v2);
             break;
         }
@@ -70,7 +70,7 @@ TestStat test() {
     for (size_t i = 0; i < N; ++i) {
         if (rand_vals1.at(i) != rand_vals2.at(i)) {
             ts.errors++;
-            err("Parallel randomiser failed at #%zu: %zu vs %zu\n",
+            JUtil.error("Parallel randomiser failed at #%zu: %zu vs %zu\n",
                 i, rand_vals1.at(i), rand_vals2.at(i));
             break;
         }

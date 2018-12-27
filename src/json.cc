@@ -3,7 +3,7 @@
 #include <sstream>
 #include <fstream>
 
-#include <jutil/jutil.h>
+#include "jutil.h"
 #include "debug_utils.h"
 
 namespace elfin {

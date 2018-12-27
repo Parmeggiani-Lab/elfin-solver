@@ -71,7 +71,7 @@ TestStat test_basics() {
             Vector3f row_vec(row);
             if (not row_vec.is_approx(points10ab_rot[i])) {
                 ts.errors++;
-                err("Rotation test failed: "
+                JUtil.error("Rotation test failed: "
                     "row %zu does not approximate actual rotation row.\n"
                     "Expeced: %s\nGot: %s\n",
                     i,
@@ -87,7 +87,7 @@ TestStat test_basics() {
         ts.tests++;
         if (not tran.is_approx(points10ab_tran)) {
             ts.errors++;
-            err("Translation test failed: "
+            JUtil.error("Translation test failed: "
                 "does not approximate actual translation.\n"
                 "Expected: %s\nGot: %s\n",
                 points10ab_tran.to_string().c_str(),
@@ -116,7 +116,7 @@ TestStat test_resample() {
         ts.tests++;
         if (a_fewer.size() != points10a.size()) {
             ts.errors++;
-            err("Upsampling failed.\nSizes: a_fewer=%zu points10a=%zu\n",
+            JUtil.error("Upsampling failed.\nSizes: a_fewer=%zu points10a=%zu\n",
                 a_fewer.size(), points10a.size());
         }
     }
@@ -139,7 +139,7 @@ TestStat test_score() {
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
-            err("kabsch identity score test failed.\n"
+            JUtil.error("kabsch identity score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
@@ -154,7 +154,7 @@ TestStat test_score() {
                 oss << point.to_string() << "\n";
             }
 
-            err(oss.str().c_str());
+            JUtil.error(oss.str().c_str());
         }
     }
 
@@ -180,7 +180,7 @@ TestStat test_score() {
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
-            err("kabsch translation score test failed.\n"
+            JUtil.error("kabsch translation score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
@@ -195,7 +195,7 @@ TestStat test_score() {
                 oss << point.to_string() << "\n";
             }
 
-            err(oss.str().c_str());
+            JUtil.error(oss.str().c_str());
         }
     }
 
@@ -221,7 +221,7 @@ TestStat test_score() {
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
-            err("kabsch rotation score test failed.\n"
+            JUtil.error("kabsch rotation score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
@@ -235,7 +235,7 @@ TestStat test_score() {
                 oss << point.to_string() << "\n";
             }
 
-            err(oss.str().c_str());
+            JUtil.error(oss.str().c_str());
         }
     }
 
@@ -263,7 +263,7 @@ TestStat test_score() {
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
-            err("kabsch random transform score test failed.\n"
+            JUtil.error("kabsch random transform score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
@@ -277,7 +277,7 @@ TestStat test_score() {
                 oss << point.to_string() << "\n";
             }
 
-            err(oss.str().c_str());
+            JUtil.error(oss.str().c_str());
         }
     }
 
@@ -288,7 +288,7 @@ TestStat test_score() {
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
-            err("kabsch Blender origin transform score test failed.\n"
+            JUtil.error("kabsch Blender origin transform score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
@@ -302,7 +302,7 @@ TestStat test_score() {
                 oss << point.to_string() << "\n";
             }
 
-            err(oss.str().c_str());
+            JUtil.error(oss.str().c_str());
         }
     }
 
@@ -312,7 +312,7 @@ TestStat test_score() {
         ts.tests++;
         if (kscore < 1.0) {
             ts.errors++;
-            err("kabsch unrelated point score test failed.\n"
+            JUtil.error("kabsch unrelated point score test failed.\n"
                 "Expected >> 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
@@ -326,7 +326,7 @@ TestStat test_score() {
                 oss << point.to_string() << "\n";
             }
 
-            err(oss.str().c_str());
+            JUtil.error(oss.str().c_str());
         }
     }
 

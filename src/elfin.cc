@@ -22,7 +22,7 @@ Elfin::Elfin(int const argc, char const** argv) {
     std::signal(SIGINT, interrupt_handler);
 
     // Display all info + warnings by default.
-    set_log_level(LOG_INFO);
+    JUtil.set_log_level(LOGLVL_INFO);
 
     // Parse arguments and configuration.
     InputManager::parse_options(argc, argv);
@@ -50,7 +50,7 @@ int Elfin::run() {
 /* private */
 /* accessors */
 void Elfin::crash_dump() const {
-    warn("Crash-dumping results...\n");
+    JUtil.warn("Crash-dumping results...\n");
     OutputManager::write_output(solver_, "crash_dump");
 }
 
@@ -63,14 +63,14 @@ void Elfin::init() const {
 /* handlers */
 void Elfin::interrupt_handler(int const signal) {
     if (interrupt_caught) {
-        JUtil.log("", "\n\n");
-        die("Caught interrupt signal (second). Aborting NOW.\n");
+        fprintf(stderr, "\n\n");
+        JUtil.panic("Caught interrupt signal (second). Aborting NOW.\n");
     }
     else {
         interrupt_caught = true;
 
-        JUtil.log("", "\n\n");
-        warn("Caught interrupt signal (first); trying to save data...\n");
+        fprintf(stderr, "\n\n");
+        JUtil.warn("Caught interrupt signal (first); trying to save data...\n");
 
         // Save latest results
         for (auto inst : instances_) {

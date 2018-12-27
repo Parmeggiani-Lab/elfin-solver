@@ -35,14 +35,14 @@ ProtoModule::ProtoModule(
     type(_type),
     radius(_radius) {
 #ifdef PRINT_INIT
-    warn("New ProtoModule at %p\n", this);
+    JUtil.warn("New ProtoModule at %p\n", this);
 #endif  /* ifdef PRINT_INIT */
 
     for (std::string const& cn : _chain_names) {
         chains_.emplace_back(cn, chains_.size());
 #ifdef PRINT_INIT
         Chain& actual = chains_.back();
-        warn("Created chain[%s] chains_.size()=%zu at %p; actual: %p, %p, %p, %p\n",
+        JUtil.warn("Created chain[%s] chains_.size()=%zu at %p; actual: %p, %p, %p, %p\n",
             cn.c_str(),
             chains_.size(),
             &actual,
@@ -54,7 +54,7 @@ ProtoModule::ProtoModule(
     }
 
 #ifdef PRINT_INIT
-    warn("First chain: %p ? %p\n", &chains_.at(0), &(chains_[0]));
+    JUtil.warn("First chain: %p ? %p\n", &chains_.at(0), &(chains_[0]));
 #endif  /* ifdef PRINT_INIT */
 }
 
@@ -67,12 +67,12 @@ size_t ProtoModule::find_chain_id(
         }
     }
 
-    err("Could not find chain named %s in ProtoModule %s\n",
+    JUtil.error("Could not find chain named %s in ProtoModule %s\n",
         chain_name, chain_name.c_str());
 
-    err("The following chains are present:\n");
+    JUtil.error("The following chains are present:\n");
     for (auto& chain : chains_) {
-        err("%s", chain.name.c_str());
+        JUtil.error("%s", chain.name.c_str());
     }
 
     NICE_PANIC("Chain Not Found");
@@ -105,7 +105,7 @@ void ProtoModule::finalize() {
     finalized_ = true;
 
 #ifdef PRINT_FINALIZE
-    warn("Finalizing module %s\n", name.c_str());
+    JUtil.warn("Finalizing module %s\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
 
     for (ProtoChain& proto_chain : chains_) {
@@ -176,7 +176,7 @@ void ProtoModule::create_proto_link_pair(
         tx = tx.inversed() * tx_hub.inversed();
     }
     else {
-        die("mod_a.type == ModuleType::HUB and "
+        JUtil.panic("mod_a.type == ModuleType::HUB and "
             "mod_b.type == ModuleType::HUB\n");
     }
 

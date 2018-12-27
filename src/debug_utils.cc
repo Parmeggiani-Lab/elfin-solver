@@ -1,6 +1,6 @@
 #include "debug_utils.h"
 
-#include <jutil/jutil.h>
+#include "jutil.h"
 
 #include "stack_trace.h"
 
@@ -13,7 +13,7 @@ void __debug(
     int const line,
     const std::string& msg) {
     if (result) {
-        JUtil.log("", "\n\n");
+        fprintf(stderr, "\n\n");
         JUtil.error("Bug: %s\n", msg.c_str());
         JUtil.error("Where: %s:%d\n", filename, line);
         JUtil.error("Reason: \"%s\" evaluated to true\n", cond_expr.c_str());

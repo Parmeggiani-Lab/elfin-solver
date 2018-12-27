@@ -48,13 +48,13 @@ void Node::remove_link(FreeChain const& src) {
     // A bit more verbose diagnosis
     if (not found_link) {
         print_stacktrace();
-        err("Trying to remove link that does not exist. Links:\n");
+        JUtil.error("Trying to remove link that does not exist. Links:\n");
         for (size_t i = 0; i < links_.size(); ++i) {
-            err("Link #%zu: %s\n",
+            JUtil.error("Link #%zu: %s\n",
                 i, links_[i].to_string().c_str());
         }
-        err("%s\n", to_string().c_str());
-        die("%s\n", src.to_string().c_str());
+        JUtil.error("%s\n", to_string().c_str());
+        JUtil.panic("%s\n", src.to_string().c_str());
     }
 }
 

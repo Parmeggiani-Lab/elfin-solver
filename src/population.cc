@@ -19,14 +19,14 @@ NodeTeamSP create_team(WorkArea const* wa) {
     // case WorkType::TWO_HINGE:
     //     return std::make_shared<TwoHingeNodeTeam>(wa);
     default:
-        die("Unimplemented work type: %s\n",
+        JUtil.panic("Unimplemented work type: %s\n",
             WorkTypeToCStr(wa->type()));
         return nullptr; // Suppress no return warning
     }
 }
 
 void print_mutation_ratios(mutation::ModeList mode_tally) {
-    if (get_log_level() <= LOG_DEBUG) {
+    if (JUtil.get_log_level() <= LOGLVL_DEBUG) {
         mutation::Counter mc;
         for (mutation::Mode const& mode : mode_tally) {
             mc[mode]++;
@@ -43,7 +43,7 @@ void print_mutation_ratios(mutation::ModeList mode_tally) {
             mutation_ss << "(" << mc[mode] << ")\n";
         }
 
-        dbg("%s\n", mutation_ss.str().c_str());
+        JUtil.debug("%s\n", mutation_ss.str().c_str());
     }
 }
 

@@ -15,6 +15,7 @@
 #endif  /* ifdef V3F_USE_EIGEN */
 
 #include "debug_utils.h"
+#include "jutil.h"
 
 namespace elfin {
 
@@ -116,7 +117,7 @@ public:
         return isApprox(other, tolerance);
 #else
         for (size_t i = 0; i < 3; ++i) {
-            if (not float_approximates_err(
+            if (not JUtil.float_approximates(
                         data_[i],
                         other.data_[i],
                         tolerance)) {

@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-#include <jutil/jutil.h>
+#include "jutil.h"
 #include "options.h"
 
 namespace elfin {
@@ -161,7 +161,7 @@ private:
     void check_options() const;
 
     /* modifiers */
-    void parse_options(int const argc, char const *argv[]);
+    void parse_options(int const argc, char const* const argv[]);
 
 #define ARG_CALLBACK_DECL(FUNC) \
     void FUNC(std::string const& arg_in)
@@ -212,7 +212,7 @@ private:
 
     ARG_CALLBACK_DECL(set_verbosity) {
         // Call jutil function to set global log level.
-        JUtil.set_log_level((LogLvl) JUtil.parse_long(arg_in.c_str()));
+        JUtil.set_log_level((JUtilLogLvl) JUtil.parse_long(arg_in.c_str()));
     }
 
     ARG_CALLBACK_DECL(set_run_tests) {

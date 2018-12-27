@@ -26,7 +26,7 @@ TestStat Vector3f::test() {
         ts.tests++;
         if (not a_mult_pi_test.is_approx(vec_a_mult_pi)) {
             ts.errors++;
-            err("vec_a(%s) * PI should be (%s) but got (%s)\n",
+            JUtil.error("vec_a(%s) * PI should be (%s) but got (%s)\n",
                 vec_a.to_string().c_str(),
                 vec_a_mult_pi.to_string().c_str(),
                 a_mult_pi_test.to_string().c_str());
@@ -39,7 +39,7 @@ TestStat Vector3f::test() {
         ts.tests++;
         if (not a_plus_pi_test.is_approx(vec_a_plus_pi)) {
             ts.errors++;
-            err("vec_a(%s) + (PI, PI, PI) should be (%s) but got (%s)\n",
+            JUtil.error("vec_a(%s) + (PI, PI, PI) should be (%s) but got (%s)\n",
                 vec_a.to_string().c_str(),
                 vec_a_plus_pi.to_string().c_str(),
                 a_plus_pi_test.to_string().c_str());
@@ -52,7 +52,7 @@ TestStat Vector3f::test() {
         ts.tests++;
         if (not a_minus_3pi_test.is_approx(vec_a_minus_3pi)) {
             ts.errors++;
-            err("vec_a(%s) - 3*(PI, PI, PI) should be (%s) but got (%s)\n",
+            JUtil.error("vec_a(%s) - 3*(PI, PI, PI) should be (%s) but got (%s)\n",
                 vec_a.to_string().c_str(),
                 vec_a_minus_3pi.to_string().c_str(),
                 a_minus_3pi_test.to_string().c_str());
@@ -63,9 +63,9 @@ TestStat Vector3f::test() {
     {
         float const a_norm_test = vec_a.dist_to(Vector3f());
         ts.tests++;
-        if (not float_approximates_err(a_norm_test, a_norm, 1e-8)) {
+        if (not JUtil.float_approximates(a_norm_test, a_norm, 1e-8)) {
             ts.errors++;
-            err("vec_a norm should be %f but got %f\n",
+            JUtil.error("vec_a norm should be %f but got %f\n",
                 a_norm, a_norm_test);
         }
     }
@@ -74,9 +74,9 @@ TestStat Vector3f::test() {
     {
         float const a_sq_norm_test = vec_a.sq_dist_to(Vector3f());
         ts.tests++;
-        if (not float_approximates_err(a_sq_norm_test, a_sq_norm, 1e-8)) {
+        if (not JUtil.float_approximates(a_sq_norm_test, a_sq_norm, 1e-8)) {
             ts.errors++;
-            err("vec_a norm should be %f but got %f\n",
+            JUtil.error("vec_a norm should be %f but got %f\n",
                 a_sq_norm, a_sq_norm_test);
         }
     }

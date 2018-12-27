@@ -3,7 +3,7 @@
 
 #include <omp.h>
 
-#include <jutil/jutil.h>
+#include "jutil.h"
 
 /* OMP Macros */
 #define OMP_PAR_FOR _Pragma("omp parallel for simd schedule(runtime)")

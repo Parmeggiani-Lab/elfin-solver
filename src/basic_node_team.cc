@@ -1,6 +1,6 @@
 #include "basic_node_team.h"
 
-#include <jutil/jutil.h>
+#include "jutil.h"
 #include "basic_node_generator.h"
 #include "kabsch.h"
 #include "input_manager.h"
@@ -308,12 +308,12 @@ struct BasicNodeTeam::PImpl {
 
             tip_node = grow_tip(src, curr_link->prototype());
             if (curr_link->dst().node_sp()->prototype_ != tip_node->prototype_) {
-                err("%s vs %s\n",
-                    curr_link->dst().node_sp()->prototype_->name.c_str(),
-                    tip_node->prototype_->name.c_str());
-                err("curr_link->prototype(): %s\n",
-                    curr_link->prototype()->module_->name.c_str());
-                die("");
+                JUtil.error("%s vs %s\n",
+                            curr_link->dst().node_sp()->prototype_->name.c_str(),
+                            tip_node->prototype_->name.c_str());
+                JUtil.error("curr_link->prototype(): %s\n",
+                            curr_link->prototype()->module_->name.c_str());
+                JUtil.panic("");
             }
 
             num_links = tip_node->links().size();
@@ -593,11 +593,11 @@ struct BasicNodeTeam::PImpl {
                 }
 
                 if (not free_chain_found) {
-                    err("FreeChain not found for %s\n",
-                        insert_point.src.node_sp()->to_string().c_str());
-                    err("Available FreeChain(s):\n");
+                    JUtil.error("FreeChain not found for %s\n",
+                                insert_point.src.node_sp()->to_string().c_str());
+                    JUtil.error("Available FreeChain(s):\n");
                     for (FreeChain const& fc : that->free_chains_) {
-                        err("%s\n", fc.to_string().c_str());
+                        JUtil.error("%s\n", fc.to_string().c_str());
                     }
                     NICE_PANIC(not free_chain_found);
                 }
@@ -956,6 +956,11 @@ JSON BasicNodeTeam::gen_nodes_json() const {
                 tran[i],
                 rms[i]);
         }
+
+        // JUtil.warn("RMS: %.2f, %.2f\n", rms[0], rms[1]);
+        // for (auto& fc : free_chains_) {
+        //     fprintf(stderr, "[WTF] fc: %s\n", fc.to_string().c_str());
+        // }
 
         // Start at tip that yields lower score.
         size_t const better_tip_id = rms[0] < rms[1] ? 0 : 1;

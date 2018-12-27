@@ -159,7 +159,7 @@ ARG_PARSER_CALLBACK_DEF(parse_config) {
         if (ab) {
             (this->*ab->callback)(json_to_str(j[ab->long_form]));
         } else {
-            die("Unrecognized option: %s\n", opt_name.c_str());
+            JUtil.panic("Unrecognized option: %s\n", opt_name.c_str());
         }
     }
 }
@@ -170,26 +170,17 @@ ARG_PARSER_CALLBACK_DEF(set_spec_file) {
 
 /* printers */
 ARG_PARSER_CALLBACK_DEF(help_and_exit) {
-    JUtil.gated_log(LOGLVL_INFO,
-                    "",
-                    "\nelfin-solver: an protein structure design solver\n");
-    JUtil.gated_log(LOGLVL_INFO,
-                    "",
-                    "Report issues at: https://github.com/joy13975/elfin-solver/issues\n\n");
-    JUtil.gated_log(LOGLVL_INFO,
-                    "",
-                    "Usage: ./elfin [OPTIONS]\n");
-    JUtil.gated_log(LOGLVL_INFO,
-                    "",
-                    "Note: settings are parsed and overridden in the order they're written\n");
-    JUtil.gated_log(LOGLVL_INFO,
-                    "",
-                    "OPTIONS:\n");
+    std::stringstream ss;
+    ss << "\nelfin-solver: an protein structure design solver\n";
+    ss << "Report issues at: https://github.com/joy13975/elfin-solver/issues\n\n";
+    ss << "Usage: ./elfin [OPTIONS]\n";
+    ss << "Note: settings are parsed and overridden in the order they're written\n";
+    ss << "OPTIONS:\n";
     for (auto const& ab : argb_) {
-        JUtil.gated_log(LOGLVL_INFO,
-                        "",
-                        "%s", ab.to_string().c_str());
+        ss << ab.to_string();
     }
+
+    std::cout << ss.rdbuf();
     exit(1);
 }
 
@@ -197,7 +188,7 @@ ARG_PARSER_CALLBACK_DEF(help_and_exit) {
 
 /* public */
 /* ctors */
-ArgParser::ArgParser(int const argc, char const *argv[]) {
+ArgParser::ArgParser(int const argc, char const* const argv[]) {
     parse_options(argc, argv);
     check_options();
 }

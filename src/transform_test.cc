@@ -68,10 +68,10 @@ TestStat Transform::test() {
         ts.tests++;
         if (not b_test.is_approx(b_world)) {
             ts.errors++;
-            err("Frame raise test failed:\n"
+            JUtil.error("Frame raise test failed:\n"
                 "b_test does not approximately equal to b_world\n");
-            err("Expected b_world: %s\n", b_world.to_string().c_str());
-            err("Got b_test: %s\n", b_test.to_string().c_str());
+            JUtil.error("Expected b_world: %s\n", b_world.to_string().c_str());
+            JUtil.error("Got b_test: %s\n", b_test.to_string().c_str());
         }
     }
 
@@ -81,10 +81,10 @@ TestStat Transform::test() {
         ts.tests++;
         if (not c_test.is_approx(c_world)) {
             ts.errors++;
-            err("Frame drop test failed:\n"
+            JUtil.error("Frame drop test failed:\n"
                 "c_test does not approximately equal to c_world\n");
-            err("Expected c_world: %s\n", c_world.to_string().c_str());
-            err("Got c_test: %s\n", c_test.to_string().c_str());
+            JUtil.error("Expected c_world: %s\n", c_world.to_string().c_str());
+            JUtil.error("Got c_test: %s\n", c_test.to_string().c_str());
         }
     }
 

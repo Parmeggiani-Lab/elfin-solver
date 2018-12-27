@@ -135,7 +135,7 @@ bool Transform::is_approx(
 #else
     for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {
-            if (not float_approximates_err(
+            if (not JUtil.float_approximates(
                         rot_[i][j],
                         other.rot_[i][j],
                         tolerance)) {
@@ -143,7 +143,7 @@ bool Transform::is_approx(
             }
         }
 
-        if (not float_approximates_err(
+        if (not JUtil.float_approximates(
                     tran_[i],
                     other.tran_[i],
                     tolerance)) {

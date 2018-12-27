@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <stdlib.h>
 
-#include <jutil/jutil.h>
+#include "jutil.h"
 #include "input_manager.h"
 #include "parallel_utils.h"
 
@@ -56,7 +56,7 @@ struct EvolutionSolver::PImpl {
 
         float const gen_best_score = best_team->score();
         double const gen_time =
-            (get_timestamp_us() - gen_start_time) / 1e3;
+            (JUtil.get_timestamp_us() - gen_start_time) / 1e3;
 
         tot_gen_time += gen_time;
 
@@ -69,11 +69,11 @@ struct EvolutionSolver::PImpl {
             gen_time);
 
         // Compute stagnancy & check inverted scores.
-        if (float_approximates(gen_best_score, lastgen_best_score)) {
+        if (JUtil.float_approximates(gen_best_score, lastgen_best_score, 1e-6)) {
             stagnant_count++;
         }
         else if (gen_best_score > lastgen_best_score) {
-            err("Best score is worse than last gen!\n");
+            JUtil.error("Best score is worse than last gen!\n");
             print_pop("Error debug", pop);
             NICE_PANIC("Score ranking bug?");
         }
@@ -101,7 +101,7 @@ struct EvolutionSolver::PImpl {
 
         // Check stop conditions.
         if (gen_best_score < OPTIONS.ga_stop_score) {
-            gated_raw(LOG_INFO, "\n");
+            fprintf(stdout, "\n");
             JUtil.info("Score stopping threshold %.2f reached\n",
                 OPTIONS.ga_stop_score);
             should_stop_ga = true;
@@ -109,8 +109,8 @@ struct EvolutionSolver::PImpl {
         else {
             if (OPTIONS.ga_stop_stagnancy != -1 and
                     stagnant_count >= OPTIONS.ga_stop_stagnancy) {
-                gated_raw(LOG_INFO, "\n");
-                warn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.ga_stop_stagnancy);
+                fprintf(stdout, "\n");
+                JUtil.warn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.ga_stop_stagnancy);
                 should_stop_ga = true;
             }
             else {
@@ -122,7 +122,7 @@ struct EvolutionSolver::PImpl {
     }
 
     /* printers */
-    void print_start_JUtil.info(WorkArea const& wa) const {
+    void print_start_msg(WorkArea const& wa) const {
         JUtil.info("Length guess: < %zu; Spec has %d points\n",
             wa.target_size(), wa.points().size());
         JUtil.info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
@@ -142,8 +142,8 @@ struct EvolutionSolver::PImpl {
         }
     }
 
-    void print_end_JUtil.info() const {
-        double const time_elapsed_in_us = get_timestamp_us() - start_time_in_us_;
+    void print_end_msg() const {
+        double const time_elapsed_in_us = JUtil.get_timestamp_us() - start_time_in_us_;
         size_t const minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
         size_t const seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
         size_t const milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
@@ -173,7 +173,7 @@ struct EvolutionSolver::PImpl {
                        "  back ", i, c->checksum(), c->size(), c->score());
             }
 
-            dbg(oss.str().c_str());
+            JUtil.debug(oss.str().c_str());
         }
     }
 
@@ -181,7 +181,7 @@ struct EvolutionSolver::PImpl {
         NICE_PANIC(run_called, "GA run() called more than once.\n");
         run_called = true;
 
-        start_time_in_us_ = get_timestamp_us();
+        start_time_in_us_ = JUtil.get_timestamp_us();
         for (auto& itr : SPEC.work_areas()) {
             std::string const wa_name = itr.first;
             auto& wa = itr.second;
@@ -190,13 +190,13 @@ struct EvolutionSolver::PImpl {
                 std::ostringstream ss;
                 ss << "Skipping work_area: ";
                 ss << WorkTypeToCStr(wa->type()) << std::endl;
-                warn(ss.str().c_str());
+                JUtil.warn(ss.str().c_str());
                 continue;
             }
 
             Population population = Population(wa.get());
 
-            print_start_JUtil.info(*wa);
+            print_start_msg(*wa);
 
             double tot_gen_time = 0.0f;
             size_t stagnant_count = 0;
@@ -204,7 +204,7 @@ struct EvolutionSolver::PImpl {
 
             if (!OPTIONS.dry_run) {
                 for (size_t gen_id = 0; gen_id < OPTIONS.ga_iters; gen_id++) {
-                    double const gen_start_time = get_timestamp_us();
+                    double const gen_start_time = JUtil.get_timestamp_us();
 
                     population.evolve();
                     print_pop("After evolve", population);
@@ -231,7 +231,7 @@ struct EvolutionSolver::PImpl {
             }
         }
 
-        print_end_JUtil.info();
+        print_end_msg();
     }
 };
 

@@ -27,13 +27,13 @@ void ProtoChain::finalize() {
     finalized_ = true;
 
 #ifdef PRINT_FINALIZE
-    warn("Finalizing proto_chain %s N term\n", name.c_str());
+    JUtil.warn("Finalizing proto_chain %s N term\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
 
     n_term_.finalize();
 
 #ifdef PRINT_FINALIZE
-    warn("Finalizing proto_chain %s C term\n", name.c_str());
+    JUtil.warn("Finalizing proto_chain %s C term\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
 
     c_term_.finalize();

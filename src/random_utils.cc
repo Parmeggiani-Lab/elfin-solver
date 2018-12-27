@@ -22,11 +22,11 @@ void init() {
         #pragma omp single
         {
             size_t const num_threads = omp_get_num_threads();
-            dbg("Creating %zu Mersenne Twisters\n", num_threads);
+            JUtil.debug("Creating %zu Mersenne Twisters\n", num_threads);
 
             uint32_t global_seed = OPTIONS.seed;
             if (global_seed == 0) {
-                global_seed = get_timestamp_us();
+                global_seed = JUtil.get_timestamp_us();
             }
 
             for (size_t tid = 0; tid < num_threads; ++tid) {

@@ -40,7 +40,7 @@ size_t test_units() {
         (total.tests - total.errors), total.tests);
 
     if (total.errors > 0) {
-        err("%zu unit tests failed!\n", total.errors);
+        JUtil.error("%zu unit tests failed!\n", total.errors);
     }
 
     return total.errors;
@@ -54,7 +54,7 @@ size_t test_integration() {
         (total.tests - total.errors), total.tests);
     
     if (total.errors > 0) {
-        err("%zu integration tests failed!\n", total.errors);
+        JUtil.error("%zu integration tests failed!\n", total.errors);
     }
 
     return total.errors;
@@ -64,18 +64,18 @@ void run_all() {
     size_t const unit_test_errors = test_units();
 
     if (unit_test_errors > 0) {
-        die("%zu unit tests failed. Not continuing to integration tests.\n",
+        JUtil.panic("%zu unit tests failed. Not continuing to integration tests.\n",
             unit_test_errors);
     }
     else {
         size_t const int_test_errors = test_integration();
 
         if (int_test_errors > 0) {
-            die("%zu integration tests failed.\n",
+            JUtil.panic("%zu integration tests failed.\n",
                 int_test_errors);
         } else {
             JUtil.info("All Tests Passed. \\*O*/\n");
-            raw(unit_tests_passed_str);
+            fprintf(stdout, unit_tests_passed_str);
         }
     }
 }

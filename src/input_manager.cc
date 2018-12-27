@@ -41,7 +41,7 @@ void InputManager::parse_options(int const argc, const char ** argv) {
     instance().options_ = ArgParser(argc, argv).get_options();
 
     // Create output dir if not exists
-    mkdir_ifn_exists(OPTIONS.output_dir.c_str());
+    JUtil.mkdir_ifn_exists(OPTIONS.output_dir.c_str());
 
     // Setup data members
     setup_cutoffs();

@@ -30,7 +30,7 @@ TestStat InputManager::test() {
     ts.tests++;
     if (SPEC.work_areas().size() != 1) {
         ts.errors++;
-        err("Spec parsing should get 1 work area but got %zu\n",
+        JUtil.error("Spec parsing should get 1 work area but got %zu\n",
             SPEC.work_areas().size());
     }
     else {
@@ -42,18 +42,18 @@ TestStat InputManager::test() {
         ts.tests++;
         if (tests::quarter_snake_free_coordinates != points_test) {
             ts.errors++;
-            err("Work area point parsing test failed\n");
+            JUtil.error("Work area point parsing test failed\n");
             std::ostringstream oss;
             oss << "Expected:\n";
             for (auto& p : tests::quarter_snake_free_coordinates) {
                 oss << p.to_string() << "\n";
             }
-            err("But got:\n");
+            JUtil.error("But got:\n");
             for (auto& p : points_test) {
                 oss << p.to_string() << "\n";
             }
 
-            err(oss.str().c_str());
+            JUtil.error(oss.str().c_str());
         }
     }
 

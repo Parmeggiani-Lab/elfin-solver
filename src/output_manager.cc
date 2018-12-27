@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include "json.h"
-#include <jutil/jutil.h>
+#include "jutil.h"
 
 namespace elfin {
 
@@ -36,7 +36,7 @@ void OutputManager::write_output(
     std::string extra_dir,
     size_t const indent_size) {
     if (not solver.has_result()) {
-        warn("Solver %p has no result to be written out\n", &solver);
+        JUtil.warn("Solver %p has no result to be written out\n", &solver);
         return;
     }
 
@@ -45,7 +45,7 @@ void OutputManager::write_output(
     output_dir_ss << OPTIONS.output_dir << "/"
                   << extra_dir;
     std::string output_dir_str = output_dir_ss.str();
-    mkdir_ifn_exists(output_dir_str.c_str());
+    JUtil.mkdir_ifn_exists(output_dir_str.c_str());
 
     JSON output_json;
     for (auto& itr : SPEC.work_areas()) {
@@ -66,7 +66,7 @@ void OutputManager::write_output(
                     sol_json["score"] = team->score();
                 }
                 else {
-                    err("Team memory corrupted in work area \"%s\" (ptr=%p)\n",
+                    JUtil.error("Team memory corrupted in work area \"%s\" (ptr=%p)\n",
                         wa_name.c_str(), team);
                 }
 
@@ -76,7 +76,7 @@ void OutputManager::write_output(
         }
         catch (std::out_of_range& e)
         {
-            err("WorkArea \"%s\" has no solutions\n", wa_name.c_str());
+            JUtil.error("WorkArea \"%s\" has no solutions\n", wa_name.c_str());
         }
     }
 
@@ -91,7 +91,7 @@ void OutputManager::write_output(
 
     // At last, write JSON to file.
     std::string dump = output_json.dump(indent_size);
-    write_binary(json_output_path,
+    JUtil.write_binary(json_output_path,
                  dump.c_str(),
                  dump.size());
 }

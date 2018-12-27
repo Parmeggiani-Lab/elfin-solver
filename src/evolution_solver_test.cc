@@ -20,18 +20,18 @@ TestStat EvolutionSolver::test() {
     {
         ts.tests++;
 
-        LogLvl original_ll = ::get_log_level();
+        JUtilLogLvl original_ll = JUtil.get_log_level();
 
-        ::set_log_level(LOG_WARNING);
+        JUtil.set_log_level(LOGLVL_WARNING);
         solver.run();
-        ::set_log_level(original_ll);
+        JUtil.set_log_level(original_ll);
     }
 
     // Test that expected solution was obtained.
     {
         ts.tests++;
         size_t const n_work_areas = SPEC.work_areas().size();
-        panic_if(n_work_areas != 1,
+        JUtil.panic_if(n_work_areas != 1,
                  "Expected spec to have exactly 1 work area, but there is %lu\n",
                  n_work_areas);
 
@@ -40,7 +40,7 @@ TestStat EvolutionSolver::test() {
         std::vector<NodeTeamSP> const& solutions =
             solver.best_sols().at(work_area->name());
         size_t const n_solutions = solutions.size();
-        panic_if(n_solutions != OPTIONS.keep_n,
+        JUtil.panic_if(n_solutions != OPTIONS.keep_n,
                  "Expected %lu solutions, but there is %lu\n",
                  OPTIONS.keep_n, n_solutions);
 
@@ -48,7 +48,7 @@ TestStat EvolutionSolver::test() {
         auto& nodes = best_team->nodes();
         auto& free_chains = best_team->free_chains();
 
-        panic_if(free_chains.size() != 2,
+        JUtil.panic_if(free_chains.size() != 2,
                  "Expected %lu free chains, but there is %lu\n",
                  2, free_chains.size());
 
@@ -64,7 +64,7 @@ TestStat EvolutionSolver::test() {
             if (step_itr == end(recipe) or
                     step_itr->mod_name != node->prototype_->name) {
                 ts.errors++;
-                err("Solver best solution differs from expectation.\n");
+                JUtil.error("Solver best solution differs from expectation.\n");
 
                 std::ostringstream oss;
                 oss << "Solver solution:\n";
@@ -74,12 +74,12 @@ TestStat EvolutionSolver::test() {
                     oss << err_node_gen.next()->prototype_->name << "\n";
                 }
 
-                err("Expected solution:\n");
+                JUtil.error("Expected solution:\n");
                 for (auto& step : recipe) {
                     oss << step.mod_name << "\n";
                 }
 
-                err(oss.str().c_str());
+                JUtil.error(oss.str().c_str());
                 break;
             }
             ++step_itr;

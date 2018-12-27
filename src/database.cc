@@ -50,7 +50,7 @@ void Database::categorize() {
         size_t const n_itf = mod->counts().all_interfaces();
         ProtoModule* mod_raw_ptr = mod.get();
         if (n_itf < 2) {
-            die("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
+            JUtil.panic("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
                 mod->name.c_str(), n_itf);
         } else if (n_itf == 2) {
             basic_mods_.push_back(mod->counts().all_links(), mod_raw_ptr);
@@ -63,7 +63,7 @@ void Database::categorize() {
         } else if (mod->type == ModuleType::HUB) {
             hubs_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
-            die("mod[%s] has unknown ModuleType: %s\n",
+            JUtil.panic("mod[%s] has unknown ModuleType: %s\n",
                 mod->name.c_str(), ModuleTypeToCStr(mod->type));
         }
     }
@@ -83,37 +83,37 @@ void Database::print_roulettes() {
 }
 
 void Database::print_db() {
-    warn("---DB Proto Link Parse Debug---\n");
+    JUtil.warn("---DB Proto Link Parse Debug---\n");
     size_t const n_mods = all_mods_.size();
-    warn("Database has %zu mods, of which...\n", n_mods);
-    warn("%zu are singles\n", singles_.items().size());
-    warn("%zu are hubs\n", hubs_.items().size());
-    warn("%zu are basic\n", basic_mods_.items().size());
-    warn("%zu are complex\n", complex_mods_.items().size());
+    JUtil.warn("Database has %zu mods, of which...\n", n_mods);
+    JUtil.warn("%zu are singles\n", singles_.items().size());
+    JUtil.warn("%zu are hubs\n", hubs_.items().size());
+    JUtil.warn("%zu are basic\n", basic_mods_.items().size());
+    JUtil.warn("%zu are complex\n", complex_mods_.items().size());
 
     for (size_t i = 0; i < n_mods; ++i)
     {
         auto& mod = all_mods_.at(i);
         size_t const n_chains = mod->chains().size();
-        warn("xdb_[#%zu:%s] has %zu chains\n",
+        JUtil.warn("xdb_[#%zu:%s] has %zu chains\n",
             i, mod->name.c_str(), n_chains);
 
         for (auto& proto_chain : mod->chains()) {
-            warn("\tchain[#%zu:%s]:\n",
+            JUtil.warn("\tchain[#%zu:%s]:\n",
                 proto_chain.id,
                 proto_chain.name.c_str());
 
             auto& n_links = proto_chain.n_term().links();
             for (size_t k = 0; k < n_links.size(); ++k)
             {
-                warn("\t\tn_links[%zu] -> xdb_[%s]\n",
+                JUtil.warn("\t\tn_links[%zu] -> xdb_[%s]\n",
                     k, n_links[k]->module_->name.c_str());
             }
 
             auto& c_links = proto_chain.c_term().links();
             for (size_t k = 0; k < c_links.size(); ++k)
             {
-                warn("\t\tc_links[%zu] -> xdb_[%s]\n",
+                JUtil.warn("\t\tc_links[%zu] -> xdb_[%s]\n",
                     k, c_links[k]->module_->name.c_str());
             }
         }
@@ -172,7 +172,7 @@ void Database::parse_from_json(JSON const& xdb) {
         mod_idx_map_[name] = mod_id;
 
 #ifdef PRINT_MOD_IDX_MAP_
-        warn("Module %s maps to id %zu\n", name.c_str(), mod_id);
+        JUtil.warn("Module %s maps to id %zu\n", name.c_str(), mod_id);
 #endif  /* ifndef PRINT_MOD_IDX_MAP_ */
 
         StrList chain_names;

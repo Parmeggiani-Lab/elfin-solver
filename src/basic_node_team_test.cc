@@ -69,7 +69,7 @@ TestStat BasicNodeTeam::test() {
         float const score = team.calc_score();
         if (score > 1e-6) {
             ts.errors++;
-            err("Construction test failed.\n"
+            JUtil.error("Construction test failed.\n"
                 "Expected score 0\nGot score: %f\n", score);
         }
 
