@@ -53,7 +53,7 @@ Population::Population(WorkArea const* work_area) {
     TIMING_START(init_start_time);
     {
         size_t const pop_size = OPTIONS.ga_pop_size;
-        info("Initializing population of %u...\n", pop_size);
+        JUtil.info("Initializing population of %u...\n", pop_size);
 
         NodeTeams* new_front_buffer = &teams[0];
         NodeTeams* new_back_buffer = &teams[1];
@@ -79,7 +79,7 @@ Population::Population(WorkArea const* work_area) {
 void Population::evolve() {
     TIMING_START(evolve_start_time);
     {
-        info("Evolving population...\n");
+        JUtil.info("Evolving population...\n");
 
         mutation::ModeList mutation_mode_tally;
         mutation_mode_tally.reserve(CUTOFFS.pop_size);
@@ -119,7 +119,7 @@ void Population::evolve() {
 void Population::rank() {
     TIMING_START(rank_start_time);
     {
-        info("Ranking population...\n");
+        JUtil.info("Ranking population...\n");
 
         std::sort(begin(*front_buffer_),
                   end(*front_buffer_),
@@ -137,7 +137,7 @@ void Population::select() {
 
     TIMING_START(start_time_select);
     {
-        info("Selecting population...\n");
+        JUtil.info("Selecting population...\n");
 
         std::unordered_map<Crc32, NodeTeamSP> crc_map;
         size_t unique_count = 0;

@@ -14,7 +14,7 @@ void Spec::parse_from_json(JSON const& json) {
         JSON const& pg_networks = json.at("pg_networks");
         JSON const& networks = json.at("networks");
 
-        info("Input spec has %zu work areas and %zu fixed areas\n",
+        JUtil.info("Input spec has %zu work areas and %zu fixed areas\n",
             pg_networks.size(),
             networks.size());
 

@@ -1,5 +1,7 @@
 #include "debug_utils.h"
 
+#include <jutil/jutil.h>
+
 #include "stack_trace.h"
 
 namespace elfin {
@@ -11,12 +13,12 @@ void __debug(
     int const line,
     const std::string& msg) {
     if (result) {
-        raw("\n\n");
-        err("Bug: %s\n", msg.c_str());
-        err("Where: %s:%d\n", filename, line);
-        err("Reason: \"%s\" evaluated to true\n", cond_expr.c_str());
+        JUtil.log("", "\n\n");
+        JUtil.error("Bug: %s\n", msg.c_str());
+        JUtil.error("Where: %s:%d\n", filename, line);
+        JUtil.error("Reason: \"%s\" evaluated to true\n", cond_expr.c_str());
         print_stacktrace();
-        die("Exit by call to %s\n", __PRETTY_FUNCTION__);
+        JUtil.panic("Exit by call to %s\n", __PRETTY_FUNCTION__);
     }
 }
 

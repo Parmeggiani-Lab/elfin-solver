@@ -63,13 +63,13 @@ void Elfin::init() const {
 /* handlers */
 void Elfin::interrupt_handler(int const signal) {
     if (interrupt_caught) {
-        raw("\n\n");
+        JUtil.log("", "\n\n");
         die("Caught interrupt signal (second). Aborting NOW.\n");
     }
     else {
         interrupt_caught = true;
 
-        raw("\n\n");
+        JUtil.log("", "\n\n");
         warn("Caught interrupt signal (first); trying to save data...\n");
 
         // Save latest results

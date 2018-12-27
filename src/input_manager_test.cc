@@ -7,7 +7,7 @@
 namespace elfin {
 
 void InputManager::load_test_config(std::string const& spec_file) {
-    info("Loading test config\n");
+    JUtil.info("Loading test config\n");
 
     char const* argv[] = {
         "elfin", /* binary name */

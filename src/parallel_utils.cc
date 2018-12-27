@@ -11,10 +11,10 @@ void init() {
     omp_set_dynamic(0);
 
     if (OPTIONS.n_workers == 0) {
-        info("Using number of threads set by OMP_NUM_THREADS\n");
+        JUtil.JUtil.info("Using number of threads set by OMP_NUM_THREADS\n");
     }
     else {
-        info("Using %zu threads\n", OPTIONS.n_workers);
+        JUtil.JUtil.info("Using %zu threads\n", OPTIONS.n_workers);
         omp_set_num_threads(OPTIONS.n_workers);
     }
 }

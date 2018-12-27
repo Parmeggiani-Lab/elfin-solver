@@ -49,7 +49,7 @@ Vector3f const points10ab_tran {
 
 /* tests */
 TestStat test_basics() {
-    info("Testing kabsch basics\n");
+    JUtil.info("Testing kabsch basics\n");
     TestStat ts;
 
     // kabsch() return variables
@@ -99,7 +99,7 @@ TestStat test_basics() {
 }
 
 TestStat test_resample() {
-    info("Testing kabsch resample\n");
+    JUtil.info("Testing kabsch resample\n");
     TestStat ts;
 
     // Test upsampling a_fewer to B.size()
@@ -125,7 +125,7 @@ TestStat test_resample() {
 }
 
 TestStat test_score() {
-    info("Testing kabsch score\n");
+    JUtil.info("Testing kabsch score\n");
     TestStat ts;
 
     // Test randomly transformed solution results in kabsch score 0.
@@ -334,7 +334,7 @@ TestStat test_score() {
 }
 
 TestStat test() {
-    info("Testing kabsch\n");
+    JUtil.info("Testing kabsch\n");
     TestStat ts;
 
     ts += test_basics();

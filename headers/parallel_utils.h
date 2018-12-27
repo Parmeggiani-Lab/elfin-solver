@@ -8,12 +8,12 @@
 /* OMP Macros */
 #define OMP_PAR_FOR _Pragma("omp parallel for simd schedule(runtime)")
 
-#define TIMING_START(var_name) \
-    double const var_name = get_timestamp_us();
+#define TIMING_START(VAR_NAME) \
+    double const VAR_NAME = JUtil.get_timestamp_us();
 
 inline long TIMING_END(char const* section_name, double const start_time) {
-    long const diff = (long) ((get_timestamp_us() - start_time) / 1e3);
-    info("Section (%s) time: %ldms\n", section_name, diff);
+    long const diff = (long) ((JUtil.get_timestamp_us() - start_time) / 1e3);
+    JUtil.info("Section (%s) time: %ldms\n", section_name, diff);
     return diff;
 }
 

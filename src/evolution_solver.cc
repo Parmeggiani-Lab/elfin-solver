@@ -61,7 +61,7 @@ struct EvolutionSolver::PImpl {
         tot_gen_time += gen_time;
 
         // Print score stats.
-        info(get_score_msg_format().c_str(),
+        JUtil.info(get_score_msg_format().c_str(),
             gen_id,
             gen_best_score,
             gen_best_score / best_team->size(),
@@ -85,7 +85,7 @@ struct EvolutionSolver::PImpl {
 
         // Print timing stats.
         size_t const n_gens = gen_id + 1;
-        info(timing_msg_format.c_str(),
+        JUtil.info(timing_msg_format.c_str(),
             (double) GA_TIMES.evolve_time / n_gens,
             (double) GA_TIMES.score_time / n_gens,
             (double) GA_TIMES.rank_time / n_gens,
@@ -102,7 +102,7 @@ struct EvolutionSolver::PImpl {
         // Check stop conditions.
         if (gen_best_score < OPTIONS.ga_stop_score) {
             gated_raw(LOG_INFO, "\n");
-            info("Score stopping threshold %.2f reached\n",
+            JUtil.info("Score stopping threshold %.2f reached\n",
                 OPTIONS.ga_stop_score);
             should_stop_ga = true;
         }
@@ -114,7 +114,7 @@ struct EvolutionSolver::PImpl {
                 should_stop_ga = true;
             }
             else {
-                info("Current stagnancy: %d, max: %d\n\n", stagnant_count, OPTIONS.ga_stop_stagnancy);
+                JUtil.info("Current stagnancy: %d, max: %d\n\n", stagnant_count, OPTIONS.ga_stop_stagnancy);
             }
         }
 
@@ -122,14 +122,14 @@ struct EvolutionSolver::PImpl {
     }
 
     /* printers */
-    void print_start_info(WorkArea const& wa) const {
-        info("Length guess: < %zu; Spec has %d points\n",
+    void print_start_JUtil.info(WorkArea const& wa) const {
+        JUtil.info("Length guess: < %zu; Spec has %d points\n",
             wa.target_size(), wa.points().size());
-        info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
-        info("Max Iterations: %zu\n", OPTIONS.ga_iters);
-        info("Surviors: %u\n", CUTOFFS.survivors);
+        JUtil.info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
+        JUtil.info("Max Iterations: %zu\n", OPTIONS.ga_iters);
+        JUtil.info("Surviors: %u\n", CUTOFFS.survivors);
 
-        info("There are %d devices. Host ID=%d; currently using ID=%d\n",
+        JUtil.info("There are %d devices. Host ID=%d; currently using ID=%d\n",
             omp_get_num_devices(), omp_get_initial_device(), OPTIONS.device);
         omp_set_default_device(OPTIONS.device);
 
@@ -137,17 +137,17 @@ struct EvolutionSolver::PImpl {
         {
             #pragma omp single
             {
-                info("GA starting with %d threads\n\n", omp_get_num_threads());
+                JUtil.info("GA starting with %d threads\n\n", omp_get_num_threads());
             }
         }
     }
 
-    void print_end_info() const {
+    void print_end_JUtil.info() const {
         double const time_elapsed_in_us = get_timestamp_us() - start_time_in_us_;
         size_t const minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
         size_t const seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
         size_t const milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
-        info("EvolutionSolver finished in %zum %zus %zums\n",
+        JUtil.info("EvolutionSolver finished in %zum %zus %zums\n",
             minutes, seconds, milliseconds);
     }
 
@@ -196,7 +196,7 @@ struct EvolutionSolver::PImpl {
 
             Population population = Population(wa.get());
 
-            print_start_info(*wa);
+            print_start_JUtil.info(*wa);
 
             double tot_gen_time = 0.0f;
             size_t stagnant_count = 0;
@@ -231,7 +231,7 @@ struct EvolutionSolver::PImpl {
             }
         }
 
-        print_end_info();
+        print_end_JUtil.info();
     }
 };
 

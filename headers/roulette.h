@@ -4,17 +4,16 @@
 #include <vector>
 #include <sstream>
 
-#include <jutil/jutil.h>
 #include "random_utils.h"
 #include "string_utils.h"
 #include "debug_utils.h"
 
 namespace elfin {
 
-/*
- * A vector wrapper that also stores a probability distribution from which
- * random items are drawn.
- */
+//
+// A vector wrapper that also stores a probability distribution from which
+// random items are drawn.
+//
 template<typename ItemType>
 class Roulette {
 protected:

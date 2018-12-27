@@ -15,11 +15,11 @@ class ArgParser;
 typedef void (ArgParser::*ArgBundleCallback)(std::string const&);
 
 struct ArgBundle {
-    std::string short_form;
-    std::string long_form;
-    std::string description;
-    bool exp_val;  // Will argument be followed by a value?
-    ArgBundleCallback callback;
+    std::string const short_form;
+    std::string const long_form;
+    std::string const description;
+    bool const exp_val;  // Will argument be followed by a value?
+    ArgBundleCallback const callback;
     std::string to_string() const;
 };
 
@@ -163,91 +163,91 @@ private:
     /* modifiers */
     void parse_options(int const argc, char const *argv[]);
 
-#define ARG_PARSER_CALLBACK_DECL(FUNC) \
+#define ARG_CALLBACK_DECL(FUNC) \
     void FUNC(std::string const& arg_in)
 
-    ARG_PARSER_CALLBACK_DECL(parse_config);
+    ARG_CALLBACK_DECL(parse_config);
 
-    ARG_PARSER_CALLBACK_DECL(set_spec_file);
+    ARG_CALLBACK_DECL(set_spec_file);
 
-    ARG_PARSER_CALLBACK_DECL(set_xdb) {
+    ARG_CALLBACK_DECL(set_xdb) {
         options_.xdb = arg_in;
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_output_dir) {
+    ARG_CALLBACK_DECL(set_output_dir) {
         options_.output_dir = arg_in;
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_len_dev) {
-        options_.len_dev = parse_long(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_len_dev) {
+        options_.len_dev = JUtil.parse_long(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_avg_pair_dist) {
-        options_.avg_pair_dist = parse_float(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_avg_pair_dist) {
+        options_.avg_pair_dist = JUtil.parse_float(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_seed) {
-        options_.seed = parse_long(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_seed) {
+        options_.seed = JUtil.parse_long(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_ga_pop_size) {
-        options_.ga_pop_size = parse_long(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_ga_pop_size) {
+        options_.ga_pop_size = JUtil.parse_long(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_ga_iters) {
-        options_.ga_iters = parse_long(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_ga_iters) {
+        options_.ga_iters = JUtil.parse_long(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_ga_survive_rate) {
-        options_.ga_survive_rate = parse_float(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_ga_survive_rate) {
+        options_.ga_survive_rate = JUtil.parse_float(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_ga_stop_score) {
-        options_.ga_stop_score = parse_float(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_ga_stop_score) {
+        options_.ga_stop_score = JUtil.parse_float(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_ga_stop_stagnancy) {
-        options_.ga_stop_stagnancy = parse_long(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_ga_stop_stagnancy) {
+        options_.ga_stop_stagnancy = JUtil.parse_long(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_verbosity) {
+    ARG_CALLBACK_DECL(set_verbosity) {
         // Call jutil function to set global log level.
-        ::set_log_level((LogLvl) parse_long(arg_in.c_str()));
+        JUtil.set_log_level((LogLvl) JUtil.parse_long(arg_in.c_str()));
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_run_tests) {
+    ARG_CALLBACK_DECL(set_run_tests) {
         options_.run_tests = true;
         options_.spec_file = "examples/quarter_snake_free.json";
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_device) {
-        options_.device = parse_long(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_device) {
+        options_.device = JUtil.parse_long(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_n_workers) {
-        options_.n_workers = parse_long(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_n_workers) {
+        options_.n_workers = JUtil.parse_long(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_keep_n) {
-        options_.keep_n = parse_long(arg_in.c_str());
+    ARG_CALLBACK_DECL(set_keep_n) {
+        options_.keep_n = JUtil.parse_long(arg_in.c_str());
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_dry_run) {
+    ARG_CALLBACK_DECL(set_dry_run) {
         options_.dry_run = true;
     }
 
-    ARG_PARSER_CALLBACK_DECL(set_radius_type) {
+    ARG_CALLBACK_DECL(set_radius_type) {
         options_.radius_type = arg_in;
     }
 
     /* printers */
-    ARG_PARSER_CALLBACK_DECL(help_and_exit);
+    ARG_CALLBACK_DECL(help_and_exit);
 
-#undef ARG_PARSER_CALLBACK_DECL
+#undef ARG_CALLBACK_DECL
 
 public:
     /* ctors */
-    ArgParser(int const argc, char const *argv[]);
+    ArgParser(int const argc, char const * const argv[]);
     Options get_options() const { return options_; }
 };
 
