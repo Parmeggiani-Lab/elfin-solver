@@ -37,7 +37,7 @@ size_t test_units() {
         total += BasicNodeTeam::test();
 
     JUtil.info("%zu/%zu unit tests passed.\n",
-        (total.tests - total.errors), total.tests);
+               (total.tests - total.errors), total.tests);
 
     if (total.errors > 0) {
         JUtil.error("%zu unit tests failed!\n", total.errors);
@@ -51,8 +51,8 @@ size_t test_integration() {
     TestStat total = EvolutionSolver::test();
 
     JUtil.info("%zu/%zu integration tests passed.\n",
-        (total.tests - total.errors), total.tests);
-    
+               (total.tests - total.errors), total.tests);
+
     if (total.errors > 0) {
         JUtil.error("%zu integration tests failed!\n", total.errors);
     }
@@ -65,17 +65,20 @@ void run_all() {
 
     if (unit_test_errors > 0) {
         JUtil.panic("%zu unit tests failed. Not continuing to integration tests.\n",
-            unit_test_errors);
+                    unit_test_errors);
     }
     else {
         size_t const int_test_errors = test_integration();
 
-        if (int_test_errors > 0) {
-            JUtil.panic("%zu integration tests failed.\n",
-                int_test_errors);
-        } else {
-            JUtil.info("All Tests Passed. \\*O*/\n");
-            fprintf(stdout, unit_tests_passed_str);
+        JUtil.panic_if(int_test_errors > 0,
+                       "%zu integration tests failed.\n",
+                       int_test_errors);
+
+        if (JUtil.check_log_lvl(LOGLVL_INFO)) {
+            printf("- - - - - - - - - -"
+                   "All Tests Passed \\*O*/"
+                   "- - - - - - - - - -\n");
+            printf(unit_tests_passed_str);
         }
     }
 }

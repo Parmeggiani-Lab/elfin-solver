@@ -212,7 +212,7 @@ private:
 
     ARG_CALLBACK_DECL(set_verbosity) {
         // Call jutil function to set global log level.
-        JUtil.set_log_level((JUtilLogLvl) JUtil.parse_long(arg_in.c_str()));
+        JUtil.set_log_lvl((JUtilLogLvl) JUtil.parse_long(arg_in.c_str()));
     }
 
     ARG_CALLBACK_DECL(set_run_tests) {

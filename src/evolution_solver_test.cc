@@ -11,20 +11,21 @@ TestStat EvolutionSolver::test() {
     TestStat ts;
 
     // Test solving free body type work area.
+    // Force 1 thread for reproduciblility.
     InputManager::load_test_config(
-        /*spec_file=*/ "examples/quarter_snake_free_far.json");
+        /*spec_file=*/ "examples/quarter_snake_free_far.json",
+        /*n_workers=*/ 1);
 
     EvolutionSolver solver;
-
     // Test solver runs without crashing.
     {
         ts.tests++;
 
-        JUtilLogLvl original_ll = JUtil.get_log_level();
+        JUtilLogLvl original_ll = JUtil.get_log_lvl();
 
-        JUtil.set_log_level(LOGLVL_WARNING);
+        // JUtil.set_log_lvl(LOGLVL_WARNING);
         solver.run();
-        JUtil.set_log_level(original_ll);
+        JUtil.set_log_lvl(original_ll);
     }
 
     // Test that expected solution was obtained.
@@ -32,8 +33,8 @@ TestStat EvolutionSolver::test() {
         ts.tests++;
         size_t const n_work_areas = SPEC.work_areas().size();
         JUtil.panic_if(n_work_areas != 1,
-                 "Expected spec to have exactly 1 work area, but there is %lu\n",
-                 n_work_areas);
+                       "Expected spec to have exactly 1 work area, but there is %lu\n",
+                       n_work_areas);
 
         auto const& work_area = begin(SPEC.work_areas())->second;
 
@@ -41,16 +42,16 @@ TestStat EvolutionSolver::test() {
             solver.best_sols().at(work_area->name());
         size_t const n_solutions = solutions.size();
         JUtil.panic_if(n_solutions != OPTIONS.keep_n,
-                 "Expected %lu solutions, but there is %lu\n",
-                 OPTIONS.keep_n, n_solutions);
+                       "Expected %lu solutions, but there is %lu\n",
+                       OPTIONS.keep_n, n_solutions);
 
         auto best_team = solutions.at(0);
         auto& nodes = best_team->nodes();
         auto& free_chains = best_team->free_chains();
 
         JUtil.panic_if(free_chains.size() != 2,
-                 "Expected %lu free chains, but there is %lu\n",
-                 2, free_chains.size());
+                       "Expected %lu free chains, but there is %lu\n",
+                       2, free_chains.size());
 
         auto& recipe = tests::quarter_snake_free_recipe;
         std::string const& starting_name = recipe[0].mod_name;

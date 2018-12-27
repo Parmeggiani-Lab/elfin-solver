@@ -26,7 +26,7 @@ NodeTeamSP create_team(WorkArea const* wa) {
 }
 
 void print_mutation_ratios(mutation::ModeList mode_tally) {
-    if (JUtil.get_log_level() <= LOGLVL_DEBUG) {
+    if (JUtil.check_log_lvl(LOGLVL_DEBUG)) {
         mutation::Counter mc;
         for (mutation::Mode const& mode : mode_tally) {
             mc[mode]++;

@@ -54,7 +54,10 @@ void InputManager::setup() {
     instance().spec_.parse_from_json(parse_json(OPTIONS.spec_file));
 
     JUtil.info("Spec has %lu fixed areas and %lu work areas\n",
-        SPEC.fixed_areas().size(), SPEC.work_areas().size());
+               SPEC.fixed_areas().size(), SPEC.work_areas().size());
+
+    parallel::init();
+    random::init();
 }
 
 }  /* elfin */

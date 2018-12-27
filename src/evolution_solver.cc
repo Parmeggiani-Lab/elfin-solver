@@ -103,7 +103,9 @@ struct EvolutionSolver::PImpl {
 
         // Check stop conditions.
         if (gen_best_score < OPTIONS.ga_stop_score) {
-            fprintf(stdout, "\n");
+            if (JUtil.check_log_lvl(LOGLVL_INFO)) {
+                fprintf(stdout, "\n");
+            }
             JUtil.info("Score stopping threshold %.2f reached\n",
                        OPTIONS.ga_stop_score);
             should_stop_ga = true;

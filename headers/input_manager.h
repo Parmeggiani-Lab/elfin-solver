@@ -67,7 +67,8 @@ public:
 
     /* tests */
     static void load_test_config(
-        std::string const& spec_file = "examples/quarter_snake_free.json");
+        std::string const& spec_file = "examples/quarter_snake_free.json",
+        size_t const n_workers = 1);
     static TestStat test();
 };
 

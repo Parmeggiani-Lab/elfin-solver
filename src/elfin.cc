@@ -22,7 +22,7 @@ Elfin::Elfin(int const argc, char const** argv) {
     std::signal(SIGINT, interrupt_handler);
 
     // Display all info + warnings by default.
-    JUtil.set_log_level(LOGLVL_INFO);
+    JUtil.set_log_lvl(LOGLVL_INFO);
 
     // Parse arguments and configuration.
     InputManager::parse_options(argc, argv);
@@ -39,7 +39,7 @@ int Elfin::run() {
         tests::run_all();
     }
     else {
-        init();
+        InputManager::setup();
         solver_.run();
         OutputManager::write_output(solver_);
     }
@@ -52,12 +52,6 @@ int Elfin::run() {
 void Elfin::crash_dump() const {
     JUtil.warn("Crash-dumping results...\n");
     OutputManager::write_output(solver_, "crash_dump");
-}
-
-void Elfin::init() const {
-    InputManager::setup();
-    parallel::init();
-    random::init();
 }
 
 /* handlers */

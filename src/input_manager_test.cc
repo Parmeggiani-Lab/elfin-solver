@@ -6,13 +6,16 @@
 
 namespace elfin {
 
-void InputManager::load_test_config(std::string const& spec_file) {
+void InputManager::load_test_config(
+    std::string const& spec_file,
+    size_t const n_workers) {
     JUtil.info("Loading test config\n");
 
     char const* argv[] = {
         "elfin", /* binary name */
         "--config_file", "config/unit_test.json",
-        "--spec_file", spec_file.c_str()
+        "--spec_file", spec_file.c_str(),
+        "--n_workers", string_format("%lu", n_workers).c_str()
     };
 
     size_t const argc = sizeof(argv) / sizeof(argv[0]);
@@ -31,7 +34,7 @@ TestStat InputManager::test() {
     if (SPEC.work_areas().size() != 1) {
         ts.errors++;
         JUtil.error("Spec parsing should get 1 work area but got %zu\n",
-            SPEC.work_areas().size());
+                    SPEC.work_areas().size());
     }
     else {
         auto& wa = begin(SPEC.work_areas())->second; // unique_ptr
