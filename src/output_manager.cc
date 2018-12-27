@@ -67,7 +67,7 @@ void OutputManager::write_output(
                 }
                 else {
                     JUtil.error("Team memory corrupted in work area \"%s\" (ptr=%p)\n",
-                        wa_name.c_str(), team);
+                                wa_name.c_str(), team);
                 }
 
                 work_area_json[i] = sol_json;
@@ -92,8 +92,8 @@ void OutputManager::write_output(
     // At last, write JSON to file.
     std::string dump = output_json.dump(indent_size);
     JUtil.write_binary(json_output_path,
-                 dump.c_str(),
-                 dump.size());
+                       dump.c_str(),
+                       dump.size());
 }
 
 }  /* elfin */

@@ -62,11 +62,11 @@ struct EvolutionSolver::PImpl {
 
         // Print score stats.
         JUtil.info(get_score_msg_format().c_str(),
-            gen_id,
-            gen_best_score,
-            gen_best_score / best_team->size(),
-            worst_team->score(),
-            gen_time);
+                   gen_id,
+                   gen_best_score,
+                   gen_best_score / best_team->size(),
+                   worst_team->score(),
+                   gen_time);
 
         // Compute stagnancy & check inverted scores.
         if (JUtil.float_approximates(gen_best_score, lastgen_best_score, 1e-6)) {
@@ -86,16 +86,18 @@ struct EvolutionSolver::PImpl {
         // Print timing stats.
         size_t const n_gens = gen_id + 1;
         JUtil.info(timing_msg_format.c_str(),
-            (double) GA_TIMES.evolve_time / n_gens,
-            (double) GA_TIMES.score_time / n_gens,
-            (double) GA_TIMES.rank_time / n_gens,
-            (double) GA_TIMES.select_time / n_gens,
-            (double) tot_gen_time / n_gens);
+                   (double) GA_TIMES.evolve_time / n_gens,
+                   (double) GA_TIMES.score_time / n_gens,
+                   (double) GA_TIMES.rank_time / n_gens,
+                   (double) GA_TIMES.select_time / n_gens,
+                   (double) tot_gen_time / n_gens);
 
         // Update best solutions.
-        best_sols = NodeTeamSPList();
+        best_sols.clear();
         for (size_t j = 0; j < OPTIONS.keep_n; j++) {
             best_sols.emplace_back(pop.front_buffer()->at(j)->clone());
+            NodeTeamSP last = best_sols.back();
+            JUtil.panic_if(not last, "Wtf?\n");
             has_result_ |= true;
         }
 
@@ -103,7 +105,7 @@ struct EvolutionSolver::PImpl {
         if (gen_best_score < OPTIONS.ga_stop_score) {
             fprintf(stdout, "\n");
             JUtil.info("Score stopping threshold %.2f reached\n",
-                OPTIONS.ga_stop_score);
+                       OPTIONS.ga_stop_score);
             should_stop_ga = true;
         }
         else {
@@ -124,13 +126,13 @@ struct EvolutionSolver::PImpl {
     /* printers */
     void print_start_msg(WorkArea const& wa) const {
         JUtil.info("Length guess: < %zu; Spec has %d points\n",
-            wa.target_size(), wa.points().size());
+                   wa.target_size(), wa.points().size());
         JUtil.info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
         JUtil.info("Max Iterations: %zu\n", OPTIONS.ga_iters);
         JUtil.info("Surviors: %u\n", CUTOFFS.survivors);
 
         JUtil.info("There are %d devices. Host ID=%d; currently using ID=%d\n",
-            omp_get_num_devices(), omp_get_initial_device(), OPTIONS.device);
+                   omp_get_num_devices(), omp_get_initial_device(), OPTIONS.device);
         omp_set_default_device(OPTIONS.device);
 
         #pragma omp parallel
@@ -148,7 +150,7 @@ struct EvolutionSolver::PImpl {
         size_t const seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
         size_t const milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
         JUtil.info("EvolutionSolver finished in %zum %zus %zums\n",
-            minutes, seconds, milliseconds);
+                   minutes, seconds, milliseconds);
     }
 
     void print_pop(
@@ -164,13 +166,13 @@ struct EvolutionSolver::PImpl {
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.front_buffer()->at(i);
                 oss << string_format(print_pop_fmt_,
-                       "  front", i, c->checksum(), c->size(), c->score());
+                                     "  front", i, c->checksum(), c->size(), c->score());
             }
 
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.back_buffer()->at(i);
                 oss << string_format(print_pop_fmt_,
-                       "  back ", i, c->checksum(), c->size(), c->score());
+                                     "  back ", i, c->checksum(), c->size(), c->score());
             }
 
             JUtil.debug(oss.str().c_str());
@@ -183,6 +185,7 @@ struct EvolutionSolver::PImpl {
 
         start_time_in_us_ = JUtil.get_timestamp_us();
         for (auto& itr : SPEC.work_areas()) {
+            // Initialize population and solution list.
             std::string const wa_name = itr.first;
             auto& wa = itr.second;
             if (wa->type() != WorkType::FREE and
@@ -195,6 +198,7 @@ struct EvolutionSolver::PImpl {
             }
 
             Population population = Population(wa.get());
+            best_sols_[wa_name] = NodeTeamSPList();
 
             print_start_msg(*wa);
 

@@ -944,7 +944,7 @@ JSON BasicNodeTeam::gen_nodes_json() const {
         // Kabsch outputs for forward and backward paths.
         elfin::Mat3f rot[2];
         Vector3f tran[2];
-        float rms[2];
+        float rms[2] = { 0 };
 
         for (size_t i = 0; i < 2; ++i) {
             V3fList const& points = collect_points(free_chains_.at(i).node_sp());
@@ -956,11 +956,6 @@ JSON BasicNodeTeam::gen_nodes_json() const {
                 tran[i],
                 rms[i]);
         }
-
-        // JUtil.warn("RMS: %.2f, %.2f\n", rms[0], rms[1]);
-        // for (auto& fc : free_chains_) {
-        //     fprintf(stderr, "[WTF] fc: %s\n", fc.to_string().c_str());
-        // }
 
         // Start at tip that yields lower score.
         size_t const better_tip_id = rms[0] < rms[1] ? 0 : 1;
