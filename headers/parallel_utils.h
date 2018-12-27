@@ -13,7 +13,7 @@
 
 inline long TIMING_END(char const* section_name, double const start_time) {
     long const diff = (long) ((get_timestamp_us() - start_time) / 1e3);
-    msg("Section (%s) time: %ldms\n", section_name, diff);
+    info("Section (%s) time: %ldms\n", section_name, diff);
     return diff;
 }
 

@@ -7,7 +7,7 @@
 namespace elfin {
 
 void InputManager::load_test_config(std::string const& spec_file) {
-    msg("Loading test config\n");
+    info("Loading test config\n");
 
     char const* argv[] = {
         "elfin", /* binary name */
@@ -43,14 +43,17 @@ TestStat InputManager::test() {
         if (tests::quarter_snake_free_coordinates != points_test) {
             ts.errors++;
             err("Work area point parsing test failed\n");
-            err("Expected:\n");
+            std::ostringstream oss;
+            oss << "Expected:\n";
             for (auto& p : tests::quarter_snake_free_coordinates) {
-                raw_at(LOG_WARN, "%s\n", p.to_string().c_str());
+                oss << p.to_string() << "\n";
             }
             err("But got:\n");
             for (auto& p : points_test) {
-                raw_at(LOG_WARN, "%s\n", p.to_string().c_str());
+                oss << p.to_string() << "\n";
             }
+
+            err(oss.str().c_str());
         }
     }
 

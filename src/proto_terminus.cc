@@ -53,7 +53,7 @@ void ProtoTerminus::finalize() {
     finalized_ = true;
 
 #ifdef PRINT_FINALIZE
-    wrn("Finalizing proto terminus with %zu links\n", links_.size());
+    warn("Finalizing proto terminus with %zu links\n", links_.size());
 #endif  /* ifdef PRINT_FINALIZE */
 
     //
@@ -120,7 +120,7 @@ void ProtoTerminus::finalize() {
         c_roulette_.push_back(c_cpd, row_link_ptr);
 
 #ifdef PRINT_FINALIZE
-        wrn("ProtoLink to %s into chain %zu with %zu interfaces\n",
+        warn("ProtoLink to %s into chain %zu with %zu interfaces\n",
             link_ptr->module_->name.c_str(),
             link_ptr->chain_id_,
             link_ptr->module_->counts().all_interfaces());

@@ -21,9 +21,10 @@ Elfin::Elfin(int const argc, char const** argv) {
 
     std::signal(SIGINT, interrupt_handler);
 
-    set_log_level(LOG_WARN);
+    // Display all info + warnings by default.
+    set_log_level(LOG_INFO);
 
-    // Parse arguments and configuration
+    // Parse arguments and configuration.
     InputManager::parse_options(argc, argv);
 }
 
@@ -49,7 +50,7 @@ int Elfin::run() {
 /* private */
 /* accessors */
 void Elfin::crash_dump() const {
-    wrn("Crash-dumping results...\n");
+    warn("Crash-dumping results...\n");
     OutputManager::write_output(solver_, "crash_dump");
 }
 
@@ -69,7 +70,7 @@ void Elfin::interrupt_handler(int const signal) {
         interrupt_caught = true;
 
         raw("\n\n");
-        wrn("Caught interrupt signal (first); trying to save data...\n");
+        warn("Caught interrupt signal (first); trying to save data...\n");
 
         // Save latest results
         for (auto inst : instances_) {

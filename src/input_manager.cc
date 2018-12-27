@@ -50,10 +50,10 @@ void InputManager::parse_options(int const argc, const char ** argv) {
 void InputManager::setup() {
     instance().xdb_.parse_from_json(parse_json(OPTIONS.xdb));
 
-    msg("Using spec file: %s\n", OPTIONS.spec_file.c_str());
+    info("Using spec file: %s\n", OPTIONS.spec_file.c_str());
     instance().spec_.parse_from_json(parse_json(OPTIONS.spec_file));
 
-    msg("Spec has %lu fixed areas and %lu work areas\n",
+    info("Spec has %lu fixed areas and %lu work areas\n",
         SPEC.fixed_areas().size(), SPEC.work_areas().size());
 }
 

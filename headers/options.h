@@ -21,7 +21,7 @@ struct Options {
 
     /* GA parameters */
     uint32_t seed = 0x1337cafe;
-    size_t ga_pop_size = 10000;
+    size_t ga_pop_size = 8096;
     size_t ga_iters = 1000;
     float ga_survive_rate = 0.05f;
 

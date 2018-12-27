@@ -15,7 +15,7 @@ namespace elfin {
 namespace tests {
 
 size_t test_units() {
-    msg("Running unit tests...\n");
+    info("Running unit tests...\n");
     TestStat total;
 
     total += InputManager::test();
@@ -36,7 +36,7 @@ size_t test_units() {
     if (total.errors == 0)
         total += BasicNodeTeam::test();
 
-    msg("%zu/%zu unit tests passed.\n",
+    info("%zu/%zu unit tests passed.\n",
         (total.tests - total.errors), total.tests);
 
     if (total.errors > 0) {
@@ -47,10 +47,10 @@ size_t test_units() {
 }
 
 size_t test_integration() {
-    msg("Running integration tests...\n");
+    info("Running integration tests...\n");
     TestStat total = EvolutionSolver::test();
 
-    msg("%zu/%zu integration tests passed.\n",
+    info("%zu/%zu integration tests passed.\n",
         (total.tests - total.errors), total.tests);
     
     if (total.errors > 0) {
@@ -74,7 +74,7 @@ void run_all() {
             die("%zu integration tests failed.\n",
                 int_test_errors);
         } else {
-            msg("All Tests Passed. \\*O*/\n");
+            info("All Tests Passed. \\*O*/\n");
             raw(unit_tests_passed_str);
         }
     }

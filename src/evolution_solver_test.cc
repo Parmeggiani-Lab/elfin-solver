@@ -22,7 +22,7 @@ TestStat EvolutionSolver::test() {
 
         LogLvl original_ll = ::get_log_level();
 
-        ::set_log_level(LOG_RAW);
+        ::set_log_level(LOG_WARNING);
         solver.run();
         ::set_log_level(original_ll);
     }
@@ -66,19 +66,20 @@ TestStat EvolutionSolver::test() {
                 ts.errors++;
                 err("Solver best solution differs from expectation.\n");
 
-                err("Solver solution:\n");
+                std::ostringstream oss;
+                oss << "Solver solution:\n";
+
                 BasicNodeGenerator err_node_gen(tip_fc.node_sp());
                 while (not err_node_gen.is_done()) {
-                    raw_at(LOG_ERROR, "%s\n",
-                           err_node_gen.next()->prototype_->name.c_str());
+                    oss << err_node_gen.next()->prototype_->name << "\n";
                 }
 
                 err("Expected solution:\n");
                 for (auto& step : recipe) {
-                    raw_at(LOG_ERROR, "%s\n",
-                           step.mod_name.c_str());
+                    oss << step.mod_name << "\n";
                 }
 
+                err(oss.str().c_str());
                 break;
             }
             ++step_itr;

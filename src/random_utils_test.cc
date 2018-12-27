@@ -21,7 +21,7 @@ TestStat test() {
         #pragma omp single
         {
             size_t const n = omp_get_num_threads();
-            msg("Testing random_utils (forcing %zu threads)\n", n);
+            info("Testing random_utils (forcing %zu threads)\n", n);
 
             NICE_PANIC(n != num_threads,
             string_format(

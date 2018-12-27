@@ -49,7 +49,7 @@ Vector3f const points10ab_tran {
 
 /* tests */
 TestStat test_basics() {
-    msg("Testing kabsch basics\n");
+    info("Testing kabsch basics\n");
     TestStat ts;
 
     // kabsch() return variables
@@ -99,7 +99,7 @@ TestStat test_basics() {
 }
 
 TestStat test_resample() {
-    msg("Testing kabsch resample\n");
+    info("Testing kabsch resample\n");
     TestStat ts;
 
     // Test upsampling a_fewer to B.size()
@@ -125,7 +125,7 @@ TestStat test_resample() {
 }
 
 TestStat test_score() {
-    msg("Testing kabsch score\n");
+    info("Testing kabsch score\n");
     TestStat ts;
 
     // Test randomly transformed solution results in kabsch score 0.
@@ -142,15 +142,19 @@ TestStat test_score() {
             err("kabsch identity score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
-            err("Hard coded points:\n");
+            std::ostringstream oss;
+            oss << "Hard coded points:\n";
+
             for (auto const& point : tests::quarter_snake_free_coordinates) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+                oss << point.to_string() << "\n";
             }
 
-            err("Input file points:\n");
+            oss << "Input file points:\n";
             for (auto const& point : wa_points) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+                oss << point.to_string() << "\n";
             }
+
+            err(oss.str().c_str());
         }
     }
 
@@ -179,15 +183,19 @@ TestStat test_score() {
             err("kabsch translation score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
-            err("Hard coded points:\n");
+            std::ostringstream oss;
+            oss << "Hard coded points:\n";
+
             for (auto const& point : points_test) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+                oss << point.to_string() << "\n";
             }
 
-            err("Input file points:\n");
+            oss << "Input file points:\n";
             for (auto const& point : wa_points) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+                oss << point.to_string() << "\n";
             }
+
+            err(oss.str().c_str());
         }
     }
 
@@ -216,15 +224,18 @@ TestStat test_score() {
             err("kabsch rotation score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
-            err("Hard coded points:\n");
+            std::ostringstream oss;
+            oss << "Hard coded points:\n";
             for (auto const& point : points_test) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+                oss << point.to_string() << "\n";
             }
 
-            err("Input file points:\n");
+            oss << "Input file points:\n";
             for (auto const& point : wa_points) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+                oss << point.to_string() << "\n";
             }
+
+            err(oss.str().c_str());
         }
     }
 
@@ -255,15 +266,18 @@ TestStat test_score() {
             err("kabsch random transform score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
-            err("Hard coded points:\n");
+            std::ostringstream oss;
+            oss << "Hard coded points:\n";
             for (auto const& point : points_test) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+                oss << point.to_string() << "\n";
+            }
+            
+            oss << "Input file points:\n";
+            for (auto const& point : wa_points) {
+                oss << point.to_string() << "\n";
             }
 
-            err("Input file points:\n");
-            for (auto const& point : wa_points) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-            }
+            err(oss.str().c_str());
         }
     }
 
@@ -277,15 +291,18 @@ TestStat test_score() {
             err("kabsch Blender origin transform score test failed.\n"
                 "Expected 0\nGot %f\n", kscore);
 
-            err("Blender origin points:\n");
+            std::ostringstream oss;
+            oss << "Blender origin points:\n";
             for (auto const& point : tests::quarter_snake_free_coordinates_origin) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+                oss << point.to_string() << "\n";
+            }
+            
+            oss << "Input file points:\n";
+            for (auto const& point : wa_points) {
+                oss << point.to_string() << "\n";
             }
 
-            err("Input file points:\n");
-            for (auto const& point : wa_points) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-            }
+            err(oss.str().c_str());
         }
     }
 
@@ -298,15 +315,18 @@ TestStat test_score() {
             err("kabsch unrelated point score test failed.\n"
                 "Expected >> 0\nGot %f\n", kscore);
 
-            err("points10a:\n");
+            std::ostringstream oss;
+            oss << "points10a:\n";
             for (auto const& point : points10a) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
+                oss << point.to_string() << "\n";
+            }
+            
+            oss << "points10b:\n";
+            for (auto const& point : points10b) {
+                oss << point.to_string() << "\n";
             }
 
-            err("points10b:\n");
-            for (auto const& point : points10b) {
-                raw_at(LOG_ERROR, "%s\n", point.to_string().c_str());
-            }
+            err(oss.str().c_str());
         }
     }
 
@@ -314,7 +334,7 @@ TestStat test_score() {
 }
 
 TestStat test() {
-    msg("Testing kabsch\n");
+    info("Testing kabsch\n");
     TestStat ts;
 
     ts += test_basics();

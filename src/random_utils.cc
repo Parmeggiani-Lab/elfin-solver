@@ -15,7 +15,7 @@ std::vector<std::mt19937> TWISTERS;
 void init() {
     TWISTERS.clear();
 
-    msg("Using master seed: 0x%p\n", OPTIONS.seed);
+    info("Using master seed: 0x%p\n", OPTIONS.seed);
 
     #pragma omp parallel
     {

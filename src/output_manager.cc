@@ -36,7 +36,7 @@ void OutputManager::write_output(
     std::string extra_dir,
     size_t const indent_size) {
     if (not solver.has_result()) {
-        wrn("Solver %p has no result to be written out\n", &solver);
+        warn("Solver %p has no result to be written out\n", &solver);
         return;
     }
 

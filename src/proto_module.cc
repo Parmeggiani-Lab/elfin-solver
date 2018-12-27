@@ -35,14 +35,14 @@ ProtoModule::ProtoModule(
     type(_type),
     radius(_radius) {
 #ifdef PRINT_INIT
-    wrn("New ProtoModule at %p\n", this);
+    warn("New ProtoModule at %p\n", this);
 #endif  /* ifdef PRINT_INIT */
 
     for (std::string const& cn : _chain_names) {
         chains_.emplace_back(cn, chains_.size());
 #ifdef PRINT_INIT
         Chain& actual = chains_.back();
-        wrn("Created chain[%s] chains_.size()=%zu at %p; actual: %p, %p, %p, %p\n",
+        warn("Created chain[%s] chains_.size()=%zu at %p; actual: %p, %p, %p, %p\n",
             cn.c_str(),
             chains_.size(),
             &actual,
@@ -54,7 +54,7 @@ ProtoModule::ProtoModule(
     }
 
 #ifdef PRINT_INIT
-    wrn("First chain: %p ? %p\n", &chains_.at(0), &(chains_[0]));
+    warn("First chain: %p ? %p\n", &chains_.at(0), &(chains_[0]));
 #endif  /* ifdef PRINT_INIT */
 }
 
@@ -105,7 +105,7 @@ void ProtoModule::finalize() {
     finalized_ = true;
 
 #ifdef PRINT_FINALIZE
-    wrn("Finalizing module %s\n", name.c_str());
+    warn("Finalizing module %s\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
 
     for (ProtoChain& proto_chain : chains_) {

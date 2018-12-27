@@ -70,49 +70,50 @@ void Database::categorize() {
 }
 
 void Database::print_roulettes() {
-    wrn("---ProtoModule Roulettes Debug---\n");
-    wrn("All:\n");
+    std::ostringstream ss;
+    ss << "---ProtoModule Roulettes Debug---\n";
+    ss << "All:\n";
     for (auto& mod : all_mods_) {
-        raw_at(LOG_WARN, mod->to_string().c_str());
+        ss << mod->to_string();
     }
-    wrn("Singles:\n%s", singles_.to_string().c_str());
-    wrn("Hubs:\n%s", hubs_.to_string().c_str());
-    wrn("Basic:\n%s", basic_mods_.to_string().c_str());
-    wrn("Complex:\n%s", complex_mods_.to_string().c_str());
+    ss << "Singles:\n" << singles_.to_string();
+    ss << "Hubs:\n" << hubs_.to_string();
+    ss << "Basic:\n" << basic_mods_.to_string();
+    ss << "Complex:\n" << complex_mods_.to_string();
 }
 
 void Database::print_db() {
-    wrn("---DB Proto Link Parse Debug---\n");
+    warn("---DB Proto Link Parse Debug---\n");
     size_t const n_mods = all_mods_.size();
-    wrn("Database has %zu mods, of which...\n", n_mods);
-    wrn("%zu are singles\n", singles_.items().size());
-    wrn("%zu are hubs\n", hubs_.items().size());
-    wrn("%zu are basic\n", basic_mods_.items().size());
-    wrn("%zu are complex\n", complex_mods_.items().size());
+    warn("Database has %zu mods, of which...\n", n_mods);
+    warn("%zu are singles\n", singles_.items().size());
+    warn("%zu are hubs\n", hubs_.items().size());
+    warn("%zu are basic\n", basic_mods_.items().size());
+    warn("%zu are complex\n", complex_mods_.items().size());
 
     for (size_t i = 0; i < n_mods; ++i)
     {
         auto& mod = all_mods_.at(i);
         size_t const n_chains = mod->chains().size();
-        wrn("xdb_[#%zu:%s] has %zu chains\n",
+        warn("xdb_[#%zu:%s] has %zu chains\n",
             i, mod->name.c_str(), n_chains);
 
         for (auto& proto_chain : mod->chains()) {
-            wrn("\tchain[#%zu:%s]:\n",
+            warn("\tchain[#%zu:%s]:\n",
                 proto_chain.id,
                 proto_chain.name.c_str());
 
             auto& n_links = proto_chain.n_term().links();
             for (size_t k = 0; k < n_links.size(); ++k)
             {
-                wrn("\t\tn_links[%zu] -> xdb_[%s]\n",
+                warn("\t\tn_links[%zu] -> xdb_[%s]\n",
                     k, n_links[k]->module_->name.c_str());
             }
 
             auto& c_links = proto_chain.c_term().links();
             for (size_t k = 0; k < c_links.size(); ++k)
             {
-                wrn("\t\tc_links[%zu] -> xdb_[%s]\n",
+                warn("\t\tc_links[%zu] -> xdb_[%s]\n",
                     k, c_links[k]->module_->name.c_str());
             }
         }
@@ -171,7 +172,7 @@ void Database::parse_from_json(JSON const& xdb) {
         mod_idx_map_[name] = mod_id;
 
 #ifdef PRINT_MOD_IDX_MAP_
-        wrn("Module %s maps to id %zu\n", name.c_str(), mod_id);
+        warn("Module %s maps to id %zu\n", name.c_str(), mod_id);
 #endif  /* ifndef PRINT_MOD_IDX_MAP_ */
 
         StrList chain_names;

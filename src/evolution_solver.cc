@@ -61,7 +61,7 @@ struct EvolutionSolver::PImpl {
         tot_gen_time += gen_time;
 
         // Print score stats.
-        msg(get_score_msg_format().c_str(),
+        info(get_score_msg_format().c_str(),
             gen_id,
             gen_best_score,
             gen_best_score / best_team->size(),
@@ -85,7 +85,7 @@ struct EvolutionSolver::PImpl {
 
         // Print timing stats.
         size_t const n_gens = gen_id + 1;
-        msg(timing_msg_format.c_str(),
+        info(timing_msg_format.c_str(),
             (double) GA_TIMES.evolve_time / n_gens,
             (double) GA_TIMES.score_time / n_gens,
             (double) GA_TIMES.rank_time / n_gens,
@@ -101,20 +101,20 @@ struct EvolutionSolver::PImpl {
 
         // Check stop conditions.
         if (gen_best_score < OPTIONS.ga_stop_score) {
-            raw_at(LOG_MESSAGE, "\n");
-            msg("Score stopping threshold %.2f reached\n",
+            gated_raw(LOG_INFO, "\n");
+            info("Score stopping threshold %.2f reached\n",
                 OPTIONS.ga_stop_score);
             should_stop_ga = true;
         }
         else {
             if (OPTIONS.ga_stop_stagnancy != -1 and
                     stagnant_count >= OPTIONS.ga_stop_stagnancy) {
-                raw_at(LOG_MESSAGE, "\n");
-                wrn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.ga_stop_stagnancy);
+                gated_raw(LOG_INFO, "\n");
+                warn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.ga_stop_stagnancy);
                 should_stop_ga = true;
             }
             else {
-                msg("Current stagnancy: %d, max: %d\n\n", stagnant_count, OPTIONS.ga_stop_stagnancy);
+                info("Current stagnancy: %d, max: %d\n\n", stagnant_count, OPTIONS.ga_stop_stagnancy);
             }
         }
 
@@ -122,14 +122,14 @@ struct EvolutionSolver::PImpl {
     }
 
     /* printers */
-    void print_start_msg(WorkArea const& wa) const {
-        msg("Length guess: < %zu; Spec has %d points\n",
+    void print_start_info(WorkArea const& wa) const {
+        info("Length guess: < %zu; Spec has %d points\n",
             wa.target_size(), wa.points().size());
-        msg("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
-        msg("Max Iterations: %zu\n", OPTIONS.ga_iters);
-        msg("Surviors: %u\n", CUTOFFS.survivors);
+        info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
+        info("Max Iterations: %zu\n", OPTIONS.ga_iters);
+        info("Surviors: %u\n", CUTOFFS.survivors);
 
-        msg("There are %d devices. Host ID=%d; currently using ID=%d\n",
+        info("There are %d devices. Host ID=%d; currently using ID=%d\n",
             omp_get_num_devices(), omp_get_initial_device(), OPTIONS.device);
         omp_set_default_device(OPTIONS.device);
 
@@ -137,17 +137,17 @@ struct EvolutionSolver::PImpl {
         {
             #pragma omp single
             {
-                msg("GA starting with %d threads\n\n", omp_get_num_threads());
+                info("GA starting with %d threads\n\n", omp_get_num_threads());
             }
         }
     }
 
-    void print_end_msg() const {
+    void print_end_info() const {
         double const time_elapsed_in_us = get_timestamp_us() - start_time_in_us_;
         size_t const minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
         size_t const seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
         size_t const milliseconds = std::floor(fmod(time_elapsed_in_us / 1e3, 1000.0f));
-        msg("EvolutionSolver finished in %zum %zus %zums\n",
+        info("EvolutionSolver finished in %zum %zus %zums\n",
             minutes, seconds, milliseconds);
     }
 
@@ -158,19 +158,22 @@ struct EvolutionSolver::PImpl {
             std::min(debug_pop_print_n_, pop.front_buffer()->size());
 
         if (max_n) {
-            dbg("%s\n", title.c_str());
+            std::ostringstream oss;
+            oss << title << "\n";
 
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.front_buffer()->at(i);
-                raw_at(LOG_DEBUG, print_pop_fmt_,
+                oss << string_format(print_pop_fmt_,
                        "  front", i, c->checksum(), c->size(), c->score());
             }
 
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.back_buffer()->at(i);
-                raw_at(LOG_DEBUG, print_pop_fmt_,
+                oss << string_format(print_pop_fmt_,
                        "  back ", i, c->checksum(), c->size(), c->score());
             }
+
+            dbg(oss.str().c_str());
         }
     }
 
@@ -187,13 +190,13 @@ struct EvolutionSolver::PImpl {
                 std::ostringstream ss;
                 ss << "Skipping work_area: ";
                 ss << WorkTypeToCStr(wa->type()) << std::endl;
-                wrn(ss.str().c_str());
+                warn(ss.str().c_str());
                 continue;
             }
 
             Population population = Population(wa.get());
 
-            print_start_msg(*wa);
+            print_start_info(*wa);
 
             double tot_gen_time = 0.0f;
             size_t stagnant_count = 0;
@@ -228,7 +231,7 @@ struct EvolutionSolver::PImpl {
             }
         }
 
-        print_end_msg();
+        print_end_info();
     }
 };
 

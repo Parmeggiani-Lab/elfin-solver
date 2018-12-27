@@ -74,7 +74,7 @@ void ArgParser::check_options() const {
              "No output directory given.");
 
     if (not file_exists(options_.output_dir.c_str())) {
-        wrn("Output directory does not exist; creating...");
+        warn("Output directory does not exist; creating...");
         mkdir_ifn_exists(options_.output_dir.c_str());
     }
 
