@@ -7,8 +7,14 @@
 
 namespace elfin {
 
-#define DEBUG1(COND_EXPR) do { __debug(COND_EXPR, #COND_EXPR, __FILE__, __LINE__, "No Message"); } while(0)
-#define DEBUG2(COND_EXPR, MSG) do { __debug(COND_EXPR, #COND_EXPR, __FILE__, __LINE__, MSG); } while(0)
+#define DEBUG1(COND_EXPR) \
+    do {\
+        __debug(COND_EXPR, #COND_EXPR, __FILE__, __LINE__, "No Message");\
+    } while(0)
+#define DEBUG2(COND_EXPR, MSG) \
+    do {\
+        __debug(COND_EXPR, #COND_EXPR, __FILE__, __LINE__, MSG);\
+    } while(0)
 #define GET_DEBUG_MACRO(_1,_2,NAME,...) NAME
 
 #ifdef NDEBUG
@@ -29,7 +35,7 @@ namespace elfin {
     } while(0)
 
 void __debug(
-    bool const result,
+    bool const predicate,
     const std::string& cond_expr,
     char const* filename,
     int const line,
