@@ -12,8 +12,9 @@ namespace elfin {
 
 /* free */
 void bad_work_type(WorkType type) {
-    TRACE_PANIC(type == type, string_format("Bad WorkType: %s\n",
-                                           WorkTypeToCStr(type)));
+    TRACE_PANIC(WorkTypeToCStr(type),
+                string_format("Bad WorkType: %s\n",
+                              WorkTypeToCStr(type)));
 }
 
 /* private */
@@ -120,9 +121,9 @@ struct WorkArea::PImpl {
     V3fList _gen_points() const {
         V3fList res;
         TRACE_PANIC(leaf_joints.size() != 2,
-                   string_format("Size of leaf_joints not "
-                                 "exactly 2 in work_area: %s\n",
-                                 name.c_str()));
+                    string_format("Size of leaf_joints not "
+                                  "exactly 2 in work_area: %s\n",
+                                  name.c_str()));
         BasicUIJointGenerator gen(&joints, leaf_joints.at(0));
 
         while (not gen.is_done()) {
