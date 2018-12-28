@@ -2,6 +2,8 @@
 
 #include <sstream>
 
+#include "basic_node_team.h"
+
 #define FREE_CHAIN_VM_RESERVE_SIZE 16
 
 namespace elfin {
@@ -81,6 +83,25 @@ NodeTeam::NodeTeam(NodeTeam const& other) {
 
 NodeTeam::NodeTeam(NodeTeam&& other) {
     *this = std::move(other); // Calls operator=(T&&)
+}
+
+NodeTeamSP NodeTeam::create_team(WorkArea const* work_area) {
+    NodeTeamSP team_sp;
+
+    switch (work_area->type()) {
+    case WorkType::FREE:
+        team_sp = std::make_shared<BasicNodeTeam>(work_area);
+        // case WorkType::ONE_HINGE:
+        //     return std::make_shared<OneHingeNodeTeam>(work_area);
+        // case WorkType::TWO_HINGE:
+        //     return std::make_shared<TwoHingeNodeTeam>(work_area);
+        break;
+    default:
+        bad_work_type(work_area->type());
+        return nullptr; // Suppress warning.
+    }
+
+    return team_sp;
 }
 
 /* dtors */

@@ -9,22 +9,6 @@
 
 namespace elfin {
 
-/* free */
-NodeTeamSP create_team(WorkArea const* wa) {
-    switch (wa->type()) {
-    case WorkType::FREE:
-        return std::make_shared<BasicNodeTeam>(wa);
-    // case WorkType::ONE_HINGE:
-    //     return std::make_shared<OneHingeNodeTeam>(wa);
-    // case WorkType::TWO_HINGE:
-    //     return std::make_shared<TwoHingeNodeTeam>(wa);
-    default:
-        JUtil.panic("Unimplemented work type: %s\n",
-            WorkTypeToCStr(wa->type()));
-        return nullptr; // Suppress no return warning
-    }
-}
-
 void print_mutation_ratios(mutation::ModeList mode_tally) {
     if (JUtil.check_log_lvl(LOGLVL_DEBUG)) {
         mutation::Counter mc;
@@ -64,9 +48,9 @@ Population::Population(WorkArea const* work_area) {
 
         OMP_PAR_FOR
         for (size_t i = 0; i < pop_size; i++) {
-            new_back_buffer->at(i) = create_team(work_area);
+            new_back_buffer->at(i) = NodeTeam::create_team(work_area);
             new_back_buffer->at(i)->randomize();
-            new_front_buffer->at(i) = create_team(work_area);
+            new_front_buffer->at(i) = NodeTeam::create_team(work_area);
         }
 
         front_buffer_ = new_front_buffer;

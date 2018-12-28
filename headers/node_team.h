@@ -44,6 +44,7 @@ public:
     NodeTeam(WorkArea const* work_area);
     NodeTeam(NodeTeam const& other);
     NodeTeam(NodeTeam&& other);
+    static NodeTeamSP create_team(WorkArea const* work_area);
 
     /* dtors */
     virtual ~NodeTeam();
