@@ -75,7 +75,7 @@ void Population::evolve() {
             auto& team = front_buffer_->at(rank);
             // Rank is 0-indexed, hence <
             if (rank < CUTOFFS.survivors) {
-                *team = *(back_buffer_->at(rank));
+                team->copy_from(*back_buffer_->at(rank));
                 mode = mutation::Mode::NONE;
             }
             else {
@@ -88,7 +88,7 @@ void Population::evolve() {
                     random::get_dice(CUTOFFS.pop_size); // include all back_buffer_ teams
                 auto& father_team = back_buffer_->at(father_id);
 
-                mode = team->mutate_and_score(*mother_team, *father_team);
+                mode = team->evolve(*mother_team, *father_team);
             }
 
             mutation_mode_tally[rank] = mode;
@@ -107,7 +107,7 @@ void Population::rank() {
 
         std::sort(begin(*front_buffer_),
                   end(*front_buffer_),
-                  NodeTeam::ScoreCompareSP);
+                  NodeTeam::ScoreCompareUP);
     }
     InputManager::ga_times().rank_time +=
         TIMING_END("ranking", rank_start_time);
@@ -129,7 +129,7 @@ void Population::select() {
         // We don't want parallelism here because the low indexes must be
         // prioritized.
         for (auto& team : *front_buffer_) {
-            Crc32 const crc = team->checksum();
+            Crc32 const crc = team->checksum;
             if (crc_map.find(crc) == end(crc_map)) {
                 // Record a new team
                 crc_map[crc] = team->clone();
@@ -151,7 +151,7 @@ void Population::select() {
         // Sort survivors
         std::sort(begin(*front_buffer_),
                   begin(*front_buffer_) + unique_count,
-                  NodeTeam::ScoreCompareSP);
+                  NodeTeam::ScoreCompareUP);
     }
     InputManager::ga_times().select_time +=
         TIMING_END("variety selection", start_time_select);

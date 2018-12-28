@@ -54,21 +54,18 @@ void OutputManager::write_output(
         JSON work_area_json;
 
         try {
-            std::vector<NodeTeamSP> const& solutions =
+            auto& solutions =
                 solver.best_sols().at(wa_name);
             for (size_t i = 0; i < solutions.size(); ++i)
             {
                 JSON sol_json;
-                auto team = solutions.at(i);
+                TRACE_PANIC(not solutions.at(i),
+                            string_format("Team memory corrupted in work area \"%s\" (ptr=%p)\n",
+                                          wa_name.c_str(), solutions.at(i).get()));
 
-                if (team) {
-                    sol_json["nodes"] = team->gen_nodes_json();
-                    sol_json["score"] = team->score();
-                }
-                else {
-                    JUtil.error("Team memory corrupted in work area \"%s\" (ptr=%p)\n",
-                                wa_name.c_str(), team);
-                }
+                NodeTeam const& team = *solutions.at(i);
+                sol_json["nodes"] = team.to_json();
+                sol_json["score"] = team.score;
 
                 work_area_json[i] = sol_json;
             }

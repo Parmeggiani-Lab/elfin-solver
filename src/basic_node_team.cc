@@ -449,8 +449,8 @@ struct BasicNodeTeam::PImpl {
                 }
                 else {
                     TRACE_PANIC("Unexpected num_links",
-                               string_format(
-                                   "Number of links: %zu\n", num_links));
+                                string_format(
+                                    "Number of links: %zu\n", num_links));
                 }
             } while (not node_gen.is_done());
 
@@ -702,75 +702,82 @@ struct BasicNodeTeam::PImpl {
 
         bool mutate_success = false;
 #ifndef NO_CROSS
-        if (not that->free_chains_.empty() and
-                not father.free_chains().empty()) {
-            // First, collect arrows from both parents.
+        if (not that->free_chains_.empty()) {
+            try { // Catch bad cast
+                auto& bnt_father = static_cast<BasicNodeTeam const&>(father);
+                if (not bnt_father.free_chains().empty()) {
+                    // First, collect arrows from both parents.
 
-            // Starting at either end is fine.
-            auto m_arrows = BasicNodeGenerator::collect_arrows(
-                                that->free_chains_[0].node_sp());
-            DEBUG(father.free_chains().size() != 2);
-            auto f_arrows = BasicNodeGenerator::collect_arrows(
-                                father.free_chains()[0].node_sp());
+                    // Starting at either end is fine.
+                    auto m_arrows = BasicNodeGenerator::collect_arrows(
+                                        that->free_chains_[0].node_sp());
+                    DEBUG(bnt_father.free_chains().size() != 2);
+                    auto f_arrows = BasicNodeGenerator::collect_arrows(
+                                        bnt_father.free_chains()[0].node_sp());
 
-            // Walk through all link pairs to collect cross points.
-            Vector<mutation::CrossPoint> cross_points;
-            for (Link const* m_arrow : m_arrows) {
-                for (Link const* f_arrow : f_arrows) {
-                    ProtoLink const* sd =
-                        m_arrow->src().find_link_to(f_arrow->dst());
-                    if (sd) {
-                        cross_points.emplace_back(
-                            sd,
-                            m_arrow, false,   // { } --m_arrow--v { del  }
-                            f_arrow, false);  // { } --f_arrow--> { copy }
+                    // Walk through all link pairs to collect cross points.
+                    Vector<mutation::CrossPoint> cross_points;
+                    for (Link const* m_arrow : m_arrows) {
+                        for (Link const* f_arrow : f_arrows) {
+                            ProtoLink const* sd =
+                                m_arrow->src().find_link_to(f_arrow->dst());
+                            if (sd) {
+                                cross_points.emplace_back(
+                                    sd,
+                                    m_arrow, false,   // { } --m_arrow--v { del  }
+                                    f_arrow, false);  // { } --f_arrow--> { copy }
+                            }
+
+                            ProtoLink const* ss =
+                                m_arrow->src().find_link_to(f_arrow->src());
+                            if (ss) {
+                                cross_points.emplace_back(
+                                    ss,
+                                    m_arrow, false,   // {      } --m_arrow--v { del }
+                                    f_arrow, true);   // { copy } <---f_rev--- {     }
+                            }
+
+                            ProtoLink const* dd =
+                                m_arrow->dst().find_link_to(f_arrow->dst());
+                            if (dd) {
+                                cross_points.emplace_back(
+                                    dd,
+                                    m_arrow, true,    // { del } v---m_rev--- {      }
+                                    f_arrow, false);  // {     } --f_arrow--> { copy }
+                            }
+
+                            ProtoLink const* ds =
+                                m_arrow->dst().find_link_to(f_arrow->src());
+                            if (ds) {
+                                cross_points.emplace_back(
+                                    ds,
+                                    m_arrow, true,    // { del  } v---m_rev--- { }
+                                    f_arrow, true);   // { keep } <---f_rev--- { }
+                            }
+                        }
                     }
 
-                    ProtoLink const* ss =
-                        m_arrow->src().find_link_to(f_arrow->src());
-                    if (ss) {
-                        cross_points.emplace_back(
-                            ss,
-                            m_arrow, false,   // {      } --m_arrow--v { del }
-                            f_arrow, true);   // { copy } <---f_rev--- {     }
-                    }
+                    if (not cross_points.empty()) {
+                        auto const& cp = cross_points.pick_random();
 
-                    ProtoLink const* dd =
-                        m_arrow->dst().find_link_to(f_arrow->dst());
-                    if (dd) {
-                        cross_points.emplace_back(
-                            dd,
-                            m_arrow, true,    // { del } v---m_rev--- {      }
-                            f_arrow, false);  // {     } --f_arrow--> { copy }
-                    }
+                        Link m_arrow = cp.m_rev ?
+                                       cp.m_arrow->reversed() :
+                                       *cp.m_arrow; // Make a copy.
+                        Link f_arrow = cp.f_rev ?
+                                       cp.f_arrow->reversed() :
+                                       *cp.f_arrow; // Make a copy.
 
-                    ProtoLink const* ds =
-                        m_arrow->dst().find_link_to(f_arrow->src());
-                    if (ds) {
-                        cross_points.emplace_back(
-                            ds,
-                            m_arrow, true,    // { del  } v---m_rev--- { }
-                            f_arrow, true);   // { keep } <---f_rev--- { }
+                        // Always keep m_arrow.src, del m_arrow.dst, and copy from
+                        // f_arrow.dst.
+                        sever_limb(m_arrow);
+                        copy_limb(m_arrow, f_arrow);
+
+                        mutate_success = true;
                     }
                 }
             }
-
-            if (not cross_points.empty()) {
-                auto const& cp = cross_points.pick_random();
-
-                Link m_arrow = cp.m_rev ?
-                               cp.m_arrow->reversed() :
-                               *cp.m_arrow; // Make a copy.
-                Link f_arrow = cp.f_rev ?
-                               cp.f_arrow->reversed() :
-                               *cp.f_arrow; // Make a copy.
-
-                // Always keep m_arrow.src, del m_arrow.dst, and copy from
-                // f_arrow.dst.
-                sever_limb(m_arrow);
-                copy_limb(m_arrow, f_arrow);
-
-                mutate_success = true;
+            catch (std::bad_cast const& e) {
+                JUtil.panic("Bad cast in %s\n", __PRETTY_FUNCTION__);
             }
         }
 #endif
@@ -833,30 +840,134 @@ NodeSP BasicNodeTeam::grow_tip(
 
 /* protected */
 /* accessors */
-BasicNodeTeam * BasicNodeTeam::clone_impl() const {
+BasicNodeTeam * BasicNodeTeam::virtual_clone() const {
     return new BasicNodeTeam(*this);
+}
+
+/* modifiers */
+NodeSP BasicNodeTeam::add_member(
+    ProtoModule const* prot,
+    Transform const& tx) {
+    auto new_node = std::make_shared<Node>(prot, tx);
+
+    for (auto& proto_chain : new_node->prototype_->chains()) {
+        if (not proto_chain.n_term().links().empty()) {
+            free_chains_.emplace_back(new_node, TerminusType::N, proto_chain.id);
+        }
+
+        if (not proto_chain.c_term().links().empty()) {
+            free_chains_.emplace_back(new_node, TerminusType::C, proto_chain.id);
+        }
+    }
+
+    nodes_.insert(new_node);
+    return new_node;
+}
+
+void BasicNodeTeam::remove_free_chains(NodeSP const& node) {
+    // Remove any FreeChain originating from node
+    free_chains_.lift_erase_all(
+        FreeChain(node, TerminusType::NONE, 0),
+    [](FreeChain const & a, FreeChain const & b) {
+        return a.node_sp() == b.node_sp();
+    });
 }
 
 /* public */
 /* ctors */
-BasicNodeTeam::BasicNodeTeam(WorkArea const* wa) :
-    NodeTeam(wa), p_impl_(init_pimpl()) {}
+BasicNodeTeam::BasicNodeTeam(WorkArea const* wa) {
+    work_area_ = wa;
+    p_impl_ = init_pimpl();
+
+    TRACE_PANIC(work_area_ == nullptr);
+    nodes_.reserve(work_area_->target_size());
+    free_chains_.reserve(2);
+}
 
 BasicNodeTeam::BasicNodeTeam(BasicNodeTeam const& other) :
-    NodeTeam(other), p_impl_(init_pimpl()) {}
+    p_impl_(init_pimpl()) {
+    *this = other; // Calls operator=(T const&)
+}
 
 BasicNodeTeam::BasicNodeTeam(BasicNodeTeam&& other) :
-    NodeTeam(std::move(other)), p_impl_(init_pimpl()) {}
+    p_impl_(init_pimpl()) {
+    *this = std::move(other); // Calls operator=(T&&)
+}
+
+void BasicNodeTeam::copy_from(NodeTeam const& other) {
+    try { // Catch bad cast
+        BasicNodeTeam::operator=(static_cast<BasicNodeTeam const&>(other));
+    }
+    catch (std::bad_cast const& e) {
+        JUtil.panic("Bad cast in %s\n", __PRETTY_FUNCTION__);
+    }
+}
 
 /* dtors */
 BasicNodeTeam::~BasicNodeTeam() {}
 
 /* modifiers */
-mutation::Mode BasicNodeTeam::mutate_and_score(
+BasicNodeTeam& BasicNodeTeam::operator=(BasicNodeTeam const& other) {
+    if (this != &other) {
+        nodes_.clear();
+        free_chains_.clear();
+
+        // Copy simple fields.
+        work_area_ = other.work_area_;
+        checksum_ = other.checksum_;
+        score_ = other.score_;
+
+        // Clone nodes and create address mapping for remapping pointers.
+        {
+            NodeAddrMap addr_map; // old addr -> new addr
+
+            for (auto& other_node : other.nodes_) {
+                auto node_sp = other_node->clone();
+                nodes_.insert(node_sp);
+                addr_map[other_node] = node_sp;
+            }
+
+            free_chains_ = other.free_chains();
+
+            // Fix pointer addresses and assign to my own nodes
+            for (auto& node : nodes_) {
+                node->update_link_ptrs(addr_map);
+            }
+
+            for (auto& fc : free_chains_) {
+                fc.node = addr_map.at(fc.node_sp());
+            }
+        }
+    }
+
+    return *this;
+}
+
+BasicNodeTeam& BasicNodeTeam::operator=(BasicNodeTeam&& other) {
+    if (this != &other) {
+        nodes_.clear();
+        free_chains_.clear();
+
+        std::swap(work_area_, other.work_area_);
+        std::swap(nodes_, other.nodes_);
+        std::swap(free_chains_, other.free_chains_);
+
+        std::swap(checksum_, other.checksum_);
+        std::swap(score_, other.score_);
+    }
+
+    return *this;
+}
+
+void BasicNodeTeam::randomize() {
+    p_impl_->randomize_mutate();
+}
+
+mutation::Mode BasicNodeTeam::evolve(
     NodeTeam const& mother,
-    NodeTeam const& father) {
-    // Inherit from mother.
-    NodeTeam::operator=(mother);
+    NodeTeam const& father)
+{
+    copy_from(mother);
 
     auto modes = mutation::gen_mode_list();
 
@@ -897,7 +1008,7 @@ mutation::Mode BasicNodeTeam::mutate_and_score(
     if (not mutate_success) {
         mutate_success = p_impl_->randomize_mutate();
         TRACE_PANIC(not mutate_success,
-                   "Randomize Mutate also failed - bug?");
+                    "Randomize Mutate also failed - bug?");
     }
 
     // Update checksum.
@@ -909,12 +1020,7 @@ mutation::Mode BasicNodeTeam::mutate_and_score(
     return mode;
 }
 
-void BasicNodeTeam::randomize() {
-    p_impl_->randomize_mutate();
-}
-
 /* printers */
-
 void BasicNodeTeam::print_to(std::ostream& os) const {
     TRACE_PANIC(free_chains_.empty());
     NodeSP start_node = free_chains_.at(0).node_sp();
@@ -932,7 +1038,7 @@ void BasicNodeTeam::print_to(std::ostream& os) const {
     }
 }
 
-JSON BasicNodeTeam::gen_nodes_json() const {
+JSON BasicNodeTeam::to_json() const {
     JSON output;
 
     if (not free_chains_.empty()) {

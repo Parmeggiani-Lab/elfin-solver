@@ -4,6 +4,7 @@
 #include "test_stat.h"
 #include "input_manager.h"
 #include "basic_node_generator.h"
+#include "basic_node_team.h"
 
 namespace elfin {
 
@@ -38,52 +39,58 @@ TestStat EvolutionSolver::test() {
 
         auto const& work_area = begin(SPEC.work_areas())->second;
 
-        std::vector<NodeTeamSP> const& solutions =
+        auto& solutions =
             solver.best_sols().at(work_area->name());
         size_t const n_solutions = solutions.size();
         JUtil.panic_if(n_solutions != OPTIONS.keep_n,
                        "Expected %zu solutions, but there is %zu\n",
                        OPTIONS.keep_n, n_solutions);
 
-        auto best_team = solutions.at(0);
-        auto& nodes = best_team->nodes();
-        auto& free_chains = best_team->free_chains();
+        try { // Catch bad_cast
+            auto best_bnt =
+                static_cast<BasicNodeTeam const&>(*solutions.at(0));
+            auto& free_chains = best_bnt.free_chains();
 
-        JUtil.panic_if(free_chains.size() != 2,
-                       "Expected %zu free chains, but there is %zu\n",
-                       2, free_chains.size());
+            JUtil.panic_if(free_chains.size() != 2,
+                           "Expected %zu free chains, but there is %zu\n",
+                           2, free_chains.size());
 
-        auto& recipe = tests::quarter_snake_free_recipe;
-        std::string const& starting_name = recipe[0].mod_name;
-        auto& tip_fc = free_chains[0].node_sp()->prototype_->name == starting_name ?
-                       free_chains[0] : free_chains[1];
+            auto& recipe = tests::quarter_snake_free_recipe;
+            std::string const& starting_name = recipe[0].mod_name;
+            auto& tip_fc = free_chains[0].node_sp()->prototype_->name == starting_name ?
+                           free_chains[0] : free_chains[1];
 
-        auto step_itr = begin(recipe);
-        BasicNodeGenerator node_gen(tip_fc.node_sp());
-        while (not node_gen.is_done()) {
-            auto node = node_gen.next();
-            if (step_itr == end(recipe) or
-                    step_itr->mod_name != node->prototype_->name) {
-                ts.errors++;
-                JUtil.error("Solver best solution differs from expectation.\n");
+            auto step_itr = begin(recipe);
+            BasicNodeGenerator node_gen(tip_fc.node_sp());
+            while (not node_gen.is_done()) {
+                auto node = node_gen.next();
+                if (step_itr == end(recipe) or
+                        step_itr->mod_name != node->prototype_->name) {
+                    ts.errors++;
+                    JUtil.error("Solver best solution differs from expectation.\n");
 
-                std::ostringstream oss;
-                oss << "Solver solution:\n";
+                    std::ostringstream oss;
+                    oss << "Solver solution:\n";
 
-                BasicNodeGenerator err_node_gen(tip_fc.node_sp());
-                while (not err_node_gen.is_done()) {
-                    oss << err_node_gen.next()->prototype_->name << "\n";
+                    BasicNodeGenerator err_node_gen(tip_fc.node_sp());
+                    while (not err_node_gen.is_done()) {
+                        oss << err_node_gen.next()->prototype_->name << "\n";
+                    }
+
+                    JUtil.error("Expected solution:\n");
+                    for (auto& step : recipe) {
+                        oss << step.mod_name << "\n";
+                    }
+
+                    JUtil.error(oss.str().c_str());
+                    break;
                 }
-
-                JUtil.error("Expected solution:\n");
-                for (auto& step : recipe) {
-                    oss << step.mod_name << "\n";
-                }
-
-                JUtil.error(oss.str().c_str());
-                break;
+                ++step_itr;
             }
-            ++step_itr;
+        }
+        catch (std::bad_cast const& exp) {
+            ts.errors++;
+            JUtil.error("Bad cast in %s\n", __PRETTY_FUNCTION__);
         }
     }
 

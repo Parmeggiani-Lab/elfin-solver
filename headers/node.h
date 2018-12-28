@@ -38,12 +38,9 @@ public:
     ProtoModule const* const prototype_;
 
     /* ctors */
-    Node(ProtoModule const* prototype, Transform const& tx);
-    Node(ProtoModule const* prototype) : Node(prototype, Transform()) {}
+    Node(ProtoModule const* const prototype, Transform const& tx);
+    Node(ProtoModule const* const prototype) : Node(prototype, Transform()) {}
     NodeSP clone() const { return std::make_shared<Node>(*this); }
-
-    /* dtors */
-    // virtual ~Node() {}
 
     /* accessors */
     LinkList const& links() const { return links_; }

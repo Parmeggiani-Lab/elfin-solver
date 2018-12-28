@@ -36,28 +36,47 @@ private:
         FreeChain const free_chain_a,
         ProtoLink const* ptlink = nullptr);
 protected:
-    /* accessors */
-    virtual BasicNodeTeam* clone_impl() const;
+    /* types */
+    typedef std::unordered_set<NodeSP> Nodes;
 
+    /* data */
+    Nodes nodes_;
+    FreeChainList free_chains_;
+
+    /* accessors */
+    virtual BasicNodeTeam* virtual_clone() const;
+
+    /* modifiers */
+    NodeSP add_member(
+        ProtoModule const* prot,
+        Transform const& tx = Transform());
+    void remove_free_chains(NodeSP const& node);
 public:
     /* ctors */
     using NodeTeam::NodeTeam;
     BasicNodeTeam(WorkArea const* wa);
     BasicNodeTeam(BasicNodeTeam const& other);
     BasicNodeTeam(BasicNodeTeam&& other);
+    virtual void copy_from(NodeTeam const& other);
 
     /* dtors */
     virtual ~BasicNodeTeam();
 
+    /* accessors */
+    virtual size_t size() const { return nodes_.size(); }
+    FreeChainList const& free_chains() const { return free_chains_; }
+
     /* modifiers */
-    virtual mutation::Mode mutate_and_score(
+    BasicNodeTeam& operator=(BasicNodeTeam const& other);
+    BasicNodeTeam& operator=(BasicNodeTeam && other);
+    virtual void randomize();
+    virtual mutation::Mode evolve(
         NodeTeam const& mother,
         NodeTeam const& father);
-    virtual void randomize();
 
     /* printers */
     virtual void print_to(std::ostream& os) const;
-    virtual JSON gen_nodes_json() const;
+    virtual JSON to_json() const;
 
     /* tests */
     static BasicNodeTeam build_team(tests::StepList const& steps);

@@ -45,9 +45,6 @@ public:
         float const radius,
         StrList const& chain_names);
 
-    /* dtors */
-    // virtual ~ProtoModule() {}
-
     /* accessors */
     ProtoChainList const& chains() const { return chains_; }
     Counts const& counts() const { return counts_; }
