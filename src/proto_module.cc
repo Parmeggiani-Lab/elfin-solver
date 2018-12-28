@@ -15,10 +15,10 @@ namespace elfin {
 Transform get_tx(
     JSON const& xdb,
     size_t const tx_id) {
-    NICE_PANIC(
+    TRACE_PANIC(
         tx_id >= xdb["n_to_c_tx"].size(),
         ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
-         "\tEither xdb.json is corrupted or "
+         "  Either xdb.json is corrupted or "
          "there is an error in dbgen.py.\n"));
 
     return Transform(xdb["n_to_c_tx"][tx_id]);
@@ -75,7 +75,7 @@ size_t ProtoModule::find_chain_id(
         JUtil.error("%s", chain.name.c_str());
     }
 
-    NICE_PANIC("Chain Not Found");
+    TRACE_PANIC("Chain Not Found");
     exit(1); // Suppress no return warning.
 }
 ProtoLink const* ProtoModule::find_link_to(
@@ -100,7 +100,7 @@ ProtoLink const* ProtoModule::find_link_to(
 void ProtoModule::finalize() {
     // ProtoChain finalize() relies on Terminus finalize(), which assumes that
     // all ProtoModule counts are calculated
-    NICE_PANIC(finalized_,
+    TRACE_PANIC(finalized_,
                string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
     finalized_ = true;
 
@@ -199,18 +199,14 @@ void ProtoModule::create_proto_link_pair(
 }
 
 /* printers */
-std::string ProtoModule::to_string() const {
-    std::ostringstream ss;
-
-    ss << "ProtoModule[" << std::endl;
-    ss << "\tName: " << name << std::endl;
-    ss << "\tType: " << ModuleTypeToCStr(type) << std::endl;
-    ss << "\tRadius: " << radius << std::endl;
-    ss << "\tn_link_count: " << counts().n_links << std::endl;
-    ss << "\tc_link_count: " << counts().c_links << std::endl;
-    ss << "  ]" << std::endl;
-
-    return ss.str();
+void ProtoModule::print_to(std::ostream& os) const {
+    os << "ProtoModule(" << name << ":";
+    os << (void*) this << ")[" << '\n';
+    os << "  Type: " << ModuleTypeToCStr(type) << '\n';
+    os << "  Radius: " << radius << '\n';
+    os << "  n_link_count: " << counts().n_links << '\n';
+    os << "  c_link_count: " << counts().c_links << '\n';
+    os << "]" << '\n';
 }
 
 }  /* elfin */

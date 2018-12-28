@@ -32,10 +32,9 @@ void Link::update_node_ptrs(NodeAddrMap const& nam) {
 }
 
 /* printers */
-std::string Link::to_string() const {
-    return string_format("Link[\n  %s\n  %s\n]",
-                         src_chain_.to_string().c_str(),
-                         dst_chain_.to_string().c_str());
+void Link::print_to(std::ostream& os) const {
+    os << "Link[\n  " << src_chain_;
+    os << "\n  " << dst_chain_ << "\n]";
 }
 
 }  /* elfin */

@@ -10,6 +10,7 @@
 #endif  /* ifdef USE_EIGEN */
 
 #include "json.h"
+#include "string_utils.h"
 
 namespace elfin {
 
@@ -19,16 +20,16 @@ struct TestStat;
 
 #ifdef USE_EIGEN
 using Matrix4f = Eigen::Matrix4f;
-#define TX_INHERIT : public Matrix4f
+#define TX_INHERIT : public Matrix4f, public Printable
 #else
-#define TX_INHERIT
+#define TX_INHERIT : public Printable
 #endif  /* ifdef USE_EIGEN */
 
 class Transform TX_INHERIT {
+#undef TX_INHERIT
+
 private:
-
 #ifndef USE_EIGEN
-
     /* data */
     float rot_[3][3] = {
         {1, 0, 0},
@@ -37,7 +38,6 @@ private:
     };
 
     float tran_[3] = {0, 0, 0};
-
 #endif  /* ifndef USE_EIGEN */
 
 public:
@@ -97,33 +97,7 @@ public:
 #endif  /* ifdef USE_EIGEN */
 
     /* printers */
-#ifndef USE_EIGEN
-
-    std::string to_string() const {
-        std::ostringstream ss;
-
-        ss << "Transform[\n  Rot[\n";
-        for (size_t i = 0; i < 3; ++i) {
-            ss << "    [ ";
-            for (size_t j = 0; j < 3; ++j) {
-                ss << rot_[i][j];
-                if (j < 2) {
-                    ss << ", ";
-                }
-            }
-            ss << " ]\n";
-        }
-        ss << "  ]\n";
-
-        ss << "  Tran[ " << tran_[0];
-        ss << ", " << tran_[1];
-        ss << ", " << tran_[2] << " ]\n";
-        ss << "]";
-
-        return ss.str();
-    }
-
-#endif  /* ifndef USE_EIGEN */
+    virtual void print_to(std::ostream& os) const;
 
     /* tests */
     static TestStat test();

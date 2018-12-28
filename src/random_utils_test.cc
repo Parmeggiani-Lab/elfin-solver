@@ -23,7 +23,7 @@ TestStat test() {
             size_t const n = omp_get_num_threads();
             JUtil.info("Testing random_utils (forcing %zu threads)\n", n);
 
-            NICE_PANIC(n != num_threads,
+            TRACE_PANIC(n != num_threads,
             string_format(
                 "Faild to set number of threads! Set %zu, got %zu",
                 num_threads, n));

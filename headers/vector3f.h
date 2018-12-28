@@ -20,16 +20,14 @@
 namespace elfin {
 
 
-
 struct TestStat;
 
 #ifdef V3F_USE_EIGEN
 typedef Eigen::Vector3f EigenV3f;
-#define V3F_INHERIT : public EigenV3f
+#define V3F_INHERIT : public EigenV3f, public Printable
 #else
-#define V3F_INHERIT
+#define V3F_INHERIT : public Printable
 #endif  /* ifdef V3F_USE_EIGEN */
-
 
 
 class Vector3f V3F_INHERIT {
@@ -45,7 +43,7 @@ private:
     Vector3f(
         RandomAccessIterator begin,
         RandomAccessIterator end) {
-        NICE_PANIC((end - begin) < 3,
+        TRACE_PANIC((end - begin) < 3,
                    string_format(
                        "Invalid Argument Size: %zu, should be < 3\n",
                        end - begin));
@@ -179,19 +177,11 @@ public:
 #endif  /* ifdef V3F_USE_EIGEN */
 
     /* printers */
-#ifndef V3F_USE_EIGEN
-    std::string to_string() const {
-        return string_format("(%f, %f, %f)",
-                             data_[0], data_[1], data_[2]);
-    }
-#endif  /* ifdef V3F_USE_EIGEN */
-
-    std::string to_csv_string() const {
-#ifdef V3F_USE_EIGEN
-        Vector3f const& data_ = *this;
-#endif  /* ifdef V3F_USE_EIGEN */
-        return string_format("%f, %f, %f",
-                             data_[0], data_[1], data_[2]);
+    virtual void print_to(std::ostream& os) const {
+        os << string_format("(%.4f, %.4f, %.4f)",
+                            this->operator[](0),
+                            this->operator[](1),
+                            this->operator[](2));
     }
 
     /* tests */

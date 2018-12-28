@@ -14,16 +14,13 @@
 namespace elfin {
 
 /* protected */
-std::string Database::ModPtrRoulette::to_string() const {
-    std::ostringstream ss;
+void Database::ModPtrRoulette::print_to(std::ostream& os) const {
     for (size_t i = 0; i < items_.size(); ++i) {
-        ss << "Module";
-        ss << "[#" << i << ":" << items_.at(i)->name;
-        ss << "]=" << cpd_.at(i) << '\n';
+        os << "Module";
+        os << "[#" << i << ":" << items_.at(i)->name;
+        os << "]=" << cpd_.at(i) << '\n';
     }
-
-    ss << "Total=" << total_ << '\n';
-    return ss.str();
+    os << "Total=" << total_ << '\n';
 }
 
 void Database::reset() {
@@ -50,7 +47,7 @@ void Database::categorize() {
         ProtoModule* mod_raw_ptr = mod.get();
         if (n_itf < 2) {
             JUtil.panic("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
-                mod->name.c_str(), n_itf);
+                        mod->name.c_str(), n_itf);
         } else if (n_itf == 2) {
             basic_mods_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
@@ -63,7 +60,7 @@ void Database::categorize() {
             hubs_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
             JUtil.panic("mod[%s] has unknown ModuleType: %s\n",
-                mod->name.c_str(), ModuleTypeToCStr(mod->type));
+                        mod->name.c_str(), ModuleTypeToCStr(mod->type));
         }
     }
 }
@@ -95,25 +92,25 @@ void Database::print_db() {
         auto& mod = all_mods_.at(i);
         size_t const n_chains = mod->chains().size();
         JUtil.warn("xdb_[#%zu:%s] has %zu chains\n",
-            i, mod->name.c_str(), n_chains);
+                   i, mod->name.c_str(), n_chains);
 
         for (auto& proto_chain : mod->chains()) {
             JUtil.warn("\tchain[#%zu:%s]:\n",
-                proto_chain.id,
-                proto_chain.name.c_str());
+                       proto_chain.id,
+                       proto_chain.name.c_str());
 
             auto& n_links = proto_chain.n_term().links();
             for (size_t k = 0; k < n_links.size(); ++k)
             {
                 JUtil.warn("\t\tn_links[%zu] -> xdb_[%s]\n",
-                    k, n_links[k]->module_->name.c_str());
+                           k, n_links[k]->module_->name.c_str());
             }
 
             auto& c_links = proto_chain.c_term().links();
             for (size_t k = 0; k < c_links.size(); ++k)
             {
                 JUtil.warn("\t\tc_links[%zu] -> xdb_[%s]\n",
-                    k, c_links[k]->module_->name.c_str());
+                           k, c_links[k]->module_->name.c_str());
             }
         }
     }

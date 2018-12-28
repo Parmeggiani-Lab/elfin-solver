@@ -17,7 +17,7 @@ ProtoLink::ProtoLink(
 // static
 void ProtoLink::pair_links(
     ProtoLink* lhs, ProtoLink* rhs) {
-    NICE_PANIC(not lhs->tx_.is_approx(rhs->tx_.inversed()),
+    TRACE_PANIC(not lhs->tx_.is_approx(rhs->tx_.inversed()),
                string_format(
                    "lhs->tx=%s\nrhs->tx.inversed()=%s\n",
                    lhs->tx_.to_string().c_str(),

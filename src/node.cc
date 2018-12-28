@@ -51,7 +51,7 @@ void Node::remove_link(FreeChain const& src) {
         JUtil.error("Trying to remove link that does not exist. Links:\n");
         for (size_t i = 0; i < links_.size(); ++i) {
             JUtil.error("Link #%zu: %s\n",
-                i, links_[i].to_string().c_str());
+                        i, links_[i].to_string().c_str());
         }
         JUtil.error("%s\n", to_string().c_str());
         JUtil.panic("%s\n", src.to_string().c_str());
@@ -59,16 +59,10 @@ void Node::remove_link(FreeChain const& src) {
 }
 
 /* printers */
-std::string Node::to_string() const {
-    return string_format("Node[%s:%p]\n%s",
-                         prototype_->name.c_str(),
-                         this,
-                         tx_.to_string().c_str());
-}
-
-std::string Node::to_csv_string() const {
-    UNIMPLEMENTED(); // This function needs an update
-    return "???";
+void Node::print_to(std::ostream& os) const {
+    os << "Node(" << prototype_->name << ":";
+    os << (void*) this << ")\n";
+    os << tx_.to_string();
 }
 
 }  /* elfin */

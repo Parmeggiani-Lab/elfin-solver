@@ -17,9 +17,16 @@ namespace elfin {
 #define DEBUG(...) GET_DEBUG_MACRO(__VA_ARGS__, DEBUG2, DEBUG1)(__VA_ARGS__)
 #endif  /* ifndef NDEBUG */
 
-#define NICE_PANIC(...) GET_DEBUG_MACRO(__VA_ARGS__, DEBUG2, DEBUG1)(__VA_ARGS__)
-#define UNIMPLEMENTED() NICE_PANIC("Unimplemented", __PRETTY_FUNCTION__)
-#define PROB_FUNC() do { wrn("%s called at %s:%d\n", __PRETTY_FUNCTION__, __FILE__, __LINE__); } while(0)
+#define TRACE_PANIC(...) GET_DEBUG_MACRO(__VA_ARGS__, DEBUG2, DEBUG1)(__VA_ARGS__)
+#define UNIMPLEMENTED() TRACE_PANIC("Unimplemented", __PRETTY_FUNCTION__)
+#define PROB_FUNC() \
+    do {\
+        JUtil.warn(\
+            "%s called at %s:%d\n",\
+            __PRETTY_FUNCTION__,\
+            __FILE__,\
+            __LINE__);\
+    } while(0)
 
 void __debug(
     bool const result,

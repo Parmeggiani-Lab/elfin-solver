@@ -91,7 +91,7 @@ struct BasicNodeTeam::PImpl {
 
     V3fList collect_points(NodeSP tip_node) const {
         // Verify node is a tip node.
-        NICE_PANIC(tip_node->links().size() > 1);
+        TRACE_PANIC(tip_node->links().size() > 1);
 
         BasicNodeGenerator node_gen(tip_node);
 
@@ -155,7 +155,7 @@ struct BasicNodeTeam::PImpl {
         NodeSP tip_node) {
         // Verify node is a tip node.
         size_t const num_links = tip_node->links().size();
-        NICE_PANIC(num_links != 1);
+        TRACE_PANIC(num_links != 1);
 
         NodeSP new_tip = nullptr;
 
@@ -355,7 +355,7 @@ struct BasicNodeTeam::PImpl {
 
                 // Verify node is tip node.
                 size_t const num_links = tip_node->links().size();
-                NICE_PANIC(num_links != 1);
+                TRACE_PANIC(num_links != 1);
 
                 FreeChain const& new_free_chain =
                     tip_node->links().at(0).dst();
@@ -448,7 +448,7 @@ struct BasicNodeTeam::PImpl {
                     }
                 }
                 else {
-                    NICE_PANIC("Unexpected num_links",
+                    TRACE_PANIC("Unexpected num_links",
                                string_format(
                                    "Number of links: %zu\n", num_links));
                 }
@@ -599,7 +599,7 @@ struct BasicNodeTeam::PImpl {
                     for (FreeChain const& fc : that->free_chains_) {
                         JUtil.error("%s\n", fc.to_string().c_str());
                     }
-                    NICE_PANIC(not free_chain_found);
+                    TRACE_PANIC(not free_chain_found);
                 }
             }
 
@@ -801,7 +801,7 @@ struct BasicNodeTeam::PImpl {
         that->score_ = INFINITY;
         bool const mutate_success = regenerate();
 
-        NICE_PANIC(that->free_chains_.size() != 2); // Replace with mutation_exit_check()
+        TRACE_PANIC(that->free_chains_.size() != 2); // Replace with mutation_exit_check()
 
         return mutate_success;
     }
@@ -864,8 +864,8 @@ mutation::Mode BasicNodeTeam::mutate_and_score(
     mutation::Mode mode;
 
     while (not mutate_success and not modes.empty()) {
-        NICE_PANIC(size() == 0);
-        NICE_PANIC(free_chains_.size() != 2); // Replace with mutation_entry_check()
+        TRACE_PANIC(size() == 0);
+        TRACE_PANIC(free_chains_.size() != 2); // Replace with mutation_entry_check()
 
         mode = modes.pop_random();
         switch (mode) {
@@ -891,12 +891,12 @@ mutation::Mode BasicNodeTeam::mutate_and_score(
             mutation::bad_mode(mode);
         }
 
-        NICE_PANIC(free_chains_.size() != 2); // Replace with mutation_exit_check()
+        TRACE_PANIC(free_chains_.size() != 2); // Replace with mutation_exit_check()
     }
 
     if (not mutate_success) {
         mutate_success = p_impl_->randomize_mutate();
-        NICE_PANIC(not mutate_success,
+        TRACE_PANIC(not mutate_success,
                    "Randomize Mutate also failed - bug?");
     }
 
@@ -916,7 +916,7 @@ void BasicNodeTeam::randomize() {
 /* printers */
 
 void BasicNodeTeam::print_to(std::ostream& os) const {
-    NICE_PANIC(free_chains_.empty());
+    TRACE_PANIC(free_chains_.empty());
     NodeSP start_node = free_chains_.at(0).node_sp();
     BasicNodeGenerator node_gen(start_node);
 

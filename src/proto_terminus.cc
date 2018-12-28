@@ -48,7 +48,7 @@ ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
 
 /* modifiers */
 void ProtoTerminus::finalize() {
-    NICE_PANIC(finalized_,
+    TRACE_PANIC(finalized_,
                string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
     finalized_ = true;
 

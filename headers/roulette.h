@@ -39,7 +39,7 @@ public:
         for (float prob : cpd) {
             accumulate_prob(prob);
         }
-        NICE_PANIC(items.size() != cpd.size());
+        TRACE_PANIC(items.size() != cpd.size());
     }
 
     /* dtors */
@@ -50,7 +50,7 @@ public:
     CummProbDist const& cpd() const { return cpd_; }
     size_t total() const { return total_; }
     ItemType const& draw() const {
-        NICE_PANIC(cpd_.empty());
+        TRACE_PANIC(cpd_.empty());
         DEBUG(cpd_.size() != items_.size(),
               string_format("cml_sum size=%zu but container size=%zu\n",
                             cpd_.size(), items_.size()));

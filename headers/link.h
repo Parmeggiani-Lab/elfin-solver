@@ -11,12 +11,12 @@ class Node;
 typedef std::shared_ptr<Node> NodeSP;
 typedef std::unordered_map<NodeSP, NodeSP> NodeAddrMap;
 
-class Link {
+class Link : public Printable {
 private:
     /* data */
     FreeChain src_chain_, dst_chain_;
     ProtoLink const* prototype_;
-    
+
 public:
     /* ctors */
     Link() = delete;
@@ -40,7 +40,7 @@ public:
     void update_node_ptrs(NodeAddrMap const& nam);
 
     /* printers */
-    std::string to_string() const;
+    virtual void print_to(std::ostream& os) const;
 };  /* class Link */
 
 typedef Vector<Link> LinkList;

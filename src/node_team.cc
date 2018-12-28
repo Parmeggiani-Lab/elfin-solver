@@ -70,7 +70,7 @@ void NodeTeam::remove_free_chains(NodeSP const& node) {
 /* ctors */
 NodeTeam::NodeTeam(WorkArea const* work_area) :
     work_area_(work_area) {
-    NICE_PANIC(work_area_ == nullptr);
+    TRACE_PANIC(work_area_ == nullptr);
     nodes_.reserve(work_area_->target_size());
     free_chains_.reserve(FREE_CHAIN_VM_RESERVE_SIZE);
 }

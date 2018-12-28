@@ -31,7 +31,7 @@ UIJoint::UIJoint(
 
         hinge_name_ = json["hinge"];
     } catch (const std::exception& e) {
-        NICE_PANIC("Exception",
+        TRACE_PANIC("Exception",
                    string_format("Failed to parse spec from JSON."
                                  "\nReason: %s", e.what()));
     }

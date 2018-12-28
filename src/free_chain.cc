@@ -92,13 +92,12 @@ NodeSP FreeChain::node_sp() const {
 }
 
 /* printers */
-std::string FreeChain::to_string() const {
+void FreeChain::print_to(std::ostream& os) const {
     NodeSP sp = node_sp();
-    return string_format("FreeChain[node: %s (%p), term: %s, chain: %zu]",
-                         sp->prototype_->name.c_str(),
-                         sp.get(),
-                         TerminusTypeToCStr(term),
-                         chain_id);
+    os << "FreeChain[node: " << sp->prototype_->name;
+    os << " (Ptr: " << (void*) sp.get() << "), ";
+    os << "term: " << TerminusTypeToCStr(term) << ", ";
+    os << "chain: " << chain_id << "]";
 }
 
 }  /* elfin */

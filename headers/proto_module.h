@@ -16,7 +16,7 @@ namespace elfin {
 
 GEN_ENUM_AND_STRING(ModuleType, ModuleTypeNames, FOREACH_MODULETYPE);
 
-class ProtoModule {
+class ProtoModule : public Printable {
 public:
     /* types */
     struct Counts {
@@ -69,7 +69,7 @@ public:
         std::string const& b_chain_name);
 
     /* printers */
-    std::string to_string() const;
+    virtual void print_to(std::ostream& os) const;
 };
 
 typedef std::unique_ptr<ProtoModule> ProtoModuleUP;

@@ -21,7 +21,7 @@ public:
         UIJointSP start_joint) :
         joints_(joints),
         next_joint_(start_joint) {
-        NICE_PANIC(not start_joint);
+        TRACE_PANIC(not start_joint);
     }
 
     /* dtors */

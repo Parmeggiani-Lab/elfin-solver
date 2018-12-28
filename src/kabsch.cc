@@ -95,7 +95,7 @@ V3fList _resample(
     }
 
     // Is something wrong with the resampling algorithm?
-    NICE_PANIC(resampled.size() != ref.size());
+    TRACE_PANIC(resampled.size() != ref.size());
 
     return resampled;
 }
@@ -111,9 +111,9 @@ void _rosetta_kabsch_align(
     size_t const ref_n = ref.size();
 
     // Check sample sizes.
-    NICE_PANIC(n < 1);
-    NICE_PANIC(ref_n < 1);
-    NICE_PANIC(n != ref_n);
+    TRACE_PANIC(n < 1);
+    TRACE_PANIC(ref_n < 1);
+    TRACE_PANIC(n != ref_n);
 
     size_t j = 0;
     size_t m = 0;
@@ -381,9 +381,9 @@ float _rosetta_kabsch_rms(
     size_t const ref_n = ref.size();
 
     // Check sample sizes.
-    NICE_PANIC(n < 1);
-    NICE_PANIC(ref_n < 1);
-    NICE_PANIC(n != ref_n);
+    TRACE_PANIC(n < 1);
+    TRACE_PANIC(ref_n < 1);
+    TRACE_PANIC(n != ref_n);
 
     size_t j = 0;
     size_t m = 0;

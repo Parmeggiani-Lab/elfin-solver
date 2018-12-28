@@ -15,7 +15,7 @@ class Node;
 typedef std::weak_ptr<Node> NodeWP;
 typedef std::shared_ptr<Node> NodeSP;
 
-struct FreeChain {
+struct FreeChain : public Printable {
     /* types */
     struct Bridge {
         ProtoLink const* const pt_link1, * const pt_link2;
@@ -47,7 +47,7 @@ struct FreeChain {
     NodeSP node_sp() const;
 
     /* printers */
-    std::string to_string() const;
+   virtual void print_to(std::ostream& os) const;
 };
 
 typedef Vector<FreeChain> FreeChainList;
@@ -67,10 +67,6 @@ template <> struct hash<elfin::FreeChain> {
 } /* std */
 
 namespace elfin {
-
-// struct FreeChainVM : public VectorMap<FreeChain> {
-//     std::string to_string() const;
-// };
 
 }  /* elfin */
 

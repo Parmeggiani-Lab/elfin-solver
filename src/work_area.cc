@@ -12,7 +12,7 @@ namespace elfin {
 
 /* free */
 void bad_work_type(WorkType type) {
-    NICE_PANIC(type == type, string_format("Bad WorkType: %s\n",
+    TRACE_PANIC(type == type, string_format("Bad WorkType: %s\n",
                                            WorkTypeToCStr(type)));
 }
 
@@ -101,7 +101,7 @@ struct WorkArea::PImpl {
          * Calculate expected length as sum of point
          * displacements over avg pair module distance
          */
-        NICE_PANIC(points.size() == 0);
+        TRACE_PANIC(points.size() == 0);
 
         float sum_dist = 0.0f;
         for (auto i = begin(points) + 1; i != end(points); ++i) {
@@ -119,7 +119,7 @@ struct WorkArea::PImpl {
 
     V3fList _gen_points() const {
         V3fList res;
-        NICE_PANIC(leaf_joints.size() != 2,
+        TRACE_PANIC(leaf_joints.size() != 2,
                    string_format("Size of leaf_joints not "
                                  "exactly 2 in work_area: %s\n",
                                  name.c_str()));

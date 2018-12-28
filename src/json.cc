@@ -23,7 +23,7 @@ JSON parse_json(const std::string& filename)
 {
     std::ifstream input_stream(filename);
 
-    NICE_PANIC(not input_stream.is_open(),
+    TRACE_PANIC(not input_stream.is_open(),
                string_format("Could not open JSON file: \"%s\"\n",
                              filename.c_str()));
 

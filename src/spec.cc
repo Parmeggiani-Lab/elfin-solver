@@ -43,14 +43,14 @@ void Spec::parse_from_json(JSON const& json) {
                 pg_network_name,
                 std::make_unique<WorkArea>(pg_network_name, *it, fixed_areas_));
 
-            NICE_PANIC(
+            TRACE_PANIC(
                 work_areas_[pg_network_name]->joints().empty(),
                 string_format(
                     "Work area \"%s\" has no joints associated.",
                     pg_network_name.c_str()));
         }
     } catch (std::exception const& e) {
-        NICE_PANIC("Exception",
+        TRACE_PANIC("Exception",
                    string_format("Failed to parse spec from JSON."
                                  "\nReason: %s", e.what()));
     }

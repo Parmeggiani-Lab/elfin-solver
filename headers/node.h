@@ -13,7 +13,7 @@ class Node;
 typedef std::shared_ptr<Node> NodeSP;
 typedef std::weak_ptr<Node> NodeWP;
 
-class Node {
+class Node : public Printable {
 protected:
     /*
      * Note: Use of vector as container for neighbors (LinkList)
@@ -62,8 +62,7 @@ public:
     void remove_link(FreeChain const& fc);
 
     /* printers */
-    virtual std::string to_string() const;
-    virtual std::string to_csv_string() const;
+    virtual void print_to(std::ostream& os) const;
 };
 
 }  /* elfin */

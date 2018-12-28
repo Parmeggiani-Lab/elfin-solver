@@ -57,7 +57,7 @@ TestStat test_basics() {
     Vector3f tran;
     float rms;
 
-    // Test that kabsch computation doesn't fail NICE_PANIC assertions.
+    // Test that kabsch computation doesn't fail TRACE_PANIC assertions.
     {
         ts.tests++;
         _rosetta_kabsch_align(points10a, points10b, rot, tran, rms);
@@ -129,7 +129,7 @@ TestStat test_score() {
     TestStat ts;
 
     // Test randomly transformed solution results in kabsch score 0.
-    NICE_PANIC(SPEC.work_areas().size() != 1);
+    TRACE_PANIC(SPEC.work_areas().size() != 1);
     auto& wa = begin(SPEC.work_areas())->second;
 
     // Identity (no transform) score 0.

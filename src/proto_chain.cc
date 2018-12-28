@@ -22,7 +22,7 @@ ProtoTerminus const& ProtoChain::get_term(
 }
 
 void ProtoChain::finalize() {
-    NICE_PANIC(finalized_,
+    TRACE_PANIC(finalized_,
                string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
     finalized_ = true;
 

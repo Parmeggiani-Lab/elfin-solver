@@ -21,8 +21,9 @@ class Database
 {
 protected:
     /* types */
-    struct ModPtrRoulette : public Roulette<ProtoModule *> {
-        std::string to_string() const;
+    struct ModPtrRoulette :
+        public Roulette<ProtoModule *>, public Printable {
+        virtual void print_to(std::ostream& os) const;
     };
 
     /* data */

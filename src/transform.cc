@@ -11,11 +11,11 @@ namespace elfin {
 /* ctors */
 Transform::Transform(JSON const& tx_json) {
     JSON const& rot_json = tx_json["rot"];
-    NICE_PANIC(rot_json.size() != 3);
-    NICE_PANIC(rot_json[0].size() != 3);
+    TRACE_PANIC(rot_json.size() != 3);
+    TRACE_PANIC(rot_json[0].size() != 3);
 
     JSON const& tran_json = tx_json["tran"];
-    NICE_PANIC(tran_json.size() != 3);
+    TRACE_PANIC(tran_json.size() != 3);
 #ifdef USE_EIGEN
     (*this) << rot_json[0][0], rot_json[0][1], rot_json[0][2], tran_json[0],
     rot_json[1][0], rot_json[1][1], rot_json[1][2], tran_json[1],
@@ -176,6 +176,36 @@ JSON Transform::tran_json() const {
     out = std::vector<float>(tran_, tran_ + 3);
 #endif  /* ifdef USE_EIGEN */
     return out;
+}
+
+/* printers */
+#ifdef USE_EIGEN
+Eigen::IOFormat const CleanFormt =
+    Eigen::IOFormat(4, 0, ", ", "\n", "[", "]");
+#endif  /* ifdef USE_EIGEN */
+
+void Transform::print_to(std::ostream& os) const {
+#ifdef USE_EIGEN
+    os << this->format(CleanFormt);
+#else
+    os << "Transform[\n  Rot[\n";
+    for (size_t i = 0; i < 3; ++i) {
+        os << "    [ ";
+        for (size_t j = 0; j < 3; ++j) {
+            os << string_format("%.4f", rot_[i][j]);
+            if (j < 2) {
+                os << ", ";
+            }
+        }
+        os << " ]\n";
+    }
+    os << "  ]\n";
+
+    os << "  Tran[ " << tran_[0];
+    os << ", " << tran_[1];
+    os << ", " << tran_[2] << " ]\n";
+    os << "]";
+#endif  /* ifdef USE_EIGEN */
 }
 
 }  /* elfin */

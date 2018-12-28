@@ -25,7 +25,7 @@ inline TerminusType random_termius() {
 }
 
 inline void bad_terminus(TerminusType term) {
-    NICE_PANIC(term == term, string_format("Bad TerminusType: %s\n",
+    TRACE_PANIC(term == term, string_format("Bad TerminusType: %s\n",
                                            TerminusTypeToCStr(term)));
 }
 

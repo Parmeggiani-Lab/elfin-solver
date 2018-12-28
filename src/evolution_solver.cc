@@ -75,7 +75,7 @@ struct EvolutionSolver::PImpl {
         else if (gen_best_score > lastgen_best_score) {
             JUtil.error("Best score is worse than last gen!\n");
             print_pop("Error debug", pop);
-            NICE_PANIC("Score ranking bug?");
+            TRACE_PANIC("Score ranking bug?");
         }
         else {
             stagnant_count = 0;
@@ -106,7 +106,7 @@ struct EvolutionSolver::PImpl {
             if (JUtil.check_log_lvl(LOGLVL_INFO)) {
                 fprintf(stdout, "\n");
             }
-            JUtil.info("Score stopping threshold %.2f reached\n",
+            JUtil.info("Solver reached stopping score %.2f\n",
                        OPTIONS.ga_stop_score);
             should_stop_ga = true;
         }
@@ -114,11 +114,15 @@ struct EvolutionSolver::PImpl {
             if (OPTIONS.ga_stop_stagnancy != -1 and
                     stagnant_count >= OPTIONS.ga_stop_stagnancy) {
                 fprintf(stdout, "\n");
-                JUtil.warn("Solver stopped because max stagnancy is reached (%d)\n", OPTIONS.ga_stop_stagnancy);
+                JUtil.warn(
+                    "Solver reached stagnancy limit (%ld)\n",
+                    OPTIONS.ga_stop_stagnancy);
                 should_stop_ga = true;
             }
             else {
-                JUtil.info("Current stagnancy: %d, max: %d\n\n", stagnant_count, OPTIONS.ga_stop_stagnancy);
+                JUtil.info("Current stagnancy: %zu, max: %ld\n\n",
+                           stagnant_count,
+                           OPTIONS.ga_stop_stagnancy);
             }
         }
 
@@ -182,7 +186,7 @@ struct EvolutionSolver::PImpl {
     }
 
     void run() {
-        NICE_PANIC(run_called, "GA run() called more than once.\n");
+        TRACE_PANIC(run_called, "GA run() called more than once.\n");
         run_called = true;
 
         start_time_in_us_ = JUtil.get_timestamp_us();
