@@ -76,16 +76,16 @@ ifeq ($(CXX),clang++)
 	ERR_FLAGS 	:=
 	CC_FLAGS 	+= -stdlib=libstdc++
 else ifeq ($(CXX),g++)
-	ERR_FLAGS	:= -fdiagnostics-color=always -fmax-errors=1
+	MAX_ERRORS  = 1
+	ERR_FLAGS	:= -fdiagnostics-color=always -fmax-errors=$(MAX_ERRORS)
 endif
 
 CC_FLAGS 		+= -MMD -std=gnu++14
 OPT_FLAGS       += -Ofast
 
-MAX_ERRORS      = 1
 COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS) \
 	$(OPT_FLAGS) $(EIGEN_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) \
-	$(DEFS) $(INCLUDES) -fmax-errors=$(MAX_ERRORS) $(EXTRA_FLAGS)
+	$(DEFS) $(INCLUDES) $(EXTRA_FLAGS)
 
 BINRAY=$(BIN_DIR)$(EXE)
 
