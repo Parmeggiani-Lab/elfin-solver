@@ -17,6 +17,7 @@ compiler:
 env: 
   - OMP_NUM_THREADS=`grep -c ^processor /proc/cpuinfo`
 script:
+  - make clean
   - make -j${OMP_NUM_THREADS} unit
   
 notifications:
