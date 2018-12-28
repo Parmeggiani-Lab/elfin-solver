@@ -96,7 +96,7 @@ void ArgParser::check_options() const {
         "No output directory given.");
 
     if (not JUtil.file_exists(options_.output_dir.c_str())) {
-        JUtil.warn("Output directory does not exist; creating...");
+        JUtil.warn("Output directory does not exist; creating...\n");
         JUtil.mkdir_ifn_exists(options_.output_dir.c_str());
     }
 
