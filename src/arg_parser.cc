@@ -139,15 +139,16 @@ std::string ArgParser::radius_types_setting_string() const {
 
 /* modifiers */
 void ArgParser::parse_options(int const argc, char const* const argv[]) {
+    // Skip binary name (index 0).
     for (size_t i = 1; i < argc; ++i) {
-        // iterate through argument bundle to match argument
+        // Iterate through argument bundle to match argument.
         auto arg = argv[i];
         auto ab = match_arg_bundle(arg);
         bool failed = false;
         if (ab) {
             if (ab->exp_val) {
                 if (i + 1 > argc - 1) {
-                    JUtil.error("Argument %s expects to be followed by a value\n", arg);
+                    JUtil.error("Argument %s requires a value\n", arg);
                     arg_parse_failure(arg, ab);
                 }
                 else {
