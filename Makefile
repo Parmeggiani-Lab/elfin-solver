@@ -18,23 +18,23 @@ DEPS 			:= $(C_SRC:%.c=$(OBJ_DIR)/%.d) $(CC_SRC:%.cc=$(OBJ_DIR)/%.d)
 # $(info Sources to be compiled: [${C_SRC}] [${CC_SRC}])
 # $(info Objects to be compiled: [${OBJS}])
 
-OMP=yes
-DEBUG=yes
-TARGET=cpu
-TIMING=yes
-MAX_ERRORS=1
-ASAN=no
-
 # Flag switches
-ifeq ($(DEBUG), yes)
-	DEBUG_FLAGS += -ggdb3 -rdynamic
+DEBUG=basic
+ifeq ($(DEBUG),basic)
+	DEBUG_FLAGS := -ggdb3 -rdynamic
+else ifeq ($(DEBUG),asan)
+	DEBUG_FLAGS := -fsanitize=address -fno-omit-frame-pointer
+else
+	DEBUG_FLAGS := -DNDBUG
 endif
 
-ifeq ($(ASAN), yes)
-	DEBUG_FLAGS += -fsanitize=address -fno-omit-frame-pointer
+EIGEN=yes
+ifeq ($(EIGEN),yes)
+	EIGEN_FLAGS = -DUSE_EIGEN
 endif
 
-ifeq ($(TARGET), gpu)
+TARGET=cpu
+ifeq ($(TARGET),gpu)
 $(info Using clang++ for GPU target)
 $(info This was only tested on the Zoo cluster)
 	CXX = clang++
@@ -42,9 +42,9 @@ $(info This was only tested on the Zoo cluster)
 		--cuda-path=/nfs/modules/cuda/8.0.61/ -DTARGET_GPU
 endif
 
-ifeq ($(CXX), clang++)
+ifeq ($(CXX),clang++)
 	# clang has no GLIBCXX_PARALLEL until c++17
-	ifeq ($(TARGET), cpu)
+	ifeq ($(TARGET),cpu)
 		OMP_FLAGS += -openmp -D_GLIBCXX_PARALLEL
 	endif
 else
@@ -53,11 +53,11 @@ endif
 
 INCLUDES += -I. -I./headers -I./lib/jutil/headers -I./lib 
 
-ifeq ($(CXX), clang++)
-	ifeq ($(OS), Windows_NT)
+ifeq ($(CXX),clang++)
+	ifeq ($(OS),Windows_NT)
 	else
 		UNAME_S := $(shell uname -s)
-		ifeq ($(UNAME_S), Darwin)
+		ifeq ($(UNAME_S),Darwin)
 		       	# For clang, these include directories vary from system to system
 		        # Find the ones your gcc/g++ use
 	        	INCLUDES += -I/usr/local/Cellar/gcc/6.1.0/include/c++/6.1.0 \
@@ -75,15 +75,16 @@ ifeq ($(CXX), clang++)
 
 	ERR_FLAGS 	:=
 	CC_FLAGS 	+= -stdlib=libstdc++
-else ifeq ($(CXX), g++)
+else ifeq ($(CXX),g++)
 	ERR_FLAGS	:= -fdiagnostics-color=always -fmax-errors=1
 endif
 
 CC_FLAGS 		+= -MMD -std=gnu++14
-OPT_FLAGS       += -Ofast -DNDBUG
+OPT_FLAGS       += -Ofast
 
+MAX_ERRORS      = 1
 COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS) \
-	$(OPT_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) \
+	$(OPT_FLAGS) $(EIGEN_FLAGS) $(DEBUG_FLAGS) $(OMP_FLAGS) \
 	$(DEFS) $(INCLUDES) -fmax-errors=$(MAX_ERRORS) $(EXTRA_FLAGS)
 
 BINRAY=$(BIN_DIR)$(EXE)
