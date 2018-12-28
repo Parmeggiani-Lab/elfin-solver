@@ -53,7 +53,7 @@ void InputManager::setup() {
     JUtil.info("Using spec file: %s\n", OPTIONS.spec_file.c_str());
     instance().spec_.parse_from_json(parse_json(OPTIONS.spec_file));
 
-    JUtil.info("Spec has %lu fixed areas and %lu work areas\n",
+    JUtil.info("Spec has %zu fixed areas and %zu work areas\n",
                SPEC.fixed_areas().size(), SPEC.work_areas().size());
 
     parallel::init();

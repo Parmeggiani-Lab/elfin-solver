@@ -15,7 +15,7 @@ void InputManager::load_test_config(
         "elfin", /* binary name */
         "--config_file", "config/unit_test.json",
         "--spec_file", spec_file.c_str(),
-        "--n_workers", string_format("%lu", n_workers).c_str()
+        "--n_workers", string_format("%zu", n_workers).c_str()
     };
 
     size_t const argc = sizeof(argv) / sizeof(argv[0]);

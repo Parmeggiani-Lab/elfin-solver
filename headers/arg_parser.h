@@ -4,24 +4,37 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_set>
 
 #include "jutil.h"
 #include "options.h"
+#include "string_utils.h"
 
 namespace elfin {
 
 /* types */
 class ArgParser;
-typedef void (ArgParser::*ArgBundleCallback)(std::string const&);
+typedef bool (ArgParser::*ArgBundleCallback)(std::string const&);
 
-struct ArgBundle {
+struct ArgBundle : public Printable {
+    /* data */
     std::string const short_form;
     std::string const long_form;
     std::string const description;
     bool const exp_val;  // Will argument be followed by a value?
     ArgBundleCallback const callback;
-    std::string to_string() const;
+    /* ctors */
+    ArgBundle(std::string const&,
+              std::string const&,
+              std::string const&,
+              bool const,
+              ArgBundleCallback const&);
+    /* printers */
+    virtual void print_to(std::ostream& os) const;
 };
+
+/* Global Data */
+extern std::unordered_set<std::string> const RADIUS_TYPES;
 
 class ArgParser {
 private:
@@ -149,8 +162,8 @@ private:
         },
         {   "R",
             "radius",
-            ("Set radius type to one of {max_ca_dist (default), "
-            "max_heavy_dist, average_all}."),
+            string_format("Set radius type to one of %s.",
+            radius_types_setting_string().c_str()),
             true,
             &ArgParser::set_radius_type
         }
@@ -159,86 +172,34 @@ private:
     /* accessors */
     ArgBundle const* match_arg_bundle(char const* arg_in) const;
     void check_options() const;
+    std::string radius_types_setting_string() const;
 
     /* modifiers */
     void parse_options(int const argc, char const* const argv[]);
 
+// This macro must match signature of ArgBundleCallback.
 #define ARG_CALLBACK_DECL(FUNC) \
-    void FUNC(std::string const& arg_in)
+    bool FUNC(std::string const& arg_in)
 
     ARG_CALLBACK_DECL(parse_config);
-
     ARG_CALLBACK_DECL(set_spec_file);
-
-    ARG_CALLBACK_DECL(set_xdb) {
-        options_.xdb = arg_in;
-    }
-
-    ARG_CALLBACK_DECL(set_output_dir) {
-        options_.output_dir = arg_in;
-    }
-
-    ARG_CALLBACK_DECL(set_len_dev) {
-        options_.len_dev = JUtil.parse_long(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_avg_pair_dist) {
-        options_.avg_pair_dist = JUtil.parse_float(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_seed) {
-        options_.seed = JUtil.parse_long(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_ga_pop_size) {
-        options_.ga_pop_size = JUtil.parse_long(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_ga_iters) {
-        options_.ga_iters = JUtil.parse_long(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_ga_survive_rate) {
-        options_.ga_survive_rate = JUtil.parse_float(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_ga_stop_score) {
-        options_.ga_stop_score = JUtil.parse_float(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_ga_stop_stagnancy) {
-        options_.ga_stop_stagnancy = JUtil.parse_long(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_verbosity) {
-        // Call jutil function to set global log level.
-        JUtil.set_log_lvl((JUtilLogLvl) JUtil.parse_long(arg_in.c_str()));
-    }
-
-    ARG_CALLBACK_DECL(set_run_tests) {
-        options_.run_tests = true;
-        options_.spec_file = "examples/quarter_snake_free.json";
-    }
-
-    ARG_CALLBACK_DECL(set_device) {
-        options_.device = JUtil.parse_long(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_n_workers) {
-        options_.n_workers = JUtil.parse_long(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_keep_n) {
-        options_.keep_n = JUtil.parse_long(arg_in.c_str());
-    }
-
-    ARG_CALLBACK_DECL(set_dry_run) {
-        options_.dry_run = true;
-    }
-
-    ARG_CALLBACK_DECL(set_radius_type) {
-        options_.radius_type = arg_in;
-    }
+    ARG_CALLBACK_DECL(set_xdb);
+    ARG_CALLBACK_DECL(set_output_dir);
+    ARG_CALLBACK_DECL(set_len_dev);
+    ARG_CALLBACK_DECL(set_avg_pair_dist);
+    ARG_CALLBACK_DECL(set_seed);
+    ARG_CALLBACK_DECL(set_ga_pop_size);
+    ARG_CALLBACK_DECL(set_ga_iters);
+    ARG_CALLBACK_DECL(set_ga_survive_rate);
+    ARG_CALLBACK_DECL(set_ga_stop_score);
+    ARG_CALLBACK_DECL(set_ga_stop_stagnancy);
+    ARG_CALLBACK_DECL(set_verbosity);
+    ARG_CALLBACK_DECL(set_run_tests);
+    ARG_CALLBACK_DECL(set_device);
+    ARG_CALLBACK_DECL(set_n_workers);
+    ARG_CALLBACK_DECL(set_keep_n);
+    ARG_CALLBACK_DECL(set_dry_run);
+    ARG_CALLBACK_DECL(set_radius_type);
 
     /* printers */
     ARG_CALLBACK_DECL(help_and_exit);

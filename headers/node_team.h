@@ -14,7 +14,7 @@ namespace elfin {
 class NodeTeam;
 typedef std::shared_ptr<NodeTeam> NodeTeamSP;
 
-class NodeTeam {
+class NodeTeam : public Printable {
 protected:
     /* types */
     typedef VectorMap<NodeSP> NodeSPVMap;
@@ -71,12 +71,9 @@ public:
     virtual void randomize() = 0;
 
     /* printers */
-    virtual std::string to_string() const = 0;
     virtual JSON gen_nodes_json() const = 0;
 
     /* tests */
-    // static BasicNodeTeam build_team(StepList const& steps);
-    // static TestStat test();
 };  /* class NodeTeam */
 
 }  /* elfin */

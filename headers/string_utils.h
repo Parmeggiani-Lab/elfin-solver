@@ -45,7 +45,7 @@ char const * const unit_tests_passed_str =
 
 class Printable {
 public:
-   virtual std::ostream& print_to(std::ostream& o) const = 0;
+   virtual void print_to(std::ostream& os) const = 0;
    std::string to_string() const;
 };
 

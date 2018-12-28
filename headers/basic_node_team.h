@@ -56,7 +56,7 @@ public:
     virtual void randomize();
 
     /* printers */
-    virtual std::string to_string() const;
+    virtual void print_to(std::ostream& os) const;
     virtual JSON gen_nodes_json() const;
 
     /* tests */

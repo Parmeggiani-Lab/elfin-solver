@@ -1,6 +1,5 @@
 #include "database.h"
 
-#include <unordered_map>
 #include <sstream>
 
 #include "string_utils.h"

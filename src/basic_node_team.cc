@@ -914,25 +914,22 @@ void BasicNodeTeam::randomize() {
 }
 
 /* printers */
-std::string BasicNodeTeam::to_string() const {
-    std::ostringstream ss;
 
+void BasicNodeTeam::print_to(std::ostream& os) const {
     NICE_PANIC(free_chains_.empty());
     NodeSP start_node = free_chains_.at(0).node_sp();
     BasicNodeGenerator node_gen(start_node);
 
     while (not node_gen.is_done()) {
-        ss << node_gen.next()->to_string();
+        os << node_gen.next()->to_string();
         Link const* link_ptr = node_gen.curr_link();
         if (link_ptr) {
             TerminusType const src_term = link_ptr->src().term;
             TerminusType const dst_term = link_ptr->dst().term;
-            ss << "\n(" << TerminusTypeToCStr(src_term) << ", ";
-            ss << TerminusTypeToCStr(dst_term) << ")\n";
+            os << "\n(" << TerminusTypeToCStr(src_term) << ", ";
+            os << TerminusTypeToCStr(dst_term) << ")\n";
         }
     }
-
-    return ss.str();
 }
 
 JSON BasicNodeTeam::gen_nodes_json() const {

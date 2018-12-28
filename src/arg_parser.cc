@@ -7,8 +7,15 @@
 
 namespace elfin {
 
+/* Global Var Definition */
+std::unordered_set<std::string> const RADIUS_TYPES = {
+    "max_heavy_dist",
+    "average_all",
+    "max_ca_dist"
+};
+
 /* free functions */
-void failure_callback(
+void arg_parse_failure(
     std::string const& arg_in,
     ArgBundle const* argb) {
     JUtil.error("Argument parsing failed on string: \"%s\"\n", arg_in.c_str());
@@ -24,12 +31,21 @@ void failure_callback(
 }
 
 /* ArgBundle */
-std::string ArgBundle::to_string() const {
-    std::ostringstream ss;
-    ss << "  -" << short_form;
-    ss << ", --" << long_form << '\n';
-    ss << "    " << description << "\n";
-    return ss.str();
+ArgBundle::ArgBundle(std::string const& _short_form,
+                     std::string const& _long_form,
+                     std::string const& _desc,
+                     bool const _exp_val,
+                     ArgBundleCallback const& _callback) :
+    short_form(_short_form),
+    long_form(_long_form),
+    description(_desc),
+    exp_val(_exp_val),
+    callback(_callback) {}
+
+void ArgBundle::print_to(std::ostream& os) const {
+    os << "  -" << short_form;
+    os << ", --" << long_form << '\n';
+    os << "    " << description << "\n";
 }
 
 /* ArgParser */
@@ -105,11 +121,20 @@ void ArgParser::check_options() const {
     JUtil.panic_if(options_.keep_n < 0 or
                    options_.keep_n > options_.ga_pop_size,
                    "Number of best solutions to output must be > 0 and < ga_pop_size.\n");
+}
 
-    JUtil.panic_if(options_.radius_type != "max_heavy_dist" and
-                   options_.radius_type != "average_all" and
-                   options_.radius_type != "max_ca_dist",
-                   "In valid radius type: \"%s\"\n", options_.radius_type.c_str());
+std::string ArgParser::radius_types_setting_string() const {
+    std::ostringstream oss;
+    oss << "{ ";
+    size_t count = 0;
+    for(auto& rt : RADIUS_TYPES) {
+        oss << rt;
+        if (count++ < RADIUS_TYPES.size() - 1) {
+            oss << ", ";
+        }
+    }
+    oss << " }, default=" << Options().radius_type;
+    return oss.str();
 }
 
 /* modifiers */
@@ -118,30 +143,133 @@ void ArgParser::parse_options(int const argc, char const* const argv[]) {
         // iterate through argument bundle to match argument
         auto arg = argv[i];
         auto ab = match_arg_bundle(arg);
+        bool failed = false;
         if (ab) {
             if (ab->exp_val) {
                 if (i + 1 > argc - 1) {
                     JUtil.error("Argument %s expects to be followed by a value\n", arg);
-                    failure_callback(arg, ab);
+                    arg_parse_failure(arg, ab);
                 }
                 else {
-                    (this->*ab->callback)(argv[++i]); // Passes next arg string.
+                    // Parse value.
+                    failed |= not (this->*ab->callback)(argv[++i]);
                 }
             }
             else {
-                (this->*ab->callback)(arg); // Passes current arg name.
+                // Parse flag.
+                failed |= not (this->*ab->callback)(arg);
             }
         }
         else {
             JUtil.error("Unknown argument: %s\n", arg);
-            failure_callback(arg, ab);
+            failed |= true;
+        }
+
+        if (failed) {
+            arg_parse_failure(arg, ab);
         }
     }
 }
 
+// This macro must match signature of ArgBundleCallback.
+#define ARG_PARSER_CALLBACK_DEF(FUNC_NAME) \
+    bool ArgParser::FUNC_NAME(std::string const& arg_in)
 
-#define ARG_PARSER_CALLBACK_DEF(name) \
-    void ArgParser::name(std::string const& arg_in)
+ARG_PARSER_CALLBACK_DEF(set_xdb) {
+    options_.xdb = arg_in;
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_output_dir) {
+    options_.output_dir = arg_in;
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_len_dev) {
+    options_.len_dev = JUtil.parse_long(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_avg_pair_dist) {
+    options_.avg_pair_dist = JUtil.parse_float(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_seed) {
+    options_.seed = JUtil.parse_long(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_ga_pop_size) {
+    options_.ga_pop_size = JUtil.parse_long(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_ga_iters) {
+    options_.ga_iters = JUtil.parse_long(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_ga_survive_rate) {
+    options_.ga_survive_rate = JUtil.parse_float(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_ga_stop_score) {
+    options_.ga_stop_score = JUtil.parse_float(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_ga_stop_stagnancy) {
+    options_.ga_stop_stagnancy = JUtil.parse_long(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_verbosity) {
+    // Call jutil function to set global log level.
+    JUtil.set_log_lvl((JUtilLogLvl) JUtil.parse_long(arg_in.c_str()));
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_run_tests) {
+    options_.run_tests = true;
+    options_.spec_file = "examples/quarter_snake_free.json";
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_device) {
+    options_.device = JUtil.parse_long(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_n_workers) {
+    options_.n_workers = JUtil.parse_long(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_keep_n) {
+    options_.keep_n = JUtil.parse_long(arg_in.c_str());
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_dry_run) {
+    options_.dry_run = true;
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_radius_type) {
+    bool const radiu_type_is_valid =
+        RADIUS_TYPES.find(arg_in) != end(RADIUS_TYPES);
+
+    if (radiu_type_is_valid) {
+        options_.radius_type = arg_in;
+    }
+    else {
+        JUtil.error("Invalid radius type: \"%s\"\n", arg_in.c_str());
+    }
+
+    return radiu_type_is_valid;
+}
 
 ARG_PARSER_CALLBACK_DEF(parse_config) {
     options_.config_file = arg_in;
@@ -159,29 +287,37 @@ ARG_PARSER_CALLBACK_DEF(parse_config) {
         if (ab) {
             (this->*ab->callback)(json_to_str(j[ab->long_form]));
         } else {
-            JUtil.panic("Unrecognized option: %s\n", opt_name.c_str());
+            JUtil.error("Unrecognized option: %s\n", opt_name.c_str());
+            return false;
         }
     }
+
+    return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_spec_file) {
     options_.spec_file = arg_in;
+    return true;
 }
 
 /* printers */
 ARG_PARSER_CALLBACK_DEF(help_and_exit) {
     std::stringstream ss;
+
     ss << "\nelfin-solver: an protein structure design solver\n";
     ss << "Report issues at: https://github.com/joy13975/elfin-solver/issues\n\n";
     ss << "Usage: ./elfin [OPTIONS]\n";
     ss << "Note: settings are parsed and overridden in the order they're written\n";
     ss << "OPTIONS:\n";
+
     for (auto const& ab : argb_) {
         ss << ab.to_string();
     }
 
     std::cout << ss.rdbuf();
-    exit(1);
+    exit(0);
+
+    return false; // Suppress warning.
 }
 
 #undef ARG_PARSER_CALLBACK_DEF

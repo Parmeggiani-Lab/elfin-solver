@@ -15,7 +15,8 @@ std::string Printable::to_string() const {
 namespace std {
 
 std::ostream& operator<<(std::ostream& os, elfin::Printable const& b) {
-	return b.print_to(os);
+    b.print_to(os);
+	return os;
 }
 
 } /* std */

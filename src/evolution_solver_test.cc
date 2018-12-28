@@ -33,7 +33,7 @@ TestStat EvolutionSolver::test() {
         ts.tests++;
         size_t const n_work_areas = SPEC.work_areas().size();
         JUtil.panic_if(n_work_areas != 1,
-                       "Expected spec to have exactly 1 work area, but there is %lu\n",
+                       "Expected spec to have exactly 1 work area, but there is %zu\n",
                        n_work_areas);
 
         auto const& work_area = begin(SPEC.work_areas())->second;
@@ -42,7 +42,7 @@ TestStat EvolutionSolver::test() {
             solver.best_sols().at(work_area->name());
         size_t const n_solutions = solutions.size();
         JUtil.panic_if(n_solutions != OPTIONS.keep_n,
-                       "Expected %lu solutions, but there is %lu\n",
+                       "Expected %zu solutions, but there is %zu\n",
                        OPTIONS.keep_n, n_solutions);
 
         auto best_team = solutions.at(0);
@@ -50,7 +50,7 @@ TestStat EvolutionSolver::test() {
         auto& free_chains = best_team->free_chains();
 
         JUtil.panic_if(free_chains.size() != 2,
-                       "Expected %lu free chains, but there is %lu\n",
+                       "Expected %zu free chains, but there is %zu\n",
                        2, free_chains.size());
 
         auto& recipe = tests::quarter_snake_free_recipe;
