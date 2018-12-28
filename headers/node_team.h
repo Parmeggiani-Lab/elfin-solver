@@ -2,10 +2,10 @@
 #define NODE_TEAM_H_
 
 #include <memory>
+#include <unordered_set>
 
 #include "node.h"
 #include "work_area.h"
-#include "vector_map.h"
 #include "checksum.h"
 #include "mutation.h"
 
@@ -17,7 +17,7 @@ typedef std::shared_ptr<NodeTeam> NodeTeamSP;
 class NodeTeam : public Printable {
 protected:
     /* types */
-    typedef VectorMap<NodeSP> NodeSPVMap;
+    typedef std::unordered_set<NodeSP> NodeSPVMap;
 
     /* data */
     WorkArea const* work_area_ = nullptr;

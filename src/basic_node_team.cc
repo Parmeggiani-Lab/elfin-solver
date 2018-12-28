@@ -194,7 +194,7 @@ struct BasicNodeTeam::PImpl {
         auto new_node = std::make_shared<Node>(
                             bridge->pt_link1->module_,
                             node1->tx_ * bridge->pt_link1->tx_);
-        that->nodes_.push_back(new_node);
+        that->nodes_.insert(new_node);
 
         //
         // Link up

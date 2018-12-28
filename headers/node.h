@@ -15,18 +15,19 @@ typedef std::weak_ptr<Node> NodeWP;
 
 class Node : public Printable {
 protected:
-    /*
-     * Note: Use of vector as container for neighbors (LinkList)
-     *
-     * I chose to use vector because as far as we are concerned now, modules
-     * have very small number of termini e.g. max 4 at the time of writing.
-     * Although it's O(n) to access the wanted FreeChain, using more complex
-     * structure to support O(1) operations is probably not worth the
-     * memory/dev time due to how tiny the vectors are.
-     *
-     * If in the future the number of termini per module does increase, it
-     * might be advisable to switch to VectorMap or something better.
-     */
+    //
+    // Note: Use of vector as container for neighbors (LinkList)
+    //
+    // I chose to use vector because as far as we are concerned now, modules
+    // have very few termini e.g. max 4 at the time of writing. Although it's
+    // O(n) to access the wanted FreeChain, using more complex structure to
+    // support O(1) operations is probably not worth the memory/dev time due
+    // to how tiny the vectors are.
+    //
+    // If in the future the number of termini per module does increase
+    // significantly, it might be advisable to switch to VectorMap or
+    // something better.
+    //
 
     /* data */
     LinkList links_;

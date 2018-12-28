@@ -55,7 +55,7 @@ NodeSP NodeTeam::add_member(
         }
     }
 
-    nodes_.push_back(new_node);
+    nodes_.insert(new_node);
     return new_node;
 }
 
@@ -109,7 +109,7 @@ NodeTeam& NodeTeam::operator=(NodeTeam const& other) {
 
             for (auto& other_node : other.nodes()) {
                 auto node_sp = other_node->clone();
-                nodes_.push_back(node_sp);
+                nodes_.insert(node_sp);
                 addr_map[other_node] = node_sp;
             }
 
