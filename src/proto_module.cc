@@ -5,6 +5,7 @@
 
 #include "debug_utils.h"
 #include "node.h"
+#include "exit_exception.h"
 
 // #define PRINT_INIT
 // #define PRINT_FINALIZE
@@ -75,8 +76,8 @@ size_t ProtoModule::find_chain_id(
         JUtil.error("%s", chain.name.c_str());
     }
 
-    TRACE_PANIC("Chain Not Found");
-    exit(1); // Suppress no return warning.
+    TRACE_PANIC("Chain Not Found\n");
+    throw ExitException{1}; // Suppress warning.
 }
 ProtoLink const* ProtoModule::find_link_to(
     size_t const src_chain_id,
@@ -176,7 +177,7 @@ void ProtoModule::create_proto_link_pair(
         tx = tx.inversed() * tx_hub.inversed();
     }
     else {
-        JUtil.panic("mod_a.type == ModuleType::HUB and "
+        PANIC("mod_a.type == ModuleType::HUB and "
             "mod_b.type == ModuleType::HUB\n");
     }
 

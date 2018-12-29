@@ -4,6 +4,7 @@
 #include <string>
 
 #include "string_utils.h"
+#include "exit_exception.h"
 
 namespace elfin {
 
@@ -32,6 +33,24 @@ namespace elfin {
             __PRETTY_FUNCTION__,\
             __FILE__,\
             __LINE__);\
+    } while(0)
+#define PANIC(...) \
+    do {\
+        _Pragma("omp single")\
+        {\
+            JUtil.error(__VA_ARGS__);\
+            throw ExitException{1};\
+        }\
+    } while(0)
+#define PANIC_IF(PREDICATE, ...) \
+    do {\
+        if(PREDICATE) {\
+            _Pragma("omp single")\
+            {\
+                JUtil.error(__VA_ARGS__);\
+                throw ExitException{1};\
+            }\
+        }\
     } while(0)
 
 void __debug(

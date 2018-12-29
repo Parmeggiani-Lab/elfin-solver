@@ -43,26 +43,28 @@ void Node::update_link_ptrs(NodeAddrMap const& nam) {
 }
 
 void Node::remove_link(FreeChain const& src) {
-    bool found_link = false;
-    for (size_t i = 0; i < links_.size(); ++i) {
-        if (links_.at(i).src() == src) {
-            links_.at(i) = links_.back();
-            links_.pop_back();
-            found_link = true;
-            break; // No two identical links should co-exist!
-        }
-    }
+    auto link_itr = std::find_if(
+                        begin(links_),
+                        end(links_),
+    [&](auto const & link) { return link.src() == src; });
 
-    // A bit more verbose diagnosis
-    if (not found_link) {
+    // Verbose diagnosis
+    if (link_itr == end(links_)) {
         print_stacktrace();
-        JUtil.error("Trying to remove link that does not exist. Links:\n");
+        JUtil.error("Tried to remove link that does not exist. Links:\n");
         for (size_t i = 0; i < links_.size(); ++i) {
             JUtil.error("Link #%zu: %s\n",
                         i, links_[i].to_string().c_str());
         }
-        JUtil.error("%s\n", to_string().c_str());
-        JUtil.panic("%s\n", src.to_string().c_str());
+        PANIC("%s failed:\nsrc=%s\nNode: %s\n",
+              __PRETTY_FUNCTION__,
+              src.to_string().c_str(),
+              to_string().c_str());
+    }
+    else {
+        // Lift erase found link.
+        *link_itr = links_.back();
+        links_.pop_back();
     }
 }
 

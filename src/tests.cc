@@ -53,10 +53,6 @@ size_t test_integration() {
     JUtil.info("%zu/%zu integration tests passed.\n",
                (total.tests - total.errors), total.tests);
 
-    if (total.errors > 0) {
-        JUtil.error("%zu integration tests failed!\n", total.errors);
-    }
-
     return total.errors;
 }
 
@@ -64,15 +60,15 @@ void run_all() {
     size_t const unit_test_errors = test_units();
 
     if (unit_test_errors > 0) {
-        JUtil.panic("%zu unit tests failed. Not continuing to integration tests.\n",
+        PANIC("%zu unit tests failed. Not continuing to integration tests.\n",
                     unit_test_errors);
     }
     else {
         size_t const int_test_errors = test_integration();
 
-        JUtil.panic_if(int_test_errors > 0,
-                       "%zu integration tests failed.\n",
-                       int_test_errors);
+        PANIC_IF(int_test_errors > 0,
+                 "%zu integration tests failed.\n",
+                 int_test_errors);
 
         if (JUtil.check_log_lvl(LOGLVL_INFO)) {
             printf("- - - - - - - - - -"

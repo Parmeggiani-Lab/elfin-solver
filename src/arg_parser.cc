@@ -4,6 +4,7 @@
 
 #include "json.h"
 #include "debug_utils.h"
+#include "exit_exception.h"
 
 namespace elfin {
 
@@ -27,7 +28,7 @@ void arg_parse_failure(
     }
 
     JUtil.error("Use -h flag for full help.\n");
-    exit(1);
+    throw ExitException{1};
 }
 
 /* ArgBundle */
@@ -69,29 +70,29 @@ ArgBundle const* ArgParser::match_arg_bundle(char const* arg_in) const {
 
 void ArgParser::check_options() const {
     // Files.
-    JUtil.panic_if(
+    PANIC_IF(
         options_.xdb == "",
         "No xdb path provided.\n");
 
-    JUtil.panic_if(
+    PANIC_IF(
         not JUtil.file_exists(options_.xdb.c_str()),
         "xdb file could not be found.\n");
 
-    JUtil.panic_if(options_.spec_file == "",
+    PANIC_IF(options_.spec_file == "",
                    "No input spec file given.\n");
 
-    JUtil.panic_if(
+    PANIC_IF(
         not JUtil.file_exists(options_.spec_file.c_str()),
         "Input file could not be found.\n");
 
     if (options_.config_file != "") {
-        JUtil.panic_if(
+        PANIC_IF(
             not JUtil.file_exists(options_.config_file.c_str()),
             "Settings file \"%s\" could not be found\n",
             options_.config_file.c_str());
     }
 
-    JUtil.panic_if(
+    PANIC_IF(
         options_.output_dir == "",
         "No output directory given.");
 
@@ -101,24 +102,24 @@ void ArgParser::check_options() const {
     }
 
     // Settings.
-    JUtil.panic_if(options_.ga_pop_size < 0,
+    PANIC_IF(options_.ga_pop_size < 0,
                    "Population size cannot be < 0.\n");
 
-    JUtil.panic_if(options_.ga_iters < 0,
+    PANIC_IF(options_.ga_iters < 0,
                    "Number of iterations cannot be < 0.\n");
 
-    JUtil.panic_if(options_.len_dev < 0,
+    PANIC_IF(options_.len_dev < 0,
                    "Candidate length deviation must be an integer > 0.\n");
 
     // GA params.
-    JUtil.panic_if(options_.ga_survive_rate <= 0.0 or
+    PANIC_IF(options_.ga_survive_rate <= 0.0 or
                    options_.ga_survive_rate >= 1.0,
                    "GA survive rate must be between 0 and 1 exclusive.\n");
 
-    JUtil.panic_if(options_.avg_pair_dist < 0,
+    PANIC_IF(options_.avg_pair_dist < 0,
                    "Average CoM distance must be > 0");
 
-    JUtil.panic_if(options_.keep_n < 0 or
+    PANIC_IF(options_.keep_n < 0 or
                    options_.keep_n > options_.ga_pop_size,
                    "Number of best solutions to output must be > 0 and < ga_pop_size.\n");
 }
@@ -284,7 +285,7 @@ ARG_PARSER_CALLBACK_DEF(set_radius_type) {
 ARG_PARSER_CALLBACK_DEF(parse_config) {
     options_.config_file = arg_in;
 
-    JUtil.panic_if(
+    PANIC_IF(
         not JUtil.file_exists(options_.config_file.c_str()),
         "Settings file does not exist: \"%s\"\n",
         options_.config_file.c_str());
@@ -325,7 +326,7 @@ ARG_PARSER_CALLBACK_DEF(help_and_exit) {
     }
 
     std::cout << ss.rdbuf();
-    exit(0);
+    throw ExitException{0};
 
     return false; // Suppress warning.
 }

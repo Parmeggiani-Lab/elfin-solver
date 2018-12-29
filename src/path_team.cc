@@ -305,14 +305,10 @@ struct PathTeam::PImpl {
                                 _.free_chains_.size()));
 
             tip_node = grow_tip(src, curr_link->prototype());
-            if (curr_link->dst().node->prototype_ != tip_node->prototype_) {
-                JUtil.error("%s vs %s\n",
-                            curr_link->dst().node->prototype_->name.c_str(),
-                            tip_node->prototype_->name.c_str());
-                JUtil.error("curr_link->prototype(): %s\n",
-                            curr_link->prototype()->module_->name.c_str());
-                JUtil.panic("");
-            }
+            DEBUG(curr_link->dst().node->prototype_ != tip_node->prototype_,
+                  string_format("%s vs %s\n",
+                                curr_link->dst().node->prototype_->name.c_str(),
+                                tip_node->prototype_->name.c_str()));
 
             num_links = tip_node->links().size();
             DEBUG(num_links != 1,
@@ -775,7 +771,7 @@ struct PathTeam::PImpl {
                 }
             }
             catch (std::bad_cast const& e) {
-                JUtil.panic("Bad cast in %s\n", __PRETTY_FUNCTION__);
+                PANIC("Bad cast in %s\n", __PRETTY_FUNCTION__);
             }
         }
 #endif
@@ -909,7 +905,7 @@ void PathTeam::copy_from(NodeTeam const& other) {
         PathTeam::operator=(static_cast<PathTeam const&>(other));
     }
     catch (std::bad_cast const& e) {
-        JUtil.panic("Bad cast in %s\n", __PRETTY_FUNCTION__);
+        PANIC("Bad cast in %s\n", __PRETTY_FUNCTION__);
     }
 }
 

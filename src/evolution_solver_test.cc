@@ -33,7 +33,7 @@ TestStat EvolutionSolver::test() {
     {
         ts.tests++;
         size_t const n_work_areas = SPEC.work_areas().size();
-        JUtil.panic_if(n_work_areas != 1,
+        PANIC_IF(n_work_areas != 1,
                        "Expected spec to have exactly 1 work area, but there is %zu\n",
                        n_work_areas);
 
@@ -42,7 +42,7 @@ TestStat EvolutionSolver::test() {
         auto& solutions =
             solver.best_sols().at(work_area->name());
         size_t const n_solutions = solutions.size();
-        JUtil.panic_if(n_solutions != OPTIONS.keep_n,
+        PANIC_IF(n_solutions != OPTIONS.keep_n,
                        "Expected %zu solutions, but there is %zu\n",
                        OPTIONS.keep_n, n_solutions);
 
@@ -51,7 +51,7 @@ TestStat EvolutionSolver::test() {
                 static_cast<PathTeam const&>(*solutions.at(0));
             auto& free_chains = best_bnt.free_chains();
 
-            JUtil.panic_if(free_chains.size() != 2,
+            PANIC_IF(free_chains.size() != 2,
                            "Expected %zu free chains, but there is %zu\n",
                            2, free_chains.size());
 
@@ -69,20 +69,22 @@ TestStat EvolutionSolver::test() {
                     ts.errors++;
                     JUtil.error("Solver best solution differs from expectation.\n");
 
-                    std::ostringstream oss;
-                    oss << "Solver solution:\n";
+                    std::ostringstream sol_oss;
+                    sol_oss << "Solver solution:\n";
 
                     auto err_path_gen = tip_fc.node->gen_path();
                     while (not err_path_gen.is_done()) {
-                        oss << err_path_gen.next()->prototype_->name << "\n";
+                        sol_oss << err_path_gen.next()->prototype_->name << "\n";
                     }
+                    JUtil.error(sol_oss.str().c_str());
 
-                    JUtil.error("Expected solution:\n");
+                    std::ostringstream exp_oss;
+                    exp_oss << "Expected solution:\n";
                     for (auto& step : recipe) {
-                        oss << step.mod_name << "\n";
+                        exp_oss << step.mod_name << "\n";
                     }
 
-                    JUtil.error(oss.str().c_str());
+                    JUtil.error(exp_oss.str().c_str());
                     break;
                 }
                 ++step_itr;

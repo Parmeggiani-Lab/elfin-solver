@@ -8,11 +8,11 @@
 #include "output_manager.h"
 #include "parallel_utils.h"
 #include "tests.h"
+#include "exit_exception.h"
 
 namespace elfin {
 
 Elfin::InstanceMap Elfin::instances_;
-bool interrupt_caught = false;
 
 /* public */
 /* ctors */
@@ -34,7 +34,7 @@ Elfin::~Elfin() {
 }
 
 /* modifiers */
-int Elfin::run() {
+void Elfin::run() {
     if (OPTIONS.run_tests) {
         tests::run_all();
     }
@@ -43,8 +43,6 @@ int Elfin::run() {
         solver_.run();
         OutputManager::write_output(solver_);
     }
-
-    return 0;
 }
 
 /* private */
@@ -56,9 +54,11 @@ void Elfin::crash_dump() const {
 
 /* handlers */
 void Elfin::interrupt_handler(int const signal) {
+    static bool interrupt_caught = false;
+    
     if (interrupt_caught) {
         fprintf(stderr, "\n\n");
-        JUtil.panic("Caught interrupt signal (second). Aborting NOW.\n");
+        PANIC("Caught interrupt signal (second). Aborting NOW.\n");
     }
     else {
         interrupt_caught = true;
@@ -71,9 +71,20 @@ void Elfin::interrupt_handler(int const signal) {
             inst->crash_dump();
         }
 
-        exit(signal);
+        throw ExitException{signal};
     }
 }
 
 
 }  // namespace elfin
+
+int main(int const argc, const char ** argv) {
+    try {
+        elfin::Elfin(argc, argv).run();
+        return 0;
+    }
+    catch (elfin::ExitException e) {
+        JUtil.error("Aborting due to code: %d\n", e.code);
+        return e.code;
+    }
+}

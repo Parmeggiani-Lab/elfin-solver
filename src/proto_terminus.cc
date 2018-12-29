@@ -4,6 +4,7 @@
 
 #include "proto_module.h"
 #include "debug_utils.h"
+#include "exit_exception.h"
 
 // #define PRINT_FINALIZE
 
@@ -21,7 +22,7 @@ ProtoLink const& ProtoTerminus::pick_random_link(
     }
     else {
         bad_terminus(term);
-        exit(1); // Suppress no return warning.
+        throw ExitException{1}; // Suppress no return warning.
     }
 }
 

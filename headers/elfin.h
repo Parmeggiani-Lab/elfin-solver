@@ -20,7 +20,7 @@ public:
     ~Elfin();
 
     /* modifiers */
-    int run();
+    void run();
 
 private:
     /* data */

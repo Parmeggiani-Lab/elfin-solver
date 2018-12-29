@@ -46,7 +46,7 @@ void Database::categorize() {
         size_t const n_itf = mod->counts().all_interfaces();
         ProtoModule* mod_raw_ptr = mod.get();
         if (n_itf < 2) {
-            JUtil.panic("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
+            PANIC("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
                         mod->name.c_str(), n_itf);
         } else if (n_itf == 2) {
             basic_mods_.push_back(mod->counts().all_links(), mod_raw_ptr);
@@ -59,7 +59,7 @@ void Database::categorize() {
         } else if (mod->type == ModuleType::HUB) {
             hubs_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
-            JUtil.panic("mod[%s] has unknown ModuleType: %s\n",
+            PANIC("mod[%s] has unknown ModuleType: %s\n",
                         mod->name.c_str(), ModuleTypeToCStr(mod->type));
         }
     }
