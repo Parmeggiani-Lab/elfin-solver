@@ -31,14 +31,14 @@ static inline size_t get_dice(size_t ceiling) {
 // https://stackoverflow.com/questions/9218724/get-random-element-and-remove-it
 template <typename T>
 static inline void remove_at(std::vector<T> & v, typename std::vector<T>::size_type n) {
-    DEBUG(v.empty());
+    TRACE_PANIC(v.empty());
     std::swap(v[n], v.back());
     v.pop_back();
 }
 
 template <typename T>
 static inline T pop(std::vector<T> & v) {
-    DEBUG(v.empty());
+    TRACE_PANIC(v.empty());
     size_t const idx = get_dice(v.size());
     T ret = v.at(idx);
     remove_at(v, idx);
@@ -47,14 +47,14 @@ static inline T pop(std::vector<T> & v) {
 
 template <typename T>
 static inline T const& pick(std::vector<T> const& v) {
-    DEBUG(v.empty());
+    TRACE_PANIC(v.empty());
     size_t const idx = get_dice(v.size());
     return v.at(idx);
 }
 
 template <typename T>
 static inline T& pick(std::vector<T> & v) {
-    DEBUG(v.empty());
+    TRACE_PANIC(v.empty());
     size_t const idx = get_dice(v.size());
     return v.at(idx);
 }

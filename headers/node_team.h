@@ -12,9 +12,7 @@ namespace elfin {
 
 class NodeTeam;
 
-// We can't use unique_ptr because they can't be sorted. std::sort may use
-// copy ctor, which unique_ptr doesn't have.
-typedef std::shared_ptr<NodeTeam> NodeTeamSP;
+typedef std::unique_ptr<NodeTeam> NodeTeamSP;
 
 class NodeTeam : public Printable {
 protected:
@@ -42,7 +40,7 @@ public:
     float const& score = score_;
     Crc32 const& checksum = checksum_;
     virtual size_t size() const = 0;
-    static bool ScoreCompareUP(
+    static bool ScoreCompareSP(
         NodeTeamSP const& lhs,
         NodeTeamSP const& rhs) { return lhs->score_ < rhs->score_; }
 

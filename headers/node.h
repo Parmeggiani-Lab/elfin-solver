@@ -9,9 +9,10 @@
 
 namespace elfin {
 
+/* Fwd Decl */
 class Node;
-typedef std::shared_ptr<Node> NodeSP;
-typedef std::weak_ptr<Node> NodeWP;
+typedef std::unique_ptr<Node> NodeSP;
+typedef Node const* NodeKey;
 
 class Node : public Printable {
 protected:
@@ -40,11 +41,12 @@ public:
     /* ctors */
     Node(ProtoModule const* const prototype, Transform const& tx);
     Node(ProtoModule const* const prototype) : Node(prototype, Transform()) {}
-    NodeSP clone() const { return std::make_shared<Node>(*this); }
+    NodeSP clone() const { return std::make_unique<Node>(*this); }
 
     /* accessors */
     LinkList const& links() const { return links_; }
-    Link const* find_link_to(NodeSP const& dst_node) const;
+    Link const* find_link_to(NodeKey dst_node) const;
+    PathGenerator gen_path() const;
 
     /* modifiers */
     void add_link(

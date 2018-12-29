@@ -55,7 +55,7 @@ private:
     std::unique_ptr<PImpl> p_impl_;
 };
 
-typedef UPMap<WorkArea> WorkAreaMap;
+typedef SPMap<WorkArea> WorkAreaMap;
 
 }  /* elfin */
 

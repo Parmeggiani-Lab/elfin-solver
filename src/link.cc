@@ -1,7 +1,7 @@
 #include "link.h"
 
 #include "node.h"
-#include "pointer_utils.h"
+#include "path_generator.h"
 
 namespace elfin {
 
@@ -14,7 +14,7 @@ Link::Link(
     src_chain_(src_chain),
     prototype_(prototype),
     dst_chain_(dst_chain) {
-    DEBUG(dst_chain_.node_sp()->prototype_ != this->prototype_->module_);
+    DEBUG(dst_chain_.node->prototype_ != this->prototype_->module_);
 }
 
 /* accessors */
@@ -23,12 +23,16 @@ bool Link::operator==(Link const& other) const {
            dst_chain_ == other.dst_chain_;
 }
 
+PathGenerator Link::gen_path() const {
+    return PathGenerator(this);
+}
+
 /* modifiers */
 void Link::update_node_ptrs(NodeAddrMap const& nam) {
-    src_chain_.node = nam.at(src_chain_.node_sp());
-    DEBUG(is_uninitialized(src_chain_.node));
-    dst_chain_.node = nam.at(dst_chain_.node_sp());
-    DEBUG(is_uninitialized(dst_chain_.node));
+    src_chain_.node = nam.at(src_chain_.node);
+    DEBUG(not src_chain_.node);
+    dst_chain_.node = nam.at(dst_chain_.node);
+    DEBUG(not dst_chain_.node);
 }
 
 /* printers */

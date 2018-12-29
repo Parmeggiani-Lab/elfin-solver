@@ -8,7 +8,7 @@ FixedArea::FixedArea(JSON const& json, const std::string& name) :
         std::string mod_name = it.key();
         modules_.emplace(
             mod_name,
-            std::make_shared<UIObject>(*it, mod_name));
+            std::make_unique<UIObject>(*it, mod_name));
     }
 }
 

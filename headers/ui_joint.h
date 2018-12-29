@@ -16,7 +16,7 @@ protected:;
     struct Occupant {
         std::string parent_name = "";
         std::string name = "";
-        std::shared_ptr<UIObject> module = nullptr;
+        UIObject const* module = nullptr;
     };
 
     /* data */
@@ -36,7 +36,7 @@ public:
     Occupant const& occupant() const { return occupant_; }
 };
 
-typedef std::shared_ptr<UIJoint> UIJointSP;
+typedef std::unique_ptr<UIJoint> UIJointSP;
 typedef SPMap<UIJoint> UIJointMap;
 
 }  /* elfin */

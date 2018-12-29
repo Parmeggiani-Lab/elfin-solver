@@ -27,7 +27,7 @@ protected:
     };
 
     /* data */
-    Vector<ProtoModuleUP> all_mods_;
+    Vector<ProtoModuleSP> all_mods_;
     StrIndexMap mod_idx_map_;
     ModPtrRoulette singles_, hubs_, basic_mods_, complex_mods_;
 

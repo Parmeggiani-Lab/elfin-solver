@@ -107,7 +107,7 @@ void Population::rank() {
 
         std::sort(begin(*front_buffer_),
                   end(*front_buffer_),
-                  NodeTeam::ScoreCompareUP);
+                  NodeTeam::ScoreCompareSP);
     }
     InputManager::ga_times().rank_time +=
         TIMING_END("ranking", rank_start_time);
@@ -151,7 +151,7 @@ void Population::select() {
         // Sort survivors
         std::sort(begin(*front_buffer_),
                   begin(*front_buffer_) + unique_count,
-                  NodeTeam::ScoreCompareUP);
+                  NodeTeam::ScoreCompareSP);
     }
     InputManager::ga_times().select_time +=
         TIMING_END("variety selection", start_time_select);

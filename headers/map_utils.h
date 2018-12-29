@@ -6,15 +6,15 @@
 
 namespace elfin {
 
-template<class T, typename KeyType = std::string>
-using UPMap = std::unordered_map <
-              KeyType,
-              std::unique_ptr<T >>;
+// template<class T, typename KeyType = std::string>
+// using UPMap = std::unordered_map <
+//               KeyType,
+//               std::unique_ptr<T >>;
 
 template<class T, typename KeyType = std::string>
 using SPMap = std::unordered_map <
               KeyType,
-              std::shared_ptr<T >>;
+              std::unique_ptr<T >>;
 
 }  /* elfin */
 

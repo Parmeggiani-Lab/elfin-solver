@@ -7,9 +7,11 @@
 
 namespace elfin {
 
+/* Fwd Decl */
 class Node;
-typedef std::shared_ptr<Node> NodeSP;
-typedef std::unordered_map<NodeSP, NodeSP> NodeAddrMap;
+typedef std::unique_ptr<Node> NodeSP;
+typedef std::unordered_map<Node const*, Node*> NodeAddrMap;
+class PathGenerator;
 
 class Link : public Printable {
 private:
@@ -35,6 +37,7 @@ public:
     size_t hash() const;
     bool operator==(Link const& other) const;
     bool operator!=(Link const& other) const { return not this->operator==(other); }
+    PathGenerator gen_path() const;
 
     /* modifiers */
     void update_node_ptrs(NodeAddrMap const& nam);

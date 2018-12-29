@@ -4,8 +4,8 @@ namespace elfin {
 
 /* public */
 /* modifiers */
-UIJointSP BasicUIJointGenerator::next() {
-    UIJointSP prev_joint = curr_joint_;
+UIJoint* BasicUIJointGenerator::next() {
+    UIJoint* prev_joint = curr_joint_;
     curr_joint_ = next_joint_;
     next_joint_ = nullptr;
 
@@ -15,7 +15,7 @@ UIJointSP BasicUIJointGenerator::next() {
         TRACE_PANIC(num_neighbors > 2);
         for (auto& nb_name : curr_joint_->neighbors()) {
             if (not prev_joint or nb_name != prev_joint->name) {
-                next_joint_ = joints_->at(nb_name);
+                next_joint_ = joints_->at(nb_name).get();
                 break;
             }
         }

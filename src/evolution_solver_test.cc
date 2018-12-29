@@ -3,8 +3,8 @@
 #include "test_data.h"
 #include "test_stat.h"
 #include "input_manager.h"
-#include "basic_node_generator.h"
 #include "basic_node_team.h"
+#include "path_generator.h"
 
 namespace elfin {
 
@@ -57,13 +57,13 @@ TestStat EvolutionSolver::test() {
 
             auto& recipe = tests::quarter_snake_free_recipe;
             std::string const& starting_name = recipe[0].mod_name;
-            auto& tip_fc = free_chains[0].node_sp()->prototype_->name == starting_name ?
+            auto& tip_fc = free_chains[0].node->prototype_->name == starting_name ?
                            free_chains[0] : free_chains[1];
 
             auto step_itr = begin(recipe);
-            BasicNodeGenerator node_gen(tip_fc.node_sp());
-            while (not node_gen.is_done()) {
-                auto node = node_gen.next();
+            auto path_gen = tip_fc.node->gen_path();
+            while (not path_gen.is_done()) {
+                auto node = path_gen.next();
                 if (step_itr == end(recipe) or
                         step_itr->mod_name != node->prototype_->name) {
                     ts.errors++;
@@ -72,9 +72,9 @@ TestStat EvolutionSolver::test() {
                     std::ostringstream oss;
                     oss << "Solver solution:\n";
 
-                    BasicNodeGenerator err_node_gen(tip_fc.node_sp());
-                    while (not err_node_gen.is_done()) {
-                        oss << err_node_gen.next()->prototype_->name << "\n";
+                    auto err_path_gen = tip_fc.node->gen_path();
+                    while (not err_path_gen.is_done()) {
+                        oss << err_path_gen.next()->prototype_->name << "\n";
                     }
 
                     JUtil.error("Expected solution:\n");

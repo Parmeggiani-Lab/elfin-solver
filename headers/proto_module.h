@@ -69,7 +69,7 @@ public:
     virtual void print_to(std::ostream& os) const;
 };
 
-typedef std::unique_ptr<ProtoModule> ProtoModuleUP;
+typedef std::unique_ptr<ProtoModule> ProtoModuleSP;
 
 }  /* elfin */
 

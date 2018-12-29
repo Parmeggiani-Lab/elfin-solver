@@ -26,7 +26,7 @@ UIJoint::UIJoint(
 
             occupant_.parent_name = occupant_network;
             occupant_.name = occupant_name;
-            occupant_.module = on_modules.at(occupant_name);
+            occupant_.module = on_modules.at(occupant_name).get();
         }
 
         hinge_name_ = json["hinge"];

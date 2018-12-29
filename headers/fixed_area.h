@@ -22,7 +22,7 @@ public:
     UIObjectMap const& modules() const { return modules_; }
 };
 
-typedef UPMap<FixedArea> FixedAreaMap;
+typedef SPMap<FixedArea> FixedAreaMap;
 
 }  /* elfin */
 

@@ -4,14 +4,13 @@
 #include <unordered_map>
 
 #include "vector_utils.h"
-#include "pointer_utils.h"
 #include "free_chain.h"
 
 namespace elfin {
 
-/* fwd dcl */
+/* Fwd Decl */
 class Node;
-typedef std::shared_ptr<Node> NodeSP;
+typedef Node const* NodeKey;
 class Link;
 
 namespace mutation {
@@ -40,17 +39,17 @@ struct DeletePoint {
     //            (src)                           (dst)
     //             --------------skipper------------->
     //
-    NodeSP delete_node;
+    NodeKey delete_node;
     FreeChain const src, dst;
     ProtoLink const* skipper;
     DeletePoint(
-        NodeSP const& _delete_node,
+        NodeKey _delete_node,
         FreeChain const&  _src,
         FreeChain const&  _dst,
         ProtoLink const* _skipper) :
+        delete_node(_delete_node),
         src(_src),
         dst(_dst),
-        delete_node(_delete_node),
         skipper(_skipper) {}
 };
 
@@ -69,16 +68,16 @@ struct InsertPoint {
         FreeChain const& _dst) :
         src(_src),
         dst(_dst),
-        bridges(is_uninitialized(dst.node) ?
-                FreeChain::BridgeList() :
-                src.find_bridges(dst)) { }
+        bridges(dst.node ?
+                src.find_bridges(dst) :
+                FreeChain::BridgeList()) { }
 };
 
 struct SwapPoint : public InsertPoint {
-    NodeSP const del_node;
+    NodeKey del_node;
     SwapPoint(
         FreeChain const& _src,
-        NodeSP const& _del_node,
+        NodeKey _del_node,
         FreeChain const& _dst) :
         InsertPoint(_src, _dst),
         del_node(_del_node) {}
@@ -109,7 +108,7 @@ Counter gen_counter();
 
 static inline void bad_mode(Mode mode) {
     TRACE_PANIC(mode == mode, string_format("Bad Mutation Mode: %s\n",
-                                           ModeToCStr(mode)));
+                                            ModeToCStr(mode)));
 }
 
 }  /* mutation */

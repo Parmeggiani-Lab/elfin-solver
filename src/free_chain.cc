@@ -6,7 +6,7 @@ namespace elfin {
 
 /* ctors */
 FreeChain::FreeChain(
-    NodeWP const& _node,
+    Node const* const _node,
     TerminusType const _term,
     size_t const _chain_id) :
     node(_node),
@@ -17,14 +17,14 @@ FreeChain::FreeChain(
 
 /* accessors */
 bool FreeChain::operator==(FreeChain const& other) const {
-    return node_sp() == other.node_sp() and
+    return node == other.node and
            term == other.term and
            chain_id == other.chain_id;
 }
 
 ProtoLink const& FreeChain::random_proto_link() const {
     ProtoChain const& proto_chain =
-        node_sp()->prototype_->chains().at(chain_id);
+        node->prototype_->chains().at(chain_id);
 
     return proto_chain.pick_random_link(term);
 }
@@ -32,11 +32,11 @@ ProtoLink const& FreeChain::random_proto_link() const {
 FreeChain::BridgeList FreeChain::find_bridges(
     FreeChain const& dst) const {
     BridgeList res;
-    ProtoModule const* dst_mod = dst.node_sp()->prototype_;
+    ProtoModule const* dst_mod = dst.node->prototype_;
     size_t const dst_chain_id = dst.chain_id;
 
     ProtoTerminus const& ptterm_src =
-        node_sp()->prototype_->chains().at(chain_id).get_term(term);
+        node->prototype_->chains().at(chain_id).get_term(term);
 
     // For each middle ProtoModule that ptterm_src connects to...
     for (auto& ptlink1 : ptterm_src.links()) {
@@ -76,26 +76,17 @@ ProtoLink const* FreeChain::find_link_to(
         return nullptr;
     }
 
-    return node_sp()->prototype_->find_link_to(
+    return node->prototype_->find_link_to(
                chain_id,
                term,
-               dst.node_sp()->prototype_,
+               dst.node->prototype_,
                dst.chain_id);
-}
-
-NodeSP FreeChain::node_sp() const {
-    auto sp = node.lock();
-    if (sp)
-        return sp;
-    else
-        return nullptr;
 }
 
 /* printers */
 void FreeChain::print_to(std::ostream& os) const {
-    NodeSP sp = node_sp();
-    os << "FreeChain[node: " << sp->prototype_->name;
-    os << " (Ptr: " << (void*) sp.get() << "), ";
+    os << "FreeChain[node: " << node->prototype_->name;
+    os << " (Ptr: " << (void*) node << "), ";
     os << "term: " << TerminusTypeToCStr(term) << ", ";
     os << "chain: " << chain_id << "]";
 }

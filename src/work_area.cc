@@ -19,15 +19,12 @@ void bad_work_type(WorkType type) {
 
 /* private */
 struct WorkArea::PImpl {
-    /* types */
-    typedef std::vector<std::shared_ptr<UIJoint>> UIJointSPList;
-
     /* data */
     std::string name;
     WorkType type = WorkType::FREE;
     UIJointMap joints;
-    UIJointSPList occupied_joints;
-    UIJointSPList leaf_joints;
+    std::vector<UIJoint*> occupied_joints;
+    std::vector<UIJoint*> leaf_joints;
     size_t target_size = 0;
     V3fList points;
 
@@ -46,7 +43,7 @@ struct WorkArea::PImpl {
             // Create new joint and put it in map
             joints.emplace(
                 joint_name,
-                std::make_shared<UIJoint>(joint_json, joint_name, fam));
+                std::make_unique<UIJoint>(joint_json, joint_name, fam));
             auto& joint = joints.at(joint_name);
 
             // Count branch points
@@ -54,11 +51,11 @@ struct WorkArea::PImpl {
 
             num_branch_points += num_neighbors > 2;
             if (num_neighbors == 1) {
-                leaf_joints.push_back(joint);
+                leaf_joints.push_back(joint.get());
             }
 
             if (joint->occupant().name != "") {
-                occupied_joints.push_back(joint);
+                occupied_joints.push_back(joint.get());
             }
         }
 
@@ -127,8 +124,7 @@ struct WorkArea::PImpl {
         BasicUIJointGenerator gen(&joints, leaf_joints.at(0));
 
         while (not gen.is_done()) {
-            UIJointSP curr_joint = gen.next();
-            res.emplace_back(curr_joint->tx.collapsed());
+            res.emplace_back(gen.next()->tx.collapsed());
         }
 
         return res;

@@ -36,7 +36,7 @@ public:
 
 /* types */
 typedef ProtoLink const* ConstProtoLinkPtr;
-typedef std::shared_ptr<ProtoLink> ProtoLinkSP;
+typedef std::unique_ptr<ProtoLink> ProtoLinkSP;
 typedef std::vector<ProtoLinkSP> ProtoLinkSPList;
 typedef ProtoModule const* ConstProtoModulePtr; 
 

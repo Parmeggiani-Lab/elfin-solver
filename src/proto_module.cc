@@ -181,17 +181,17 @@ void ProtoModule::create_proto_link_pair(
     }
 
     // Create links and count.
-    auto a_ptlink = std::make_shared<ProtoLink>(tx, &mod_b, b_chain_id);
-    auto b_ptlink = std::make_shared<ProtoLink>(tx.inversed(), &mod_a, a_chain_id);
+    auto a_ptlink = std::make_unique<ProtoLink>(tx, &mod_b, b_chain_id);
+    auto b_ptlink = std::make_unique<ProtoLink>(tx.inversed(), &mod_a, a_chain_id);
     ProtoLink::pair_links(a_ptlink.get(), b_ptlink.get());
 
-    a_chain.c_term_.links_.push_back(a_ptlink);
+    a_chain.c_term_.links_.push_back(std::move(a_ptlink));
     mod_a.counts_.c_links++;
     if (a_chain.c_term_.links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_a.counts_.c_interfaces++;
     }
 
-    b_chain.n_term_.links_.push_back(b_ptlink);
+    b_chain.n_term_.links_.push_back(std::move(b_ptlink));
     mod_b.counts_.n_links++;
     if (b_chain.n_term_.links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_b.counts_.n_interfaces++;

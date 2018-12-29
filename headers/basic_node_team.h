@@ -2,22 +2,24 @@
 #define BASIC_NODE_TEAM_H_
 
 #include "node_team.h"
+#include "node.h"
 
 namespace elfin {
 
+/* Fwd Decl */
 struct TestStat;
 
 namespace tests {
-
 class Step;
 typedef std::vector<Step> StepList;
-
 }  /* tests */
 
 class BasicNodeTeam : public NodeTeam {
 private:
-    /* data */
+    /* type */
     class PImpl;
+
+    /* data */
     std::unique_ptr<PImpl> p_impl_;
 
     /* accessors */
@@ -28,16 +30,16 @@ private:
     // nodes network is thus a simple path. We walk the path to collect the 3D
     // points in order.
     //
-    V3fList collect_points(NodeSP const& tip_node) const;
+    V3fList collect_points(NodeKey tip_node) const;
 
     /*modifiers */
     std::unique_ptr<PImpl> init_pimpl();
-    NodeSP grow_tip(
+    NodeKey grow_tip(
         FreeChain const free_chain_a,
         ProtoLink const* ptlink = nullptr);
 protected:
     /* types */
-    typedef std::unordered_set<NodeSP> Nodes;
+    typedef std::unordered_map<NodeKey, NodeSP> Nodes;
 
     /* data */
     Nodes nodes_;
@@ -47,10 +49,10 @@ protected:
     virtual BasicNodeTeam* virtual_clone() const;
 
     /* modifiers */
-    NodeSP add_member(
+    NodeKey add_member(
         ProtoModule const* prot,
         Transform const& tx = Transform());
-    void remove_free_chains(NodeSP const& node);
+    void remove_free_chains(NodeKey const node);
 public:
     /* ctors */
     using NodeTeam::NodeTeam;

@@ -1,18 +1,25 @@
-#include "basic_node_generator.h"
+#include "path_generator.h"
+
+#include "link.h"
+#include "node.h"
 
 namespace elfin {
 
 /* public */
+/* ctors */
+PathGenerator::PathGenerator(Link const* const arrow) :
+    curr_node_(arrow->src().node),
+    curr_link_(arrow),
+    next_node_(arrow->dst().node) {}
+
 /* accessors */
-std::vector<Link const*> BasicNodeGenerator::collect_arrows(
-    NodeSP const& start_node) {
-    BasicNodeGenerator gen(start_node);
+std::vector<Link const*> PathGenerator::collect_arrows() {
     std::vector<Link const*> arrows;
 
-    while (not gen.is_done()) {
-        gen.next();
-        if (gen.curr_link()) {
-            arrows.push_back(gen.curr_link());
+    while (not is_done()) {
+        next();
+        if (curr_link()) {
+            arrows.push_back(curr_link());
         }
     }
 
@@ -20,8 +27,9 @@ std::vector<Link const*> BasicNodeGenerator::collect_arrows(
 }
 
 /* modifiers */
-NodeSP BasicNodeGenerator::next() {
-    NodeSP prev_node = curr_node_;
+NodeKey PathGenerator::next()
+{
+    NodeKey prev_node = curr_node_;
     curr_node_ = next_node_;
     next_node_ = nullptr;
     curr_link_ = nullptr;
@@ -31,9 +39,9 @@ NodeSP BasicNodeGenerator::next() {
         size_t const num_neighbors = curr_node_->links().size();
         DEBUG(num_neighbors > 2);
         DEBUG(num_neighbors == 0);
-        
+
         for (auto& link : curr_node_->links()) {
-            NodeSP sp = link.dst().node_sp();
+            NodeKey sp = link.dst().node;
             if (sp != prev_node) {
                 // curr_link links curr_node to next_node
                 curr_link_ = &link;
