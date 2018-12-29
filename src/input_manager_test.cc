@@ -11,14 +11,15 @@ void InputManager::load_test_config(
     size_t const n_workers) {
     JUtil.info("Loading test config\n");
 
+    auto const& n_workers_str = std::to_string(n_workers);
     char const* argv[] = {
         "elfin", /* binary name */
         "--config_file", "config/unit_test.json",
         "--spec_file", spec_file.c_str(),
-        "--n_workers", string_format("%zu", n_workers).c_str()
+        "--n_workers", n_workers_str.c_str()
     };
 
-    size_t const argc = sizeof(argv) / sizeof(argv[0]);
+    size_t const argc = sizeof(argv) / sizeof(char const*);
     InputManager::parse_options(argc, argv);
     InputManager::setup();
 }
