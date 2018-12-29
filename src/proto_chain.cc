@@ -23,9 +23,8 @@ ProtoTerminus const& ProtoChain::get_term(
 }
 
 void ProtoChain::finalize() {
-    TRACE_PANIC(finalized_,
-               string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
-    finalized_ = true;
+    TRACE_NOMSG(already_finalized_);
+    already_finalized_ = true;
 
 #ifdef PRINT_FINALIZE
     JUtil.warn("Finalizing proto_chain %s N term\n", name.c_str());

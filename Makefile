@@ -76,7 +76,7 @@ ifeq ($(CXX),clang++)
 	CC_FLAGS 	+= -stdlib=libstdc++
 else ifeq ($(CXX),g++)
 	MAX_ERRORS  = 1
-	ERR_FLAGS	:= -fdiagnostics-color=always -fmax-errors=$(MAX_ERRORS)
+	ERR_FLAGS	:= -fdiagnostics-color=always -fmax-errors=$(MAX_ERRORS) -Werror
 endif
 
 CC_FLAGS 		+= -MMD -std=gnu++14

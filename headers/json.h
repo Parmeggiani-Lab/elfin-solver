@@ -13,7 +13,7 @@ class RelaMat;
 
 std::string json_to_str(JSON const& j);
 
-JSON parse_json(const std::string& filename);
+JSON parse_json(std::string const& filename);
 
 }
 

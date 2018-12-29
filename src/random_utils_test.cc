@@ -23,10 +23,10 @@ TestStat test() {
             size_t const n = omp_get_num_threads();
             JUtil.info("Testing random_utils (forcing %zu threads)\n", n);
 
-            TRACE_PANIC(n != num_threads,
-            string_format(
-                "Faild to set number of threads! Set %zu, got %zu",
-                num_threads, n));
+            TRACE(n != num_threads,
+            "Faild to set number of threads! Set %zu, got %zu\n",
+            num_threads,
+            n);
         }
     }
 
@@ -44,7 +44,7 @@ TestStat test() {
         if (v1 != v2) {
             ts.errors++;
             JUtil.error("MT19937 failed at #%zu: %zu vs %zu\n",
-                i, v1, v2);
+                        i, v1, v2);
             break;
         }
     }
@@ -71,7 +71,7 @@ TestStat test() {
         if (rand_vals1.at(i) != rand_vals2.at(i)) {
             ts.errors++;
             JUtil.error("Parallel randomiser failed at #%zu: %zu vs %zu\n",
-                i, rand_vals1.at(i), rand_vals2.at(i));
+                        i, rand_vals1.at(i), rand_vals2.at(i));
             break;
         }
     }

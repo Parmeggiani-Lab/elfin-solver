@@ -15,8 +15,8 @@ void Spec::parse_from_json(JSON const& json) {
         JSON const& networks = json.at("networks");
 
         JUtil.info("Input spec has %zu work areas and %zu fixed areas\n",
-            pg_networks.size(),
-            networks.size());
+                   pg_networks.size(),
+                   networks.size());
 
         // Initialize fixed areas first so work areas can refer to fixed
         // modules as occupants or hinges.
@@ -43,16 +43,12 @@ void Spec::parse_from_json(JSON const& json) {
                 pg_network_name,
                 std::make_unique<WorkArea>(pg_network_name, *it, fixed_areas_));
 
-            TRACE_PANIC(
-                work_areas_[pg_network_name]->joints().empty(),
-                string_format(
-                    "Work area \"%s\" has no joints associated.",
-                    pg_network_name.c_str()));
+            TRACE(work_areas_[pg_network_name]->joints().empty(),
+                  "Work area \"%s\" has no joints associated.",
+                  pg_network_name.c_str());
         }
     } catch (std::exception const& e) {
-        TRACE_PANIC("Exception",
-                   string_format("Failed to parse spec from JSON."
-                                 "\nReason: %s", e.what()));
+        TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
     }
 }
 

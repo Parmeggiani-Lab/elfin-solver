@@ -16,11 +16,11 @@ struct UIObject {
 
     UIObject(
         Transform const& _tx,
-        const std::string& _name) :
+        std::string const& _name) :
         tx(_tx), name(_name) {}
     UIObject(
         JSON const& json,
-        const std::string& _name) :
+        std::string const& _name) :
         UIObject(Transform(json), _name) {}
 };
 

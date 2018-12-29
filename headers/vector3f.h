@@ -43,10 +43,9 @@ private:
     Vector3f(
         RandomAccessIterator begin,
         RandomAccessIterator end) {
-        TRACE_PANIC((end - begin) < 3,
-                   string_format(
+        TRACE((end - begin) < 3,
                        "Invalid Argument Size: %zu, should be < 3\n",
-                       end - begin));
+                       end - begin);
         auto itr = begin;
 
 #ifdef V3F_USE_EIGEN

@@ -25,8 +25,9 @@ inline TerminusType random_termius() {
 }
 
 inline void bad_terminus(TerminusType term) {
-    TRACE_PANIC(term == term, string_format("Bad TerminusType: %s\n",
-                                           TerminusTypeToCStr(term)));
+    TRACE(term == term,
+          "Bad TerminusType: %s\n",
+          TerminusTypeToCStr(term));
 }
 
 inline TerminusType opposite_term(TerminusType const term) {

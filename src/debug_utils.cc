@@ -5,26 +5,23 @@
 
 namespace elfin {
 
-void __debug(
-    bool const predicate,
-    const std::string& cond_expr,
+void _debug(
+    std::string const& cond_expr,
     char const* filename,
     int const line,
-    const std::string& msg) {
-    if (predicate) {
-        #pragma omp single
-        {
-            fprintf(stderr, "\n"
-            "---------------------------------------------\n"
-            "--------------------ABORT--------------------\n"
-            "---------------------------------------------\n" COLOR_RED);
-            JUtil.error("Reason: %s at %s:%d\n", msg.c_str(), filename, line);
-            JUtil.error("  \"%s\" evaluated to true\n", cond_expr.c_str());
-            print_stacktrace();
-
-            JUtil.error("Failure at %s\n", __PRETTY_FUNCTION__);
-            throw ExitException{1};
-        }
+    char const* function,
+    std::string const& msg) {
+    #pragma omp single
+    {
+        fprintf(stderr, "\n" COLOR_RED
+        "---------------------------------------------\n"
+        "--------------------ABORT--------------------\n"
+        "---------------------------------------------\n" COLOR_RED);
+        JUtil.error("Condition: \"%s\" was true\n", cond_expr.c_str());
+        JUtil.error("Reason:    %s\n", msg.c_str());
+        JUtil.error("Location:  %s:%d in %s\n", filename, line, function);
+        print_stacktrace();
+        throw ExitException{1};
     }
 }
 

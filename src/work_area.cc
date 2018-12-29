@@ -12,9 +12,7 @@ namespace elfin {
 
 /* free */
 void bad_work_type(WorkType type) {
-    TRACE_PANIC(WorkTypeToCStr(type),
-                string_format("Bad WorkType: %s\n",
-                              WorkTypeToCStr(type)));
+    TRACE(WorkTypeToCStr(type), "Bad WorkType: %s\n", WorkTypeToCStr(type));
 }
 
 /* private */
@@ -99,7 +97,7 @@ struct WorkArea::PImpl {
          * Calculate expected length as sum of point
          * displacements over avg pair module distance
          */
-        TRACE_PANIC(points.size() == 0);
+        TRACE_NOMSG(points.size() == 0);
 
         float sum_dist = 0.0f;
         for (auto i = begin(points) + 1; i != end(points); ++i) {
@@ -117,10 +115,9 @@ struct WorkArea::PImpl {
 
     V3fList _gen_points() const {
         V3fList res;
-        TRACE_PANIC(leaf_joints.size() != 2,
-                    string_format("Size of leaf_joints not "
-                                  "exactly 2 in work_area: %s\n",
-                                  name.c_str()));
+        TRACE(leaf_joints.size() != 2,
+              "Size of leaf_joints not exactly 2 in work_area: %s\n",
+              name.c_str());
         UIJointPathGenerator gen(&joints, leaf_joints.at(0));
 
         while (not gen.is_done()) {

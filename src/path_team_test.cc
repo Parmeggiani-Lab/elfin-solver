@@ -9,7 +9,7 @@ namespace elfin {
 /* tests data */
 PathTeam PathTeam::build_team(tests::StepList const& steps) {
     // Create team
-    TRACE_PANIC(SPEC.work_areas().size() != 1);
+    TRACE_NOMSG(SPEC.work_areas().size() != 1);
     auto& wa = begin(SPEC.work_areas())->second;
     PathTeam team(wa.get());
 
@@ -24,8 +24,8 @@ PathTeam PathTeam::build_team(tests::StepList const& steps) {
 
             auto src_mod = XDB.get_module(step.mod_name);
             auto dst_mod = XDB.get_module((itr + 1)->mod_name);
-            TRACE_PANIC(not src_mod);
-            TRACE_PANIC(not dst_mod);
+            TRACE_NOMSG(not src_mod);
+            TRACE_NOMSG(not dst_mod);
 
             size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
             size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
@@ -38,13 +38,13 @@ PathTeam PathTeam::build_team(tests::StepList const& steps) {
                                dst_chain_id);
 
             // Find FreeChain
-            TRACE_PANIC(team.free_chains_.size() != 2);
+            TRACE_NOMSG(team.free_chains_.size() != 2);
             auto fc_itr = std::find_if(
                               begin(team.free_chains_),
                               end(team.free_chains_),
             [&](auto const & fc) { return fc.term == step.src_term; });
 
-            TRACE_PANIC(fc_itr == end(team.free_chains_));
+            TRACE_NOMSG(fc_itr == end(team.free_chains_));
             FreeChain const& free_chain = *fc_itr;
 
             last_node = team.grow_tip(free_chain, pt_link);
@@ -61,7 +61,7 @@ TestStat PathTeam::test() {
     // Construction test.
     {
         auto team = build_team(tests::quarter_snake_free_recipe);
-        TRACE_PANIC(team.free_chains_.size() != 2);
+        TRACE_NOMSG(team.free_chains_.size() != 2);
 
         V3fList team_points = team.collect_points(team.free_chains_[0].node);
 

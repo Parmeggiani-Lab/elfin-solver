@@ -39,9 +39,9 @@ struct PathTeam::PImpl {
         // achieved by XOR'ing the forward and backward checksums.
         //
         DEBUG(_.free_chains_.size() != 2,
-              string_format("There are %zu free chains!",
-                            _.free_chains_.size()));
-        DEBUG(_.size() == 0);
+              "There are %zu free chains!",
+              _.free_chains_.size());
+        DEBUG_NOMSG(_.size() == 0);
 
         Crc32 crc = 0x0000;
         for (auto& free_chain : _.free_chains_) {
@@ -71,9 +71,9 @@ struct PathTeam::PImpl {
         // can yield different RMSD scores.
         //
         DEBUG(_.free_chains_.size() != 2,
-              string_format("There are %zu free chains!\n",
-                            _.free_chains_.size()));
-        DEBUG(_.size() == 0);
+              "There are %zu free chains!\n",
+              _.free_chains_.size());
+        DEBUG_NOMSG(_.size() == 0);
 
         float score = INFINITY;
         for (auto& free_chain : _.free_chains_) {
@@ -89,7 +89,8 @@ struct PathTeam::PImpl {
 
     V3fList collect_points(NodeKey tip_node) const {
         // Verify node is a tip node.
-        TRACE_PANIC(tip_node->links().size() > 1);
+        size_t const num_links = tip_node->links().size();
+        TRACE_NOMSG(num_links > 1);
 
         auto path_gen = tip_node->gen_path();
 
@@ -99,8 +100,9 @@ struct PathTeam::PImpl {
         }
 
         DEBUG(points.size() != _.size(),
-              string_format("points.size()=%zu, size()=%zu\n",
-                            points.size(), _.size()));
+              "points.size()=%zu, size()=%zu\n",
+              points.size(),
+              _.size());
 
         return points;
     }
@@ -128,7 +130,7 @@ struct PathTeam::PImpl {
 
         // Verify that provided free chain is attached a node that is a tip
         // node.
-        DEBUG(node_a->links().size() > 1);
+        DEBUG_NOMSG(node_a->links().size() > 1);
 
         auto node_b = _.add_member(
                           pt_link->module_,
@@ -154,7 +156,7 @@ struct PathTeam::PImpl {
         NodeKey tip_node) {
         // Verify node is a tip node.
         size_t const num_links = tip_node->links().size();
-        TRACE_PANIC(num_links != 1);
+        TRACE_NOMSG(num_links != 1);
 
         NodeKey new_tip = nullptr;
 
@@ -237,7 +239,7 @@ struct PathTeam::PImpl {
 
             // Verify temporary tip node.
             num_links = next_node->links().size();
-            DEBUG(num_links > 1); // Must be 0 or 1.
+            DEBUG_NOMSG(num_links > 1); // Must be 0 or 1.
 
             if (num_links > 0) {
                 curr_arrow = next_node->links().at(0); // Copy.
@@ -258,11 +260,11 @@ struct PathTeam::PImpl {
     void copy_limb(
         Link const& m_arrow,
         Link const& f_arrow) {
-        DEBUG(_.size() == 0);
+        DEBUG_NOMSG(_.size() == 0);
 
         NodeKey tip_node = m_arrow.src().node;
         size_t num_links = tip_node->links().size();
-        DEBUG(_.size() > 1 and num_links != 1);
+        DEBUG_NOMSG(_.size() > 1 and num_links != 1);
 
         // Occupy src chain.
         _.free_chains_.lift_erase(m_arrow.src());
@@ -274,45 +276,44 @@ struct PathTeam::PImpl {
                 m_arrow.src().term,
                 f_arrow.dst().node->prototype_,
                 f_arrow.dst().chain_id);
-        DEBUG(not pt_link);
+        DEBUG_NOMSG(not pt_link);
 
         tip_node = grow_tip(m_arrow.src(), pt_link);
 
         num_links = tip_node->links().size();
-        DEBUG(num_links != 1,
-              string_format("There are %zu links!\n", num_links));
+        DEBUG_NOMSG(num_links != 1);
 
         auto path_gen = f_arrow.gen_path();
         path_gen.next(); // Same as f_arrow.dst().node.
         while (not path_gen.is_done()) {
             auto curr_link = path_gen.curr_link();
-            DEBUG(curr_link->dst().node->prototype_ !=
-                  curr_link->prototype()->module_);
+            DEBUG_NOMSG(curr_link->dst().node->prototype_ !=
+                        curr_link->prototype()->module_);
 
             // Modify copy of curr_link->src().
             FreeChain src = curr_link->src();
 
             DEBUG(src.node->prototype_ != tip_node->prototype_,
-                  string_format("%s vs %s\n",
-                                src.node->prototype_->name.c_str(),
-                                tip_node->prototype_->name.c_str()));
+                  "%s vs %s\n",
+                  src.node->prototype_->name.c_str(),
+                  tip_node->prototype_->name.c_str());
             src.node = tip_node;
 
             // Occupy src chain.
             _.free_chains_.lift_erase(src);
             DEBUG(_.free_chains_.size() != 1,
-                  string_format("There are %zu free chains!",
-                                _.free_chains_.size()));
+                  "%zu free chains\n",
+                  _.free_chains_.size());
 
             tip_node = grow_tip(src, curr_link->prototype());
             DEBUG(curr_link->dst().node->prototype_ != tip_node->prototype_,
-                  string_format("%s vs %s\n",
-                                curr_link->dst().node->prototype_->name.c_str(),
-                                tip_node->prototype_->name.c_str()));
+                  "%s vs %s\n",
+                  curr_link->dst().node->prototype_->name.c_str(),
+                  tip_node->prototype_->name.c_str());
 
             num_links = tip_node->links().size();
             DEBUG(num_links != 1,
-                  string_format("There are %zu links!\n", num_links));
+                  "%zu links\n", num_links);
 
             path_gen.next();
         }
@@ -349,7 +350,7 @@ struct PathTeam::PImpl {
 
                 // Verify node is tip node.
                 size_t const num_links = tip_node->links().size();
-                TRACE_PANIC(num_links != 1);
+                TRACE_NOMSG(num_links != 1);
 
                 FreeChain const& new_free_chain =
                     tip_node->links().at(0).dst();
@@ -442,14 +443,14 @@ struct PathTeam::PImpl {
                     }
                 }
                 else {
-                    TRACE_PANIC("Unexpected num_links",
-                                string_format(
-                                    "Number of links: %zu\n", num_links));
+                    TRACE("Unexpected num_links",
+                          "num_links=%zu\n",
+                          num_links);
                 }
             } while (not path_gen.is_done());
 
             // delete_points will at least contain the tip nodes.
-            DEBUG(delete_points.empty());
+            DEBUG_NOMSG(delete_points.empty());
 
             // Delete a node using a random deletable point.
             auto const& delete_point = delete_points.pick_random();
@@ -567,7 +568,7 @@ struct PathTeam::PImpl {
             } while (not path_gen.is_done());
 
             // insert_points will at least contain the tip nodes.
-            DEBUG(insert_points.empty());
+            DEBUG_NOMSG(insert_points.empty());
 
             // Insert a node using a random insert point/
             auto const& insert_point = insert_points.pick_random();
@@ -593,7 +594,7 @@ struct PathTeam::PImpl {
                     for (FreeChain const& fc : _.free_chains_) {
                         JUtil.error("%s\n", fc.to_string().c_str());
                     }
-                    TRACE_PANIC(not free_chain_found);
+                    TRACE_NOMSG(not free_chain_found);
                 }
             }
 
@@ -705,7 +706,7 @@ struct PathTeam::PImpl {
                     // Starting at either end is fine.
                     auto m_arrows = _.free_chains_[0].node->
                                     gen_path().collect_arrows();
-                    DEBUG(bnt_father.free_chains().size() != 2);
+                    DEBUG_NOMSG(bnt_father.free_chains().size() != 2);
                     auto f_arrows = bnt_father.free_chains()[0].node->
                                     gen_path().collect_arrows();
 
@@ -802,13 +803,13 @@ struct PathTeam::PImpl {
         _.score_ = INFINITY;
         bool const mutate_success = regenerate();
 
-        TRACE_PANIC(_.free_chains_.size() != 2); // Replace with mutation_exit_check()
+        TRACE_NOMSG(_.free_chains_.size() != 2); // Replace with mutation_exit_check()
 
         return mutate_success;
     }
 
     Node* get_node(NodeKey nk) {
-        DEBUG(_.nodes_.find(nk) == end(_.nodes_));
+        DEBUG_NOMSG(_.nodes_.find(nk) == end(_.nodes_));
         return _.nodes_.at(nk).get();
     }
 };
@@ -885,7 +886,7 @@ PathTeam::PathTeam(WorkArea const* wa) {
     work_area_ = wa;
     p_impl_ = init_pimpl();
 
-    TRACE_PANIC(not work_area_);
+    TRACE_NOMSG(not work_area_);
     nodes_.reserve(work_area_->target_size());
     free_chains_.reserve(2);
 }
@@ -983,8 +984,8 @@ mutation::Mode PathTeam::evolve(
     mutation::Mode mode;
 
     while (not mutate_success and not modes.empty()) {
-        TRACE_PANIC(size() == 0);
-        TRACE_PANIC(free_chains_.size() != 2); // Replace with mutation_entry_check()
+        TRACE_NOMSG(size() == 0);
+        TRACE_NOMSG(free_chains_.size() != 2); // Replace with mutation_entry_check()
 
         mode = modes.pop_random();
         switch (mode) {
@@ -1010,13 +1011,12 @@ mutation::Mode PathTeam::evolve(
             mutation::bad_mode(mode);
         }
 
-        TRACE_PANIC(free_chains_.size() != 2); // Replace with mutation_exit_check()
+        TRACE_NOMSG(free_chains_.size() != 2); // Replace with mutation_exit_check()
     }
 
     if (not mutate_success) {
         mutate_success = p_impl_->randomize_mutate();
-        TRACE_PANIC(not mutate_success,
-                    "Randomize Mutate also failed - bug?");
+        TRACE_NOMSG(not mutate_success);
     }
 
     // Update checksum.
@@ -1030,7 +1030,7 @@ mutation::Mode PathTeam::evolve(
 
 /* printers */
 void PathTeam::print_to(std::ostream& os) const {
-    TRACE_PANIC(free_chains_.empty());
+    TRACE_NOMSG(free_chains_.empty());
     auto start_node = free_chains_.at(0).node;
     auto path_gen = start_node->gen_path();
 
@@ -1050,7 +1050,7 @@ JSON PathTeam::to_json() const {
     JSON output;
 
     if (not free_chains_.empty()) {
-        DEBUG(free_chains_.size() != 2);
+        DEBUG_NOMSG(free_chains_.size() != 2);
 
         // Kabsch outputs for forward and backward paths.
         elfin::Mat3f rot[2];
@@ -1118,8 +1118,9 @@ JSON PathTeam::to_json() const {
         }
 
         DEBUG(output.size() != size(),
-              string_format("output.size()=%zu, size()=%zu\n",
-                            output.size(), this->size()));
+                    "output.size()=%zu, size()=%zu\n",
+                    output.size(),
+                    this->size());
     }
 
     return output;

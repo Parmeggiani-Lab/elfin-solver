@@ -49,9 +49,8 @@ ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
 
 /* modifiers */
 void ProtoTerminus::finalize() {
-    TRACE_PANIC(finalized_,
-               string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
-    finalized_ = true;
+    TRACE_NOMSG(already_finalized_);
+    already_finalized_ = true;
 
 #ifdef PRINT_FINALIZE
     JUtil.warn("Finalizing proto terminus with %zu links\n", links_.size());
@@ -70,7 +69,7 @@ void ProtoTerminus::finalize() {
     });
 
     for (auto& link : links_) {
-        DEBUG(nullptr == link->module_);
+        DEBUG_NOMSG(nullptr == link->module_);
 
         ProtoLink const* row_link_ptr = link.get();
         link_set_.insert(row_link_ptr);

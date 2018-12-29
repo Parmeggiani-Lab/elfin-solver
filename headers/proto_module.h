@@ -28,7 +28,7 @@ public:
 
 private:
     /* data */
-    bool finalized_ = false;
+    bool already_finalized_ = false;
     ProtoChainList chains_;
     Counts counts_ = {};
 

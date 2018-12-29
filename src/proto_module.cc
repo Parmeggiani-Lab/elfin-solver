@@ -16,7 +16,7 @@ namespace elfin {
 Transform get_tx(
     JSON const& xdb,
     size_t const tx_id) {
-    TRACE_PANIC(
+    TRACE(
         tx_id >= xdb["n_to_c_tx"].size(),
         ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
          "  Either xdb.json is corrupted or "
@@ -44,13 +44,13 @@ ProtoModule::ProtoModule(
 #ifdef PRINT_INIT
         Chain& actual = chains_.back();
         JUtil.warn("Created chain[%s] chains_.size()=%zu at %p; actual: %p, %p, %p, %p\n",
-            cn.c_str(),
-            chains_.size(),
-            &actual,
-            &actual.c_term_,
-            &actual.c_term_.links(),
-            &actual.n_term_,
-            &actual.n_term_.links());
+                   cn.c_str(),
+                   chains_.size(),
+                   &actual,
+                   &actual.c_term_,
+                   &actual.c_term_.links(),
+                   &actual.n_term_,
+                   &actual.n_term_.links());
 #endif  /* ifdef PRINT_INIT */
     }
 
@@ -62,22 +62,25 @@ ProtoModule::ProtoModule(
 /* accessors */
 size_t ProtoModule::find_chain_id(
     std::string const& chain_name) const {
-    for (auto& chain : chains_) {
-        if (chain.name == chain_name) {
-            return chain.id;
+    auto chain_itr = std::find_if(
+                         begin(chains_),
+                         end(chains_),
+    [&](auto const & chain) { return chain.name == chain_name; });
+    if (chain_itr == end(chains_)) {
+        // Verbose diagnostics.
+        JUtil.error("Could not find chain named %s in ProtoModule %s\n",
+                    chain_name, chain_name.c_str());
+        JUtil.error("The following chains are present:\n");
+        for (auto& chain : chains_) {
+            JUtil.error("%s", chain.name.c_str());
         }
+
+        TRACE_NOMSG("Chain Not Found\n");
+        throw ExitException{1}; // Suppress warning.
     }
-
-    JUtil.error("Could not find chain named %s in ProtoModule %s\n",
-        chain_name, chain_name.c_str());
-
-    JUtil.error("The following chains are present:\n");
-    for (auto& chain : chains_) {
-        JUtil.error("%s", chain.name.c_str());
+    else {
+        return chain_itr->id;
     }
-
-    TRACE_PANIC("Chain Not Found\n");
-    throw ExitException{1}; // Suppress warning.
 }
 ProtoLink const* ProtoModule::find_link_to(
     size_t const src_chain_id,
@@ -101,9 +104,8 @@ ProtoLink const* ProtoModule::find_link_to(
 void ProtoModule::finalize() {
     // ProtoChain finalize() relies on Terminus finalize(), which assumes that
     // all ProtoModule counts are calculated
-    TRACE_PANIC(finalized_,
-               string_format("%s called more than once!", __PRETTY_FUNCTION__).c_str());
-    finalized_ = true;
+    TRACE_NOMSG(already_finalized_);
+    already_finalized_ = true;
 
 #ifdef PRINT_FINALIZE
     JUtil.warn("Finalizing module %s\n", name.c_str());
@@ -178,7 +180,7 @@ void ProtoModule::create_proto_link_pair(
     }
     else {
         PANIC("mod_a.type == ModuleType::HUB and "
-            "mod_b.type == ModuleType::HUB\n");
+              "mod_b.type == ModuleType::HUB\n");
     }
 
     // Create links and count.

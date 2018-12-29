@@ -13,7 +13,7 @@ class ProtoChain {
     friend ProtoModule;
 private:
     /* data members */
-    bool finalized_ = false;
+    bool already_finalized_ = false;
     ProtoTerminus n_term_;
     ProtoTerminus c_term_;
 

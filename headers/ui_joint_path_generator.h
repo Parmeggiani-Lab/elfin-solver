@@ -21,7 +21,7 @@ public:
         UIJoint* const start_joint) :
         joints_(joints)
     {
-        TRACE_PANIC(not start_joint);
+        TRACE_NOMSG(not start_joint);
         next_joint_ = start_joint;
     }
 

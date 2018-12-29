@@ -107,8 +107,7 @@ ModeList gen_mode_list();
 Counter gen_counter();
 
 static inline void bad_mode(Mode mode) {
-    TRACE_PANIC(mode == mode, string_format("Bad Mutation Mode: %s\n",
-                                            ModeToCStr(mode)));
+    TRACE(mode == mode, "Bad Mutation Mode: %s\n", ModeToCStr(mode));
 }
 
 }  /* mutation */

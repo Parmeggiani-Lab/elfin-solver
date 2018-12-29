@@ -14,7 +14,7 @@ Link::Link(
     src_chain_(src_chain),
     prototype_(prototype),
     dst_chain_(dst_chain) {
-    DEBUG(dst_chain_.node->prototype_ != this->prototype_->module_);
+    DEBUG_NOMSG(dst_chain_.node->prototype_ != this->prototype_->module_);
 }
 
 /* accessors */
@@ -30,9 +30,9 @@ PathGenerator Link::gen_path() const {
 /* modifiers */
 void Link::update_node_ptrs(NodeAddrMap const& nam) {
     src_chain_.node = nam.at(src_chain_.node);
-    DEBUG(not src_chain_.node);
+    DEBUG_NOMSG(not src_chain_.node);
     dst_chain_.node = nam.at(dst_chain_.node);
-    DEBUG(not dst_chain_.node);
+    DEBUG_NOMSG(not dst_chain_.node);
 }
 
 /* printers */

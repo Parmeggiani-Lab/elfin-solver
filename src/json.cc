@@ -19,13 +19,13 @@ std::string json_to_str(JSON const& j) {
     return ss.str();
 }
 
-JSON parse_json(const std::string& filename)
+JSON parse_json(std::string const& filename)
 {
     std::ifstream input_stream(filename);
 
-    TRACE_PANIC(not input_stream.is_open(),
-               string_format("Could not open JSON file: \"%s\"\n",
-                             filename.c_str()));
+    TRACE(not input_stream.is_open(),
+          "Could not open JSON file: \"%s\"\n",
+          filename.c_str());
 
     JSON j;
     input_stream >> j;

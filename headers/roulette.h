@@ -20,7 +20,7 @@ protected:
     /* types */
     typedef std::vector<ItemType> ItemList;
     typedef std::vector<float> CummProbDist;
-    
+
     /* data */
     ItemList items_;
     CummProbDist cpd_;
@@ -39,7 +39,8 @@ public:
         for (float prob : cpd) {
             accumulate_prob(prob);
         }
-        TRACE_PANIC(items.size() != cpd.size());
+        TRACE(items.size() != cpd.size(),
+              "%zu vs %zu\n", items.size(), cpd.size());
     }
 
     /* dtors */
@@ -50,10 +51,11 @@ public:
     CummProbDist const& cpd() const { return cpd_; }
     size_t total() const { return total_; }
     ItemType const& draw() const {
-        TRACE_PANIC(cpd_.empty());
+        TRACE_NOMSG(cpd_.empty());
         DEBUG(cpd_.size() != items_.size(),
-              string_format("cml_sum size=%zu but container size=%zu\n",
-                            cpd_.size(), items_.size()));
+              "cml_sum size=%zu but container size=%zu\n",
+              cpd_.size(),
+              items_.size());
         auto itr = std::upper_bound(
                        begin(cpd_),
                        end(cpd_),

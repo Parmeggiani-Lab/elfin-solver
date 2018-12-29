@@ -38,8 +38,9 @@ void init() {
 
 float get_dice_0to1() {
     DEBUG(omp_get_thread_num() >= TWISTERS.size(),
-          string_format("Thread #%d; TWISTERS size: %zu\n",
-                        omp_get_thread_num(), TWISTERS.size()));
+          "Thread #%d; TWISTERS size: %zu\n",
+          omp_get_thread_num(),
+          TWISTERS.size());
     std::mt19937& mt = TWISTERS.at(omp_get_thread_num());
     return (float) mt() / mt.max();
 }

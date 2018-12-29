@@ -79,7 +79,7 @@ void ArgParser::check_options() const {
         "xdb file could not be found.\n");
 
     PANIC_IF(options_.spec_file == "",
-                   "No input spec file given.\n");
+             "No input spec file given.\n");
 
     PANIC_IF(
         not JUtil.file_exists(options_.spec_file.c_str()),
@@ -103,25 +103,25 @@ void ArgParser::check_options() const {
 
     // Settings.
     PANIC_IF(options_.ga_pop_size < 0,
-                   "Population size cannot be < 0.\n");
+             "Population size cannot be < 0.\n");
 
     PANIC_IF(options_.ga_iters < 0,
-                   "Number of iterations cannot be < 0.\n");
+             "Number of iterations cannot be < 0.\n");
 
     PANIC_IF(options_.len_dev < 0,
-                   "Candidate length deviation must be an integer > 0.\n");
+             "Candidate length deviation must be an integer > 0.\n");
 
     // GA params.
     PANIC_IF(options_.ga_survive_rate <= 0.0 or
-                   options_.ga_survive_rate >= 1.0,
-                   "GA survive rate must be between 0 and 1 exclusive.\n");
+             options_.ga_survive_rate >= 1.0,
+             "GA survive rate must be between 0 and 1 exclusive.\n");
 
     PANIC_IF(options_.avg_pair_dist < 0,
-                   "Average CoM distance must be > 0");
+             "Average CoM distance must be > 0");
 
     PANIC_IF(options_.keep_n < 0 or
-                   options_.keep_n > options_.ga_pop_size,
-                   "Number of best solutions to output must be > 0 and < ga_pop_size.\n");
+             options_.keep_n > options_.ga_pop_size,
+             "Number of best solutions to output must be > 0 and < ga_pop_size.\n");
 }
 
 std::string ArgParser::radius_types_setting_string() const {
@@ -173,6 +173,16 @@ void ArgParser::parse_options(int const argc, char const* const argv[]) {
     }
 }
 
+long parse_long(char const* const str) {
+    char *next;
+    long val = strtol(str, &next, 0); // base 0 allows format detection
+    TRACE(strlen(next),
+          "Failed to parse long integer from \"%s\"\n",
+          str);
+
+    return val;
+}
+
 // This macro must match signature of ArgBundleCallback.
 #define ARG_PARSER_CALLBACK_DEF(FUNC_NAME) \
     bool ArgParser::FUNC_NAME(std::string const& arg_in)
@@ -189,7 +199,7 @@ ARG_PARSER_CALLBACK_DEF(set_output_dir) {
 
 ARG_PARSER_CALLBACK_DEF(set_len_dev) {
     JUtil.warn("set_len_dev(%s)\n", arg_in.c_str());
-    options_.len_dev = JUtil.parse_long(arg_in.c_str());
+    options_.len_dev = parse_long(arg_in.c_str());
     return true;
 }
 
@@ -200,19 +210,19 @@ ARG_PARSER_CALLBACK_DEF(set_avg_pair_dist) {
 
 ARG_PARSER_CALLBACK_DEF(set_seed) {
     JUtil.warn("set_seed(%s)\n", arg_in.c_str());
-    options_.seed = JUtil.parse_long(arg_in.c_str());
+    options_.seed = parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_pop_size) {
     JUtil.warn("set_ga_pop_size(%s)\n", arg_in.c_str());
-    options_.ga_pop_size = JUtil.parse_long(arg_in.c_str());
+    options_.ga_pop_size = parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_iters) {
     JUtil.warn("set_ga_iters(%s)\n", arg_in.c_str());
-    options_.ga_iters = JUtil.parse_long(arg_in.c_str());
+    options_.ga_iters = parse_long(arg_in.c_str());
     return true;
 }
 
@@ -228,14 +238,14 @@ ARG_PARSER_CALLBACK_DEF(set_ga_stop_score) {
 
 ARG_PARSER_CALLBACK_DEF(set_ga_stop_stagnancy) {
     JUtil.warn("set_ga_stop_stagnancy(%s)\n", arg_in.c_str());
-    options_.ga_stop_stagnancy = JUtil.parse_long(arg_in.c_str());
+    options_.ga_stop_stagnancy = parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_verbosity) {
     JUtil.warn("set_verbosity(%s)\n", arg_in.c_str());
     // Call jutil function to set global log level.
-    JUtil.set_log_lvl((JUtilLogLvl) JUtil.parse_long(arg_in.c_str()));
+    JUtil.set_log_lvl((JUtilLogLvl) parse_long(arg_in.c_str()));
     return true;
 }
 
@@ -247,19 +257,19 @@ ARG_PARSER_CALLBACK_DEF(set_run_tests) {
 
 ARG_PARSER_CALLBACK_DEF(set_device) {
     JUtil.warn("set_device(%s)\n", arg_in.c_str());
-    options_.device = JUtil.parse_long(arg_in.c_str());
+    options_.device = parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_n_workers) {
     JUtil.warn("set_n_workers(%s)\n", arg_in.c_str());
-    options_.n_workers = JUtil.parse_long(arg_in.c_str());
+    options_.n_workers = parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_keep_n) {
     JUtil.warn("set_keep_n(%s)\n", arg_in.c_str());
-    options_.keep_n = JUtil.parse_long(arg_in.c_str());
+    options_.keep_n = parse_long(arg_in.c_str());
     return true;
 }
 
@@ -299,7 +309,8 @@ ARG_PARSER_CALLBACK_DEF(parse_config) {
             (this->*ab->callback)(json_to_str(j[ab->long_form]));
         } else {
             JUtil.error("Unrecognized option: %s\n", opt_name.c_str());
-            return false;
+            arg_parse_failure(opt_name.c_str(), ab);
+            return true;
         }
     }
 

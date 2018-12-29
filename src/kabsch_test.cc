@@ -57,7 +57,7 @@ TestStat test_basics() {
     Vector3f tran;
     float rms;
 
-    // Test that kabsch computation doesn't fail TRACE_PANIC assertions.
+    // Test that kabsch computation doesn't fail TRACE assertions.
     {
         ts.tests++;
         _rosetta_kabsch_align(points10a, points10b, rot, tran, rms);
@@ -72,11 +72,11 @@ TestStat test_basics() {
             if (not row_vec.is_approx(points10ab_rot[i])) {
                 ts.errors++;
                 JUtil.error("Rotation test failed: "
-                    "row %zu does not approximate actual rotation row.\n"
-                    "Expeced: %s\nGot: %s\n",
-                    i,
-                    points10ab_rot[i].to_string().c_str(),
-                    row_vec.to_string().c_str());
+                            "row %zu does not approximate actual rotation row.\n"
+                            "Expeced: %s\nGot: %s\n",
+                            i,
+                            points10ab_rot[i].to_string().c_str(),
+                            row_vec.to_string().c_str());
                 break;
             }
         }
@@ -88,10 +88,10 @@ TestStat test_basics() {
         if (not tran.is_approx(points10ab_tran)) {
             ts.errors++;
             JUtil.error("Translation test failed: "
-                "does not approximate actual translation.\n"
-                "Expected: %s\nGot: %s\n",
-                points10ab_tran.to_string().c_str(),
-                tran.to_string().c_str());
+                        "does not approximate actual translation.\n"
+                        "Expected: %s\nGot: %s\n",
+                        points10ab_tran.to_string().c_str(),
+                        tran.to_string().c_str());
         }
     }
 
@@ -117,7 +117,7 @@ TestStat test_resample() {
         if (a_fewer.size() != points10a.size()) {
             ts.errors++;
             JUtil.error("Upsampling failed.\nSizes: a_fewer=%zu points10a=%zu\n",
-                a_fewer.size(), points10a.size());
+                        a_fewer.size(), points10a.size());
         }
     }
 
@@ -129,7 +129,9 @@ TestStat test_score() {
     TestStat ts;
 
     // Test randomly transformed solution results in kabsch score 0.
-    TRACE_PANIC(SPEC.work_areas().size() != 1);
+    TRACE(SPEC.work_areas().size() != 1,
+          "%zu work areas\n",
+          SPEC.work_areas().size());
     auto& wa = begin(SPEC.work_areas())->second;
 
     // Identity (no transform) score 0.
@@ -140,7 +142,7 @@ TestStat test_score() {
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch identity score test failed.\n"
-                "Expected 0\nGot %f\n", kscore);
+                        "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
             oss << "Hard coded points:\n";
@@ -181,7 +183,7 @@ TestStat test_score() {
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch translation score test failed.\n"
-                "Expected 0\nGot %f\n", kscore);
+                        "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
             oss << "Hard coded points:\n";
@@ -222,7 +224,7 @@ TestStat test_score() {
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch rotation score test failed.\n"
-                "Expected 0\nGot %f\n", kscore);
+                        "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
             oss << "Hard coded points:\n";
@@ -264,14 +266,14 @@ TestStat test_score() {
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch random transform score test failed.\n"
-                "Expected 0\nGot %f\n", kscore);
+                        "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
             oss << "Hard coded points:\n";
             for (auto const& point : points_test) {
                 oss << point.to_string() << "\n";
             }
-            
+
             oss << "Input file points:\n";
             for (auto const& point : wa_points) {
                 oss << point.to_string() << "\n";
@@ -289,14 +291,14 @@ TestStat test_score() {
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch Blender origin transform score test failed.\n"
-                "Expected 0\nGot %f\n", kscore);
+                        "Expected 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
             oss << "Blender origin points:\n";
             for (auto const& point : tests::quarter_snake_free_coordinates_origin) {
                 oss << point.to_string() << "\n";
             }
-            
+
             oss << "Input file points:\n";
             for (auto const& point : wa_points) {
                 oss << point.to_string() << "\n";
@@ -313,14 +315,14 @@ TestStat test_score() {
         if (kscore < 1.0) {
             ts.errors++;
             JUtil.error("kabsch unrelated point score test failed.\n"
-                "Expected >> 0\nGot %f\n", kscore);
+                        "Expected >> 0\nGot %f\n", kscore);
 
             std::ostringstream oss;
             oss << "points10a:\n";
             for (auto const& point : points10a) {
                 oss << point.to_string() << "\n";
             }
-            
+
             oss << "points10b:\n";
             for (auto const& point : points10b) {
                 oss << point.to_string() << "\n";

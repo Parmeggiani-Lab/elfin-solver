@@ -16,7 +16,7 @@ private:
     typedef Roulette<ProtoLink const*> ProtoLinkRoulette;
 
     /* data */
-    bool finalized_ = false;
+    bool already_finalized_ = false;
     ProtoLinkSPList links_;
     ProtoLinkRoulette n_roulette_, c_roulette_;
     ProtoLinkPtrSet link_set_;

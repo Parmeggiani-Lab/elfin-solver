@@ -8,24 +8,29 @@
 
 namespace elfin {
 
-#define DEBUG1(COND_EXPR) \
+#define TRACE(COND_EXPR, ...) \
     do {\
-        __debug(COND_EXPR, #COND_EXPR, __FILE__, __LINE__, "No Message");\
+        if (COND_EXPR) {\
+            _debug(#COND_EXPR, __FILE__, __LINE__, __PRETTY_FUNCTION__, string_format(__VA_ARGS__));\
+        }\
     } while(0)
-#define DEBUG2(COND_EXPR, MSG) \
+
+#define TRACE_NOMSG(COND_EXPR) \
     do {\
-        __debug(COND_EXPR, #COND_EXPR, __FILE__, __LINE__, MSG);\
+        if (COND_EXPR) {\
+            _debug(#COND_EXPR, __FILE__, __LINE__, __PRETTY_FUNCTION__, #COND_EXPR);\
+        }\
     } while(0)
-#define GET_DEBUG_MACRO(_1,_2,NAME,...) NAME
 
 #ifdef NDEBUG
-#define DEBUG(...)
+#define DEBUG(...) 
+#define DEBUG_NOMSG(...) 
 #else
-#define DEBUG(...) GET_DEBUG_MACRO(__VA_ARGS__, DEBUG2, DEBUG1)(__VA_ARGS__)
+#define DEBUG(COND_EXPR, ...) TRACE(COND_EXPR, __VA_ARGS__)
+#define DEBUG_NOMSG(COND_EXPR) TRACE_NOMSG(COND_EXPR)
 #endif  /* ifndef NDEBUG */
 
-#define TRACE_PANIC(...) GET_DEBUG_MACRO(__VA_ARGS__, DEBUG2, DEBUG1)(__VA_ARGS__)
-#define UNIMPLEMENTED() TRACE_PANIC("Unimplemented", __PRETTY_FUNCTION__)
+#define UNIMP() DEBUG("Unimplemented", "Unimplemented")
 #define PROB_FUNC() \
     do {\
         JUtil.warn(\
@@ -53,12 +58,12 @@ namespace elfin {
         }\
     } while(0)
 
-void __debug(
-    bool const predicate,
-    const std::string& cond_expr,
+void _debug(
+    std::string const& cond_expr,
     char const* filename,
     int const line,
-    const std::string& msg);
+    char const* function,
+    std::string const& msg);
 
 }  /* elfin */
 

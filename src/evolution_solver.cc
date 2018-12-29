@@ -28,7 +28,7 @@ std::string timing_msg_format =
 struct EvolutionSolver::PImpl {
     /* data */
     bool has_result_ = false;
-    bool run_called = false;
+    bool run_alread_called = false;
     SolutionMap best_sols_;
     double start_time_in_us_ = 0;
     size_t const debug_pop_print_n_;
@@ -72,12 +72,11 @@ struct EvolutionSolver::PImpl {
         if (JUtil.float_approximates(gen_best_score, lastgen_best_score, 1e-6)) {
             stagnant_count++;
         }
-        else if (gen_best_score > lastgen_best_score) {
-            JUtil.error("Best score is worse than last gen!\n");
-            print_pop("Error debug", pop);
-            TRACE_PANIC("Score ranking bug?");
-        }
         else {
+            if (gen_best_score > lastgen_best_score) {
+                print_pop("Error debug", pop);
+                TRACE_NOMSG("Best score is worse than last gen.\n");
+            }
             stagnant_count = 0;
         }
 
@@ -184,8 +183,8 @@ struct EvolutionSolver::PImpl {
     }
 
     void run() {
-        TRACE_PANIC(run_called, "GA run() called more than once.\n");
-        run_called = true;
+        TRACE_NOMSG(run_alread_called);
+        run_alread_called = true;
 
         start_time_in_us_ = JUtil.get_timestamp_us();
         for (auto& itr : SPEC.work_areas()) {
