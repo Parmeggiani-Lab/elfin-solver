@@ -54,7 +54,7 @@ struct EvolutionSolver::PImpl {
         auto const& best_team = pop.front_buffer()->front();
         auto const& worst_team = pop.front_buffer()->back();
 
-        float const gen_best_score = best_team->score;
+        float const gen_best_score = best_team->score();
         double const gen_time =
             (JUtil.get_timestamp_us() - gen_start_time) / 1e3;
 
@@ -65,7 +65,7 @@ struct EvolutionSolver::PImpl {
                    gen_id,
                    gen_best_score,
                    gen_best_score / best_team->size(),
-                   worst_team->score,
+                   worst_team->score(),
                    gen_time);
 
         // Compute stagnancy & check inverted scores.
@@ -170,13 +170,13 @@ struct EvolutionSolver::PImpl {
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.front_buffer()->at(i);
                 oss << string_format(print_pop_fmt_,
-                                     "  front", i, c->checksum, c->size(), c->score);
+                                     "  front", i, c->checksum(), c->size(), c->score());
             }
 
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.back_buffer()->at(i);
                 oss << string_format(print_pop_fmt_,
-                                     "  back ", i, c->checksum, c->size(), c->score);
+                                     "  back ", i, c->checksum(), c->size(), c->score());
             }
 
             JUtil.debug(oss.str().c_str());

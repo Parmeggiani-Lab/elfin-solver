@@ -65,7 +65,7 @@ void OutputManager::write_output(
 
                 NodeTeam const& team = *solutions.at(i);
                 sol_json["nodes"] = team.to_json();
-                sol_json["score"] = team.score;
+                sol_json["score"] = team.score();
 
                 work_area_json[i] = sol_json;
             }

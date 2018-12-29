@@ -37,8 +37,8 @@ public:
     virtual ~NodeTeam() {}
 
     /* accessors */
-    float const& score = score_;
-    Crc32 const& checksum = checksum_;
+    float score() const { return score_; }
+    Crc32 checksum() const { return checksum_; }
     virtual size_t size() const = 0;
     static bool ScoreCompareSP(
         NodeTeamSP const& lhs,
