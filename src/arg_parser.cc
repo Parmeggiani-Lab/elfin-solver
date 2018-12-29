@@ -127,7 +127,7 @@ std::string ArgParser::radius_types_setting_string() const {
     std::ostringstream oss;
     oss << "{ ";
     size_t count = 0;
-    for(auto& rt : RADIUS_TYPES) {
+    for (auto& rt : RADIUS_TYPES) {
         oss << rt;
         if (count++ < RADIUS_TYPES.size() - 1) {
             oss << ", ";
@@ -187,6 +187,7 @@ ARG_PARSER_CALLBACK_DEF(set_output_dir) {
 }
 
 ARG_PARSER_CALLBACK_DEF(set_len_dev) {
+    JUtil.warn("set_len_dev()\n");
     options_.len_dev = JUtil.parse_long(arg_in.c_str());
     return true;
 }
@@ -197,16 +198,19 @@ ARG_PARSER_CALLBACK_DEF(set_avg_pair_dist) {
 }
 
 ARG_PARSER_CALLBACK_DEF(set_seed) {
+    JUtil.warn("set_seed()\n");
     options_.seed = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_pop_size) {
+    JUtil.warn("set_ga_pop_size()\n");
     options_.ga_pop_size = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_iters) {
+    JUtil.warn("set_ga_iters()\n");
     options_.ga_iters = JUtil.parse_long(arg_in.c_str());
     return true;
 }
@@ -222,11 +226,13 @@ ARG_PARSER_CALLBACK_DEF(set_ga_stop_score) {
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_stop_stagnancy) {
+    JUtil.warn("set_ga_stop_stagnancy()\n");
     options_.ga_stop_stagnancy = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_verbosity) {
+    JUtil.warn("set_verbosity()\n");
     // Call jutil function to set global log level.
     JUtil.set_log_lvl((JUtilLogLvl) JUtil.parse_long(arg_in.c_str()));
     return true;
@@ -239,16 +245,19 @@ ARG_PARSER_CALLBACK_DEF(set_run_tests) {
 }
 
 ARG_PARSER_CALLBACK_DEF(set_device) {
+    JUtil.warn("set_device()\n");
     options_.device = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_n_workers) {
+    JUtil.warn("set_n_workers()\n");
     options_.n_workers = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_keep_n) {
+    JUtil.warn("set_keep_n()\n");
     options_.keep_n = JUtil.parse_long(arg_in.c_str());
     return true;
 }
