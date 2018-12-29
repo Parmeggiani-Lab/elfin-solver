@@ -6,7 +6,7 @@
 #include "debug_utils.h"
 #include "input_manager.h"
 #include "fixed_area.h"
-#include "basic_ui_joint_generator.h"
+#include "ui_joint_path_generator.h"
 
 namespace elfin {
 
@@ -121,7 +121,7 @@ struct WorkArea::PImpl {
                     string_format("Size of leaf_joints not "
                                   "exactly 2 in work_area: %s\n",
                                   name.c_str()));
-        BasicUIJointGenerator gen(&joints, leaf_joints.at(0));
+        UIJointPathGenerator gen(&joints, leaf_joints.at(0));
 
         while (not gen.is_done()) {
             res.emplace_back(gen.next()->tx.collapsed());

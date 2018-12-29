@@ -1,10 +1,10 @@
-#include "basic_ui_joint_generator.h"
+#include "ui_joint_path_generator.h"
 
 namespace elfin {
 
 /* public */
 /* modifiers */
-UIJoint* BasicUIJointGenerator::next() {
+UIJoint* UIJointPathGenerator::next() {
     UIJoint* prev_joint = curr_joint_;
     curr_joint_ = next_joint_;
     next_joint_ = nullptr;

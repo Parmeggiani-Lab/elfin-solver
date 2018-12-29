@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-#include "basic_node_team.h"
+#include "path_team.h"
 
 #define FREE_CHAIN_VM_RESERVE_SIZE 16
 
@@ -33,7 +33,7 @@ NodeTeamSP NodeTeam::create_team(WorkArea const* work_area) {
 
     switch (work_area->type()) {
     case WorkType::FREE:
-        team_up = std::make_unique<BasicNodeTeam>(work_area);
+        team_up = std::make_unique<PathTeam>(work_area);
         // case WorkType::ONE_HINGE:
         //     return std::make_unique<OneHingeNodeTeam>(work_area);
         // case WorkType::TWO_HINGE:

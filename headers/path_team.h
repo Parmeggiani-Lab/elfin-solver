@@ -1,5 +1,5 @@
-#ifndef BASIC_NODE_TEAM_H_
-#define BASIC_NODE_TEAM_H_
+#ifndef PATH_TEAM_H_
+#define PATH_TEAM_H_
 
 #include "node_team.h"
 #include "node.h"
@@ -14,7 +14,7 @@ class Step;
 typedef std::vector<Step> StepList;
 }  /* tests */
 
-class BasicNodeTeam : public NodeTeam {
+class PathTeam : public NodeTeam {
 private:
     /* type */
     class PImpl;
@@ -26,7 +26,7 @@ private:
     Crc32 calc_checksum() const;
     float calc_score() const;
     //
-    // In a BasicNodeTeam there are either 0 or 2 tips at any given time. The
+    // In a PathTeam there are either 0 or 2 tips at any given time. The
     // nodes network is thus a simple path. We walk the path to collect the 3D
     // points in order.
     //
@@ -46,7 +46,7 @@ protected:
     FreeChainList free_chains_;
 
     /* accessors */
-    virtual BasicNodeTeam* virtual_clone() const;
+    virtual PathTeam* virtual_clone() const;
 
     /* modifiers */
     NodeKey add_member(
@@ -56,21 +56,21 @@ protected:
 public:
     /* ctors */
     using NodeTeam::NodeTeam;
-    BasicNodeTeam(WorkArea const* wa);
-    BasicNodeTeam(BasicNodeTeam const& other);
-    BasicNodeTeam(BasicNodeTeam&& other);
+    PathTeam(WorkArea const* wa);
+    PathTeam(PathTeam const& other);
+    PathTeam(PathTeam&& other);
     virtual void copy_from(NodeTeam const& other);
 
     /* dtors */
-    virtual ~BasicNodeTeam();
+    virtual ~PathTeam();
 
     /* accessors */
     virtual size_t size() const { return nodes_.size(); }
     FreeChainList const& free_chains() const { return free_chains_; }
 
     /* modifiers */
-    BasicNodeTeam& operator=(BasicNodeTeam const& other);
-    BasicNodeTeam& operator=(BasicNodeTeam && other);
+    PathTeam& operator=(PathTeam const& other);
+    PathTeam& operator=(PathTeam && other);
     virtual void randomize();
     virtual mutation::Mode evolve(
         NodeTeam const& mother,
@@ -81,10 +81,10 @@ public:
     virtual JSON to_json() const;
 
     /* tests */
-    static BasicNodeTeam build_team(tests::StepList const& steps);
+    static PathTeam build_team(tests::StepList const& steps);
     static TestStat test();
-};  /* class BasicNodeTeam */
+};  /* class PathTeam */
 
 }  /* elfin */
 
-#endif  /* end of include guard: BASIC_NODE_TEAM_H_ */
+#endif  /* end of include guard: PATH_TEAM_H_ */

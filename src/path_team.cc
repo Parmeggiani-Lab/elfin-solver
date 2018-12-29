@@ -1,4 +1,4 @@
-#include "basic_node_team.h"
+#include "path_team.h"
 
 #include "kabsch.h"
 #include "path_generator.h"
@@ -24,12 +24,12 @@ namespace elfin {
 
 /* private */
 
-struct BasicNodeTeam::PImpl {
+struct PathTeam::PImpl {
     /* data */
-    BasicNodeTeam& _;
+    PathTeam& _;
 
     /* ctors */
-    PImpl(BasicNodeTeam& interface) : _(interface) {}
+    PImpl(PathTeam& interface) : _(interface) {}
 
     /* accessors */
     Crc32 calc_checksum() const {
@@ -702,7 +702,7 @@ struct BasicNodeTeam::PImpl {
 #ifndef NO_CROSS
         if (not _.free_chains_.empty()) {
             try { // Catch bad cast
-                auto& bnt_father = static_cast<BasicNodeTeam const&>(father);
+                auto& bnt_father = static_cast<PathTeam const&>(father);
                 if (not bnt_father.free_chains().empty()) {
                     // First, collect arrows from both parents.
 
@@ -818,24 +818,24 @@ struct BasicNodeTeam::PImpl {
 };
 
 /* accessors */
-Crc32 BasicNodeTeam::calc_checksum() const {
+Crc32 PathTeam::calc_checksum() const {
     return p_impl_->calc_checksum();
 }
 
-float BasicNodeTeam::calc_score() const {
+float PathTeam::calc_score() const {
     return p_impl_->calc_score();
 }
 
-V3fList BasicNodeTeam::collect_points(NodeKey tip_node) const {
+V3fList PathTeam::collect_points(NodeKey tip_node) const {
     return p_impl_->collect_points(tip_node);
 }
 
 /* modifiers */
-std::unique_ptr<BasicNodeTeam::PImpl> BasicNodeTeam::init_pimpl() {
+std::unique_ptr<PathTeam::PImpl> PathTeam::init_pimpl() {
     return std::make_unique<PImpl>(*this);
 }
 
-NodeKey BasicNodeTeam::grow_tip(
+NodeKey PathTeam::grow_tip(
     FreeChain const free_chain_a,
     ProtoLink const* pt_link) {
     return p_impl_->grow_tip(free_chain_a, pt_link);
@@ -843,12 +843,12 @@ NodeKey BasicNodeTeam::grow_tip(
 
 /* protected */
 /* accessors */
-BasicNodeTeam * BasicNodeTeam::virtual_clone() const {
-    return new BasicNodeTeam(*this);
+PathTeam * PathTeam::virtual_clone() const {
+    return new PathTeam(*this);
 }
 
 /* modifiers */
-NodeKey BasicNodeTeam::add_member(
+NodeKey PathTeam::add_member(
     ProtoModule const* prot,
     Transform const& tx) {
     auto new_node = std::make_unique<Node>(prot, tx);
@@ -874,7 +874,7 @@ NodeKey BasicNodeTeam::add_member(
     return new_node_raw;
 }
 
-void BasicNodeTeam::remove_free_chains(NodeKey const node) {
+void PathTeam::remove_free_chains(NodeKey const node) {
     // Remove any FreeChain originating from node
     free_chains_.lift_erase_all(
         FreeChain(node, TerminusType::NONE, 0),
@@ -885,7 +885,7 @@ void BasicNodeTeam::remove_free_chains(NodeKey const node) {
 
 /* public */
 /* ctors */
-BasicNodeTeam::BasicNodeTeam(WorkArea const* wa) {
+PathTeam::PathTeam(WorkArea const* wa) {
     work_area_ = wa;
     p_impl_ = init_pimpl();
 
@@ -894,19 +894,19 @@ BasicNodeTeam::BasicNodeTeam(WorkArea const* wa) {
     free_chains_.reserve(2);
 }
 
-BasicNodeTeam::BasicNodeTeam(BasicNodeTeam const& other) :
+PathTeam::PathTeam(PathTeam const& other) :
     p_impl_(init_pimpl()) {
     *this = other; // Calls operator=(T const&)
 }
 
-BasicNodeTeam::BasicNodeTeam(BasicNodeTeam&& other) :
+PathTeam::PathTeam(PathTeam&& other) :
     p_impl_(init_pimpl()) {
     *this = std::move(other); // Calls operator=(T&&)
 }
 
-void BasicNodeTeam::copy_from(NodeTeam const& other) {
+void PathTeam::copy_from(NodeTeam const& other) {
     try { // Catch bad cast
-        BasicNodeTeam::operator=(static_cast<BasicNodeTeam const&>(other));
+        PathTeam::operator=(static_cast<PathTeam const&>(other));
     }
     catch (std::bad_cast const& e) {
         JUtil.panic("Bad cast in %s\n", __PRETTY_FUNCTION__);
@@ -914,10 +914,10 @@ void BasicNodeTeam::copy_from(NodeTeam const& other) {
 }
 
 /* dtors */
-BasicNodeTeam::~BasicNodeTeam() {}
+PathTeam::~PathTeam() {}
 
 /* modifiers */
-BasicNodeTeam& BasicNodeTeam::operator=(BasicNodeTeam const& other) {
+PathTeam& PathTeam::operator=(PathTeam const& other) {
     if (this != &other) {
         nodes_.clear();
         free_chains_.clear();
@@ -955,7 +955,7 @@ BasicNodeTeam& BasicNodeTeam::operator=(BasicNodeTeam const& other) {
     return *this;
 }
 
-BasicNodeTeam& BasicNodeTeam::operator=(BasicNodeTeam&& other) {
+PathTeam& PathTeam::operator=(PathTeam&& other) {
     if (this != &other) {
         nodes_.clear();
         free_chains_.clear();
@@ -971,11 +971,11 @@ BasicNodeTeam& BasicNodeTeam::operator=(BasicNodeTeam&& other) {
     return *this;
 }
 
-void BasicNodeTeam::randomize() {
+void PathTeam::randomize() {
     p_impl_->randomize_mutate();
 }
 
-mutation::Mode BasicNodeTeam::evolve(
+mutation::Mode PathTeam::evolve(
     NodeTeam const& mother,
     NodeTeam const& father)
 {
@@ -1033,7 +1033,7 @@ mutation::Mode BasicNodeTeam::evolve(
 }
 
 /* printers */
-void BasicNodeTeam::print_to(std::ostream& os) const {
+void PathTeam::print_to(std::ostream& os) const {
     TRACE_PANIC(free_chains_.empty());
     auto start_node = free_chains_.at(0).node;
     auto path_gen = start_node->gen_path();
@@ -1050,7 +1050,7 @@ void BasicNodeTeam::print_to(std::ostream& os) const {
     }
 }
 
-JSON BasicNodeTeam::to_json() const {
+JSON PathTeam::to_json() const {
     JSON output;
 
     if (not free_chains_.empty()) {

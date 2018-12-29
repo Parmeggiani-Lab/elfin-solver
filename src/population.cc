@@ -5,7 +5,7 @@
 
 #include "input_manager.h"
 #include "parallel_utils.h"
-#include "basic_node_team.h"
+#include "path_team.h"
 
 namespace elfin {
 

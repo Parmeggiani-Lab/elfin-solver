@@ -3,7 +3,7 @@
 #include "test_data.h"
 #include "test_stat.h"
 #include "input_manager.h"
-#include "basic_node_team.h"
+#include "path_team.h"
 #include "path_generator.h"
 
 namespace elfin {
@@ -48,7 +48,7 @@ TestStat EvolutionSolver::test() {
 
         try { // Catch bad_cast
             auto best_bnt =
-                static_cast<BasicNodeTeam const&>(*solutions.at(0));
+                static_cast<PathTeam const&>(*solutions.at(0));
             auto& free_chains = best_bnt.free_chains();
 
             JUtil.panic_if(free_chains.size() != 2,

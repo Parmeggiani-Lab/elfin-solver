@@ -1,4 +1,4 @@
-#include "basic_node_team.h"
+#include "path_team.h"
 
 #include "test_data.h"
 #include "test_stat.h"
@@ -7,11 +7,11 @@
 namespace elfin {
 
 /* tests data */
-BasicNodeTeam BasicNodeTeam::build_team(tests::StepList const& steps) {
+PathTeam PathTeam::build_team(tests::StepList const& steps) {
     // Create team
     TRACE_PANIC(SPEC.work_areas().size() != 1);
     auto& wa = begin(SPEC.work_areas())->second;
-    BasicNodeTeam team(wa.get());
+    PathTeam team(wa.get());
 
     if (not steps.empty()) {
         std::string const& first_mod_name = steps[0].mod_name;
@@ -55,7 +55,7 @@ BasicNodeTeam BasicNodeTeam::build_team(tests::StepList const& steps) {
 }
 
 /* tests */
-TestStat BasicNodeTeam::test() {
+TestStat PathTeam::test() {
     TestStat ts;
 
     // Construction test.
