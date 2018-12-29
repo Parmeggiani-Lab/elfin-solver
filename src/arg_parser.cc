@@ -149,8 +149,8 @@ void ArgParser::parse_options(int const argc, char const* const argv[]) {
         if (ab) {
             if (ab->exp_val) {
                 if (i + 1 > argc - 1) {
+                    failed |= true;
                     JUtil.error("Argument %s requires a value\n", arg);
-                    arg_parse_failure(arg, ab);
                 }
                 else {
                     // Parse value.
@@ -168,19 +168,13 @@ void ArgParser::parse_options(int const argc, char const* const argv[]) {
         }
 
         if (failed) {
+            JUtil.error("Failed to parse options:\n");
+            for (size_t j = 0; j < argc; ++j) {
+                JUtil.error("argv[%zu]=%s\n", j, argv[j]);
+            }
             arg_parse_failure(arg, ab);
         }
     }
-}
-
-long parse_long(char const* const str) {
-    char *next;
-    long val = strtol(str, &next, 0); // base 0 allows format detection
-    TRACE(strlen(next),
-          "Failed to parse long integer from \"%s\"\n",
-          str);
-
-    return val;
 }
 
 // This macro must match signature of ArgBundleCallback.
@@ -199,7 +193,7 @@ ARG_PARSER_CALLBACK_DEF(set_output_dir) {
 
 ARG_PARSER_CALLBACK_DEF(set_len_dev) {
     JUtil.warn("set_len_dev(%s)\n", arg_in.c_str());
-    options_.len_dev = parse_long(arg_in.c_str());
+    options_.len_dev = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
@@ -210,19 +204,19 @@ ARG_PARSER_CALLBACK_DEF(set_avg_pair_dist) {
 
 ARG_PARSER_CALLBACK_DEF(set_seed) {
     JUtil.warn("set_seed(%s)\n", arg_in.c_str());
-    options_.seed = parse_long(arg_in.c_str());
+    options_.seed = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_pop_size) {
     JUtil.warn("set_ga_pop_size(%s)\n", arg_in.c_str());
-    options_.ga_pop_size = parse_long(arg_in.c_str());
+    options_.ga_pop_size = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_iters) {
     JUtil.warn("set_ga_iters(%s)\n", arg_in.c_str());
-    options_.ga_iters = parse_long(arg_in.c_str());
+    options_.ga_iters = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
@@ -238,14 +232,14 @@ ARG_PARSER_CALLBACK_DEF(set_ga_stop_score) {
 
 ARG_PARSER_CALLBACK_DEF(set_ga_stop_stagnancy) {
     JUtil.warn("set_ga_stop_stagnancy(%s)\n", arg_in.c_str());
-    options_.ga_stop_stagnancy = parse_long(arg_in.c_str());
+    options_.ga_stop_stagnancy = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_verbosity) {
     JUtil.warn("set_verbosity(%s)\n", arg_in.c_str());
     // Call jutil function to set global log level.
-    JUtil.set_log_lvl((JUtilLogLvl) parse_long(arg_in.c_str()));
+    JUtil.set_log_lvl((JUtilLogLvl) JUtil.parse_long(arg_in.c_str()));
     return true;
 }
 
@@ -257,19 +251,26 @@ ARG_PARSER_CALLBACK_DEF(set_run_tests) {
 
 ARG_PARSER_CALLBACK_DEF(set_device) {
     JUtil.warn("set_device(%s)\n", arg_in.c_str());
-    options_.device = parse_long(arg_in.c_str());
+    options_.device = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_n_workers) {
     JUtil.warn("set_n_workers(%s)\n", arg_in.c_str());
-    options_.n_workers = parse_long(arg_in.c_str());
+    char *next;
+    long val = strtol(arg_in.c_str(), &next, 0); // base 0 allows format detection
+    if(strlen(next)) {
+        JUtil.error("WTF?? %s\n", arg_in.c_str());
+        return false;
+    }
+
+    options_.n_workers = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_keep_n) {
     JUtil.warn("set_keep_n(%s)\n", arg_in.c_str());
-    options_.keep_n = parse_long(arg_in.c_str());
+    options_.keep_n = JUtil.parse_long(arg_in.c_str());
     return true;
 }
 
