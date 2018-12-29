@@ -43,12 +43,11 @@ $(info This was only tested on the Zoo cluster)
 endif
 
 ifeq ($(CXX),clang++)
-	# clang has no GLIBCXX_PARALLEL until c++17
 	ifeq ($(TARGET),cpu)
-		OMP_FLAGS += -openmp -D_GLIBCXX_PARALLEL
+		OMP_FLAGS += -openmp
 	endif
 else
-	OMP_FLAGS     += -fopenmp -D_GLIBCXX_PARALLEL
+	OMP_FLAGS     += -fopenmp
 endif
 
 INCLUDES += -I. -I./headers -I./lib/jutil/headers -I./lib 
