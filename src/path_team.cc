@@ -815,14 +815,6 @@ struct PathTeam::PImpl {
 };
 
 /* accessors */
-Crc32 PathTeam::calc_checksum() const {
-    return p_impl_->calc_checksum();
-}
-
-float PathTeam::calc_score() const {
-    return p_impl_->calc_score();
-}
-
 V3fList PathTeam::collect_points(NodeKey tip_node) const {
     return p_impl_->collect_points(tip_node);
 }
@@ -840,7 +832,16 @@ NodeKey PathTeam::grow_tip(
 
 /* protected */
 /* accessors */
-PathTeam * PathTeam::virtual_clone() const {
+void PathTeam::virtual_copy(NodeTeam const& other) {
+    try { // Catch bad cast
+        PathTeam::operator=(static_cast<PathTeam const&>(other));
+    }
+    catch (std::bad_cast const& e) {
+        PANIC("Bad cast in %s\n", __PRETTY_FUNCTION__);
+    }
+}
+
+PathTeam* PathTeam::virtual_clone() const {
     return new PathTeam(*this);
 }
 
@@ -882,32 +883,69 @@ void PathTeam::remove_free_chains(NodeKey const node) {
 
 /* public */
 /* ctors */
-PathTeam::PathTeam(WorkArea const* wa) {
-    work_area_ = wa;
-    p_impl_ = init_pimpl();
-
+PathTeam::PathTeam(WorkArea const* wa) :
+    NodeTeam(wa),
+    p_impl_(init_pimpl())
+{
     TRACE_NOMSG(not work_area_);
     nodes_.reserve(work_area_->target_size());
     free_chains_.reserve(2);
 }
 
+PathTeam::PathTeam(WorkArea const* wa, tests::Recipe const& recipe) :
+    PathTeam(wa)
+{
+    if (not recipe.empty()) {
+        std::string const& first_mod_name = recipe[0].mod_name;
+        auto last_node = add_member(XDB.get_module(first_mod_name));
+
+        for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
+            auto const& step = *itr;
+
+            // Now create next node.
+            auto src_mod = XDB.get_module(step.mod_name);
+            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
+            TRACE_NOMSG(not src_mod);
+            TRACE_NOMSG(not dst_mod);
+
+            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
+            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
+
+            // Find ProtoLink
+            auto pt_link = src_mod->find_link_to(
+                               src_chain_id,
+                               step.src_term,
+                               dst_mod,
+                               dst_chain_id);
+
+            // Find FreeChain
+            TRACE_NOMSG(free_chains_.size() != 2);
+            auto fc_itr = std::find_if(
+                              begin(free_chains_),
+                              end(free_chains_),
+            [&](auto const & fc) { return fc.term == step.src_term; });
+
+            TRACE_NOMSG(fc_itr == end(free_chains_));
+            FreeChain const& free_chain = *fc_itr;
+
+            last_node = grow_tip(free_chain, pt_link);
+        }
+
+        checksum_ = p_impl_->calc_checksum();
+        score_ = p_impl_->calc_score();
+    }
+}
+
 PathTeam::PathTeam(PathTeam const& other) :
-    p_impl_(init_pimpl()) {
+    PathTeam(other.work_area_)
+{
     *this = other; // Calls operator=(T const&)
 }
 
 PathTeam::PathTeam(PathTeam&& other) :
-    p_impl_(init_pimpl()) {
+    PathTeam(other.work_area_)
+{
     *this = std::move(other); // Calls operator=(T&&)
-}
-
-void PathTeam::copy_from(NodeTeam const& other) {
-    try { // Catch bad cast
-        PathTeam::operator=(static_cast<PathTeam const&>(other));
-    }
-    catch (std::bad_cast const& e) {
-        PANIC("Bad cast in %s\n", __PRETTY_FUNCTION__);
-    }
 }
 
 /* dtors */
@@ -976,7 +1014,7 @@ mutation::Mode PathTeam::evolve(
     NodeTeam const& mother,
     NodeTeam const& father)
 {
-    copy_from(mother);
+    virtual_copy(mother);
 
     auto modes = mutation::gen_mode_list();
 
@@ -1019,10 +1057,7 @@ mutation::Mode PathTeam::evolve(
         TRACE_NOMSG(not mutate_success);
     }
 
-    // Update checksum.
     checksum_ = p_impl_->calc_checksum();
-
-    // Update score.
     score_ = p_impl_->calc_score();
 
     return mode;
@@ -1118,9 +1153,9 @@ JSON PathTeam::to_json() const {
         }
 
         DEBUG(output.size() != size(),
-                    "output.size()=%zu, size()=%zu\n",
-                    output.size(),
-                    this->size());
+              "output.size()=%zu, size()=%zu\n",
+              output.size(),
+              this->size());
     }
 
     return output;

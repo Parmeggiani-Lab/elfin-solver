@@ -3,16 +3,9 @@
 
 #include "node_team.h"
 #include "node.h"
+#include "test_data.h"
 
 namespace elfin {
-
-/* Fwd Decl */
-struct TestStat;
-
-namespace tests {
-class Step;
-typedef std::vector<Step> StepList;
-}  /* tests */
 
 class PathTeam : public NodeTeam {
 private:
@@ -23,8 +16,6 @@ private:
     std::unique_ptr<PImpl> p_impl_;
 
     /* accessors */
-    Crc32 calc_checksum() const;
-    float calc_score() const;
     //
     // In a PathTeam there are either 0 or 2 tips at any given time. The
     // nodes network is thus a simple path. We walk the path to collect the 3D
@@ -38,14 +29,12 @@ private:
         FreeChain const free_chain_a,
         ProtoLink const* ptlink = nullptr);
 protected:
-    /* types */
-    typedef std::unordered_map<NodeKey, NodeSP> Nodes;
-
     /* data */
-    Nodes nodes_;
+    std::unordered_map<NodeKey, NodeSP> nodes_;
     FreeChainList free_chains_;
 
     /* accessors */
+    virtual void virtual_copy(NodeTeam const& other);
     virtual PathTeam* virtual_clone() const;
 
     /* modifiers */
@@ -55,11 +44,11 @@ protected:
     void remove_free_chains(NodeKey const node);
 public:
     /* ctors */
-    using NodeTeam::NodeTeam;
     PathTeam(WorkArea const* wa);
+    // Recipe ctor is used for testing.
+    PathTeam(WorkArea const* wa, tests::Recipe const& recipe);
     PathTeam(PathTeam const& other);
     PathTeam(PathTeam&& other);
-    virtual void copy_from(NodeTeam const& other);
 
     /* dtors */
     virtual ~PathTeam();
@@ -81,7 +70,6 @@ public:
     virtual JSON to_json() const;
 
     /* tests */
-    static PathTeam build_team(tests::StepList const& steps);
     static TestStat test();
 };  /* class PathTeam */
 

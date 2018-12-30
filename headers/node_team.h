@@ -10,9 +10,12 @@
 
 namespace elfin {
 
-class NodeTeam;
 
+/* Fwd Decl */
+class NodeTeam;
 typedef std::unique_ptr<NodeTeam> NodeTeamSP;
+struct TestStat;
+
 
 class NodeTeam : public Printable {
 protected:
@@ -22,16 +25,16 @@ protected:
     float score_ = INFINITY;
 
     /* accessors */
-    // bool collides(
-    //     Vector3f const& new_com,
-    //     float const mod_radius) const;
-    virtual NodeTeam * virtual_clone() const = 0;
+    // Allow copying from/cloning of derived objects without cast.
+    virtual void virtual_copy(NodeTeam const& other) = 0;
+    virtual NodeTeam* virtual_clone() const = 0;
 
 public:
     /* ctors */
-    static NodeTeamSP create_team(WorkArea const* work_area);
-    NodeTeamSP clone() const;
-    virtual void copy_from(NodeTeam const& other) = 0;
+    NodeTeam(WorkArea const* const wa) : work_area_(wa) {}
+    static NodeTeamSP create_team(WorkArea const* const work_area);
+    void copy(NodeTeam const& other) { virtual_copy(other); }
+    NodeTeamSP clone() const { return NodeTeamSP(virtual_clone()); }
 
     /* dtors */
     virtual ~NodeTeam() {}
@@ -52,8 +55,6 @@ public:
 
     /* printers */
     virtual JSON to_json() const = 0;
-
-    /* tests */
 };  /* class NodeTeam */
 
 }  /* elfin */

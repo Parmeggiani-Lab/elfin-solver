@@ -8,14 +8,13 @@ namespace elfin {
 
 namespace tests {
 
-/* types */
-struct Step {
-    std::string mod_name = "";
+struct RecipeStep {
+    std::string mod_name;
     TerminusType src_term = TerminusType::NONE;
-    std::string src_chain = "";
-    std::string dst_chain = "";
+    std::string src_chain;
+    std::string dst_chain;
 };
-typedef std::vector<Step> StepList;
+typedef std::vector<RecipeStep> Recipe;
 
 /* default test input */
 static V3fList const quarter_snake_free_coordinates = {
@@ -38,7 +37,7 @@ static V3fList const quarter_snake_free_coordinates_origin = {
     {1.430511474609375e-05, -1.430511474609375e-05, 4.76837158203125e-06}
 };
 
-static StepList const quarter_snake_free_recipe {
+static Recipe const quarter_snake_free_recipe {
     {"D79_aC2_04", TerminusType::C, "B", "A"},
     {"D79", TerminusType::C, "A",  "A"},
     {"D79", TerminusType::C, "A",  "A"},

@@ -75,7 +75,7 @@ void Population::evolve() {
             auto& team = front_buffer_->at(rank);
             // Rank is 0-indexed, hence <
             if (rank < CUTOFFS.survivors) {
-                team->copy_from(*back_buffer_->at(rank));
+                team->copy(*back_buffer_->at(rank));
                 mode = mutation::Mode::NONE;
             }
             else {
