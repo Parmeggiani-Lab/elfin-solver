@@ -23,7 +23,7 @@ DEBUG=basic
 ifeq ($(DEBUG),basic)
 	DEBUG_FLAGS := -ggdb3 -rdynamic
 else ifeq ($(DEBUG),asan)
-	DEBUG_FLAGS := -fsanitize=address -fno-omit-frame-pointer
+	DEBUG_FLAGS := -ggdb3 -rdynamic -fsanitize=address -fno-omit-frame-pointer
 else
 	DEBUG_FLAGS := -DNDBUG
 endif
