@@ -63,7 +63,7 @@ void ProtoTerminus::finalize() {
     std::sort(
         begin(links_),
         end(links_),
-    [](ProtoLinkSP const & lhs, ProtoLinkSP const & rhs) {
+    [](auto const & lhs, auto const & rhs) {
         return lhs->module_->counts().all_interfaces() <
                rhs->module_->counts().all_interfaces();
     });

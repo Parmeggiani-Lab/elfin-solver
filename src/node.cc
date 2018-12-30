@@ -11,16 +11,6 @@
 namespace elfin {
 
 /* public */
-/* ctors */
-Node::Node(
-    ProtoModule const* prototype,
-    Transform const& tx) :
-    prototype_(prototype),
-    tx_(tx) {
-    // Reserve memory for maximum occupancy
-    links_.reserve(prototype_->counts().all_interfaces());
-}
-
 /* accessors */
 Link const* Node::find_link_to(NodeKey dst_node) const {
     for (auto& link : links_) {
@@ -51,20 +41,23 @@ void Node::remove_link(FreeChain const& src) {
     // Verbose diagnosis
     if (link_itr == end(links_)) {
         print_stacktrace();
+        
         JUtil.error("Tried to remove link that does not exist. Links:\n");
-        for (size_t i = 0; i < links_.size(); ++i) {
+
+        size_t index = 0;
+        for (auto& link : links_) {
             JUtil.error("Link #%zu: %s\n",
-                        i, links_[i].to_string().c_str());
+                        index++,
+                        link.to_string().c_str());
         }
+
         PANIC("%s failed:\nsrc=%s\nNode: %s\n",
               __PRETTY_FUNCTION__,
               src.to_string().c_str(),
               to_string().c_str());
     }
     else {
-        // Lift erase found link.
-        *link_itr = links_.back();
-        links_.pop_back();
+        links_.erase(link_itr);
     }
 }
 

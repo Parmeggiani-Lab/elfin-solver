@@ -17,8 +17,6 @@ TestStat PathTeam::test() {
         PathTeam team(wa.get(), tests::quarter_snake_free_recipe);
         TRACE_NOMSG(team.free_chains_.size() != 2);
 
-        V3fList team_points = team.collect_points(team.free_chains_[0].node);
-
         ts.tests++;
         if (team.score() > 1e-6) {
             ts.errors++;

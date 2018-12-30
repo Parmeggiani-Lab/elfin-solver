@@ -3,7 +3,6 @@
 
 #include <unordered_map>
 
-#include "vector_utils.h"
 #include "free_chain.h"
 
 namespace elfin {
@@ -29,7 +28,7 @@ namespace mutation {
 GEN_ENUM_AND_STRING(Mode, ModeNames, FOREACH_MODES);
 
 typedef std::unordered_map<Mode, size_t> Counter;
-typedef Vector<Mode> ModeList;
+typedef std::vector<Mode> ModeList;
 
 struct DeletePoint {
     //

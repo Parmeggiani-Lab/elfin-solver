@@ -2,7 +2,6 @@
 #define LINK_H_
 
 #include "free_chain.h"
-#include "vector_utils.h"
 #include "proto_link.h"
 
 namespace elfin {
@@ -45,8 +44,6 @@ public:
     /* printers */
     virtual void print_to(std::ostream& os) const;
 };  /* class Link */
-
-typedef Vector<Link> LinkList;
 
 }  /* elfin */
 

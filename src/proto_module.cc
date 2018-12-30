@@ -209,7 +209,7 @@ void ProtoModule::print_to(std::ostream& os) const {
     os << "  Radius: " << radius << '\n';
     os << "  n_link_count: " << counts().n_links << '\n';
     os << "  c_link_count: " << counts().c_links << '\n';
-    os << "]" << '\n';
+    os << "]";
 }
 
 }  /* elfin */

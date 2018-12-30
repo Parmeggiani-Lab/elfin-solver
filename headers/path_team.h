@@ -7,6 +7,8 @@
 
 namespace elfin {
 
+// In a PathTeam there are either 0 or 2 tips at any given time. The
+// nodes network is thus a simple path.
 class PathTeam : public NodeTeam {
 private:
     /* type */
@@ -15,23 +17,12 @@ private:
     /* data */
     std::unique_ptr<PImpl> p_impl_;
 
-    /* accessors */
-    //
-    // In a PathTeam there are either 0 or 2 tips at any given time. The
-    // nodes network is thus a simple path. We walk the path to collect the 3D
-    // points in order.
-    //
-    V3fList collect_points(NodeKey tip_node) const;
-
     /*modifiers */
     std::unique_ptr<PImpl> init_pimpl();
-    NodeKey grow_tip(
-        FreeChain const free_chain_a,
-        ProtoLink const* ptlink = nullptr);
 protected:
     /* data */
     std::unordered_map<NodeKey, NodeSP> nodes_;
-    FreeChainList free_chains_;
+    std::list<FreeChain> free_chains_;
 
     /* accessors */
     virtual void virtual_copy(NodeTeam const& other);
@@ -39,7 +30,7 @@ protected:
 
     /* modifiers */
     NodeKey add_member(
-        ProtoModule const* prot,
+        ProtoModule const* const prot,
         Transform const& tx = Transform());
     void remove_free_chains(NodeKey const node);
 public:
@@ -55,7 +46,7 @@ public:
 
     /* accessors */
     virtual size_t size() const { return nodes_.size(); }
-    FreeChainList const& free_chains() const { return free_chains_; }
+    std::list<FreeChain> const& free_chains() const { return free_chains_; }
 
     /* modifiers */
     PathTeam& operator=(PathTeam const& other);

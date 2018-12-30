@@ -5,7 +5,6 @@
 #include <memory>
 
 #include "geometry.h"
-#include "vector_utils.h"
 
 namespace elfin {
 
@@ -64,7 +63,7 @@ ProtoLinkPtrSet;
 typedef typename ProtoLinkPtrSet::const_iterator
 ProtoLinkPtrSetCItr;
 
-typedef elfin::Vector<ConstProtoLinkPtr> ProtoLinkPtrList;
+typedef std::vector<ConstProtoLinkPtr> ProtoLinkPtrList;
 
 }  /* elfin */
 

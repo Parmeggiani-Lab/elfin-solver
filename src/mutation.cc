@@ -1,5 +1,6 @@
 #include "mutation.h"
 
+#include <vector>
 #include <algorithm>
 
 namespace elfin {
@@ -8,8 +9,7 @@ namespace mutation {
 
 ModeList gen_mode_list() {
     // NONE is excluded, hence the -1 and pre-increment of int_mode
-    Vector<Mode> res(
-        static_cast<int>(Mode::_ENUM_SIZE) - 1);
+    std::vector<Mode> res(static_cast<int>(Mode::_ENUM_SIZE) - 1);
 
     int int_mode = static_cast<int>(Mode::NONE);
     std::generate(begin(res), end(res), [&] {

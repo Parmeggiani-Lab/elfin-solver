@@ -5,14 +5,12 @@
 #ifndef DATABASE_H_
 #define DATABASE_H_
 
+#include <string>
 #include <vector>
 
 #include "json.h"
 #include "proto_module.h"
 #include "roulette.h"
-#include "vector_utils.h"
-
-#include <string>
 
 namespace elfin {
 
@@ -27,7 +25,7 @@ protected:
     };
 
     /* data */
-    Vector<ProtoModuleSP> all_mods_;
+    std::vector<ProtoModuleSP> all_mods_;
     StrIndexMap mod_idx_map_;
     ModPtrRoulette singles_, hubs_, basic_mods_, complex_mods_;
 

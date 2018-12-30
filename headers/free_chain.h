@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "terminus_type.h"
-#include "vector_utils.h"
 #include "proto_link.h"
 
 namespace elfin {
@@ -21,7 +20,7 @@ struct FreeChain : public Printable {
             pt_link1(_pt_link1), pt_link2(_pt_link2) {}
     };
 
-    typedef Vector<Bridge> BridgeList;
+    typedef std::vector<Bridge> BridgeList;
 
     /* data */
     Node const* node;
@@ -46,8 +45,6 @@ struct FreeChain : public Printable {
     /* printers */
    virtual void print_to(std::ostream& os) const;
 };
-
-typedef Vector<FreeChain> FreeChainList;
 
 }  /* elfin */
 

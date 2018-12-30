@@ -2,6 +2,7 @@
 #define NODE_H_
 
 #include <memory>
+#include <list>
 
 #include "proto_module.h"
 #include "geometry.h"
@@ -31,7 +32,7 @@ protected:
     //
 
     /* data */
-    LinkList links_;
+    std::list<Link> links_;
 
 public:
     /* data */
@@ -39,12 +40,13 @@ public:
     ProtoModule const* const prototype_;
 
     /* ctors */
-    Node(ProtoModule const* const prototype, Transform const& tx);
+    Node(ProtoModule const* prototype, Transform const& tx) :
+        prototype_(prototype), tx_(tx) {}
     Node(ProtoModule const* const prototype) : Node(prototype, Transform()) {}
     NodeSP clone() const { return std::make_unique<Node>(*this); }
 
     /* accessors */
-    LinkList const& links() const { return links_; }
+    std::list<Link> const& links() const { return links_; }
     Link const* find_link_to(NodeKey dst_node) const;
     PathGenerator gen_path() const;
 

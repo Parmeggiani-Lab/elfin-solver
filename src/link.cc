@@ -13,8 +13,14 @@ Link::Link(
     FreeChain const& dst_chain) :
     src_chain_(src_chain),
     prototype_(prototype),
-    dst_chain_(dst_chain) {
-    DEBUG_NOMSG(dst_chain_.node->prototype_ != this->prototype_->module_);
+    dst_chain_(dst_chain)
+{
+    // Check that prototype_ (ProtoLink) destination ProtoModule is the same
+    // as dst_chain ProtoModule.
+    DEBUG(dst_chain_.node->prototype_ != prototype_->module_,
+        "\ndst_chain_.node->prototype_=%s\nprototype_->module_=%s\n",
+        dst_chain_.node->prototype_->to_string().c_str(),
+        prototype_->module_->to_string().c_str());
 }
 
 /* accessors */

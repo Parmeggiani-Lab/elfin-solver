@@ -57,8 +57,10 @@ TestStat EvolutionSolver::test() {
 
             auto& recipe = tests::quarter_snake_free_recipe;
             std::string const& starting_name = recipe[0].mod_name;
-            auto& tip_fc = free_chains[0].node->prototype_->name == starting_name ?
-                           free_chains[0] : free_chains[1];
+
+            auto fc_itr = begin(free_chains);
+            auto& tip_fc = fc_itr->node->prototype_->name == starting_name ?
+                           *fc_itr : *(++fc_itr);
 
             auto step_itr = begin(recipe);
             auto path_gen = tip_fc.node->gen_path();
