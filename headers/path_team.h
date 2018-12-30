@@ -23,6 +23,7 @@ protected:
     /* data */
     std::unordered_map<NodeKey, NodeSP> nodes_;
     std::list<FreeChain> free_chains_;
+    NodeKey scored_tip_ = nullptr;
 
     /* accessors */
     virtual void virtual_copy(NodeTeam const& other);
@@ -46,7 +47,7 @@ public:
 
     /* accessors */
     virtual size_t size() const { return nodes_.size(); }
-    std::list<FreeChain> const& free_chains() const { return free_chains_; }
+    PathGenerator gen_path() const;
 
     /* modifiers */
     PathTeam& operator=(PathTeam const& other);

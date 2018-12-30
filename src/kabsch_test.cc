@@ -136,27 +136,33 @@ TestStat test_score() {
 
     // Identity (no transform) score 0.
     {
-        V3fList const& wa_points = wa->points();
-        float const kscore = score(tests::quarter_snake_free_coordinates, wa_points);
+        auto const& expect_points = tests::quarter_snake_free_coordinates;
+        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
+
+        auto const& input_points = wa->points();
+        float const kscore = std::min(
+                                 score(expect_points, input_points),
+                                 score(expect_points_rev, input_points));
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch identity score test failed.\n"
                         "Expected 0\nGot %f\n", kscore);
 
-            std::ostringstream oss;
-            oss << "Hard coded points:\n";
+            std::ostringstream hc_oss;
+            hc_oss << "Hard coded points:\n";
+            for (auto const& point : expect_points) {
+                hc_oss << point.to_string() << "\n";
+            }
+            JUtil.error(hc_oss.str().c_str());
 
-            for (auto const& point : tests::quarter_snake_free_coordinates) {
-                oss << point.to_string() << "\n";
+            std::ostringstream ex_oss;
+            ex_oss << "Input file points:\n";
+            for (auto const& point : input_points) {
+                ex_oss << point.to_string() << "\n";
             }
 
-            oss << "Input file points:\n";
-            for (auto const& point : wa_points) {
-                oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(oss.str().c_str());
+            JUtil.error(ex_oss.str().c_str());
         }
     }
 
@@ -172,32 +178,36 @@ TestStat test_score() {
             {"tran", { -7.7777, -30, 150.12918}}
         });
 
-        V3fList points_test = tests::quarter_snake_free_coordinates;
-        for (auto& point : points_test) {
+        V3fList expect_points = tests::quarter_snake_free_coordinates;
+        for (auto& point : expect_points) {
             point = trans_tx * point;
         }
+        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
 
-        V3fList const& wa_points = wa->points();
-        float const kscore = score(points_test, wa_points);
+        V3fList const& input_points = wa->points();
+        float const kscore = std::min(
+                                 score(expect_points, input_points),
+                                 score(expect_points_rev, input_points));
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch translation score test failed.\n"
                         "Expected 0\nGot %f\n", kscore);
 
-            std::ostringstream oss;
-            oss << "Hard coded points:\n";
+            std::ostringstream hc_oss;
+            hc_oss << "Hard coded points:\n";
+            for (auto const& point : expect_points) {
+                hc_oss << point.to_string() << "\n";
+            }
+            JUtil.error(hc_oss.str().c_str());
 
-            for (auto const& point : points_test) {
-                oss << point.to_string() << "\n";
+            std::ostringstream ex_oss;
+            ex_oss << "Input file points:\n";
+            for (auto const& point : input_points) {
+                ex_oss << point.to_string() << "\n";
             }
 
-            oss << "Input file points:\n";
-            for (auto const& point : wa_points) {
-                oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(oss.str().c_str());
+            JUtil.error(ex_oss.str().c_str());
         }
     }
 
@@ -213,31 +223,36 @@ TestStat test_score() {
             {"tran", {0, 0, 0}}
         });
 
-        V3fList points_test = tests::quarter_snake_free_coordinates;
-        for (auto& point : points_test) {
+        V3fList expect_points = tests::quarter_snake_free_coordinates;
+        for (auto& point : expect_points) {
             point = rot_tx * point;
         }
+        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
 
-        V3fList const& wa_points = wa->points();
-        float const kscore = score(points_test, wa_points);
+        V3fList const& input_points = wa->points();
+        float const kscore = std::min(
+                                 score(expect_points, input_points),
+                                 score(expect_points_rev, input_points));
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch rotation score test failed.\n"
                         "Expected 0\nGot %f\n", kscore);
 
-            std::ostringstream oss;
-            oss << "Hard coded points:\n";
-            for (auto const& point : points_test) {
-                oss << point.to_string() << "\n";
+            std::ostringstream hc_oss;
+            hc_oss << "Hard coded points:\n";
+            for (auto const& point : expect_points) {
+                hc_oss << point.to_string() << "\n";
+            }
+            JUtil.error(hc_oss.str().c_str());
+
+            std::ostringstream ex_oss;
+            ex_oss << "Input file points:\n";
+            for (auto const& point : input_points) {
+                ex_oss << point.to_string() << "\n";
             }
 
-            oss << "Input file points:\n";
-            for (auto const& point : wa_points) {
-                oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(oss.str().c_str());
+            JUtil.error(ex_oss.str().c_str());
         }
     }
 
@@ -255,56 +270,68 @@ TestStat test_score() {
             {"tran", {3.15165638923645, -5.339916229248047, 3.290015935897827}}
         });
 
-        V3fList points_test = tests::quarter_snake_free_coordinates;
-        for (auto& point : points_test) {
+        V3fList expect_points = tests::quarter_snake_free_coordinates;
+        for (auto& point : expect_points) {
             point = random_tx * point;
         }
+        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
 
-        V3fList const& wa_points = wa->points();
-        float const kscore = score(points_test, wa_points);
+        V3fList const& input_points = wa->points();
+        float const kscore = std::min(
+                                 score(expect_points, input_points),
+                                 score(expect_points_rev, input_points));
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch random transform score test failed.\n"
                         "Expected 0\nGot %f\n", kscore);
 
-            std::ostringstream oss;
-            oss << "Hard coded points:\n";
-            for (auto const& point : points_test) {
-                oss << point.to_string() << "\n";
+            std::ostringstream hc_oss;
+            hc_oss << "Hard coded points:\n";
+            for (auto const& point : expect_points) {
+                hc_oss << point.to_string() << "\n";
+            }
+            JUtil.error(hc_oss.str().c_str());
+
+            std::ostringstream ex_oss;
+            ex_oss << "Input file points:\n";
+            for (auto const& point : input_points) {
+                ex_oss << point.to_string() << "\n";
             }
 
-            oss << "Input file points:\n";
-            for (auto const& point : wa_points) {
-                oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(oss.str().c_str());
+            JUtil.error(ex_oss.str().c_str());
         }
     }
 
     // Test Blender origin transform score 0.
     {
-        V3fList const& wa_points = wa->points();
-        float const kscore = score(tests::quarter_snake_free_coordinates_origin, wa_points);
+        auto const& expect_points = tests::quarter_snake_free_coordinates_origin;
+        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
+
+        V3fList const& input_points = wa->points();
+        float const kscore = std::min(
+                                 score(expect_points, input_points),
+                                 score(expect_points_rev, input_points));
         ts.tests++;
         if (kscore > 1e-6) {
             ts.errors++;
             JUtil.error("kabsch Blender origin transform score test failed.\n"
                         "Expected 0\nGot %f\n", kscore);
 
-            std::ostringstream oss;
-            oss << "Blender origin points:\n";
-            for (auto const& point : tests::quarter_snake_free_coordinates_origin) {
-                oss << point.to_string() << "\n";
+            std::ostringstream hc_oss;
+            hc_oss << "Blender origin points:\n";
+            for (auto const& point : expect_points) {
+                hc_oss << point.to_string() << "\n";
+            }
+            JUtil.error(hc_oss.str().c_str());
+
+            std::ostringstream ex_oss;
+            ex_oss << "Input file points:\n";
+            for (auto const& point : input_points) {
+                ex_oss << point.to_string() << "\n";
             }
 
-            oss << "Input file points:\n";
-            for (auto const& point : wa_points) {
-                oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(oss.str().c_str());
+            JUtil.error(ex_oss.str().c_str());
         }
     }
 
@@ -317,18 +344,20 @@ TestStat test_score() {
             JUtil.error("kabsch unrelated point score test failed.\n"
                         "Expected >> 0\nGot %f\n", kscore);
 
-            std::ostringstream oss;
-            oss << "points10a:\n";
+            std::ostringstream a_oss;
+            a_oss << "points10a:\n";
             for (auto const& point : points10a) {
-                oss << point.to_string() << "\n";
+                a_oss << point.to_string() << "\n";
             }
+            JUtil.error(a_oss.str().c_str());
 
-            oss << "points10b:\n";
+            std::ostringstream b_oss;
+            b_oss << "points10b:\n";
             for (auto const& point : points10b) {
-                oss << point.to_string() << "\n";
+                b_oss << point.to_string() << "\n";
             }
 
-            JUtil.error(oss.str().c_str());
+            JUtil.error(b_oss.str().c_str());
         }
     }
 

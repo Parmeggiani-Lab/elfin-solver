@@ -60,7 +60,7 @@ public:
     void add_link(Link const& link) {
         links_.emplace_back(link);
     }
-    void update_link_ptrs(NodeAddrMap const& nam);
+    void update_link_ptrs(NodeKeyMap const& nam);
     void remove_link(FreeChain const& fc);
 
     /* printers */

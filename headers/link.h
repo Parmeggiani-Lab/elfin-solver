@@ -9,7 +9,7 @@ namespace elfin {
 /* Fwd Decl */
 class Node;
 typedef std::unique_ptr<Node> NodeSP;
-typedef std::unordered_map<Node const*, Node*> NodeAddrMap;
+typedef std::unordered_map<Node const*, Node*> NodeKeyMap;
 class PathGenerator;
 
 class Link : public Printable {
@@ -39,7 +39,7 @@ public:
     PathGenerator gen_path() const;
 
     /* modifiers */
-    void update_node_ptrs(NodeAddrMap const& nam);
+    void update_node_ptrs(NodeKeyMap const& nam);
 
     /* printers */
     virtual void print_to(std::ostream& os) const;

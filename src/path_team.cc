@@ -32,7 +32,7 @@ struct PathTeam::PImpl {
     PImpl(PathTeam& interface) : _(interface) {}
 
     /* accessors */
-    Crc32 calc_checksum() const {
+    void calc_checksum() const {
         //
         // We want the same checksum for two node teams that consist of the same
         // sequence of nodes even if they are in reverse order. This can be
@@ -61,10 +61,10 @@ struct PathTeam::PImpl {
             }
         }
 
-        return crc;
+        _.checksum_ = crc;
     }
 
-    float calc_score() const {
+    void calc_score() const {
         //
         // We score the path forward and backward, because the Kabsch
         // algorithm relies on point-wise correspondance. Different ordering
@@ -75,16 +75,18 @@ struct PathTeam::PImpl {
               _.free_chains_.size());
         DEBUG_NOMSG(_.size() == 0);
 
-        float score = INFINITY;
+        _.score_ = INFINITY;
         for (auto& free_chain : _.free_chains_) {
-            V3fList points = collect_points(free_chain.node);
-
+            auto const my_points = collect_points(free_chain.node);
             float const new_score =
-                kabsch::score(points, _.work_area_->points());
-            score = new_score < score ? new_score : score;
-        }
+                kabsch::score(my_points,
+                              _.work_area_->points());
 
-        return score;
+            if (new_score < _.score_) {
+                _.score_ = new_score;
+                _.scored_tip_ = free_chain.node;
+            }
+        }
     }
 
     V3fList collect_points(NodeKey tip_node) const {
@@ -705,14 +707,14 @@ struct PathTeam::PImpl {
         if (not _.free_chains_.empty()) {
             try { // Catch bad cast
                 auto& bnt_father = static_cast<PathTeam const&>(father);
-                if (not bnt_father.free_chains().empty()) {
+                if (not bnt_father.free_chains_.empty()) {
                     // First, collect arrows from both parents.
 
                     // Starting at either end is fine.
                     auto m_arrows = begin(_.free_chains_)->node->
                                     gen_path().collect_arrows();
-                    DEBUG_NOMSG(bnt_father.free_chains().size() != 2);
-                    auto f_arrows = begin(bnt_father.free_chains())->node->
+                    DEBUG_NOMSG(bnt_father.free_chains_.size() != 2);
+                    auto f_arrows = begin(bnt_father.free_chains_)->node->
                                     gen_path().collect_arrows();
 
                     // Walk through all link pairs to collect cross points.
@@ -922,8 +924,8 @@ PathTeam::PathTeam(WorkArea const* wa, tests::Recipe const& recipe) :
             last_node = p_impl_->grow_tip(src_fc, pt_link);
         }
 
-        checksum_ = p_impl_->calc_checksum();
-        score_ = p_impl_->calc_score();
+        p_impl_->calc_checksum();
+        p_impl_->calc_score();
     }
 }
 
@@ -942,25 +944,28 @@ PathTeam::PathTeam(PathTeam&& other) :
 /* dtors */
 PathTeam::~PathTeam() {}
 
+/* accessors */
+PathGenerator PathTeam::gen_path() const {
+    DEBUG(not scored_tip_, "calc_score() not called\n");
+    return scored_tip_->gen_path();
+}
+
 /* modifiers */
 PathTeam& PathTeam::operator=(PathTeam const& other) {
     if (this != &other) {
         nodes_.clear();
         free_chains_.clear();
 
-        // Copy simple fields.
-        work_area_ = other.work_area_;
-        checksum_ = other.checksum_;
-        score_ = other.score_;
+        NodeTeam::operator=(other);
 
         // Clone nodes and create address mapping for remapping pointers.
         {
-            NodeAddrMap addr_map; // old addr -> new addr
+            NodeKeyMap nk_map; // old addr -> new addr
 
             for (auto& other_node_itr : other.nodes_) {
                 auto& other_node = other_node_itr.second;
                 NodeSP node = other_node->clone();
-                addr_map[other_node.get()] = node.get();
+                nk_map[other_node.get()] = node.get();
                 nodes_.emplace(node.get(), std::move(node));
             }
 
@@ -969,11 +974,15 @@ PathTeam& PathTeam::operator=(PathTeam const& other) {
             // Fix pointer addresses and assign to my own nodes
             for (auto& node_itr : nodes_) {
                 auto& node = node_itr.second;
-                node->update_link_ptrs(addr_map);
+                node->update_link_ptrs(nk_map);
             }
 
             for (auto& fc : free_chains_) {
-                fc.node = addr_map.at(fc.node);
+                fc.node = nk_map.at(fc.node);
+            }
+
+            if (other.scored_tip_) {
+                scored_tip_ = nk_map.at(other.scored_tip_);
             }
         }
     }
@@ -986,12 +995,11 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
         nodes_.clear();
         free_chains_.clear();
 
-        std::swap(work_area_, other.work_area_);
+        NodeTeam::operator=(std::move(other));
+
         std::swap(nodes_, other.nodes_);
         std::swap(free_chains_, other.free_chains_);
-
-        std::swap(checksum_, other.checksum_);
-        std::swap(score_, other.score_);
+        std::swap(scored_tip_, other.scored_tip_);
     }
 
     return *this;
@@ -1048,8 +1056,8 @@ mutation::Mode PathTeam::evolve(
         TRACE_NOMSG(not mutate_success);
     }
 
-    checksum_ = p_impl_->calc_checksum();
-    score_ = p_impl_->calc_score();
+    p_impl_->calc_checksum();
+    p_impl_->calc_score();
 
     return mode;
 }

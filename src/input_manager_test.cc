@@ -41,10 +41,13 @@ TestStat InputManager::test() {
         auto& wa = begin(SPEC.work_areas())->second; // unique_ptr
 
         // Test parsed points.
-        V3fList const& points_test = wa->points();
+        auto const& test_points = wa->points();
+        V3fList const test_points_rev(rbegin(test_points), rend(test_points));
+        auto const& expect_points = tests::quarter_snake_free_coordinates;
 
         ts.tests++;
-        if (tests::quarter_snake_free_coordinates != points_test) {
+        if (test_points != expect_points and
+                test_points_rev != expect_points ) {
             ts.errors++;
             JUtil.error("Work area point parsing test failed\n");
             std::ostringstream oss;
@@ -53,7 +56,7 @@ TestStat InputManager::test() {
                 oss << p.to_string() << "\n";
             }
             JUtil.error("But got:\n");
-            for (auto& p : points_test) {
+            for (auto& p : test_points) {
                 oss << p.to_string() << "\n";
             }
 

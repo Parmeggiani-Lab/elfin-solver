@@ -34,7 +34,7 @@ PathGenerator Link::gen_path() const {
 }
 
 /* modifiers */
-void Link::update_node_ptrs(NodeAddrMap const& nam) {
+void Link::update_node_ptrs(NodeKeyMap const& nam) {
     src_chain_.node = nam.at(src_chain_.node);
     DEBUG_NOMSG(not src_chain_.node);
     dst_chain_.node = nam.at(dst_chain_.node);

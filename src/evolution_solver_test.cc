@@ -34,8 +34,8 @@ TestStat EvolutionSolver::test() {
         ts.tests++;
         size_t const n_work_areas = SPEC.work_areas().size();
         PANIC_IF(n_work_areas != 1,
-                       "Expected spec to have exactly 1 work area, but there is %zu\n",
-                       n_work_areas);
+                 "Expected spec to have exactly 1 work area, but there is %zu\n",
+                 n_work_areas);
 
         auto const& work_area = begin(SPEC.work_areas())->second;
 
@@ -43,27 +43,26 @@ TestStat EvolutionSolver::test() {
             solver.best_sols().at(work_area->name());
         size_t const n_solutions = solutions.size();
         PANIC_IF(n_solutions != OPTIONS.keep_n,
-                       "Expected %zu solutions, but there is %zu\n",
-                       OPTIONS.keep_n, n_solutions);
+                 "Expected %zu solutions, but there is %zu\n",
+                 OPTIONS.keep_n, n_solutions);
 
         try { // Catch bad_cast
             auto best_bnt =
                 static_cast<PathTeam const&>(*solutions.at(0));
-            auto& free_chains = best_bnt.free_chains();
+            auto path_gen = best_bnt.gen_path();
 
-            PANIC_IF(free_chains.size() != 2,
-                           "Expected %zu free chains, but there is %zu\n",
-                           2, free_chains.size());
+            // Might need to reverse recipe because data exported from
+            // elfin-ui does not gurantee consistent starting tip.
+            bool const should_reverse =
+                tests::quarter_snake_free_recipe[0].mod_name !=
+                path_gen.peek()->prototype_->name;
 
-            auto& recipe = tests::quarter_snake_free_recipe;
-            std::string const& starting_name = recipe[0].mod_name;
-
-            auto fc_itr = begin(free_chains);
-            auto& tip_fc = fc_itr->node->prototype_->name == starting_name ?
-                           *fc_itr : *(++fc_itr);
-
+            auto recipe = should_reverse ?
+                          tests::Recipe(rbegin(tests::quarter_snake_free_recipe),
+                            rend(tests::quarter_snake_free_recipe)) :
+                          tests::quarter_snake_free_recipe;
             auto step_itr = begin(recipe);
-            auto path_gen = tip_fc.node->gen_path();
+
             while (not path_gen.is_done()) {
                 auto node = path_gen.next();
                 if (step_itr == end(recipe) or
@@ -74,7 +73,7 @@ TestStat EvolutionSolver::test() {
                     std::ostringstream sol_oss;
                     sol_oss << "Solver solution:\n";
 
-                    auto err_path_gen = tip_fc.node->gen_path();
+                    auto err_path_gen = best_bnt.gen_path();
                     while (not err_path_gen.is_done()) {
                         sol_oss << err_path_gen.next()->prototype_->name << "\n";
                     }

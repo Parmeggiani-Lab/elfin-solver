@@ -26,7 +26,7 @@ PathGenerator Node::gen_path() const {
 }
 
 /* modifiers */
-void Node::update_link_ptrs(NodeAddrMap const& nam) {
+void Node::update_link_ptrs(NodeKeyMap const& nam) {
     for (Link& link : links_) {
         link.update_node_ptrs(nam);
     }
