@@ -18,7 +18,7 @@ typedef std::unordered_map <std::string, NodeTeamSPList > SolutionMap;
 class EvolutionSolver {
 private:
 	struct PImpl;
-	std::unique_ptr<PImpl> p_impl_;
+	std::unique_ptr<PImpl> pimpl_;
 
 public:
 	/* ctors */

@@ -134,7 +134,7 @@ WorkArea::WorkArea(
     std::string const& name,
     JSON const& json,
     FixedAreaMap const& fam) {
-    p_impl_ = std::make_unique<PImpl>(name, json, fam);
+    pimpl_ = std::make_unique<PImpl>(name, json, fam);
 }
 
 /* dtors */
@@ -142,23 +142,23 @@ WorkArea::~WorkArea() {}
 
 /* accessors */
 std::string WorkArea::name() const {
-    return p_impl_->name;
+    return pimpl_->name;
 }
 
 WorkType WorkArea::type() const {
-    return p_impl_->type;
+    return pimpl_->type;
 }
 
 UIJointMap const& WorkArea::joints() const {
-    return p_impl_->joints;
+    return pimpl_->joints;
 }
 
 size_t WorkArea::target_size() const {
-    return p_impl_->target_size;
+    return pimpl_->target_size;
 }
 
 V3fList const& WorkArea::points() const {
-    return p_impl_->points;
+    return pimpl_->points;
 }
 
 }  /* elfin */

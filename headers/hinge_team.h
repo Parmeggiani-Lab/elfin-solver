@@ -11,21 +11,35 @@ private:
     class PImpl;
 
     /* data */
-    std::unique_ptr<PImpl> p_impl_;
+    std::unique_ptr<PImpl> pimpl_;
 
     /*modifiers */
-    std::unique_ptr<PImpl> init_pimpl();
+    std::unique_ptr<PImpl> make_pimpl();
+protected:
+    /* accessors */
+    virtual HingeTeam* virtual_clone() const;
+
+    /* modifiers */
+    virtual void virtual_copy(NodeTeam const& other);
+    virtual void calc_score();
+
 public:
     /* ctors */
-    // HingeTeam(WorkArea const* wa);
-    // // Recipe ctor is used for testing.
-    // HingeTeam(WorkArea const* wa, tests::Recipe const& recipe);
-    // HingeTeam(HingeTeam const& other);
-    // HingeTeam(HingeTeam&& other);
+    HingeTeam(WorkArea const* wa);
+    // Recipe ctor is used for testing.
+    HingeTeam(WorkArea const* wa, tests::Recipe const& recipe);
+    HingeTeam(HingeTeam const& other);
+    HingeTeam(HingeTeam&& other);
 
     /* dtors */
     virtual ~HingeTeam();
 
+    /* modifiers */
+    HingeTeam& operator=(HingeTeam const& other);
+    HingeTeam& operator=(HingeTeam && other);
+
+    /* tests */
+    static TestStat test();
 };
 
 }  /* elfin */

@@ -7,18 +7,20 @@
 
 namespace elfin {
 
-// In a PathTeam there are either 0 or 2 tips at any given time. The
-// nodes network is thus a simple path.
+/* Fwd Decl */
+struct TestStat;
+
+// A PathTeam has either 0 or 2 tips at any given time.
 class PathTeam : public NodeTeam {
 private:
     /* type */
     class PImpl;
 
     /* data */
-    std::unique_ptr<PImpl> p_impl_;
+    std::unique_ptr<PImpl> pimpl_;
 
     /*modifiers */
-    std::unique_ptr<PImpl> init_pimpl();
+    std::unique_ptr<PImpl> make_pimpl();
 protected:
     /* data */
     std::unordered_map<NodeKey, NodeSP> nodes_;
@@ -26,14 +28,15 @@ protected:
     NodeKey scored_tip_ = nullptr;
 
     /* accessors */
-    virtual void virtual_copy(NodeTeam const& other);
     virtual PathTeam* virtual_clone() const;
 
     /* modifiers */
+    virtual void virtual_copy(NodeTeam const& other);
     NodeKey add_member(
         ProtoModule const* const prot,
         Transform const& tx = Transform());
     void remove_free_chains(NodeKey const node);
+    virtual void calc_score();
 public:
     /* ctors */
     PathTeam(WorkArea const* wa);

@@ -245,23 +245,23 @@ struct EvolutionSolver::PImpl {
 /* public */
 /* ctors */
 EvolutionSolver::EvolutionSolver(size_t const debug_pop_print_n) :
-    p_impl_(std::make_unique<PImpl>(debug_pop_print_n)) {}
+    pimpl_(std::make_unique<PImpl>(debug_pop_print_n)) {}
 
 /* dtors */
 EvolutionSolver::~EvolutionSolver() {}
 
 /* accessors */
 bool EvolutionSolver::has_result() const {
-    return p_impl_->has_result_;
+    return pimpl_->has_result_;
 }
 
 SolutionMap const& EvolutionSolver::best_sols() const {
-    return p_impl_->best_sols_;
+    return pimpl_->best_sols_;
 }
 
 /* modifiers */
 void EvolutionSolver::run() {
-    p_impl_->run();
+    pimpl_->run();
 }
 
 } // namespace elfin

@@ -23,7 +23,6 @@ defined(NO_CROSS)
 namespace elfin {
 
 /* private */
-
 struct PathTeam::PImpl {
     /* data */
     PathTeam& _;
@@ -62,31 +61,6 @@ struct PathTeam::PImpl {
         }
 
         _.checksum_ = crc;
-    }
-
-    void calc_score() const {
-        //
-        // We score the path forward and backward, because the Kabsch
-        // algorithm relies on point-wise correspondance. Different ordering
-        // can yield different RMSD scores.
-        //
-        DEBUG(_.free_chains_.size() != 2,
-              "There are %zu free chains!\n",
-              _.free_chains_.size());
-        DEBUG_NOMSG(_.size() == 0);
-
-        _.score_ = INFINITY;
-        for (auto& free_chain : _.free_chains_) {
-            auto const my_points = collect_points(free_chain.node);
-            float const new_score =
-                kabsch::score(my_points,
-                              _.work_area_->points());
-
-            if (new_score < _.score_) {
-                _.score_ = new_score;
-                _.scored_tip_ = free_chain.node;
-            }
-        }
     }
 
     V3fList collect_points(NodeKey tip_node) const {
@@ -822,26 +796,26 @@ struct PathTeam::PImpl {
 };
 
 /* modifiers */
-std::unique_ptr<PathTeam::PImpl> PathTeam::init_pimpl() {
+std::unique_ptr<PathTeam::PImpl> PathTeam::make_pimpl() {
     return std::make_unique<PImpl>(*this);
 }
 
 /* protected */
 /* accessors */
-void PathTeam::virtual_copy(NodeTeam const& other) {
-    try { // Catch bad cast
-        PathTeam::operator=(static_cast<PathTeam const&>(other));
-    }
-    catch (std::bad_cast const& e) {
-        PANIC("Bad cast in %s\n", __PRETTY_FUNCTION__);
-    }
-}
-
 PathTeam* PathTeam::virtual_clone() const {
     return new PathTeam(*this);
 }
 
 /* modifiers */
+void PathTeam::virtual_copy(NodeTeam const& other) {
+    try { // Catch bad cast
+        PathTeam::operator=(static_cast<PathTeam const&>(other));
+    }
+    catch (std::bad_cast const& e) {
+        TRACE_NOMSG("Bad cast\n");
+    }
+}
+
 NodeKey PathTeam::add_member(
     ProtoModule const* const prot,
     Transform const& tx) {
@@ -878,11 +852,36 @@ void PathTeam::remove_free_chains(NodeKey const node) {
     });
 }
 
+void PathTeam::calc_score() {
+    //
+    // We score the path forward and backward, because the Kabsch
+    // algorithm relies on point-wise correspondance. Different ordering
+    // can yield different RMSD scores.
+    //
+    DEBUG(free_chains_.size() != 2,
+          "There are %zu free chains!\n",
+          free_chains_.size());
+    DEBUG_NOMSG(size() == 0);
+
+    score_ = INFINITY;
+    for (auto& free_chain : free_chains_) {
+        auto const my_points = pimpl_->collect_points(free_chain.node);
+        float const new_score =
+            kabsch::score(my_points,
+                          work_area_->points());
+
+        if (new_score < score_) {
+            score_ = new_score;
+            scored_tip_ = free_chain.node;
+        }
+    }
+}
+
 /* public */
 /* ctors */
 PathTeam::PathTeam(WorkArea const* wa) :
     NodeTeam(wa),
-    p_impl_(init_pimpl())
+    pimpl_(make_pimpl())
 {
     TRACE_NOMSG(not work_area_);
 }
@@ -921,11 +920,10 @@ PathTeam::PathTeam(WorkArea const* wa, tests::Recipe const& recipe) :
                                   end(free_chains_),
                                   src_fc) == end(free_chains_));
 
-            last_node = p_impl_->grow_tip(src_fc, pt_link);
+            last_node = pimpl_->grow_tip(src_fc, pt_link);
         }
 
-        p_impl_->calc_checksum();
-        p_impl_->calc_score();
+        pimpl_->calc_checksum();
     }
 }
 
@@ -1006,7 +1004,7 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
 }
 
 void PathTeam::randomize() {
-    p_impl_->randomize_mutate();
+    pimpl_->randomize_mutate();
 }
 
 mutation::Mode PathTeam::evolve(
@@ -1027,22 +1025,22 @@ mutation::Mode PathTeam::evolve(
         mode = random::pop(modes);
         switch (mode) {
         case mutation::Mode::ERODE:
-            mutate_success = p_impl_->erode_mutate();
+            mutate_success = pimpl_->erode_mutate();
             break;
         case mutation::Mode::DELETE:
-            mutate_success = p_impl_->delete_mutate();
+            mutate_success = pimpl_->delete_mutate();
             break;
         case mutation::Mode::INSERT:
-            mutate_success = p_impl_->insert_mutate();
+            mutate_success = pimpl_->insert_mutate();
             break;
         case mutation::Mode::SWAP:
-            mutate_success = p_impl_->swap_mutate();
+            mutate_success = pimpl_->swap_mutate();
             break;
         case mutation::Mode::CROSS:
-            mutate_success = p_impl_->cross_mutate(father);
+            mutate_success = pimpl_->cross_mutate(father);
             break;
         case mutation::Mode::REGENERATE:
-            mutate_success = p_impl_->regenerate();
+            mutate_success = pimpl_->regenerate();
             break;
         default:
             mutation::bad_mode(mode);
@@ -1052,12 +1050,12 @@ mutation::Mode PathTeam::evolve(
     }
 
     if (not mutate_success) {
-        mutate_success = p_impl_->randomize_mutate();
+        mutate_success = pimpl_->randomize_mutate();
         TRACE_NOMSG(not mutate_success);
     }
 
-    p_impl_->calc_checksum();
-    p_impl_->calc_score();
+    pimpl_->calc_checksum();
+    calc_score();
 
     return mode;
 }
@@ -1094,7 +1092,7 @@ JSON PathTeam::to_json() const {
         auto fc_itr = begin(free_chains_);
         for (size_t i = 0; i < 2; ++i) {
             advance(fc_itr, i);
-            V3fList const& points = p_impl_->collect_points(fc_itr->node);
+            V3fList const& points = pimpl_->collect_points(fc_itr->node);
 
             kabsch::calc_alignment(
                 /*mobile=*/ points,

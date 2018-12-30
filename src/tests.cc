@@ -8,6 +8,7 @@
 #include "random_utils.h"
 #include "input_manager.h"
 #include "path_team.h"
+#include "hinge_team.h"
 #include "evolution_solver.h"
 
 namespace elfin {
@@ -36,12 +37,11 @@ size_t test_units() {
     if (total.errors == 0)
         total += PathTeam::test();
 
+    if (total.errors == 0)
+        total += HingeTeam::test();
+
     JUtil.info("%zu/%zu unit tests passed.\n",
                (total.tests - total.errors), total.tests);
-
-    if (total.errors > 0) {
-        JUtil.error("%zu unit tests failed!\n", total.errors);
-    }
 
     return total.errors;
 }

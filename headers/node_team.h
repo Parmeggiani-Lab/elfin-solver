@@ -14,7 +14,6 @@ namespace elfin {
 /* Fwd Decl */
 class NodeTeam;
 typedef std::unique_ptr<NodeTeam> NodeTeamSP;
-struct TestStat;
 
 
 class NodeTeam : public Printable {

@@ -52,7 +52,7 @@ public:
 
 private:
     struct PImpl;
-    std::unique_ptr<PImpl> p_impl_;
+    std::unique_ptr<PImpl> pimpl_;
 };
 
 typedef SPMap<WorkArea> WorkAreaMap;
