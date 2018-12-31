@@ -79,7 +79,7 @@ else ifeq ($(CXX),g++)
 	ERR_FLAGS	:= -fdiagnostics-color=always -fmax-errors=$(MAX_ERRORS) -Werror
 endif
 
-CC_FLAGS 		+= -MMD -std=gnu++14
+CC_FLAGS 		+= -MMD -std=gnu++17
 OPT_FLAGS       += -Ofast
 
 COMPILE 		:= $(CXX) $(CC_FLAGS) $(ERR_FLAGS) \
