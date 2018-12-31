@@ -9,7 +9,7 @@ namespace elfin {
 void Spec::parse_from_json(JSON const& json) {
     work_areas_.clear();
     fixed_areas_.clear();
-    
+
     try {
         JUtil.info("Input spec has %zu work areas and %zu fixed areas\n",
                    json.at("pg_networks").size(),
@@ -24,11 +24,26 @@ void Spec::parse_from_json(JSON const& json) {
         }
 
         for (auto& [name, pgnw_json] : json.at("pg_networks").items()) {
-            // If this was a complex work area, we need to break it down to
-            // multiple simple ones by first choosing hubs and their orientations.
-            /*
-            TODO: Break complex work area
-            */
+            size_t const num_branch_points =
+                std::accumulate(
+                    begin(pgnw_json),
+                    end(pgnw_json),
+                    0,
+            [](size_t sum, auto & joint_json) {
+                return sum + (joint_json["neighbors"].size() > 2);
+            });
+
+            if (num_branch_points > 2) {
+                UNIMP();
+                // Break it down to multiple simple ones by first choosing hubs
+                // and their orientations.
+                /*
+                TODO: Break complex work area
+                */
+            }
+
+            JUtil.warn("num_branch_points=%zu\n", num_branch_points);
+
             work_areas_.emplace(
                 name,
                 std::make_unique<WorkArea>(name, pgnw_json, fixed_areas_));

@@ -14,19 +14,16 @@ struct HingeTeam::PImpl {
 
     void place_hinges() {
         auto const& occ_joints = _.work_area_->occupied_joints;
-        auto const t = _.work_area_->type;
+        DEBUG_NOMSG(occ_joints.size() == 0);
+        DEBUG_NOMSG(occ_joints.size() > 2);
 
-        switch (t) {
-        case WorkType::ONE_HINGE:
-            DEBUG_NOMSG(occ_joints.size() != 1);
-            // begin(occ_joints)
-            break;
-        case WorkType::TWO_HINGE:
-            DEBUG_NOMSG(occ_joints.size() != 2);
-            UNIMP();
-            break;
-        default:
-            bad_work_type(t);
+        if (occ_joints.size() == 1) {
+            for (auto & oj : occ_joints) {
+                JUtil.warn("oj: %s\n", oj->to_string().c_str());
+            }
+            for (auto & lj : _.work_area_->leaf_joints) {
+                JUtil.warn("lj: %s\n", lj->to_string().c_str());
+            }
         }
     }
 };

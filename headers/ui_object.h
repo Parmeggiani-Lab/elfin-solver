@@ -6,20 +6,24 @@
 #include "json.h"
 #include "geometry.h"
 #include "map_utils.h"
+#include "string_utils.h"
 
 namespace elfin {
 
-struct UIObject {
+struct UIObject : public Printable {
     /* data */
     std::string const name;
     Transform const tx;
 
-    UIObject(std::string const& _name,
-             Transform const& _tx) :
-        name(_name), tx(_tx) {}
-    UIObject(std::string const& _name,
-             JSON const& json) :
-        UIObject(_name, Transform(json)) {}
+    /* ctors */
+    UIObject(std::string const& _name, Transform const& _tx);
+    UIObject(std::string const& _name, JSON const& json);
+
+    /* dtors */
+    virtual ~UIObject() {};
+    
+    /* printers */
+    virtual void print_to(std::ostream& os) const;
 };
 
 typedef SPMap<UIObject> UIObjectMap;

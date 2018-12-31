@@ -187,19 +187,8 @@ struct EvolutionSolver::PImpl {
         run_alread_called = true;
 
         start_time_in_us_ = JUtil.get_timestamp_us();
-        for (auto& itr : SPEC.work_areas()) {
+        for (auto& [wa_name, wa] : SPEC.work_areas()) {
             // Initialize population and solution list.
-            std::string const wa_name = itr.first;
-            auto& wa = itr.second;
-            if (wa->type != WorkType::FREE and
-                    wa->type != WorkType::ONE_HINGE) {
-                std::ostringstream ss;
-                ss << "Skipping work_area: ";
-                ss << WorkTypeToCStr(wa->type) << std::endl;
-                JUtil.warn(ss.str().c_str());
-                continue;
-            }
-
             Population population = Population(wa.get());
             best_sols_[wa_name] = NodeTeamSPList();
 

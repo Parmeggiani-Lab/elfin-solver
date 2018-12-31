@@ -186,7 +186,7 @@ Eigen::IOFormat const CleanFormt =
 
 void Transform::print_to(std::ostream& os) const {
 #ifdef USE_EIGEN
-    os << this->format(CleanFormt);
+    os << "Transform[\n" << this->format(CleanFormt) << "\n]";
 #else
     os << "Transform[\n  Rot[\n";
     for (size_t i = 0; i < 3; ++i) {

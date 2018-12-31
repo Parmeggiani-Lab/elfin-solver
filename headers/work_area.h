@@ -21,11 +21,10 @@ namespace elfin {
 */
 
 #define FOREACH_WORKTYPE(MACRO) \
-    MACRO(FREE) \
-    MACRO(ONE_HINGE) \
-    MACRO(TWO_HINGE) \
-    MACRO(COMPLEX) \
     MACRO(NONE) \
+    MACRO(FREE) \
+    MACRO(HINGED) \
+    MACRO(_ENUM_SIZE) 
 
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 
@@ -35,8 +34,8 @@ struct WorkArea {
     /* data */
     std::string const   name;
     UIJointMap const    joints;
-    UIJointKeys const   occupied_joints;
-    UIJointKeys const   leaf_joints;
+    UIJointKeys const   leaf_joints;      // Leaf joints are tips of the path.
+    UIJointKeys const   occupied_joints;  // Occupied joints are a subset of leaf joints.
     WorkType const      type;
     V3fList const       points;
     size_t const        target_size;
