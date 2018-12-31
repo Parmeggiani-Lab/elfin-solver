@@ -35,8 +35,9 @@ TestStat PathTeam::test() {
             std::ostringstream const_oss;
             const_oss << "Constructed points:\n";
 
-            for (auto& p : const_points) {
-                const_oss << p << "\n";
+            auto team_pg = team.gen_path();
+            while (not team_pg.is_done()) {
+                const_oss << *team_pg.next() << "\n";
             }
             JUtil.error(const_oss.str().c_str());
 

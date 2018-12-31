@@ -627,16 +627,16 @@ struct PathTeam::PImpl {
 #ifndef NO_CROSS
         if (not _.free_chains_.empty()) {
             try { // Catch bad cast
-                auto& bnt_father = static_cast<PathTeam const&>(father);
-                if (not bnt_father.free_chains_.empty()) {
+                auto& pt_father = static_cast<PathTeam const&>(father);
+                if (not pt_father.free_chains_.empty()) {
                     // First, collect arrows from both parents.
 
                     // Starting at either end is fine.
                     auto m_arrows =
                         begin(_.free_chains_)->node->gen_path().collect_arrows();
-                    DEBUG_NOMSG(bnt_father.free_chains_.size() != 2);
+                    DEBUG_NOMSG(pt_father.free_chains_.size() != 2);
                     auto f_arrows =
-                        begin(bnt_father.free_chains_)->node->gen_path().collect_arrows();
+                        begin(pt_father.free_chains_)->node->gen_path().collect_arrows();
 
                     // Walk through all link pairs to collect cross points.
                     std::vector<mutation::CrossPoint> cross_points;

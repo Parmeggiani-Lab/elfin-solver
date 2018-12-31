@@ -45,9 +45,9 @@ TestStat EvolutionSolver::test() {
                  OPTIONS.keep_n, n_solutions);
 
         try { // Catch bad_cast
-            auto best_bnt =
+            auto best_pt =
                 static_cast<PathTeam const&>(*solutions.at(0));
-            auto path_gen = best_bnt.gen_path();
+            auto path_gen = best_pt.gen_path();
 
             // Might need to reverse recipe because data exported from
             // elfin-ui does not gurantee consistent starting tip.
@@ -71,9 +71,9 @@ TestStat EvolutionSolver::test() {
                     std::ostringstream sol_oss;
                     sol_oss << "Solver solution:\n";
 
-                    auto err_path_gen = best_bnt.gen_path();
-                    while (not err_path_gen.is_done()) {
-                        sol_oss << err_path_gen.next()->prototype_->name << "\n";
+                    auto team_pg = best_pt.gen_path();
+                    while (not team_pg.is_done()) {
+                        sol_oss << team_pg.next()->prototype_->name << "\n";
                     }
                     JUtil.error(sol_oss.str().c_str());
 

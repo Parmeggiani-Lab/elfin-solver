@@ -47,13 +47,6 @@ static Recipe const quarter_snake_free_recipe {
     {"D79_j2_D14", TerminusType::C, "A", "A"},
 };
 
-static V3fList const H_1h_coordinates = {
-    {142.52716064453125, 28.195323944091797, 67.84108638763428},
-    {140.590238571167, 28.450264930725098, 87.85070419311523},
-    {133.331937789917, 28.57943058013916, 106.59908294677734},
-    {121.28985404968262, 28.819551467895508, 122.6966667175293}
-};
-
 static Recipe const H_1h_recipe {
     {"D49_aC2_ext", TerminusType::N, "D", "A"},
     {"D49", TerminusType::N, "A", "A"},
