@@ -33,7 +33,7 @@ void HingeTeam::virtual_copy(NodeTeam const& other) {
 }
 
 void HingeTeam::calc_score() {
-    UNIMP();
+    // UNIMP();
     // Need to take into account the fact that the joint that superimposes the
     // hinge module is not scored.
 }

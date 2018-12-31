@@ -47,7 +47,7 @@ void Database::categorize() {
         ProtoModule* mod_raw_ptr = mod.get();
         if (n_itf < 2) {
             PANIC("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
-                        mod->name.c_str(), n_itf);
+                  mod->name.c_str(), n_itf);
         } else if (n_itf == 2) {
             basic_mods_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
@@ -60,7 +60,7 @@ void Database::categorize() {
             hubs_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
             PANIC("mod[%s] has unknown ModuleType: %s\n",
-                        mod->name.c_str(), ModuleTypeToCStr(mod->type));
+                  mod->name.c_str(), ModuleTypeToCStr(mod->type));
         }
     }
 }
@@ -132,88 +132,81 @@ ProtoModule const* Database::get_module(
 }
 
 /* modifiers */
-#define JSON_MOD_PARAMS JSON::const_iterator jit, ModuleType mod_type
-typedef std::function<void(JSON_MOD_PARAMS)> JsonModTypeLambda;
-#define FOR_JSON(child, parent) \
-    for(auto child = begin(parent); child != end(parent); ++child)
+#define JSON_PARSER_PARAMS \
+std::string const& key, JSON const& json, ModuleType mod_type
+
+typedef std::function<void(JSON_PARSER_PARAMS)> JSONParser;
 
 void Database::parse_from_json(JSON const& xdb) {
     reset();
 
     // Define lambas for code reuse
     JSON const& singles = xdb["modules"]["singles"];
-    auto for_each_double_json = [&](JsonModTypeLambda const & lambda) {
-        FOR_JSON (jit, singles) {
-            lambda(jit, ModuleType::SINGLE);
+    auto for_each_double_json = [&](JSONParser const & lambda) {
+        for (auto& [key, json] : singles.items()) {
+            lambda(key, json, ModuleType::SINGLE);
         }
     };
 
     JSON const& hubs = xdb["modules"]["hubs"];
-    auto for_each_hub_json = [&](JsonModTypeLambda const & lambda) {
-        FOR_JSON (jit, hubs) {
-            lambda(jit, ModuleType::HUB);
+    auto for_each_hub_json = [&](JSONParser const & lambda) {
+        for (auto& [key, json] : hubs.items()) {
+            lambda(key, json, ModuleType::HUB);
         }
     };
 
-    auto for_each_module_json = [&](JsonModTypeLambda const & lambda) {
+    auto for_each_module_json = [&](JSONParser const & lambda) {
         for_each_double_json(lambda);
         for_each_hub_json(lambda);
     };
 
     // Non-finalized module list
     // Build mapping between name and id
-    auto init_module = [&](JSON_MOD_PARAMS) {
-        std::string const& name = jit.key();
+    auto init_module = [&](JSON_PARSER_PARAMS) {
         size_t const mod_id = all_mods_.size();
-        mod_idx_map_[name] = mod_id;
+        mod_idx_map_[key] = mod_id;
 
 #ifdef PRINT_MOD_IDX_MAP_
-        JUtil.warn("Module %s maps to id %zu\n", name.c_str(), mod_id);
+        JUtil.warn("Module %s maps to id %zu\n", key.c_str(), mod_id);
 #endif  /* ifndef PRINT_MOD_IDX_MAP_ */
 
         StrList chain_names;
-        JSON const& chains_json = (*jit)["chains"];
-        FOR_JSON(chain_it, chains_json) {
-            chain_names.push_back(chain_it.key());
+        for (auto& [chain_name, json] : json["chains"].items()) {
+            chain_names.push_back(chain_name);
         }
 
-        float const radius = (*jit)["radii"][OPTIONS.radius_type];
+        float const radius = json["radii"][OPTIONS.radius_type];
 
         all_mods_.push_back(
             std::make_unique<ProtoModule>(
-                name,
+                key,
                 mod_type,
                 radius,
                 chain_names));
     };
     for_each_module_json(init_module);
 
-    auto parse_link = [&](JSON_MOD_PARAMS) {
-        size_t const mod_a_id = mod_idx_map_[jit.key()];
+    auto parse_link = [&](JSON_PARSER_PARAMS) {
+        size_t const mod_a_id = mod_idx_map_[key];
         auto& mod_a = all_mods_.at(mod_a_id);
 
-        JSON const& chains_json = (*jit)["chains"];
-        FOR_JSON(a_chain_it, chains_json) {
-            std::string const& a_chain_name = a_chain_it.key();
-
+        for (auto& [a_chain_name, a_chain_json] : json["chains"].items()) {
             // No need to run through "n" because xdb contains only n-c
             // transforms, i.e. "C-term extrusion" transforms.
-            FOR_JSON(c_term_it, (*a_chain_it)["c"]) {
-                size_t const mod_b_id = mod_idx_map_[c_term_it.key()];
-                auto& mod_b = all_mods_.at(mod_b_id);
+            for (auto& [c_term_name, c_term_json] : a_chain_json["c"].items()) {
+                auto const& mod_b =
+                    all_mods_.at(/*mod_b_id=*/mod_idx_map_[c_term_name]);
 
-                FOR_JSON (b_chain_it, (*c_term_it)) {
-                    size_t const tx_id = (*b_chain_it).get<size_t>();
-
+                for (auto& [b_chain_name, b_chain_json] : c_term_json.items()) {
                     // In create_proto_link(), an inversed version for c-n
                     // transform is created.
                     ProtoModule::create_proto_link_pair(
                         xdb,
-                        tx_id,
+                        /*tx_id=*/b_chain_json.get<size_t>(),
                         *mod_a,
                         a_chain_name,
                         *mod_b,
-                        b_chain_it.key());
+                        b_chain_name);
                 }
             }
         }

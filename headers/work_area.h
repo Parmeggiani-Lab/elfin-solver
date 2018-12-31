@@ -32,6 +32,10 @@ GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 void bad_work_type(WorkType type);
 
 class WorkArea {
+private:
+    struct PImpl;
+    std::unique_ptr<PImpl> pimpl_;
+
 public:
     /* ctors */
     WorkArea(
@@ -49,10 +53,6 @@ public:
     UIJointMap const& joints() const;
     size_t target_size() const;
     V3fList const& points() const;
-
-private:
-    struct PImpl;
-    std::unique_ptr<PImpl> pimpl_;
 };
 
 typedef SPMap<WorkArea> WorkAreaMap;

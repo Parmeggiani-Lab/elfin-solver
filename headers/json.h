@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "nlohmann_json/nlohmann_json.h"
+#include "nlohmann/json.hpp"
 
 namespace elfin {
 
@@ -11,7 +11,7 @@ typedef nlohmann::json JSON;
 
 class RelaMat;
 
-std::string json_to_str(JSON const& j);
+std::string json_to_clean_str(JSON const& j);
 
 JSON parse_json(std::string const& filename);
 

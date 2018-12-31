@@ -285,13 +285,13 @@ ARG_PARSER_CALLBACK_DEF(parse_config) {
         "Settings file does not exist: \"%s\"\n",
         options_.config_file.c_str());
 
-    JSON const j = parse_json(options_.config_file);
+    JSON const json = parse_json(options_.config_file);
 
-    for (auto it = begin(j); it != end(j); ++it) {
-        const std::string opt_name = "--" + it.key();
+    for (auto& [opt_key, opt_json] : json.items()) {
+        std::string const opt_name = "--" + opt_key;
         auto ab = match_arg_bundle(opt_name.c_str());
         if (ab) {
-            (this->*ab->callback)(json_to_str(j[ab->long_form]));
+            (this->*ab->callback)(json_to_clean_str(json[ab->long_form]));
         } else {
             JUtil.error("Unrecognized option: %s\n", opt_name.c_str());
             arg_parse_failure(opt_name.c_str(), ab);

@@ -11,11 +11,8 @@ UIJoint::UIJoint(
     UIObject(json, name) {
     try {
         // Parse neighbor names
-        JSON const& neighbors_json = json["neighbors"];
-        for (auto it = begin(neighbors_json);
-                it != end(neighbors_json);
-                ++it) {
-            neighbors_.push_back(*it);
+        for (auto nb_json : json["neighbors"]) {
+            neighbors_.push_back(nb_json);
         }
 
         // Parse occupant data

@@ -37,10 +37,8 @@ TestStat EvolutionSolver::test() {
                  "Expected spec to have exactly 1 work area, but there is %zu\n",
                  n_work_areas);
 
-        auto const& work_area = begin(SPEC.work_areas())->second;
-
-        auto& solutions =
-            solver.best_sols().at(work_area->name());
+        auto const& [work_area_name, work_area] = *begin(SPEC.work_areas());
+        auto& solutions = solver.best_sols().at(work_area_name);
         size_t const n_solutions = solutions.size();
         PANIC_IF(n_solutions != OPTIONS.keep_n,
                  "Expected %zu solutions, but there is %zu\n",

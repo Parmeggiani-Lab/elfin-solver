@@ -15,7 +15,7 @@ TestStat HingeTeam::test() {
     // Construction test.
     {
         TRACE_NOMSG(SPEC.work_areas().size() != 1);
-        auto& wa = begin(SPEC.work_areas())->second;
+        auto& [wa_name, wa] = *begin(SPEC.work_areas());
         HingeTeam team(wa.get(), tests::H_1h_recipe);
         team.calc_score();
 
@@ -28,7 +28,6 @@ TestStat HingeTeam::test() {
                         "Expected score 0\nGot score: %f\n",
                         team.score());
         }
-
     }
 
     // Mutation test.

@@ -157,14 +157,19 @@ void ProtoModule::create_proto_link_pair(
              mod_b.type == ModuleType::SINGLE) {
 
         // First find tx from hub to single
-
         JSON const& hub_json = xdb["modules"]["hubs"][mod_a.name];
         std::string const& hub_single_name =
             hub_json["chains"][a_chain_name]["single_name"];
 
         JSON const& singles_json = xdb["modules"]["singles"];
+        auto const& hub_single_chains_json =
+            singles_json[hub_single_name]["chains"];
+
+        TRACE(hub_single_chains_json.size() != 1,
+              "Single modules are expected to have exactly 1 chain, but %s has %zu.",
+              hub_single_name.c_str(), hub_single_chains_json.size());
         std::string const& hub_single_chain_name =
-            begin(singles_json[hub_single_name]["chains"]).key();
+            begin(hub_single_chains_json).key();
 
         JSON const& hub_single_json = singles_json[hub_single_name];
 

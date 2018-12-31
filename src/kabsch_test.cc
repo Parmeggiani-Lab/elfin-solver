@@ -132,7 +132,7 @@ TestStat test_score() {
     TRACE(SPEC.work_areas().size() != 1,
           "%zu work areas\n",
           SPEC.work_areas().size());
-    auto& wa = begin(SPEC.work_areas())->second;
+    auto& [wa_name, wa] = *begin(SPEC.work_areas());
 
     // Identity (no transform) score 0.
     {

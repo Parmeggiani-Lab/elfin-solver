@@ -4,11 +4,10 @@ namespace elfin {
 
 FixedArea::FixedArea(JSON const& json, std::string const& name) :
     name_(name) {
-    for (auto it = begin(json); it != end(json); ++it) {
-        std::string mod_name = it.key();
+    for (auto& [mod_name , mod_json] : json.items()) {
         modules_.emplace(
             mod_name,
-            std::make_unique<UIObject>(*it, mod_name));
+            std::make_unique<UIObject>(mod_json, mod_name));
     }
 }
 

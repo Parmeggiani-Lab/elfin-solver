@@ -11,41 +11,31 @@ void Spec::parse_from_json(JSON const& json) {
         work_areas_.clear();
         fixed_areas_.clear();
 
-        JSON const& pg_networks = json.at("pg_networks");
-        JSON const& networks = json.at("networks");
-
         JUtil.info("Input spec has %zu work areas and %zu fixed areas\n",
-                   pg_networks.size(),
-                   networks.size());
+                   json.at("pg_networks").size(),
+                   json.at("networks").size());
 
         // Initialize fixed areas first so work areas can refer to fixed
         // modules as occupants or hinges.
-        for (auto it = begin(networks);
-                it != end(networks);
-                ++it) {
-            std::string const& network_name = it.key();
+        for (auto& [name, json] : json.at("networks").items()) {
             fixed_areas_.emplace(
-                network_name,
-                std::make_unique<FixedArea>(*it, network_name));
+                name,
+                std::make_unique<FixedArea>(json, name));
         }
 
-        for (auto it = begin(pg_networks);
-                it != end(pg_networks);
-                ++it) {
-            std::string const& pg_network_name = it.key();
-
+        for (auto& [name, json] : json.at("pg_networks").items()) {
             // If this was a complex work area, we need to break it down to
             // multiple simple ones by first choosing hubs and their orientations.
             /*
             TODO: Break complex work area
             */
             work_areas_.emplace(
-                pg_network_name,
-                std::make_unique<WorkArea>(pg_network_name, *it, fixed_areas_));
+                name,
+                std::make_unique<WorkArea>(name, json, fixed_areas_));
 
-            TRACE(work_areas_[pg_network_name]->joints().empty(),
+            TRACE(work_areas_[name]->joints().empty(),
                   "Work area \"%s\" has no joints associated.",
-                  pg_network_name.c_str());
+                  name.c_str());
         }
     } catch (std::exception const& e) {
         TRACE("Failed to parse spec from JSON.", "%s\n", e.what());

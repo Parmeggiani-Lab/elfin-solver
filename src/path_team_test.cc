@@ -16,10 +16,10 @@ TestStat PathTeam::test() {
     // Construction test.
     {
         TRACE_NOMSG(SPEC.work_areas().size() != 1);
-        auto& wa = begin(SPEC.work_areas())->second;
+        auto& [wa_name, wa] = *begin(SPEC.work_areas());
         PathTeam team(wa.get(), tests::quarter_snake_free_recipe);
         team.calc_score();
-        
+
         TRACE_NOMSG(team.free_chains_.size() != 2);
 
         ts.tests++;
