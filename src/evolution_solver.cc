@@ -129,7 +129,7 @@ struct EvolutionSolver::PImpl {
     /* printers */
     void print_start_msg(WorkArea const& wa) const {
         JUtil.info("Length guess: < %zu; Spec has %d points\n",
-                   wa.target_size(), wa.points().size());
+                   wa.target_size, wa.points.size());
         JUtil.info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
         JUtil.info("Max Iterations: %zu\n", OPTIONS.ga_iters);
         JUtil.info("Surviors: %u\n", CUTOFFS.survivors);
@@ -191,11 +191,11 @@ struct EvolutionSolver::PImpl {
             // Initialize population and solution list.
             std::string const wa_name = itr.first;
             auto& wa = itr.second;
-            if (wa->type() != WorkType::FREE and
-                    wa->type() != WorkType::ONE_HINGE) {
+            if (wa->type != WorkType::FREE and
+                    wa->type != WorkType::ONE_HINGE) {
                 std::ostringstream ss;
                 ss << "Skipping work_area: ";
-                ss << WorkTypeToCStr(wa->type()) << std::endl;
+                ss << WorkTypeToCStr(wa->type) << std::endl;
                 JUtil.warn(ss.str().c_str());
                 continue;
             }

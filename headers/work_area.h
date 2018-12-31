@@ -31,28 +31,24 @@ GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 
 void bad_work_type(WorkType type);
 
-class WorkArea {
-private:
-    struct PImpl;
-    std::unique_ptr<PImpl> pimpl_;
+struct WorkArea {
+    /* data */
+    std::string const   name;
+    UIJointMap const    joints;
+    UIJointKeys const   occupied_joints;
+    UIJointKeys const   leaf_joints;
+    WorkType const      type;
+    V3fList const       points;
+    size_t const        target_size;
 
-public:
     /* ctors */
     WorkArea(
-        std::string const& name,
+        std::string const& _name,
         JSON const& json,
         FixedAreaMap const& fam);
-    WorkArea() = delete;
-    
+
     /* dtors */
     virtual ~WorkArea();
-
-    /* accessors */
-    std::string name() const;
-    WorkType type() const;
-    UIJointMap const& joints() const;
-    size_t target_size() const;
-    V3fList const& points() const;
 };
 
 typedef SPMap<WorkArea> WorkAreaMap;

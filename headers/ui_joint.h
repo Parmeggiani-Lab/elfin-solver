@@ -11,7 +11,7 @@
 namespace elfin {
 
 class UIJoint : public UIObject {
-protected:;
+public:
     /* types */
     struct Occupant {
         std::string parent_name = "";
@@ -20,24 +20,20 @@ protected:;
     };
 
     /* data */
-    StrList neighbors_;
-    Occupant occupant_;
-    std::string hinge_name_ = "";
+    StrList const neighbors;
+    Occupant const occupant;
+    std::string const hinge_name;
 
-public:
     /* ctors */
-    UIJoint(
-        JSON const& json,
-        std::string const& name,
-        FixedAreaMap const& fam);
-
-    /* accessors */
-    StrList const& neighbors() const { return neighbors_; }
-    Occupant const& occupant() const { return occupant_; }
+    UIJoint(std::string const& name,
+            JSON const& json,
+            FixedAreaMap const& fam);
 };
 
 typedef std::unique_ptr<UIJoint> UIJointSP;
 typedef SPMap<UIJoint> UIJointMap;
+typedef UIJoint* UIJointKey;
+typedef std::vector<UIJointKey> UIJointKeys;
 
 }  /* elfin */
 

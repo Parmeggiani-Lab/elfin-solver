@@ -139,7 +139,7 @@ TestStat test_score() {
         auto const& expect_points = tests::quarter_snake_free_coordinates;
         V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
 
-        auto const& input_points = wa->points();
+        auto const& input_points = wa->points;
         float const kscore = std::min(
                                  score(expect_points, input_points),
                                  score(expect_points_rev, input_points));
@@ -184,7 +184,7 @@ TestStat test_score() {
         }
         V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
 
-        V3fList const& input_points = wa->points();
+        V3fList const& input_points = wa->points;
         float const kscore = std::min(
                                  score(expect_points, input_points),
                                  score(expect_points_rev, input_points));
@@ -229,7 +229,7 @@ TestStat test_score() {
         }
         V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
 
-        V3fList const& input_points = wa->points();
+        V3fList const& input_points = wa->points;
         float const kscore = std::min(
                                  score(expect_points, input_points),
                                  score(expect_points_rev, input_points));
@@ -276,7 +276,7 @@ TestStat test_score() {
         }
         V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
 
-        V3fList const& input_points = wa->points();
+        V3fList const& input_points = wa->points;
         float const kscore = std::min(
                                  score(expect_points, input_points),
                                  score(expect_points_rev, input_points));
@@ -308,7 +308,7 @@ TestStat test_score() {
         auto const& expect_points = tests::quarter_snake_free_coordinates_origin;
         V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
 
-        V3fList const& input_points = wa->points();
+        V3fList const& input_points = wa->points;
         float const kscore = std::min(
                                  score(expect_points, input_points),
                                  score(expect_points_rev, input_points));

@@ -8,18 +8,12 @@
 
 namespace elfin {
 
-class FixedArea
+struct FixedArea
 {
-protected:
-    std::string name_;
-    UIObjectMap modules_;
+    std::string const name;
+    UIObjectMap const modules;
 
-public:
-    FixedArea(JSON const& json, std::string const& name);
-
-    /* getters */
-    std::string name() const { return name_; }
-    UIObjectMap const& modules() const { return modules_; }
+    FixedArea(std::string const& _name, JSON const& json);
 };
 
 typedef SPMap<FixedArea> FixedAreaMap;

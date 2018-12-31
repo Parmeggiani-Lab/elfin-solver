@@ -17,13 +17,13 @@ void Spec::parse_from_json(JSON const& json) {
 
         // Initialize fixed areas first so work areas can refer to fixed
         // modules as occupants or hinges.
-        for (auto& [name, json] : json.at("networks").items()) {
+        for (auto& [name, nw_json] : json.at("networks").items()) {
             fixed_areas_.emplace(
                 name,
-                std::make_unique<FixedArea>(json, name));
+                std::make_unique<FixedArea>(name, nw_json));
         }
 
-        for (auto& [name, json] : json.at("pg_networks").items()) {
+        for (auto& [name, pgnw_json] : json.at("pg_networks").items()) {
             // If this was a complex work area, we need to break it down to
             // multiple simple ones by first choosing hubs and their orientations.
             /*
@@ -31,9 +31,9 @@ void Spec::parse_from_json(JSON const& json) {
             */
             work_areas_.emplace(
                 name,
-                std::make_unique<WorkArea>(name, json, fixed_areas_));
+                std::make_unique<WorkArea>(name, pgnw_json, fixed_areas_));
 
-            TRACE(work_areas_[name]->joints().empty(),
+            TRACE(work_areas_[name]->joints.empty(),
                   "Work area \"%s\" has no joints associated.",
                   name.c_str());
         }

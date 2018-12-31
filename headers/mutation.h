@@ -38,9 +38,10 @@ struct DeletePoint {
     //            (src)                           (dst)
     //             --------------skipper------------->
     //
-    NodeKey delete_node;
-    FreeChain const src, dst;
-    ProtoLink const* skipper;
+    NodeKey const       delete_node;
+    FreeChain const     src;
+    FreeChain const     dst;
+    ProtoLink const*    skipper;
     DeletePoint(
         NodeKey _delete_node,
         FreeChain const&  _src,
@@ -60,7 +61,8 @@ struct InsertPoint {
     // Each bridge has pt_link1 and pt_link2 that:
     // [  node1 ] -pt_link1-> [new_node] -pt_link2-> [ node2  ]
     //
-    FreeChain const src, dst;
+    FreeChain const             src;
+    FreeChain const             dst;
     FreeChain::BridgeList const bridges;
     InsertPoint(
         FreeChain const& _src,
@@ -73,7 +75,7 @@ struct InsertPoint {
 };
 
 struct SwapPoint : public InsertPoint {
-    NodeKey del_node;
+    NodeKey const del_node;
     SwapPoint(
         FreeChain const& _src,
         NodeKey _del_node,
@@ -83,11 +85,11 @@ struct SwapPoint : public InsertPoint {
 };
 
 struct CrossPoint {
-    ProtoLink const* pt_link;
-    Link const* m_arrow;
-    bool m_rev;
-    Link const* f_arrow;
-    bool f_rev;
+    ProtoLink const*    pt_link;
+    Link const*         m_arrow;
+    bool const          m_rev;
+    Link const*         f_arrow;
+    bool const          f_rev;
     CrossPoint(
         ProtoLink const* _pt_link,
         Link const* _m_arrow,

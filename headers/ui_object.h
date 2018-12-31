@@ -14,14 +14,12 @@ struct UIObject {
     std::string const name;
     Transform const tx;
 
-    UIObject(
-        Transform const& _tx,
-        std::string const& _name) :
-        tx(_tx), name(_name) {}
-    UIObject(
-        JSON const& json,
-        std::string const& _name) :
-        UIObject(Transform(json), _name) {}
+    UIObject(std::string const& _name,
+             Transform const& _tx) :
+        name(_name), tx(_tx) {}
+    UIObject(std::string const& _name,
+             JSON const& json) :
+        UIObject(_name, Transform(json)) {}
 };
 
 typedef SPMap<UIObject> UIObjectMap;

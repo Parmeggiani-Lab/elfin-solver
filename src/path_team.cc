@@ -91,7 +91,7 @@ struct PathTeam::PImpl {
             auto curr_node = limb_gen.curr_node();
             auto next_node = limb_gen.next();
 
-            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
+            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype_->tx_;
         }
     }
 
@@ -205,19 +205,19 @@ struct PathTeam::PImpl {
     void sever_limb(Link const& arrow) {
         // Delete the dst side of arrow.
 
-        Link curr_arrow = arrow;
+        Link const* curr_arrow = &arrow;
         size_t num_links = 0;
         do {
             // Unlink nodes.
-            NodeKey next_node = curr_arrow.dst().node;
-            get_node(next_node)->remove_link(curr_arrow.dst());
+            NodeKey next_node = curr_arrow->dst().node;
+            get_node(next_node)->remove_link(curr_arrow->dst());
 
             // Check temporary tip node.
             num_links = next_node->links().size();
             DEBUG_NOMSG(num_links > 1); // Must be 0 or 1.
 
-            if (num_links > 0) {
-                curr_arrow = *begin(next_node->links()); // Copy.
+            if (num_links == 1) {
+                curr_arrow = &(*begin(next_node->links()));
             }
             else {
                 _.remove_free_chains(next_node);
@@ -231,7 +231,7 @@ struct PathTeam::PImpl {
         _.free_chains_.push_back(arrow.src());
     }
 
-    // Copy nodes starting from f_arrow.dst() to m_arrow.src().
+    // Copy nodes starting from f_arrow.dst to m_arrow.src().
     void copy_limb(
         Link const& m_arrow,
         Link const& f_arrow) {
@@ -263,7 +263,7 @@ struct PathTeam::PImpl {
         while (not path_gen.is_done()) {
             auto curr_link = path_gen.curr_link();
             DEBUG_NOMSG(curr_link->dst().node->prototype_ !=
-                        curr_link->prototype()->module_);
+                        curr_link->prototype_->module_);
 
             // Modify copy of curr_link->src().
             FreeChain src = curr_link->src();
@@ -280,7 +280,7 @@ struct PathTeam::PImpl {
                   "%zu free chains\n",
                   _.free_chains_.size());
 
-            tip_node = grow_tip(src, curr_link->prototype());
+            tip_node = grow_tip(src, curr_link->prototype_);
             DEBUG(curr_link->dst().node->prototype_ != tip_node->prototype_,
                   "%s vs %s\n",
                   curr_link->dst().node->prototype_->name.c_str(),
@@ -465,12 +465,12 @@ struct PathTeam::PImpl {
                 neighbor1->add_link(arrow1);
                 neighbor2->add_link(arrow1.reversed());
                 //
-                //         link1->dst()     link2->dst()
+                //         link1->dst     link2->dst
                 //                  vvv     vvv
                 //  X--[neighbor1]--src->-<-dst
                 //                  dst->-<-src--[neighbor2]--...
                 //                  ^^^     ^^^
-                //         link1->dst()     link2->dst
+                //         link1->dst     link2->dst
                 //
 
                 _.nodes_.erase(delete_point.delete_node);
@@ -513,7 +513,7 @@ struct PathTeam::PImpl {
                     //
                     // curr_node is a tip node. A new node can be inserted on the
                     // unconnected terminus of a tip node trivially. Use nullptr
-                    // in dst.node to flag that this is tip node.
+                    // in dst().node to flag that this is tip node.
                     //
                     // Either:
                     //             X---- [curr_node] ----> [next_node]
@@ -744,7 +744,7 @@ struct PathTeam::PImpl {
                                        *cp.f_arrow; // Make a copy.
 
                         // Always keep m_arrow.src, del m_arrow.dst, and copy from
-                        // f_arrow.dst.
+                        // f_arrow.dst().
                         sever_limb(m_arrow);
                         copy_limb(m_arrow, f_arrow);
 
@@ -766,7 +766,7 @@ struct PathTeam::PImpl {
             _.add_member(XDB.basic_mods().draw());
         }
 
-        while (_.size() < _.work_area_->target_size()) {
+        while (_.size() < _.work_area_->target_size) {
             // Pick next tip chain.
             auto fc_itr = begin(_.free_chains_);
             advance(fc_itr, random::get_dice(_.free_chains_.size()));
@@ -868,7 +868,7 @@ void PathTeam::calc_score() {
         auto const my_points = pimpl_->collect_points(free_chain.node);
         float const new_score =
             kabsch::score(my_points,
-                          work_area_->points());
+                          work_area_->points);
 
         if (new_score < score_) {
             score_ = new_score;
@@ -1096,7 +1096,7 @@ JSON PathTeam::to_json() const {
 
             kabsch::calc_alignment(
                 /*mobile=*/ points,
-                /*ref=*/ work_area_->points(),
+                /*ref=*/ work_area_->points,
                 rot[i],
                 tran[i],
                 rms[i]);

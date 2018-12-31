@@ -12,13 +12,13 @@ class UIJointPathGenerator {
 private:
     /* data */
     UIJointMap const* joints_;
-    UIJoint* curr_joint_ = nullptr;
-    UIJoint* next_joint_ = nullptr;
+    UIJointKey curr_joint_ = nullptr;
+    UIJointKey next_joint_ = nullptr;
 public:
     /* ctors */
     UIJointPathGenerator(
         UIJointMap const* const joints,
-        UIJoint* const start_joint) :
+        UIJointKey const start_joint) :
         joints_(joints)
     {
         TRACE_NOMSG(not start_joint);
@@ -31,10 +31,10 @@ public:
     /* accessors */
     bool is_done() const { return not next_joint_; }
 
-    UIJoint* curr_node() const { return curr_joint_; }
+    UIJointKey curr_node() const { return curr_joint_; }
 
     /* modifiers */
-    UIJoint* next();
+    UIJointKey next();
 
 };  /* class UIJointPathGenerator */
 

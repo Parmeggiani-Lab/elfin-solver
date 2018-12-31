@@ -8,7 +8,27 @@ struct HingeTeam::PImpl {
     HingeTeam& _;
 
     /* ctors */
-    PImpl(HingeTeam& interface) : _(interface) {}
+    PImpl(HingeTeam& interface) : _(interface) {
+        place_hinges();
+    }
+
+    void place_hinges() {
+        auto const& occ_joints = _.work_area_->occupied_joints;
+        auto const t = _.work_area_->type;
+
+        switch (t) {
+        case WorkType::ONE_HINGE:
+            DEBUG_NOMSG(occ_joints.size() != 1);
+            // begin(occ_joints)
+            break;
+        case WorkType::TWO_HINGE:
+            DEBUG_NOMSG(occ_joints.size() != 2);
+            UNIMP();
+            break;
+        default:
+            bad_work_type(t);
+        }
+    }
 };
 
 /* modifiers */
@@ -24,7 +44,7 @@ HingeTeam* HingeTeam::virtual_clone() const {
 
 /* modifiers */
 void HingeTeam::virtual_copy(NodeTeam const& other) {
-    try { // Catch bad cast
+    try {  // Catch bad cast
         HingeTeam::operator=(static_cast<HingeTeam const&>(other));
     }
     catch (std::bad_cast const& e) {

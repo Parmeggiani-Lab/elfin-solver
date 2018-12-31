@@ -12,7 +12,7 @@ namespace elfin {
 NodeTeamSP NodeTeam::create_team(WorkArea const* const work_area) {
     NodeTeamSP team_up;
 
-    switch (work_area->type()) {
+    switch (work_area->type) {
     case WorkType::FREE:
         team_up = std::make_unique<PathTeam>(work_area);
         break;
@@ -21,7 +21,7 @@ NodeTeamSP NodeTeam::create_team(WorkArea const* const work_area) {
         team_up = std::make_unique<HingeTeam>(work_area);
         break;
     default:
-        bad_work_type(work_area->type());
+        bad_work_type(work_area->type);
         return nullptr; // Suppress warning.
     }
 

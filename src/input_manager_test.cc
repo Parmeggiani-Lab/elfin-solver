@@ -41,7 +41,7 @@ TestStat InputManager::test() {
         auto& [wa_name, wa] = *begin(SPEC.work_areas()); // unique_ptr
 
         // Test parsed points.
-        auto const& test_points = wa->points();
+        auto const& test_points = wa->points;
         V3fList const test_points_rev(rbegin(test_points), rend(test_points));
         auto const& expect_points = tests::quarter_snake_free_coordinates;
 

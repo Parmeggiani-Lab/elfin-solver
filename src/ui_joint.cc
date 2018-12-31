@@ -4,33 +4,59 @@
 
 namespace elfin {
 
-UIJoint::UIJoint(
-    JSON const& json,
-    std::string const& name,
-    FixedAreaMap const& fam) :
-    UIObject(json, name) {
+StrList parse_neighbors(JSON const& json) {
+    StrList res;
+
     try {
-        // Parse neighbor names
-        for (auto nb_json : json["neighbors"]) {
-            neighbors_.push_back(nb_json);
+        for (auto neighbor_name : json["neighbors"]) {
+            res.push_back(neighbor_name);
         }
-
-        // Parse occupant data
-        std::string const& occupant_name = json["occupant"];
-        if (occupant_name != "") {
-            std::string const& occupant_network = json["occupant_parent"];
-            auto& on_modules = fam.at(occupant_network)->modules();
-
-            occupant_.parent_name = occupant_network;
-            occupant_.name = occupant_name;
-            occupant_.module = on_modules.at(occupant_name).get();
-        }
-
-        hinge_name_ = json["hinge"];
     } catch (const std::exception& e) {
         TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
     }
+
+    return res;
 }
+
+UIJoint::Occupant parse_occupant(JSON const& json,
+                                 FixedAreaMap const& fam) {
+    UIJoint::Occupant res;
+
+    try {
+        res.name = json["occupant"];
+        if (res.name != "") {
+            std::string const& occ_network = json["occupant_parent"];
+            auto& fxn_modules = fam.at(occ_network)->modules;
+
+            res.parent_name = occ_network;
+            res.module = fxn_modules.at(res.name).get();
+        }
+    } catch (const std::exception& e) {
+        TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
+    }
+
+    return res;
+}
+
+std::string parse_hinge_name(JSON const& json) {
+    std::string res;
+
+    try {
+        res = json["hinge"];
+    } catch (const std::exception& e) {
+        TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
+    }
+    
+    return res;
+}
+
+UIJoint::UIJoint(std::string const& name,
+                 JSON const& json,
+                 FixedAreaMap const& fam) :
+    UIObject(name, json),
+    neighbors(parse_neighbors(json)),
+    occupant(parse_occupant(json, fam)),
+    hinge_name(parse_hinge_name(json)) {}
 
 
 }  /* elfin */
