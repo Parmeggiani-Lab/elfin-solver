@@ -13,11 +13,8 @@ namespace elfin {
 
 /*
  - FREE: a string-like path guide with no hinge on either side.
- - ONE_HINGE: like FREE, but one end is hinged.
- - TWO_HINGE: like ONE_HINGE, but ther other end is also hinged.
- - COMPLEX: a path guide that has at least one branch point with more than
-   2 bridges. Will need to be broken down into the previous three types after
-   hub assignment.
+ - HINGED: like FREE, but one end or both ends are hinged i.e. superimposed by
+   fixed modules.
 */
 
 #define FOREACH_WORKTYPE(MACRO) \
