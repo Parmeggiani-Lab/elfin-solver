@@ -1,6 +1,6 @@
-#include <cmath>
-
 #include "scoring.h"
+
+#include <numeric>
 
 #include "work_area.h"
 #include "debug_utils.h"
@@ -35,23 +35,31 @@ float score(V3fList const& mobile, V3fList const& ref) {
     return _rosetta_kabsch_rms(mobile_resampled, ref);
 }
 
-float simple_rms(V3fList const& mobile, V3fList const& ref) {
-    if (mobile.empty() or ref.empty()) {
-        return INFINITY;
-    }
+// float simple_rms(V3fList const& mobile, V3fList const& ref) {
+//     if (mobile.empty() or ref.empty()) {
+//         return INFINITY;
+//     }
 
-    V3fList const& mobile_resampled =
-        mobile.size() == ref.size() ?
-        mobile : _resample(ref, mobile);
+//     V3fList const& mobile_resampled =
+//         mobile.size() == ref.size() ?
+//         mobile : _resample(ref, mobile);
 
-    size_t const n = ref.size();
-    double sq_err = 0.0f;
-    for (size_t i = 0; i < n; ++i) {
-        sq_err += ref.at(i).sq_dist_to(mobile_resampled.at(i));
-    }
+//     size_t const n = ref.size();
+//     // float sq_err = 0.0f;
+//     // for (size_t i = 0; i < n; ++i) {
+//     //     sq_err += ref.at(i).sq_dist_to(mobile_resampled.at(i));
+//     // }
 
-    return sqrt(sq_err / n);
-}
+//     // return sqrt(sq_err / static_cast<double>(n));
+
+//     std::vector<float> sq_err(n);
+//     for (size_t i = 0; i < n; ++i) {
+//         sq_err[i] = ref.at(i).sq_dist_to(mobile_resampled.at(i));
+//     }
+
+//     return sqrt(std::inner_product(begin(sq_err), end(sq_err), begin(sq_err), 0) *
+//                 (double) 1 / n);
+// }
 
 V3fList _resample(
     V3fList const& ref,

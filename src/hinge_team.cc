@@ -84,13 +84,19 @@ void HingeTeam::calc_checksum() {
 void HingeTeam::calc_score() {
     auto const my_points =
         hinge_->gen_path().collect_points();
-    score_ = scoring::simple_rms(my_points,
-                                 work_area_->points);
+
+    // Should use simple_rms(), but there's some floating point rounding error
+    // that's causing unit tests to fail. If we used inner_product() in
+    // simple_rms(), that'd yield the same result but then an extra vector is
+    // required. Until transform_reduce() is supported, Kabsch RMS should be
+    // fine performance wise?
+    score_ = scoring::score(my_points,
+                            work_area_->points);
     scored_tip_ = hinge_;
 }
 
 NodeKey HingeTeam::follow_recipe(tests::Recipe const& recipe,
-                               Transform const& shift_tx)
+                                 Transform const& shift_tx)
 {
     hinge_ = PathTeam::follow_recipe(recipe, shift_tx);
 

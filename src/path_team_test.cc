@@ -42,8 +42,9 @@ TestStat PathTeam::test() {
             JUtil.error(const_oss.str().c_str());
 
             std::ostringstream inp_oss;
-            inp_oss << "Input points:\n";
-            for (auto& p : wa->points) {
+            auto const& inp_points = wa->points;
+            inp_oss << "Input modules:\n";
+            for (auto& p : inp_points) {
                 inp_oss << p << "\n";
             }
 

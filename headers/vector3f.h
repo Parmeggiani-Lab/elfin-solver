@@ -23,7 +23,7 @@ namespace elfin {
 struct TestStat;
 
 #ifdef V3F_USE_EIGEN
-typedef Eigen::Vector3f EigenV3f;
+using EigenV3f = Eigen::Vector3f;
 #define V3F_INHERIT : public EigenV3f, public Printable
 #else
 #define V3F_INHERIT : public Printable

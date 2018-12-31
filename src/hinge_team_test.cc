@@ -1,8 +1,10 @@
 #include "hinge_team.h"
+
 #include "test_data.h"
 #include "test_stat.h"
 #include "input_manager.h"
 #include "path_generator.h"
+#include "scoring.h"
 
 namespace elfin {
 
@@ -32,8 +34,6 @@ TestStat HingeTeam::test() {
                         "Expected score 0\nGot score: %f\n",
                         team.score());
 
-            auto const& const_points =
-                team.gen_path().collect_points();
             std::ostringstream const_oss;
             const_oss << "Constructed nodes:\n";
 
@@ -44,8 +44,9 @@ TestStat HingeTeam::test() {
             JUtil.error(const_oss.str().c_str());
 
             std::ostringstream inp_oss;
+            auto const& inp_points = wa->points;
             inp_oss << "Input modules:\n";
-            for (auto& p : wa->points) {
+            for (auto& p : inp_points) {
                 inp_oss << p << "\n";
             }
 

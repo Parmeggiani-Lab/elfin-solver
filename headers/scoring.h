@@ -15,9 +15,9 @@ namespace scoring {
 // RMS-only mode.
 float score(V3fList const& mobile, V3fList const& ref);
 
-// esamples two point lists of arbitrary sizes, then computes in-order RMS
+// Resamples two point lists of arbitrary sizes, then computes in-order RMS
 // without Kabsch.
-float simple_rms(V3fList const& mobile, V3fList const& ref);
+// float simple_rms(V3fList const& mobile, V3fList const& ref);
 
 // A wrapper for Rosetta's Kabsch in Transform+RMS mode for point lists.
 void calc_alignment(
