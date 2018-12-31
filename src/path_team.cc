@@ -91,7 +91,7 @@ struct PathTeam::PImpl {
             auto curr_node = limb_gen.curr_node();
             auto next_node = limb_gen.next();
 
-            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype_->tx_;
+            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
         }
     }
 
@@ -205,19 +205,19 @@ struct PathTeam::PImpl {
     void sever_limb(Link const& arrow) {
         // Delete the dst side of arrow.
 
-        Link const* curr_arrow = &arrow;
+        Link curr_arrow = arrow;
         size_t num_links = 0;
         do {
             // Unlink nodes.
-            NodeKey next_node = curr_arrow->dst().node;
-            get_node(next_node)->remove_link(curr_arrow->dst());
+            NodeKey next_node = curr_arrow.dst().node;
+            get_node(next_node)->remove_link(curr_arrow.dst());
 
             // Check temporary tip node.
             num_links = next_node->links().size();
             DEBUG_NOMSG(num_links > 1); // Must be 0 or 1.
 
             if (num_links == 1) {
-                curr_arrow = &(*begin(next_node->links()));
+                curr_arrow = *begin(next_node->links());
             }
             else {
                 _.remove_free_chains(next_node);
@@ -263,7 +263,7 @@ struct PathTeam::PImpl {
         while (not path_gen.is_done()) {
             auto curr_link = path_gen.curr_link();
             DEBUG_NOMSG(curr_link->dst().node->prototype_ !=
-                        curr_link->prototype_->module_);
+                        curr_link->prototype()->module_);
 
             // Modify copy of curr_link->src().
             FreeChain src = curr_link->src();
@@ -280,7 +280,7 @@ struct PathTeam::PImpl {
                   "%zu free chains\n",
                   _.free_chains_.size());
 
-            tip_node = grow_tip(src, curr_link->prototype_);
+            tip_node = grow_tip(src, curr_link->prototype());
             DEBUG(curr_link->dst().node->prototype_ != tip_node->prototype_,
                   "%s vs %s\n",
                   curr_link->dst().node->prototype_->name.c_str(),

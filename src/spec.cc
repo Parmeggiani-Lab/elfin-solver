@@ -7,10 +7,10 @@ namespace elfin {
 /* public */
 /* modifiers */
 void Spec::parse_from_json(JSON const& json) {
+    work_areas_.clear();
+    fixed_areas_.clear();
+    
     try {
-        work_areas_.clear();
-        fixed_areas_.clear();
-
         JUtil.info("Input spec has %zu work areas and %zu fixed areas\n",
                    json.at("pg_networks").size(),
                    json.at("networks").size());

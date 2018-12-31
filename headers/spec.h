@@ -18,8 +18,6 @@ protected:
 public:
     /* ctors */
     Spec() {}
-    Spec(Spec const& other) = delete;
-    Spec(Spec&& other) = delete;
 
     /* dtors */
     virtual ~Spec() {}
@@ -33,8 +31,6 @@ public:
     }
 
     /* modifiers */
-    Spec& operator=(Spec const& other) = delete;
-    Spec& operator=(Spec&& other) = delete;
     void parse_from_json(JSON const& json);
 };
 

@@ -17,16 +17,14 @@ protected:
     /* data */
     FreeChain src_;
     FreeChain dst_;
+    ProtoLink const* prototype_;
 
 public:
-    /* data */
-    ProtoLink const* const prototype_;
 
     /* ctors */
     Link(FreeChain const& src,
          ProtoLink const* prot,
          FreeChain const& dst);
-    Link(Link const& other);
     Link reversed() const {
         return Link(dst_, prototype_->reverse(), src_);
     }
@@ -37,6 +35,7 @@ public:
     /* accessors */
     FreeChain const& src() const { return src_; }
     FreeChain const& dst() const { return dst_; }
+    ProtoLink const* prototype() const { return prototype_; }
     // bool operator==(Link const& other) const;
     // bool operator!=(Link const& other) const { return not this->operator==(other); }
     PathGenerator gen_path() const;
