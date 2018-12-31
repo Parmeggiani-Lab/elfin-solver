@@ -45,7 +45,7 @@ float simple_rms(V3fList const& mobile, V3fList const& ref) {
         mobile : _resample(ref, mobile);
 
     size_t const n = ref.size();
-    float sq_err = 0.0f;
+    double sq_err = 0.0f;
     for (size_t i = 0; i < n; ++i) {
         sq_err += ref.at(i).sq_dist_to(mobile_resampled.at(i));
     }

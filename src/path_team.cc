@@ -842,6 +842,54 @@ void PathTeam::calc_score() {
     }
 }
 
+NodeKey PathTeam::follow_recipe(tests::Recipe const& recipe,
+                                Transform const& shift_tx)
+{
+    nodes_.clear();
+    free_chains_.clear();
+    scored_tip_ = nullptr;
+
+    NodeKey first_node = nullptr;
+    if (not recipe.empty()) {
+        std::string const& first_mod_name = recipe[0].mod_name;
+        auto last_node = add_member(XDB.get_module(first_mod_name));
+        first_node = last_node;
+        pimpl_->get_node(last_node)->tx_ = shift_tx;
+
+        for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
+            auto const& step = *itr;
+
+            // Create next node.
+            auto src_mod = XDB.get_module(step.mod_name);
+            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
+            TRACE_NOMSG(not src_mod);
+            TRACE_NOMSG(not dst_mod);
+
+            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
+            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
+
+            // Find ProtoLink.
+            auto pt_link = src_mod->find_link_to(
+                               src_chain_id,
+                               step.src_term,
+                               dst_mod,
+                               dst_chain_id);
+
+            // Find FreeChain.
+            mutation_invariance_check();
+            FreeChain const src_fc(last_node, step.src_term, src_chain_id);
+
+            TRACE_NOMSG(std::find(begin(free_chains_),
+                                  end(free_chains_),
+                                  src_fc) == end(free_chains_));
+
+            last_node = pimpl_->grow_tip(src_fc, pt_link);
+        }
+    }
+
+    return first_node;
+}
+
 /* public */
 /* ctors */
 PathTeam::PathTeam(WorkArea const* wa) :
@@ -996,49 +1044,12 @@ mutation::Mode PathTeam::evolve(
     return mode;
 }
 
-void PathTeam::from_recipe(tests::Recipe const& recipe)
-{
-    nodes_.clear();
-    free_chains_.clear();
-    scored_tip_ = nullptr;
+void PathTeam::implement_recipe(tests::Recipe const& recipe,
+                                    Transform const& shift_tx) {
+    NodeKey start_node = follow_recipe(recipe, shift_tx);
 
-    if (not recipe.empty()) {
-        std::string const& first_mod_name = recipe[0].mod_name;
-        auto last_node = add_member(XDB.get_module(first_mod_name));
-
-        for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
-            auto const& step = *itr;
-
-            // Create next node.
-            auto src_mod = XDB.get_module(step.mod_name);
-            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
-            TRACE_NOMSG(not src_mod);
-            TRACE_NOMSG(not dst_mod);
-
-            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
-            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
-
-            // Find ProtoLink.
-            auto pt_link = src_mod->find_link_to(
-                               src_chain_id,
-                               step.src_term,
-                               dst_mod,
-                               dst_chain_id);
-
-            // Find FreeChain.
-            mutation_invariance_check();
-            FreeChain const src_fc(last_node, step.src_term, src_chain_id);
-
-            TRACE_NOMSG(std::find(begin(free_chains_),
-                                  end(free_chains_),
-                                  src_fc) == end(free_chains_));
-
-            last_node = pimpl_->grow_tip(src_fc, pt_link);
-        }
-
-        calc_checksum();
-        calc_score();
-    }
+    calc_checksum();
+    calc_score();
 }
 
 /* printers */

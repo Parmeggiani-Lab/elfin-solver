@@ -28,6 +28,8 @@ protected:
     virtual void virtual_copy(NodeTeam const& other);
     virtual void calc_checksum();
     virtual void calc_score();
+    virtual NodeKey follow_recipe(tests::Recipe const& recipe,
+                     Transform const& shift_tx = Transform());
 
 public:
     /* ctors */

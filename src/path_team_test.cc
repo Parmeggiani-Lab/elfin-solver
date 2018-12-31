@@ -19,7 +19,7 @@ TestStat PathTeam::test() {
         TRACE_NOMSG(SPEC.work_areas().size() != 1);
         auto& [wa_name, wa] = *begin(SPEC.work_areas());
         PathTeam team(wa.get());
-        team.from_recipe(tests::quarter_snake_free_recipe);
+        team.implement_recipe(tests::quarter_snake_free_recipe);
 
         TRACE_NOMSG(team.free_chains_.size() != 2);
 

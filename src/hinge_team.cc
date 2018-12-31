@@ -89,6 +89,14 @@ void HingeTeam::calc_score() {
     scored_tip_ = hinge_;
 }
 
+NodeKey HingeTeam::follow_recipe(tests::Recipe const& recipe,
+                               Transform const& shift_tx)
+{
+    hinge_ = PathTeam::follow_recipe(recipe, shift_tx);
+
+    return hinge_;
+}
+
 /* public */
 /* ctors */
 HingeTeam::HingeTeam(WorkArea const* wa) :

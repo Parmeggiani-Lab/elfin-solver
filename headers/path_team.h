@@ -38,12 +38,14 @@ protected:
 
     /* modifiers */
     virtual void virtual_copy(NodeTeam const& other);
-    NodeKey add_member(
-        ProtoModule const* const prot,
-        Transform const& tx = Transform());
+    NodeKey add_member(ProtoModule const* const prot,
+                       Transform const& tx = Transform());
     void remove_free_chains(NodeKey const node);
     virtual void calc_checksum();
     virtual void calc_score();
+    // For testing: builds node team from recipe and returns the starting node.
+    virtual NodeKey follow_recipe(tests::Recipe const& recipe,
+                                  Transform const& shift_tx = Transform());
 public:
     /* ctors */
     PathTeam(WorkArea const* wa);
@@ -64,7 +66,8 @@ public:
     virtual mutation::Mode evolve(
         NodeTeam const& mother,
         NodeTeam const& father);
-    void from_recipe(tests::Recipe const& recipe);
+    void implement_recipe(tests::Recipe const& recipe,
+                          Transform const& shift_tx = Transform());
 
     /* printers */
     virtual void print_to(std::ostream& os) const;

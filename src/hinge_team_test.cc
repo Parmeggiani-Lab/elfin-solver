@@ -20,11 +20,10 @@ TestStat HingeTeam::test() {
         // Initialize HingeTeam, copy hinge transform, build from recipe than
         // apply transform.
         HingeTeam team(wa.get());
-        auto const hinge_tx = team.hinge_->tx_;
-        team.from_recipe(tests::H_1h_recipe);
-        for (auto& node_itr : team.nodes_) {
-            node_itr.second->tx_  = hinge_tx * node_itr.second->tx_;
-        }
+
+        // Make a copy of the tx because it's gonna get clear()'ed.
+        auto hinge_tx = team.hinge_->tx_;
+        team.implement_recipe(tests::H_1h_recipe, hinge_tx);
 
         ts.tests++;
         if (team.score() > 1e-6) {

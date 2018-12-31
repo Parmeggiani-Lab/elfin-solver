@@ -63,9 +63,10 @@ void Node::remove_link(FreeChain const& src) {
 
 /* printers */
 void Node::print_to(std::ostream& os) const {
-    os << "Node(" << prototype_->name << ":";
-    os << (void*) this << ")\n";
-    os << tx_.to_string();
+    os << "Node (" << prototype_->name << ":";
+    os << (void*) this << ") [\n";
+    os << tx_ << "\n";
+    os << "]\n";
 }
 
 }  /* elfin */
