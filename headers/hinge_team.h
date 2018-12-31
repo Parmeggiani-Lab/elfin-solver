@@ -22,7 +22,7 @@ protected:
     /* accessors */
     virtual HingeTeam* virtual_clone() const;
     // virtual NodeKey pick_tip_node() const;
-    // virtual void mutation_invariant_check() const;
+    virtual void mutation_invariance_check() const;
 
     /* modifiers */
     virtual void virtual_copy(NodeTeam const& other);
@@ -32,8 +32,6 @@ protected:
 public:
     /* ctors */
     HingeTeam(WorkArea const* wa);
-    // Recipe ctor is used for testing.
-    HingeTeam(WorkArea const* wa, tests::Recipe const& recipe);
     HingeTeam(HingeTeam const& other);
     HingeTeam(HingeTeam&& other);
 

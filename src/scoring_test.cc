@@ -1,4 +1,4 @@
-#include "kabsch.h"
+#include "scoring.h"
 
 #include "test_stat.h"
 #include "test_data.h"
@@ -6,7 +6,7 @@
 
 namespace elfin {
 
-namespace kabsch {
+namespace scoring {
 
 /* test data */
 V3fList const points10a = {

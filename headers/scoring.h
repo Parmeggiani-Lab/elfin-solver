@@ -1,5 +1,5 @@
-#ifndef KABSCH_H
-#define KABSCH_H
+#ifndef SCORING_H
+#define SCORING_H
 
 #include "geometry.h"
 
@@ -9,10 +9,17 @@ namespace elfin
 class WorkArea;
 struct TestStat;
 
-namespace kabsch {
+namespace scoring {
 
+// Resamples two point lists of arbitrary sizes, then calls Rosetta's Kabsch in
+// RMS-only mode.
 float score(V3fList const& mobile, V3fList const& ref);
 
+// esamples two point lists of arbitrary sizes, then computes in-order RMS
+// without Kabsch.
+float simple_rms(V3fList const& mobile, V3fList const& ref);
+
+// A wrapper for Rosetta's Kabsch in Transform+RMS mode for point lists.
 void calc_alignment(
     V3fList const& mobile,
     V3fList const& ref,
@@ -20,10 +27,11 @@ void calc_alignment(
     Vector3f& tran,
     float& rms);
 
+/* tests */
 TestStat test();
 
 // The following functions a prefixed by underscore because they're not meant
-// to be called from other modules except for testing.
+// to be called from modules other than tests.cc.
 
 V3fList _resample(V3fList const& ref, V3fList const& pts);
 
@@ -47,7 +55,7 @@ float _rosetta_kabsch_rms(
     V3fList const& mobile,
     V3fList const& ref);
 
-}  /* kabsch */
+}  /* scroing */
 
 } // namespace elfin
 

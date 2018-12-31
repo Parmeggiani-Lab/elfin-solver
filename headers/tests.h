@@ -1,8 +1,6 @@
 #ifndef TESTS_H
 #define TESTS_H
 
-#include <cstddef>
-
 namespace elfin {
 
 namespace tests {

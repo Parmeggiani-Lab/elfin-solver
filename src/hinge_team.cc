@@ -2,6 +2,7 @@
 
 #include "input_manager.h"
 #include "path_generator.h"
+#include "scoring.h"
 
 namespace elfin {
 
@@ -51,6 +52,19 @@ HingeTeam* HingeTeam::virtual_clone() const {
     return new HingeTeam(*this);
 }
 
+// NodeKey PathTeam::pick_tip_node() const {
+
+// }
+
+void HingeTeam::mutation_invariance_check() const {
+    // TRACE(free_chains_.size() != 2,
+    //       "Invariance broken: %zu free chains\n",
+    //       free_chains_.size());
+
+    TRACE(size() == 0,
+          "Invariance broken: size() = 0\n");
+}
+
 /* modifiers */
 void HingeTeam::virtual_copy(NodeTeam const& other) {
     try {  // Catch bad cast
@@ -62,33 +76,23 @@ void HingeTeam::virtual_copy(NodeTeam const& other) {
 }
 
 void HingeTeam::calc_checksum() {
-    //
     // Unlike PathTeam, here we can compute one-way checksum from hinge.
-    //
     DEBUG_NOMSG(size() == 0);
-
-    checksum_ = PathGenerator::path_checksum(hinge_);
+    checksum_ = hinge_->gen_path().path_checksum();
 }
 
 void HingeTeam::calc_score() {
-    // UNIMP();
-    // Need to take into account the fact that the joint that superimposes the
-    // hinge module is not scored.
+    auto const my_points =
+        hinge_->gen_path().collect_points();
+    score_ = scoring::simple_rms(my_points,
+                                 work_area_->points);
+    scored_tip_ = hinge_;
 }
 
 /* public */
 /* ctors */
 HingeTeam::HingeTeam(WorkArea const* wa) :
     PathTeam(wa),
-    pimpl_(make_pimpl()),
-    hinge_(pimpl_->find_hinge())
-{
-    DEBUG_NOMSG(not hinge_);
-}
-
-// Recipe ctor is used for testing.
-HingeTeam::HingeTeam(WorkArea const* wa, tests::Recipe const& recipe) :
-    PathTeam(wa, recipe),
     pimpl_(make_pimpl()),
     hinge_(pimpl_->find_hinge())
 {

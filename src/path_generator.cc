@@ -2,19 +2,30 @@
 
 #include "link.h"
 #include "node.h"
+#include "vector3f.h"
 
 namespace elfin {
 
 /* public */
 /* ctors */
+PathGenerator::PathGenerator(NodeKey start_node) :
+    next_node_(start_node)
+{
+    // Check node is a tip node.
+    DEBUG_NOMSG(not start_node);
+    DEBUG_NOMSG(start_node->links().size() > 1);
+}
+
 PathGenerator::PathGenerator(Link const* const arrow) :
     curr_node_(arrow->src().node),
     curr_link_(arrow),
     next_node_(arrow->dst().node) {}
 
 /* accessors */
-std::vector<Link const*> PathGenerator::collect_arrows(NodeKey start_node) {
-    auto pg = PathGenerator(start_node);
+std::vector<Link const*> PathGenerator::collect_arrows() const
+{
+    DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
+    auto pg = PathGenerator(next_node_);
     std::vector<Link const*> arrows;
     while (not pg.is_done()) {
         pg.next();
@@ -25,8 +36,9 @@ std::vector<Link const*> PathGenerator::collect_arrows(NodeKey start_node) {
     return arrows;
 }
 
-Crc32 PathGenerator::path_checksum(NodeKey start_node) {
-    auto pg = PathGenerator(start_node);
+Crc32 PathGenerator::path_checksum() const {
+    DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
+    auto pg = PathGenerator(next_node_);
     Crc32 res = 0xffff;
     while (not pg.is_done()) {
         auto nk = pg.next();
@@ -36,6 +48,16 @@ Crc32 PathGenerator::path_checksum(NodeKey start_node) {
         checksum_cascade(&res, &prot, sizeof(prot));
     }
     return res;
+}
+
+V3fList PathGenerator::collect_points() const {
+    DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
+    auto pg = PathGenerator(next_node_);
+    V3fList points;
+    while (not pg.is_done()) {
+        points.push_back(pg.next()->tx_.collapsed());
+    }
+    return points;
 }
 
 /* modifiers */

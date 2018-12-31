@@ -1,6 +1,8 @@
 #ifndef TEST_STAT_H_
 #define TEST_STAT_H_
 
+#include <cstddef>  // For size_t
+
 namespace elfin {
 
 struct TestStat {

@@ -3,10 +3,11 @@
 #include "test_stat.h"
 #include "test_data.h"
 
-// Test subjects.
-#include "kabsch.h"
+// Include test subject modules.
+#include "scoring.h"
 #include "random_utils.h"
 #include "input_manager.h"
+#include "path_generator.h"
 #include "path_team.h"
 #include "hinge_team.h"
 #include "evolution_solver.h"
@@ -32,10 +33,14 @@ size_t test_units() {
         total += Vector3f::test();
 
     if (total.errors == 0)
-        total += kabsch::test();
+        total += scoring::test();
+
 
     if (total.errors == 0)
         total += PathTeam::test();
+
+    if (total.errors == 0)
+        total += PathGenerator::test();
 
     if (total.errors == 0)
         total += HingeTeam::test();
@@ -61,7 +66,7 @@ void run_all() {
 
     if (unit_test_errors > 0) {
         PANIC("%zu unit tests failed. Not continuing to integration tests.\n",
-                    unit_test_errors);
+              unit_test_errors);
     }
     else {
         size_t const int_test_errors = test_integration();

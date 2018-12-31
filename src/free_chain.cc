@@ -6,7 +6,7 @@ namespace elfin {
 
 /* ctors */
 FreeChain::FreeChain(
-    Node const* const _node,
+    NodeKey const _node,
     TerminusType const _term,
     size_t const _chain_id) :
     node(_node),

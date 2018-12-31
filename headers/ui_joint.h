@@ -43,7 +43,7 @@ struct UIJoint : public UIObject {
 
 typedef std::unique_ptr<UIJoint> UIJointSP;
 typedef SPMap<UIJoint> UIJointMap;
-typedef UIJoint* UIJointKey;
+typedef UIJoint const* UIJointKey;
 typedef std::vector<UIJointKey> UIJointKeys;
 
 }  /* elfin */

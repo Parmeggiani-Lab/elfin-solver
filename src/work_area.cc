@@ -39,6 +39,7 @@ UIJointKeys parse_leaf_joints(UIJointMap const& _joints)
     return res;
 }
 
+// Occupied joints are supposed to be a subset of leaves.
 UIJointKeys parse_occupied_joints(UIJointKeys const& _leaf_joints)
 {
     UIJointKeys res;
@@ -80,13 +81,19 @@ WorkType parse_type(UIJointMap const& _joints,
 }
 
 V3fList parse_points(UIJointMap const& _joints,
-                     UIJointKeys const& _leaf_joints)
+                     UIJointKeys const& _leaf_joints,
+                     UIJointKeys const& _occupied_joints)
 {
     V3fList res;
     TRACE(_leaf_joints.size() != 2,
           "Size of _leaf_joints not exactly 2 in work_area\n");
 
-    UIJointPathGenerator gen(&_joints, _leaf_joints.at(0));
+    // Start at the first occupied joint if there are any.
+    auto start_joint_key = _occupied_joints.empty() ?
+                           _leaf_joints.at(0) :
+                           _occupied_joints.at(0);
+
+    UIJointPathGenerator gen(&_joints, start_joint_key);
     while (not gen.is_done()) {
         res.emplace_back(gen.next()->tx.collapsed());
     }
@@ -128,7 +135,7 @@ WorkArea::WorkArea(
     leaf_joints(parse_leaf_joints(joints)),
     occupied_joints(parse_occupied_joints(leaf_joints)),
     type(parse_type(joints, occupied_joints)),
-    points(parse_points(joints, leaf_joints)),
+    points(parse_points(joints, leaf_joints, occupied_joints)),
     target_size(parse_target_size(points))
 { }
 

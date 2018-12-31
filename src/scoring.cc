@@ -1,9 +1,6 @@
-// These kabsch(mostly just SVD) functions taken from the Hybridization
-// protocol of the Rosetta software suite, TMalign.cc
-
 #include <cmath>
 
-#include "kabsch.h"
+#include "scoring.h"
 
 #include "work_area.h"
 #include "debug_utils.h"
@@ -11,7 +8,7 @@
 
 namespace elfin {
 
-namespace kabsch {
+namespace scoring {
 
 void calc_alignment(
     V3fList const& mobile,
@@ -36,6 +33,24 @@ float score(V3fList const& mobile, V3fList const& ref) {
         mobile : _resample(ref, mobile);
 
     return _rosetta_kabsch_rms(mobile_resampled, ref);
+}
+
+float simple_rms(V3fList const& mobile, V3fList const& ref) {
+    if (mobile.empty() or ref.empty()) {
+        return INFINITY;
+    }
+
+    V3fList const& mobile_resampled =
+        mobile.size() == ref.size() ?
+        mobile : _resample(ref, mobile);
+
+    size_t const n = ref.size();
+    float sq_err = 0.0f;
+    for (size_t i = 0; i < n; ++i) {
+        sq_err += ref.at(i).sq_dist_to(mobile_resampled.at(i));
+    }
+
+    return sqrt(sq_err / n);
 }
 
 V3fList _resample(
@@ -100,6 +115,9 @@ V3fList _resample(
     return resampled;
 }
 
+// These kabsch(mostly just SVD) functions taken from the Hybridization
+// protocol of the Rosetta software suite, TMalign.cc. I split it into 2
+// functions so there's no mode switching.
 void _rosetta_kabsch_align(
     V3fList const& mobile,
     V3fList const& ref,

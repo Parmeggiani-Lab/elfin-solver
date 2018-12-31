@@ -11,6 +11,7 @@
 namespace elfin {
 
 class Node;
+typedef Node const* NodeKey;
 
 struct FreeChain : public Printable {
     /* types */
@@ -23,15 +24,15 @@ struct FreeChain : public Printable {
     typedef std::vector<Bridge> BridgeList;
 
     /* data */
-    Node const* node;
+    NodeKey node;
     TerminusType term;
     size_t chain_id;
 
     /* ctors */
     FreeChain() :
-        node(), term(TerminusType::NONE), chain_id(0) {}
+        node(nullptr), term(TerminusType::NONE), chain_id(0) {}
     FreeChain(
-        Node const* const _node,
+        NodeKey const _node,
         TerminusType const _term,
         size_t const _chain_id);
 

@@ -11,6 +11,9 @@ namespace elfin {
 class Link;
 class Node;
 typedef Node const* NodeKey;
+struct TestStat;
+class Vector3f;
+typedef std::vector<Vector3f> V3fList;
 
 class PathGenerator {
 private:
@@ -20,8 +23,7 @@ private:
     NodeKey next_node_ = nullptr;
 public:
     /* ctors */
-    PathGenerator(NodeKey start_node) :
-        next_node_(start_node) {}
+    PathGenerator(NodeKey start_node);
 
     //
     // Constructor for starting mid-way in a basic node team.
@@ -40,13 +42,17 @@ public:
     NodeKey curr_node() const { return curr_node_; }
     NodeKey peek() const { return next_node_; }
     Link const* curr_link() const { return curr_link_; }
-    static std::vector<Link const*> collect_arrows(NodeKey start_node);
-    static Crc32 path_checksum(NodeKey start_node);
+    std::vector<Link const*> collect_arrows() const;
+    Crc32 path_checksum() const;
+    V3fList collect_points() const;
 
     /* modifiers */
     NodeKey next();
 
     /* printers */
+
+    /* tests */
+    static TestStat test();
 };  /* class PathGenerator */
 
 }  /* elfin */

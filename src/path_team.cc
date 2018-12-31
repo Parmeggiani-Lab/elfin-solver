@@ -1,6 +1,6 @@
 #include "path_team.h"
 
-#include "kabsch.h"
+#include "scoring.h"
 #include "path_generator.h"
 #include "input_manager.h"
 #include "id_types.h"
@@ -29,27 +29,6 @@ struct PathTeam::PImpl {
 
     /* ctors */
     PImpl(PathTeam& interface) : _(interface) {}
-
-    /* accessors */
-    V3fList collect_points(NodeKey tip_node) const {
-        // Check node is a tip node.
-        size_t const num_links = tip_node->links().size();
-        TRACE_NOMSG(num_links > 1);
-
-        auto path_gen = tip_node->gen_path();
-
-        V3fList points;
-        while (not path_gen.is_done()) {
-            points.push_back(path_gen.next()->tx_.collapsed());
-        }
-
-        DEBUG(points.size() != _.size(),
-              "points.size()=%zu, size()=%zu\n",
-              points.size(),
-              _.size());
-
-        return points;
-    }
 
     /*modifiers */
     void fix_limb_transforms(Link const& arrow) {
@@ -653,11 +632,11 @@ struct PathTeam::PImpl {
                     // First, collect arrows from both parents.
 
                     // Starting at either end is fine.
-                    auto m_arrows = PathGenerator::collect_arrows(
-                                        begin(_.free_chains_)->node);
+                    auto m_arrows =
+                        begin(_.free_chains_)->node->gen_path().collect_arrows();
                     DEBUG_NOMSG(bnt_father.free_chains_.size() != 2);
-                    auto f_arrows = PathGenerator::collect_arrows(
-                                        begin(bnt_father.free_chains_)->node);
+                    auto f_arrows =
+                        begin(bnt_father.free_chains_)->node->gen_path().collect_arrows();
 
                     // Walk through all link pairs to collect cross points.
                     std::vector<mutation::CrossPoint> cross_points;
@@ -752,8 +731,7 @@ struct PathTeam::PImpl {
         _.score_ = INFINITY;
         bool const mutate_success = regenerate();
 
-        TRACE_NOMSG(_.free_chains_.size() != 2); // Replace with mutation_exit_check()
-
+        _.mutation_invariance_check();
         return mutate_success;
     }
 
@@ -821,11 +799,9 @@ void PathTeam::remove_free_chains(NodeKey const node) {
 }
 
 void PathTeam::calc_checksum() {
-    //
     // We want the same checksum for two node teams that consist of the same
     // sequence of nodes even if they are in reverse order. This can be
     // achieved by XOR'ing the forward and backward checksums.
-    //
     DEBUG(free_chains_.size() != 2,
           "There are %zu free chains!",
           free_chains_.size());
@@ -833,7 +809,8 @@ void PathTeam::calc_checksum() {
 
     checksum_ = 0x0000;
     for (auto& free_chain : free_chains_) {
-        Crc32 const crc_half = PathGenerator::path_checksum(free_chain.node);
+        Crc32 const crc_half =
+            free_chain.node->gen_path().path_checksum();
 
         Crc32 tmp = checksum_ ^ crc_half;
         if (not tmp) {
@@ -848,22 +825,15 @@ void PathTeam::calc_checksum() {
 }
 
 void PathTeam::calc_score() {
-    //
-    // We score the path forward and backward, because the Kabsch
+    // Score the path forward and backward, because the Kabsch
     // algorithm relies on point-wise correspondance. Different ordering
     // can yield different RMSD scores.
-    //
-    DEBUG(free_chains_.size() != 2,
-          "There are %zu free chains!\n",
-          free_chains_.size());
-    DEBUG_NOMSG(size() == 0);
-
     score_ = INFINITY;
     for (auto& free_chain : free_chains_) {
-        auto const my_points = pimpl_->collect_points(free_chain.node);
-        float const new_score =
-            kabsch::score(my_points,
-                          work_area_->points);
+        auto const my_points =
+            free_chain.node->gen_path().collect_points();
+        float const new_score = scoring::score(my_points,
+                                               work_area_->points);
 
         if (new_score < score_) {
             score_ = new_score;
@@ -879,47 +849,6 @@ PathTeam::PathTeam(WorkArea const* wa) :
     pimpl_(make_pimpl())
 {
     TRACE_NOMSG(not work_area_);
-}
-
-PathTeam::PathTeam(WorkArea const* wa, tests::Recipe const& recipe) :
-    PathTeam(wa)
-{
-    if (not recipe.empty()) {
-        std::string const& first_mod_name = recipe[0].mod_name;
-        auto last_node = add_member(XDB.get_module(first_mod_name));
-
-        for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
-            auto const& step = *itr;
-
-            // Now create next node.
-            auto src_mod = XDB.get_module(step.mod_name);
-            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
-            TRACE_NOMSG(not src_mod);
-            TRACE_NOMSG(not dst_mod);
-
-            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
-            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
-
-            // Find ProtoLink
-            auto pt_link = src_mod->find_link_to(
-                               src_chain_id,
-                               step.src_term,
-                               dst_mod,
-                               dst_chain_id);
-
-            // Find FreeChain
-            TRACE_NOMSG(free_chains_.size() != 2);
-            FreeChain src_fc(last_node, step.src_term, src_chain_id);
-
-            TRACE_NOMSG(std::find(begin(free_chains_),
-                                  end(free_chains_),
-                                  src_fc) == end(free_chains_));
-
-            last_node = pimpl_->grow_tip(src_fc, pt_link);
-        }
-
-        calc_checksum();
-    }
 }
 
 PathTeam::PathTeam(PathTeam const& other) :
@@ -947,9 +876,14 @@ PathGenerator PathTeam::gen_path() const {
 
 // }
 
-// void PathTeam::mutation_invariant_check() const {
+void PathTeam::mutation_invariance_check() const {
+    TRACE(free_chains_.size() != 2,
+          "Invariance broken: %zu free chains\n",
+          free_chains_.size());
 
-// }
+    TRACE(size() == 0,
+          "Invariance broken: size() = 0\n");
+}
 
 /* modifiers */
 PathTeam& PathTeam::operator=(PathTeam const& other) {
@@ -1022,8 +956,7 @@ mutation::Mode PathTeam::evolve(
     mutation::Mode mode;
 
     while (not mutate_success and not modes.empty()) {
-        TRACE_NOMSG(size() == 0);
-        TRACE_NOMSG(free_chains_.size() != 2); // Replace with mutation_entry_check()
+        mutation_invariance_check();
 
         mode = random::pop(modes);
         switch (mode) {
@@ -1049,7 +982,7 @@ mutation::Mode PathTeam::evolve(
             mutation::bad_mode(mode);
         }
 
-        TRACE_NOMSG(free_chains_.size() != 2); // Replace with mutation_exit_check()
+        mutation_invariance_check();
     }
 
     if (not mutate_success) {
@@ -1061,6 +994,51 @@ mutation::Mode PathTeam::evolve(
     calc_score();
 
     return mode;
+}
+
+void PathTeam::from_recipe(tests::Recipe const& recipe)
+{
+    nodes_.clear();
+    free_chains_.clear();
+    scored_tip_ = nullptr;
+
+    if (not recipe.empty()) {
+        std::string const& first_mod_name = recipe[0].mod_name;
+        auto last_node = add_member(XDB.get_module(first_mod_name));
+
+        for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
+            auto const& step = *itr;
+
+            // Create next node.
+            auto src_mod = XDB.get_module(step.mod_name);
+            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
+            TRACE_NOMSG(not src_mod);
+            TRACE_NOMSG(not dst_mod);
+
+            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
+            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
+
+            // Find ProtoLink.
+            auto pt_link = src_mod->find_link_to(
+                               src_chain_id,
+                               step.src_term,
+                               dst_mod,
+                               dst_chain_id);
+
+            // Find FreeChain.
+            mutation_invariance_check();
+            FreeChain const src_fc(last_node, step.src_term, src_chain_id);
+
+            TRACE_NOMSG(std::find(begin(free_chains_),
+                                  end(free_chains_),
+                                  src_fc) == end(free_chains_));
+
+            last_node = pimpl_->grow_tip(src_fc, pt_link);
+        }
+
+        calc_checksum();
+        calc_score();
+    }
 }
 
 /* printers */
@@ -1095,9 +1073,10 @@ JSON PathTeam::to_json() const {
         auto fc_itr = begin(free_chains_);
         for (size_t i = 0; i < 2; ++i) {
             advance(fc_itr, i);
-            V3fList const& points = pimpl_->collect_points(fc_itr->node);
+            V3fList const& points =
+                fc_itr->node->gen_path().collect_points();
 
-            kabsch::calc_alignment(
+            scoring::calc_alignment(
                 /*mobile=*/ points,
                 /*ref=*/ work_area_->points,
                 rot[i],

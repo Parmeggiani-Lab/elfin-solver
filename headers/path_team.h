@@ -34,7 +34,7 @@ protected:
     // virtual NodeKey pick_tip_node() const;
     // Checks free_chains_.size() etc. are correct on entry to a mutation
     // method. Called before calling mutation methods from evolve().
-    // virtual void mutation_invariant_check() const;
+    virtual void mutation_invariance_check() const;
 
     /* modifiers */
     virtual void virtual_copy(NodeTeam const& other);
@@ -47,8 +47,6 @@ protected:
 public:
     /* ctors */
     PathTeam(WorkArea const* wa);
-    // Recipe ctor is used for testing.
-    PathTeam(WorkArea const* wa, tests::Recipe const& recipe);
     PathTeam(PathTeam const& other);
     PathTeam(PathTeam&& other);
 
@@ -66,6 +64,7 @@ public:
     virtual mutation::Mode evolve(
         NodeTeam const& mother,
         NodeTeam const& father);
+    void from_recipe(tests::Recipe const& recipe);
 
     /* printers */
     virtual void print_to(std::ostream& os) const;
