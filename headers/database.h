@@ -14,9 +14,10 @@
 
 namespace elfin {
 
-// singleton class
-class Database
-{
+/* Fwd Decl */
+struct Options;
+
+class Database {
 protected:
     /* types */
     struct ModPtrRoulette :
@@ -45,7 +46,7 @@ public:
     ProtoModule const* get_module(std::string const& name) const;
 
     /* modifiers */
-    void parse_from_json(JSON const& xdb);
+    void parse(Options const& options);
 };
 
 }  /* elfin */

@@ -13,17 +13,29 @@ PathGenerator::PathGenerator(Link const* const arrow) :
     next_node_(arrow->dst().node) {}
 
 /* accessors */
-std::vector<Link const*> PathGenerator::collect_arrows() {
+std::vector<Link const*> PathGenerator::collect_arrows(NodeKey start_node) {
+    auto pg = PathGenerator(start_node);
     std::vector<Link const*> arrows;
-
-    while (not is_done()) {
-        next();
-        if (curr_link()) {
-            arrows.push_back(curr_link());
+    while (not pg.is_done()) {
+        pg.next();
+        if (pg.curr_link()) {  // The last call to .next() has nullptr for curr_link.
+            arrows.push_back(pg.curr_link());
         }
     }
-
     return arrows;
+}
+
+Crc32 PathGenerator::path_checksum(NodeKey start_node) {
+    auto pg = PathGenerator(start_node);
+    Crc32 res = 0xffff;
+    while (not pg.is_done()) {
+        auto nk = pg.next();
+        ProtoModule const* prot = nk->prototype_;
+
+        // Calculate checksum from the pointer, not the value!
+        checksum_cascade(&res, &prot, sizeof(prot));
+    }
+    return res;
 }
 
 /* modifiers */

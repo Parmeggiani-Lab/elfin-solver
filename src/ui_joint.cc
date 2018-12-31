@@ -7,10 +7,15 @@ namespace elfin {
 /* occupant */
 /* printers */
 void UIJoint::Occupant::print_to(std::ostream& os) const {
-    os << "Occupant (" << (name == "" ? "null" : name) << ") [\n";
-    os << "  parent_name: " << parent_name << "\n";
-    os << "  module: " << (module ? module->name : "null") << "\n";
-    os << "]";
+    if (ui_module) {
+        os << "Occupant [\n";
+        os << "  parent_name: " << parent_name << "\n";
+        os << "  ui_module: " << *ui_module << "\n";
+        os << "]";
+    }
+    else {
+        os << "Occupant [ empty ]";
+    }
 }
 
 StrList parse_neighbors(JSON const& json) {
@@ -32,13 +37,12 @@ UIJoint::Occupant parse_occupant(JSON const& json,
     UIJoint::Occupant res;
 
     try {
-        res.name = json["occupant"];
-        if (res.name != "") {
+        if (json["occupant"] != "") {
             std::string const& occ_network = json["occupant_parent"];
             auto& fxn_modules = fam.at(occ_network)->modules;
 
             res.parent_name = occ_network;
-            res.module = fxn_modules.at(res.name).get();
+            res.ui_module = fxn_modules.at(json["occupant"]).get();
         }
     } catch (const std::exception& e) {
         TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
@@ -71,7 +75,7 @@ UIJoint::UIJoint(std::string const& name,
 void UIJoint::print_to(std::ostream& os) const {
     os << "UIJoint (" << name << ") [\n";
     os << tx << "\n";
-    os << "neighbors:\n";
+    os << "Neighbors:\n";
     for (auto& nb : neighbors) {
         os << "  " << nb << "\n";
     }

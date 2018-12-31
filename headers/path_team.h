@@ -29,6 +29,12 @@ protected:
 
     /* accessors */
     virtual PathTeam* virtual_clone() const;
+    // Returns a tip node, may be random. For a hinged team, fixed nodes must
+    // not be returned unlress there are no other nodes.
+    // virtual NodeKey pick_tip_node() const;
+    // Checks free_chains_.size() etc. are correct on entry to a mutation
+    // method. Called before calling mutation methods from evolve().
+    // virtual void mutation_invariant_check() const;
 
     /* modifiers */
     virtual void virtual_copy(NodeTeam const& other);
@@ -36,6 +42,7 @@ protected:
         ProtoModule const* const prot,
         Transform const& tx = Transform());
     void remove_free_chains(NodeKey const node);
+    virtual void calc_checksum();
     virtual void calc_score();
 public:
     /* ctors */

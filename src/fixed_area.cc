@@ -2,12 +2,12 @@
 
 namespace elfin {
 
-UIObjectMap parse_modules(JSON const& json) {
-    UIObjectMap res;
+UIModuleMap parse_modules(JSON const& json) {
+    UIModuleMap res;
     for (auto& [mod_name , mod_json] : json.items()) {
         res.emplace(
             mod_name,
-            std::make_unique<UIObject>(mod_name, mod_json));
+            std::make_unique<UIModule>(mod_name, mod_json));
     }
     return res;
 }

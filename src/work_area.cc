@@ -43,7 +43,7 @@ UIJointKeys parse_occupied_joints(UIJointKeys const& _leaf_joints)
 {
     UIJointKeys res;
     for (auto& leaf_joint : _leaf_joints) {
-        if (leaf_joint->occupant.name != "") {
+        if (leaf_joint->occupant.ui_module) {
             res.push_back(leaf_joint);
         }
     }
@@ -60,11 +60,20 @@ WorkType parse_type(UIJointMap const& _joints,
           "Parsing error: too many occupied joints (%zu) for WorkArea\n",
           n_occ_joints);
 
-    if (n_occ_joints == 0) {
+    switch (n_occ_joints) {
+    case 0:
         res = WorkType::FREE;
-    }
-    else {
+        break;
+    case 1:
         res = WorkType::HINGED;
+        break;
+    case 2:
+        res = WorkType::DOUBLE_HINGED;
+        break;
+    default:
+        TRACE("Too many occupied joints",
+              "Expecting 0, 1, or 2 but got %zu\n",
+              n_occ_joints);
     }
 
     return res;

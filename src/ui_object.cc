@@ -1,7 +1,8 @@
 #include "ui_object.h"
 
-namespace elfin {
+#include "json.h"
 
+namespace elfin {
 
 /* ctors */
 UIObject::UIObject(std::string const& _name,

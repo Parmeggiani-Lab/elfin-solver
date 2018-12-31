@@ -21,7 +21,8 @@ namespace elfin {
     MACRO(NONE) \
     MACRO(FREE) \
     MACRO(HINGED) \
-    MACRO(_ENUM_SIZE) 
+    MACRO(DOUBLE_HINGED) \
+    MACRO(_ENUM_SIZE)
 
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 
@@ -38,10 +39,9 @@ struct WorkArea {
     size_t const        target_size;
 
     /* ctors */
-    WorkArea(
-        std::string const& _name,
-        JSON const& json,
-        FixedAreaMap const& fam);
+    WorkArea(std::string const& _name,
+             JSON const& json,
+             FixedAreaMap const& fam);
 
     /* dtors */
     virtual ~WorkArea();

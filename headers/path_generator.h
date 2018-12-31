@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "checksum.h"
+
 namespace elfin {
 
 /* Fwd Decl */
@@ -35,10 +37,11 @@ public:
 
     /* accessors */
     bool is_done() const { return not next_node_; }
-    std::vector<Link const*> collect_arrows();
     NodeKey curr_node() const { return curr_node_; }
     NodeKey peek() const { return next_node_; }
     Link const* curr_link() const { return curr_link_; }
+    static std::vector<Link const*> collect_arrows(NodeKey start_node);
+    static Crc32 path_checksum(NodeKey start_node);
 
     /* modifiers */
     NodeKey next();

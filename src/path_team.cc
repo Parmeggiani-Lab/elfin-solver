@@ -31,38 +31,6 @@ struct PathTeam::PImpl {
     PImpl(PathTeam& interface) : _(interface) {}
 
     /* accessors */
-    void calc_checksum() const {
-        //
-        // We want the same checksum for two node teams that consist of the same
-        // sequence of nodes even if they are in reverse order. This can be
-        // achieved by XOR'ing the forward and backward checksums.
-        //
-        DEBUG(_.free_chains_.size() != 2,
-              "There are %zu free chains!",
-              _.free_chains_.size());
-        DEBUG_NOMSG(_.size() == 0);
-
-        Crc32 crc = 0x0000;
-        for (auto& free_chain : _.free_chains_) {
-            auto path_gen = free_chain.node->gen_path();
-
-            Crc32 crc_half = 0xffff;
-            while (not path_gen.is_done()) {
-                auto node = path_gen.next();
-                ProtoModule const* prot = node->prototype_;
-                checksum_cascade(&crc_half, &prot, sizeof(prot));
-            }
-
-            if (crc ^ crc_half) {
-                // If result is 0x0000 then it's due to the node sequence being
-                // symmetrical.
-                crc ^= crc_half;
-            }
-        }
-
-        _.checksum_ = crc;
-    }
-
     V3fList collect_points(NodeKey tip_node) const {
         // Check node is a tip node.
         size_t const num_links = tip_node->links().size();
@@ -685,11 +653,11 @@ struct PathTeam::PImpl {
                     // First, collect arrows from both parents.
 
                     // Starting at either end is fine.
-                    auto m_arrows = begin(_.free_chains_)->node->
-                                    gen_path().collect_arrows();
+                    auto m_arrows = PathGenerator::collect_arrows(
+                                        begin(_.free_chains_)->node);
                     DEBUG_NOMSG(bnt_father.free_chains_.size() != 2);
-                    auto f_arrows = begin(bnt_father.free_chains_)->node->
-                                    gen_path().collect_arrows();
+                    auto f_arrows = PathGenerator::collect_arrows(
+                                        begin(bnt_father.free_chains_)->node);
 
                     // Walk through all link pairs to collect cross points.
                     std::vector<mutation::CrossPoint> cross_points;
@@ -852,6 +820,33 @@ void PathTeam::remove_free_chains(NodeKey const node) {
     });
 }
 
+void PathTeam::calc_checksum() {
+    //
+    // We want the same checksum for two node teams that consist of the same
+    // sequence of nodes even if they are in reverse order. This can be
+    // achieved by XOR'ing the forward and backward checksums.
+    //
+    DEBUG(free_chains_.size() != 2,
+          "There are %zu free chains!",
+          free_chains_.size());
+    DEBUG_NOMSG(size() == 0);
+
+    checksum_ = 0x0000;
+    for (auto& free_chain : free_chains_) {
+        Crc32 const crc_half = PathGenerator::path_checksum(free_chain.node);
+
+        Crc32 tmp = checksum_ ^ crc_half;
+        if (not tmp) {
+            // If result is 0x0000, it's due to the node sequence being
+            // symmetrical. No need to compute the other direction if it's
+            // symmetrical.
+            break;
+        }
+
+        checksum_ = tmp;
+    }
+}
+
 void PathTeam::calc_score() {
     //
     // We score the path forward and backward, because the Kabsch
@@ -923,7 +918,7 @@ PathTeam::PathTeam(WorkArea const* wa, tests::Recipe const& recipe) :
             last_node = pimpl_->grow_tip(src_fc, pt_link);
         }
 
-        pimpl_->calc_checksum();
+        calc_checksum();
     }
 }
 
@@ -947,6 +942,14 @@ PathGenerator PathTeam::gen_path() const {
     DEBUG(not scored_tip_, "calc_score() not called\n");
     return scored_tip_->gen_path();
 }
+
+// NodeKey PathTeam::pick_tip_node() const {
+
+// }
+
+// void PathTeam::mutation_invariant_check() const {
+
+// }
 
 /* modifiers */
 PathTeam& PathTeam::operator=(PathTeam const& other) {
@@ -1054,7 +1057,7 @@ mutation::Mode PathTeam::evolve(
         TRACE_NOMSG(not mutate_success);
     }
 
-    pimpl_->calc_checksum();
+    calc_checksum();
     calc_score();
 
     return mode;

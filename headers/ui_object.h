@@ -3,9 +3,8 @@
 
 #include <string>
 
-#include "json.h"
 #include "geometry.h"
-#include "map_utils.h"
+#include "json.h"
 #include "string_utils.h"
 
 namespace elfin {
@@ -21,12 +20,10 @@ struct UIObject : public Printable {
 
     /* dtors */
     virtual ~UIObject() {};
-    
+
     /* printers */
     virtual void print_to(std::ostream& os) const;
 };
-
-typedef SPMap<UIObject> UIObjectMap;
 
 }
 

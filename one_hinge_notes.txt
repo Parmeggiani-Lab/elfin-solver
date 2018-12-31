@@ -1,6 +1,6 @@
 // Need to implement:
 //  - pick_tip_node(): returns tip node, may be random. For 1H, it must not
-//    return the fixed tip.
+//    return the fixed tip unless there are no other nodes.
 //
 //  - mutation_entry_check(): checks free_chains_.size() etc. are correct on
 //    entry to a mutation method. Called before calling mutation methods, from

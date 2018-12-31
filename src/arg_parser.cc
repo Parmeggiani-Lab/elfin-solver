@@ -71,11 +71,11 @@ ArgBundle const* ArgParser::match_arg_bundle(char const* arg_in) const {
 void ArgParser::check_options() const {
     // Files.
     PANIC_IF(
-        options_.xdb == "",
+        options_.xdb_file == "",
         "No xdb path provided.\n");
 
     PANIC_IF(
-        not JUtil.file_exists(options_.xdb.c_str()),
+        not JUtil.file_exists(options_.xdb_file.c_str()),
         "xdb file could not be found.\n");
 
     PANIC_IF(options_.spec_file == "",
@@ -182,7 +182,7 @@ void ArgParser::parse_options(int const argc, char const* const argv[]) {
     bool ArgParser::FUNC_NAME(std::string const& arg_in)
 
 ARG_PARSER_CALLBACK_DEF(set_xdb) {
-    options_.xdb = arg_in;
+    options_.xdb_file = arg_in;
     return true;
 }
 

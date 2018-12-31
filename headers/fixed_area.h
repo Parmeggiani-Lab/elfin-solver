@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "ui_object.h"
+#include "ui_module.h"
 #include "map_utils.h"
 
 namespace elfin {
@@ -11,7 +11,7 @@ namespace elfin {
 struct FixedArea
 {
     std::string const name;
-    UIObjectMap const modules;
+    UIModuleMap const modules;
 
     FixedArea(std::string const& _name, JSON const& json);
 };

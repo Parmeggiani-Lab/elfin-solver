@@ -9,8 +9,7 @@ namespace elfin {
 TestStat HingeTeam::test() {
     TestStat ts;
 
-    InputManager::load_test_config(
-        "examples/H_1h.json");
+    InputManager::load_test_config("examples/H_1h.json");
 
     // Construction test.
     {
@@ -18,8 +17,6 @@ TestStat HingeTeam::test() {
         auto& [wa_name, wa] = *begin(SPEC.work_areas());
         HingeTeam team(wa.get(), tests::H_1h_recipe);
         team.calc_score();
-
-        TRACE_NOMSG(team.free_chains_.size() != 2);
 
         ts.tests++;
         if (team.score() > 1e-6) {

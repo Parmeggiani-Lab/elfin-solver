@@ -4,8 +4,9 @@
 
 #include "string_utils.h"
 #include "random_utils.h"
-#include "input_manager.h"
 #include "debug_utils.h"
+#include "options.h"
+#include "json.h"
 
 // #define PRINT_ROULETTES
 // #define PRINT_DB
@@ -137,8 +138,10 @@ std::string const& key, JSON const& json, ModuleType mod_type
 
 typedef std::function<void(JSON_PARSER_PARAMS)> JSONParser;
 
-void Database::parse_from_json(JSON const& xdb) {
+void Database::parse(Options const& options) {
     reset();
+
+    JSON const& xdb = parse_json(options.xdb_file);
 
     // Define lambas for code reuse
     JSON const& singles = xdb["modules"]["singles"];
@@ -175,7 +178,7 @@ void Database::parse_from_json(JSON const& xdb) {
             chain_names.push_back(chain_name);
         }
 
-        float const radius = json["radii"][OPTIONS.radius_type];
+        float const radius = json["radii"][options.radius_type];
 
         all_mods_.push_back(
             std::make_unique<ProtoModule>(

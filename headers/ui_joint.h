@@ -10,17 +10,15 @@
 
 namespace elfin {
 
-class UIJoint : public UIObject {
-public:
+struct UIJoint : public UIObject {
     /* types */
     struct Occupant : public Printable {
         /* data */
         std::string parent_name = "";
-        std::string name = "";
-        UIObject const* module = nullptr;
+        UIModule const* ui_module = nullptr;
 
         /* dtors */
-        virtual ~Occupant() {};
+        virtual ~Occupant() {}
 
         /* printers */
         virtual void print_to(std::ostream& os) const;

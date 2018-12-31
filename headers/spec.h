@@ -5,9 +5,12 @@
 
 #include "work_area.h"
 #include "fixed_area.h"
-#include "json.h"
 
 namespace elfin {
+
+/* Fwd Decl */
+struct Options;
+class Database;
 
 class Spec {
 protected:
@@ -31,7 +34,7 @@ public:
     }
 
     /* modifiers */
-    void parse_from_json(JSON const& json);
+    void parse(Options const& options);
 };
 
 }  /* elfin */

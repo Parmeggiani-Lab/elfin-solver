@@ -37,21 +37,21 @@ void InputManager::setup_cutoffs() {
 
 /* public */
 void InputManager::parse_options(int const argc, const char ** argv) {
-    // Parse arguments into options struct
+    // Parse arguments into options struct.
     instance().options_ = ArgParser(argc, argv).get_options();
 
-    // Create output dir if not exists
+    // Create output dir if not exists.
     JUtil.mkdir_ifn_exists(OPTIONS.output_dir.c_str());
 
-    // Setup data members
+    // Setup data members.
     setup_cutoffs();
 }
 
 void InputManager::setup() {
-    instance().xdb_.parse_from_json(parse_json(OPTIONS.xdb));
+    instance().xdb_.parse(OPTIONS);
 
     JUtil.info("Using spec file: %s\n", OPTIONS.spec_file.c_str());
-    instance().spec_.parse_from_json(parse_json(OPTIONS.spec_file));
+    instance().spec_.parse(OPTIONS);
 
     JUtil.info("Spec parsed %zu fixed areas and %zu work areas\n",
                SPEC.fixed_areas().size(), SPEC.work_areas().size());

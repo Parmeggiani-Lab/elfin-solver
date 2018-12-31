@@ -16,11 +16,17 @@ private:
     /*modifiers */
     std::unique_ptr<PImpl> make_pimpl();
 protected:
+    /* data */
+    NodeKey hinge_;
+
     /* accessors */
     virtual HingeTeam* virtual_clone() const;
+    // virtual NodeKey pick_tip_node() const;
+    // virtual void mutation_invariant_check() const;
 
     /* modifiers */
     virtual void virtual_copy(NodeTeam const& other);
+    virtual void calc_checksum();
     virtual void calc_score();
 
 public:

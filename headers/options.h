@@ -8,7 +8,7 @@ namespace elfin {
 struct Options {
     bool valid = true;
 
-    std::string xdb = "xdb.json";
+    std::string xdb_file = "xdb.json";
     std::string spec_file = "";
     std::string config_file = "";
     std::string output_dir = "output";

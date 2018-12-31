@@ -19,6 +19,9 @@ NodeTeamSP NodeTeam::create_team(WorkArea const* const work_area) {
     case WorkType::HINGED:
         team_up = std::make_unique<HingeTeam>(work_area);
         break;
+    // case WorkType::DOUBLE_HINGED:
+    //     team_up = std::make_unique<DoubleHingeTeam>(work_area);
+    //     break;
     default:
         bad_work_type(work_area->type);
         return nullptr; // Suppress warning.
