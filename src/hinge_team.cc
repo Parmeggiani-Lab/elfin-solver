@@ -89,7 +89,7 @@ void HingeTeam::add_node_check(ProtoModule const* const prot) const {
     }
 }
 
-bool HingeTeam::can_delete_tip(NodeKey const tip) const {
+bool HingeTeam::can_modify(NodeKey const tip) const {
     return tip != hinge_;
 }
 

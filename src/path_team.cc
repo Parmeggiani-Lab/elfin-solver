@@ -8,7 +8,7 @@
 
 // #define NO_ERODE
 // #define NO_DELETE
-#define NO_INSERT
+// #define NO_INSERT
 #define NO_SWAP
 #define NO_CROSS
 
@@ -318,13 +318,12 @@ struct PathTeam::PImpl {
                 size_t const num_links = curr_node->links().size();
 
                 if (num_links == 1) {
-                    //
-                    // curr_node is a tip node, which can always be deleted trivially.
-                    // Use ProtoLink* = nullptr to mark a tip node. Pointers
-                    // src and dst are not used.
-                    //
-
-                    if (_.can_delete_tip(curr_node)) {
+                    if ( _.can_modify(curr_node)) {
+                        //
+                        // curr_node is a tip node, which can always be deleted trivially.
+                        // Use ProtoLink* = nullptr to mark a tip node. Pointers
+                        // src and dst are not used.
+                        //
                         delete_points.emplace_back(
                             /*delete_node=*/ curr_node,
                             /*src=*/ FreeChain(),
@@ -371,6 +370,8 @@ struct PathTeam::PImpl {
                 }
             } while (not path_gen.is_done());
 
+            // delete_points might be empty (if HingeTeam has no other nodes
+            // than hinge_).
             if (not delete_points.empty()) {
                 // Delete a node using a random deletable point.
                 auto const& delete_point = random::pick(delete_points);
@@ -441,17 +442,17 @@ struct PathTeam::PImpl {
             std::vector<mutation::InsertPoint> insert_points;
 
             // Starting at either end is fine.
-            auto start_node = begin(_.free_chains_)->node;
+            auto start_node = _.pick_tip_chain().node;
             auto path_gen = start_node->gen_path();
 
             NodeKey curr_node = nullptr;
-            auto next_node = path_gen.next();  // Starts with start_node.
+            auto next_node = path_gen.next();
             do {
                 curr_node = next_node;
                 next_node = path_gen.next();  // Can be nullptr.
                 size_t const num_links = curr_node->links().size();
 
-                if (num_links == 1) {
+                if (num_links == 1 and _.can_modify(curr_node)) {
                     //
                     // curr_node is a tip node. A new node can be inserted on the
                     // unconnected terminus of a tip node trivially. Use nullptr
@@ -463,8 +464,9 @@ struct PathTeam::PImpl {
                     // [prev_node] <---- [curr_node] ----X
                     //
 
-                    FreeChain const src(curr_node, TerminusType::NONE, 0);
-                    insert_points.emplace_back(src, FreeChain());
+                    insert_points.emplace_back(
+                        FreeChain(curr_node, TerminusType::NONE, 0),
+                        FreeChain());
                 }
 
                 if (next_node) {
@@ -488,38 +490,39 @@ struct PathTeam::PImpl {
                 }
             } while (not path_gen.is_done());
 
-            // insert_points will at least contain the tip nodes.
-            DEBUG_NOMSG(insert_points.empty());
-
-            // Insert a node using a random insert point/
-            auto const& insert_point = random::pick(insert_points);
-            if (insert_point.dst.node) {
-                // This is a non-tip node.
-                build_bridge(insert_point);
-            }
-            else {
-                // This is a tip node. Inserting is the same as grow_tip().
-                auto fc_itr = find_if(begin(_.free_chains_),
-                                      end(_.free_chains_),
-                [&](auto const & fc) {
-                    return fc.node == insert_point.src.node;
-                });
-
-                if (fc_itr == end(_.free_chains_)) {
-                    JUtil.error("FreeChain not found for %s\n",
-                                insert_point.src.node->to_string().c_str());
-                    JUtil.error("Available FreeChain(s):\n");
-                    for (FreeChain const& fc : _.free_chains_) {
-                        JUtil.error("%s\n", fc.to_string().c_str());
-                    }
-                    TRACE_NOMSG("FreeChain not found");
+            // insert_points might be empty (if HingeTeam has no other nodes
+            // than hinge_).
+            if (not insert_points.empty()) {
+                // Insert a node using a random insert point
+                auto const& insert_point = random::pick(insert_points);
+                if (insert_point.dst.node) {
+                    // This is a non-tip node.
+                    build_bridge(insert_point);
                 }
                 else {
-                    grow_tip(*fc_itr);
-                }
-            }
+                    // This is a tip node. Inserting is the same as grow_tip().
+                    auto fc_itr = find_if(begin(_.free_chains_),
+                                          end(_.free_chains_),
+                    [&](auto const & fc) {
+                        return fc.node == insert_point.src.node;
+                    });
 
-            mutate_success = true;
+                    if (fc_itr == end(_.free_chains_)) {
+                        JUtil.error("FreeChain not found for %s\n",
+                                    insert_point.src.node->to_string().c_str());
+                        JUtil.error("Available FreeChain(s):\n");
+                        for (FreeChain const& fc : _.free_chains_) {
+                            JUtil.error("%s\n", fc.to_string().c_str());
+                        }
+                        TRACE_NOMSG("FreeChain not found");
+                    }
+                    else {
+                        grow_tip(*fc_itr);
+                    }
+                }
+
+                mutate_success = true;
+            }
         }
 #endif
         return mutate_success;
@@ -754,7 +757,7 @@ void PathTeam::add_node_check(ProtoModule const* const prot) const {
     DEBUG(n_intf != 2, "%zu\n", n_intf);
 }
 
-bool PathTeam::can_delete_tip(NodeKey const tip) const {
+bool PathTeam::can_modify(NodeKey const tip) const {
     return true;
 }
 
