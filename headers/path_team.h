@@ -39,6 +39,7 @@ protected:
     // method. Called before calling mutation methods from evolve().
     virtual void mutation_invariance_check() const;
     virtual void add_node_check(ProtoModule const* const prot) const;
+    virtual bool can_delete_tip(NodeKey const tip) const;
 
     /* modifiers */
     virtual void restart();

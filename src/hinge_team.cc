@@ -62,6 +62,7 @@ FreeChain const& HingeTeam::pick_tip_chain() const {
         DEBUG_NOMSG(not hinge_);
 
         for (auto const& fc : free_chains_) {
+            // There should be only one instance that this condition is true.
             if (fc.node != hinge_) {
                 return fc;
             }
@@ -86,6 +87,10 @@ void HingeTeam::add_node_check(ProtoModule const* const prot) const {
     if (hinge_) {
         PathTeam::add_node_check(prot);
     }
+}
+
+bool HingeTeam::can_delete_tip(NodeKey const tip) const {
+    return tip != hinge_;
 }
 
 /* modifiers */

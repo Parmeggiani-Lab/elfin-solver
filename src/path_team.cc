@@ -7,7 +7,7 @@
 #include "mutation.h"
 
 // #define NO_ERODE
-#define NO_DELETE
+// #define NO_DELETE
 #define NO_INSERT
 #define NO_SWAP
 #define NO_CROSS
@@ -324,11 +324,13 @@ struct PathTeam::PImpl {
                     // src and dst are not used.
                     //
 
-                    delete_points.emplace_back(
-                        /*delete_node=*/ curr_node,
-                        /*src=*/ FreeChain(),
-                        /*dst=*/ FreeChain(),
-                        /*skipper=*/ nullptr);
+                    if (_.can_delete_tip(curr_node)) {
+                        delete_points.emplace_back(
+                            /*delete_node=*/ curr_node,
+                            /*src=*/ FreeChain(),
+                            /*dst=*/ FreeChain(),
+                            /*skipper=*/ nullptr);
+                    }
                 }
                 else if (num_links == 2) {
                     //
@@ -369,63 +371,62 @@ struct PathTeam::PImpl {
                 }
             } while (not path_gen.is_done());
 
-            // delete_points will at least contain the tip nodes.
-            DEBUG_NOMSG(delete_points.empty());
+            if (not delete_points.empty()) {
+                // Delete a node using a random deletable point.
+                auto const& delete_point = random::pick(delete_points);
+                if (delete_point.skipper) {
+                    //
+                    // This is NOT a tip node. Need to do some clean up
+                    //
+                    // Link up neighbor1 and neighbor2
+                    // X--[neighbor1]--src->-<-dst                 dst->-<-src--[neighbor2]--...
+                    //                 (  link1  )                 (  link2  )
+                    //                 vvvvvvvvvvv                 vvvvvvvvvvv
+                    //                 dst->-<-src--[delete_node]--src->-<-dst
+                    //                 ^^^                                 ^^^
+                    //                (src)                               (dst)
+                    //
+                    auto neighbor1 = get_node(delete_point.src.node);
+                    auto neighbor2 = get_node(delete_point.dst.node);
 
-            // Delete a node using a random deletable point.
-            auto const& delete_point = random::pick(delete_points);
-            if (delete_point.skipper) {
-                //
-                // This is NOT a tip node. Need to do some clean up
-                //
-                // Link up neighbor1 and neighbor2
-                // X--[neighbor1]--src->-<-dst                 dst->-<-src--[neighbor2]--...
-                //                 (  link1  )                 (  link2  )
-                //                 vvvvvvvvvvv                 vvvvvvvvvvv
-                //                 dst->-<-src--[delete_node]--src->-<-dst
-                //                 ^^^                                 ^^^
-                //                (src)                               (dst)
-                //
-                auto neighbor1 = get_node(delete_point.src.node);
-                auto neighbor2 = get_node(delete_point.dst.node);
+                    neighbor1->remove_link(delete_point.src);
+                    neighbor2->remove_link(delete_point.dst);
+                    //
+                    // X--[neighbor1]--X                                     X--[neighbor2]--...
+                    //                 (  link1  )                 (  link2  )
+                    //                 vvvvvvvvvvv                 vvvvvvvvvvv
+                    //                 dst->-<-src--[delete_node]--src->-<-dst
+                    //                 ----------------arrow1---------------->
+                    //
 
-                neighbor1->remove_link(delete_point.src);
-                neighbor2->remove_link(delete_point.dst);
-                //
-                // X--[neighbor1]--X                                     X--[neighbor2]--...
-                //                 (  link1  )                 (  link2  )
-                //                 vvvvvvvvvvv                 vvvvvvvvvvv
-                //                 dst->-<-src--[delete_node]--src->-<-dst
-                //                 ----------------arrow1---------------->
-                //
+                    // Create links between neighbor1 and neighbor2.
+                    Link const arrow1(delete_point.src,
+                                      delete_point.skipper,
+                                      delete_point.dst);
+                    neighbor1->add_link(arrow1);
+                    neighbor2->add_link(arrow1.reversed());
+                    //
+                    //         link1->dst     link2->dst
+                    //                  vvv     vvv
+                    //  X--[neighbor1]--src->-<-dst
+                    //                  dst->-<-src--[neighbor2]--...
+                    //                  ^^^     ^^^
+                    //         link1->dst     link2->dst
+                    //
 
-                // Create links between neighbor1 and neighbor2.
-                Link const arrow1(delete_point.src,
-                                  delete_point.skipper,
-                                  delete_point.dst);
-                neighbor1->add_link(arrow1);
-                neighbor2->add_link(arrow1.reversed());
-                //
-                //         link1->dst     link2->dst
-                //                  vvv     vvv
-                //  X--[neighbor1]--src->-<-dst
-                //                  dst->-<-src--[neighbor2]--...
-                //                  ^^^     ^^^
-                //         link1->dst     link2->dst
-                //
+                    _.nodes_.erase(delete_point.delete_node);
 
-                _.nodes_.erase(delete_point.delete_node);
+                    // delete_node is guranteed to not be a tip so no need to clean up
+                    // _.free_chains_.
+                    fix_limb_transforms(arrow1);
+                }
+                else {
+                    // This is a tip node.
+                    nip_tip(delete_point.delete_node);
+                }
 
-                // delete_node is guranteed to not be a tip so no need to clean up
-                // _.free_chains_.
-                fix_limb_transforms(arrow1);
+                mutate_success = true;
             }
-            else {
-                // This is a tip node.
-                nip_tip(delete_point.delete_node);
-            }
-
-            mutate_success = true;
         }
 #endif
         return mutate_success;
@@ -751,6 +752,10 @@ void PathTeam::add_node_check(ProtoModule const* const prot) const {
     // Only allow basic modules i.e. those with exactly 2 interfaces.
     size_t const n_intf = prot->counts().all_interfaces();
     DEBUG(n_intf != 2, "%zu\n", n_intf);
+}
+
+bool PathTeam::can_delete_tip(NodeKey const tip) const {
+    return true;
 }
 
 /* modifiers */
