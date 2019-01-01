@@ -95,7 +95,8 @@ struct EvolutionSolver::PImpl {
 
         // Update best solutions.
         best_sols.clear();
-        for (size_t j = 0; j < OPTIONS.keep_n; j++) {
+        size_t const max_keep = std::min(OPTIONS.keep_n, OPTIONS.ga_pop_size);
+        for (size_t j = 0; j < max_keep; j++) {
             best_sols.emplace_back(pop.front_buffer()->at(j)->clone());
             has_result_ |= true;
         }

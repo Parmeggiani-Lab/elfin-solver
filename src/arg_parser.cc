@@ -95,16 +95,6 @@ void ArgParser::check_options() const {
         JUtil.mkdir_ifn_exists(options_.output_dir.c_str());
     }
 
-    // Settings.
-    PANIC_IF(options_.ga_pop_size < 0,
-             "Population size cannot be < 0.\n");
-
-    PANIC_IF(options_.ga_iters < 0,
-             "Number of iterations cannot be < 0.\n");
-
-    PANIC_IF(options_.len_dev < 0,
-             "Candidate length deviation must be an integer > 0.\n");
-
     // GA params.
     PANIC_IF(options_.ga_survive_rate <= 0.0 or
              options_.ga_survive_rate >= 1.0,
@@ -112,10 +102,6 @@ void ArgParser::check_options() const {
 
     PANIC_IF(options_.avg_pair_dist < 0,
              "Average CoM distance must be > 0");
-
-    PANIC_IF(options_.keep_n < 0 or
-             options_.keep_n > options_.ga_pop_size,
-             "Number of best solutions to output must be > 0 and < ga_pop_size.\n");
 }
 
 std::string ArgParser::radius_types_setting_string() const {

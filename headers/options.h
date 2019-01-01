@@ -29,7 +29,7 @@ struct Options {
     // comparison
     float ga_stop_score = 0.001f;
 
-    long ga_stop_stagnancy = 50;
+    size_t ga_stop_stagnancy = 50;
 
     bool run_tests = false;
 
