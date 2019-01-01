@@ -16,9 +16,8 @@ std::unordered_set<std::string> const RADIUS_TYPES = {
 };
 
 /* free functions */
-void arg_parse_failure(
-    std::string const& arg_in,
-    ArgBundle const* argb) {
+void arg_parse_failure(std::string const& arg_in,
+                       ArgBundle const* argb) {
     JUtil.error("Argument parsing failed on string: \"%s\"\n", arg_in.c_str());
 
     if (argb) {
@@ -70,31 +69,26 @@ ArgBundle const* ArgParser::match_arg_bundle(char const* arg_in) const {
 
 void ArgParser::check_options() const {
     // Files.
-    PANIC_IF(
-        options_.xdb_file == "",
-        "No xdb path provided.\n");
+    PANIC_IF(options_.xdb_file == "",
+             "No xdb path provided.\n");
 
-    PANIC_IF(
-        not JUtil.file_exists(options_.xdb_file.c_str()),
-        "xdb file could not be found.\n");
+    PANIC_IF(not JUtil.file_exists(options_.xdb_file.c_str()),
+             "xdb file could not be found.\n");
 
     PANIC_IF(options_.spec_file == "",
              "No input spec file given.\n");
 
-    PANIC_IF(
-        not JUtil.file_exists(options_.spec_file.c_str()),
-        "Input file could not be found.\n");
+    PANIC_IF(not JUtil.file_exists(options_.spec_file.c_str()),
+             "Input file could not be found.\n");
 
     if (options_.config_file != "") {
-        PANIC_IF(
-            not JUtil.file_exists(options_.config_file.c_str()),
-            "Settings file \"%s\" could not be found\n",
-            options_.config_file.c_str());
+        PANIC_IF(not JUtil.file_exists(options_.config_file.c_str()),
+                 "Settings file \"%s\" could not be found\n",
+                 options_.config_file.c_str());
     }
 
-    PANIC_IF(
-        options_.output_dir == "",
-        "No output directory given.");
+    PANIC_IF(options_.output_dir == "",
+             "No output directory given.");
 
     if (not JUtil.file_exists(options_.output_dir.c_str())) {
         JUtil.warn("Output directory does not exist; creating...\n");
@@ -192,7 +186,8 @@ ARG_PARSER_CALLBACK_DEF(set_output_dir) {
 }
 
 ARG_PARSER_CALLBACK_DEF(set_len_dev) {
-    options_.len_dev = JUtil.parse_long(arg_in.c_str());
+    long const l = JUtil.parse_long(arg_in.c_str());
+    options_.len_dev = l < 0 ? 0 : l;
     return true;
 }
 
@@ -207,12 +202,14 @@ ARG_PARSER_CALLBACK_DEF(set_seed) {
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_pop_size) {
-    options_.ga_pop_size = JUtil.parse_long(arg_in.c_str());
+    long const l = JUtil.parse_long(arg_in.c_str());
+    options_.ga_pop_size = l < 0 ? 0 : l;
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_iters) {
-    options_.ga_iters = JUtil.parse_long(arg_in.c_str());
+    long const l = JUtil.parse_long(arg_in.c_str());
+    options_.ga_iters = l < 0 ? 0 : l;
     return true;
 }
 
@@ -227,13 +224,15 @@ ARG_PARSER_CALLBACK_DEF(set_ga_stop_score) {
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_stop_stagnancy) {
-    options_.ga_stop_stagnancy = JUtil.parse_long(arg_in.c_str());
+    long const l = JUtil.parse_long(arg_in.c_str());
+    options_.ga_stop_stagnancy = l < 0 ? 0 : l;
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_verbosity) {
     // Call jutil function to set global log level.
-    JUtil.set_log_lvl((JUtilLogLvl) JUtil.parse_long(arg_in.c_str()));
+    long const l = JUtil.parse_long(arg_in.c_str());
+    JUtil.set_log_lvl(static_cast<JUtilLogLvl>(l < 0 ? 0 : l));
     return true;
 }
 
@@ -249,12 +248,14 @@ ARG_PARSER_CALLBACK_DEF(set_device) {
 }
 
 ARG_PARSER_CALLBACK_DEF(set_n_workers) {
-    options_.n_workers = JUtil.parse_long(arg_in.c_str());
+    long const l = JUtil.parse_long(arg_in.c_str());
+    options_.n_workers = l < 0 ? 0 : l;
     return true;
 }
 
 ARG_PARSER_CALLBACK_DEF(set_keep_n) {
-    options_.keep_n = JUtil.parse_long(arg_in.c_str());
+    long const l = JUtil.parse_long(arg_in.c_str());
+    options_.keep_n = l < 0 ? 0 : l;
     return true;
 }
 

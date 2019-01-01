@@ -12,7 +12,9 @@
 namespace elfin {
 
 auto get_score_msg_format = []() {
-    size_t gen_digits = std::ceil(std::log(OPTIONS.ga_iters) / std::log(10));
+    size_t const gen_digits =
+        gen_digits == 0 ? 5 :
+        std::ceil(std::log(OPTIONS.ga_iters) / std::log(10));
     return string_format(
                ("Generation #%%%zuzu: "
                 "best=%%.2f (%%.2f/module), "
@@ -40,14 +42,14 @@ struct EvolutionSolver::PImpl {
         debug_pop_print_n_(debug_pop_print_n) {}
 
     /* modifiers */
-    bool collect_gen_data(
-        Population const& pop,
-        size_t const gen_id,
-        double const gen_start_time,
-        double& tot_gen_time,
-        size_t& stagnant_count,
-        float& lastgen_best_score,
-        NodeTeamSPList& best_sols) {
+    bool collect_gen_data(Population const& pop,
+                          size_t const gen_id,
+                          double const gen_start_time,
+                          double& tot_gen_time,
+                          size_t& stagnant_count,
+                          float& lastgen_best_score,
+                          NodeTeamSPList& best_sols)
+    {
         bool should_stop_ga = false;
 
         // Stat collection
@@ -109,18 +111,18 @@ struct EvolutionSolver::PImpl {
             should_stop_ga = true;
         }
         else {
-            if (OPTIONS.ga_stop_stagnancy != -1 and
-                    stagnant_count >= OPTIONS.ga_stop_stagnancy) {
+            if (OPTIONS.ga_stop_stagnancy == 0 or
+                    stagnant_count < OPTIONS.ga_stop_stagnancy) {
+                JUtil.info("Current stagnancy: %zu, max: %ld\n\n",
+                           stagnant_count,
+                           OPTIONS.ga_stop_stagnancy);
+            }
+            else {
                 fprintf(stdout, "\n");
                 JUtil.warn(
                     "Solver reached stagnancy limit (%ld)\n",
                     OPTIONS.ga_stop_stagnancy);
                 should_stop_ga = true;
-            }
-            else {
-                JUtil.info("Current stagnancy: %zu, max: %ld\n\n",
-                           stagnant_count,
-                           OPTIONS.ga_stop_stagnancy);
             }
         }
 
@@ -128,7 +130,8 @@ struct EvolutionSolver::PImpl {
     }
 
     /* printers */
-    void print_start_msg(WorkArea const& wa) const {
+    void print_start_msg(WorkArea const& wa) const
+    {
         JUtil.info("Length guess=%zu; Spec has %d points\n",
                    wa.target_size, wa.points.size());
         JUtil.info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
@@ -157,9 +160,9 @@ struct EvolutionSolver::PImpl {
                    minutes, seconds, milliseconds);
     }
 
-    void print_pop(
-        std::string const& title,
-        Population const& pop) const {
+    void print_pop(std::string const& title,
+                   Population const& pop) const
+    {
         size_t const max_n =
             std::min(debug_pop_print_n_, pop.front_buffer()->size());
 
@@ -200,7 +203,8 @@ struct EvolutionSolver::PImpl {
             float lastgen_best_score = INFINITY;
 
             if (!OPTIONS.dry_run) {
-                for (size_t gen_id = 0; gen_id < OPTIONS.ga_iters; gen_id++) {
+                size_t gen_id = 0;
+                while (OPTIONS.ga_iters == 0 or gen_id < OPTIONS.ga_iters) {
                     double const gen_start_time = JUtil.get_timestamp_us();
 
                     population.evolve();
@@ -224,6 +228,8 @@ struct EvolutionSolver::PImpl {
                     if (should_break) break;
 
                     population.swap_buffer();
+
+                    gen_id++;
                 }
             }
         }
