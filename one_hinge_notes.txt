@@ -29,8 +29,8 @@ sever_limb():
 // copy_limb():
 //     // No change
 
-erode_mutate():
-    // Receive tip node choice from virtual pick_tip_node()
+// erode_mutate():
+//     // Receive tip node choice from virtual pick_tip_node()
 
 delete_mutate():
     // Receive tip node choice from virtual pick_tip_node()
