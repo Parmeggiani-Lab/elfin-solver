@@ -42,11 +42,10 @@ struct DeletePoint {
     FreeChain const     src;
     FreeChain const     dst;
     ProtoLink const*    skipper;
-    DeletePoint(
-        NodeKey _delete_node,
-        FreeChain const&  _src,
-        FreeChain const&  _dst,
-        ProtoLink const* _skipper) :
+    DeletePoint(NodeKey const _delete_node,
+                FreeChain const&  _src,
+                FreeChain const&  _dst,
+                ProtoLink const* _skipper) :
         delete_node(_delete_node),
         src(_src),
         dst(_dst),
@@ -64,9 +63,8 @@ struct InsertPoint {
     FreeChain const             src;
     FreeChain const             dst;
     FreeChain::BridgeList const bridges;
-    InsertPoint(
-        FreeChain const& _src,
-        FreeChain const& _dst) :
+    InsertPoint(FreeChain const& _src,
+                FreeChain const& _dst) :
         src(_src),
         dst(_dst),
         bridges(dst.node ?
@@ -76,26 +74,24 @@ struct InsertPoint {
 
 struct SwapPoint : public InsertPoint {
     NodeKey const del_node;
-    SwapPoint(
-        FreeChain const& _src,
-        NodeKey _del_node,
-        FreeChain const& _dst) :
+    SwapPoint(FreeChain const& _src,
+              NodeKey const _del_node,
+              FreeChain const& _dst) :
         InsertPoint(_src, _dst),
         del_node(_del_node) {}
 };
 
 struct CrossPoint {
-    ProtoLink const*    pt_link;
-    Link const*         m_arrow;
-    bool const          m_rev;
-    Link const*         f_arrow;
-    bool const          f_rev;
-    CrossPoint(
-        ProtoLink const* _pt_link,
-        Link const* _m_arrow,
-        bool const _m_rev,
-        Link const* _f_arrow,
-        bool const _f_rev) :
+    ProtoLink const* const  pt_link;
+    Link const* const       m_arrow;
+    bool const              m_rev;
+    Link const* const       f_arrow;
+    bool const              f_rev;
+    CrossPoint(ProtoLink const* const _pt_link,
+               Link const* const _m_arrow,
+               bool const _m_rev,
+               Link const* const _f_arrow,
+               bool const _f_rev) :
         pt_link(_pt_link),
         m_arrow(_m_arrow),
         m_rev(_m_rev),
