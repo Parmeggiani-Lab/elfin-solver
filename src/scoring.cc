@@ -10,12 +10,12 @@ namespace elfin {
 
 namespace scoring {
 
-void calc_alignment(
-    V3fList const& mobile,
-    V3fList const& ref,
-    elfin::Mat3f& rot,
-    Vector3f& tran,
-    float& rms) {
+void calc_alignment(V3fList const& mobile,
+                    V3fList const& ref,
+                    elfin::Mat3f& rot,
+                    Vector3f& tran,
+                    float& rms)
+{
     V3fList const& mobile_resampled =
         mobile.size() == ref.size() ?
         mobile : _resample(ref, mobile);
@@ -24,7 +24,12 @@ void calc_alignment(
 }
 
 float score(V3fList const& mobile, V3fList const& ref) {
-    if (mobile.empty() or ref.empty()) {
+    if (mobile.size() == 1 and ref.size() == 1) {
+        // Single points be trivially superimposed.
+        return 0;
+    }
+
+    if (mobile.size() <= 1 or ref.size() <= 1) {
         return INFINITY;
     }
 
@@ -61,9 +66,9 @@ float score(V3fList const& mobile, V3fList const& ref) {
 //                 (double) 1 / n);
 // }
 
-V3fList _resample(
-    V3fList const& ref,
-    V3fList const& pts) {
+V3fList _resample(V3fList const& ref,
+                  V3fList const& pts)
+{
     if (ref.size() == pts.size())
         return pts;
 
@@ -118,7 +123,9 @@ V3fList _resample(
     }
 
     // Is something wrong with the resampling algorithm?
-    TRACE_NOMSG(resampled.size() != ref.size());
+    DEBUG(resampled.size() != ref.size(),
+          "resampled.size()=%zu, ref.size()=%zu",
+          resampled.size(), ref.size());
 
     return resampled;
 }
@@ -126,12 +133,11 @@ V3fList _resample(
 // These kabsch(mostly just SVD) functions taken from the Hybridization
 // protocol of the Rosetta software suite, TMalign.cc. I split it into 2
 // functions so there's no mode switching.
-void _rosetta_kabsch_align(
-    V3fList const& mobile,
-    V3fList const& ref,
-    elfin::Mat3f& rot,
-    Vector3f& tran,
-    float& rms)
+void _rosetta_kabsch_align(V3fList const& mobile,
+                           V3fList const& ref,
+                           elfin::Mat3f& rot,
+                           Vector3f& tran,
+                           float& rms)
 {
     size_t const n = mobile.size();
     size_t const ref_n = ref.size();
@@ -399,9 +405,8 @@ void _rosetta_kabsch_align(
     }
 }
 
-float _rosetta_kabsch_rms(
-    V3fList const& mobile,
-    V3fList const& ref)
+float _rosetta_kabsch_rms(V3fList const& mobile,
+                          V3fList const& ref)
 {
     size_t const n = mobile.size();
     size_t const ref_n = ref.size();

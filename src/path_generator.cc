@@ -72,7 +72,6 @@ NodeKey PathGenerator::next()
     if (curr_node_) {
         size_t const num_neighbors = curr_node_->links().size();
         DEBUG_NOMSG(num_neighbors > 2);
-        DEBUG_NOMSG(num_neighbors == 0);
 
         for (auto& link : curr_node_->links()) {
             NodeKey sp = link.dst().node;

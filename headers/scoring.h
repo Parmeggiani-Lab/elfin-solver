@@ -20,12 +20,11 @@ float score(V3fList const& mobile, V3fList const& ref);
 // float simple_rms(V3fList const& mobile, V3fList const& ref);
 
 // A wrapper for Rosetta's Kabsch in Transform+RMS mode for point lists.
-void calc_alignment(
-    V3fList const& mobile,
-    V3fList const& ref,
-    elfin::Mat3f& rot,
-    Vector3f& tran,
-    float& rms);
+void calc_alignment(V3fList const& mobile,
+                    V3fList const& ref,
+                    elfin::Mat3f& rot,
+                    Vector3f& tran,
+                    float& rms);
 
 /* tests */
 TestStat test();
@@ -44,16 +43,14 @@ V3fList _resample(V3fList const& ref, V3fList const& pts);
 // rms    - sum of w*(ux+t-y)**2 over all atom pairs              (output)
 // mode   - 0:calculate rms only                                  (input)
 //          1:calculate rms,u,t (takes longer)
-void _rosetta_kabsch_align(
-    V3fList const& mobile,
-    V3fList const& ref,
-    elfin::Mat3f& rot,
-    Vector3f& tran,
-    float& rms);
+void _rosetta_kabsch_align(V3fList const& mobile,
+                           V3fList const& ref,
+                           elfin::Mat3f& rot,
+                           Vector3f& tran,
+                           float& rms);
 
-float _rosetta_kabsch_rms(
-    V3fList const& mobile,
-    V3fList const& ref);
+float _rosetta_kabsch_rms(V3fList const& mobile,
+                          V3fList const& ref);
 
 }  /* scroing */
 

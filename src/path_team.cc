@@ -236,48 +236,50 @@ struct PathTeam::PImpl {
 
         bool mutate_success = false;
 #ifndef NO_ERODE
-        // Pick random tip node if not specified.
-        NodeKey tip_node = _.get_tip_chain(/*mutable_hint=*/true).node;
-        _.remove_free_chains(tip_node);
+        if (_.size() > 1) {
+            // Pick random tip node if not specified.
+            NodeKey tip_node = _.get_tip_chain(/*mutable_hint=*/true).node;
+            _.remove_free_chains(tip_node);
 
-        FreeChain last_free_chain;
-        float p = 1.0f;  // p for Probability.
+            FreeChain last_free_chain;
+            float p = 1.0f;  // p for Probability.
 
-        // Loop condition is always true on first entrance, hence do-while.
-        bool next_loop = false;
-        size_t const original_size = _.size();
-        do {
-            // Calculate next iteration condition - linearly falling
-            // probability.
-            p = (_.size() - 1) / original_size;
-            next_loop = random::get_dice_0to1() <= p;
+            // Loop condition is always true on first entrance, hence do-while.
+            bool next_loop = false;
+            size_t const original_size = _.size();
+            do {
+                // Calculate next iteration condition - linearly falling
+                // probability.
+                p = (_.size() - 1) / original_size;
+                next_loop = random::get_dice_0to1() <= p;
 
-            // Check node is tip node.
-            size_t const num_links = tip_node->links().size();
-            TRACE_NOMSG(num_links != 1);
+                // Check node is tip node.
+                size_t const num_links = tip_node->links().size();
+                TRACE(num_links != 1, "num_links=%zu", num_links);
 
-            FreeChain const& new_free_chain =
-                begin(tip_node->links())->dst();
-            NodeKey new_tip = new_free_chain.node;
+                FreeChain const& new_free_chain =
+                    begin(tip_node->links())->dst();
+                NodeKey new_tip = new_free_chain.node;
 
-            // Unlink
-            get_node(new_tip)->remove_link(new_free_chain);
+                // Unlink
+                get_node(new_tip)->remove_link(new_free_chain);
 
-            if (not next_loop) {
-                last_free_chain = new_free_chain;
-            }
+                if (not next_loop) {
+                    last_free_chain = new_free_chain;
+                }
 
-            _.nodes_.erase(tip_node);
+                _.nodes_.erase(tip_node);
 
-            tip_node = new_tip;
-        } while (next_loop);
+                tip_node = new_tip;
+            } while (next_loop);
 
-        // Restore chain.
-        _.free_chains_.push_back(last_free_chain);
+            // Restore chain.
+            _.free_chains_.push_back(last_free_chain);
 
-        regenerate();
+            regenerate();
 
-        mutate_success = true;
+            mutate_success = true;
+        }
 #endif // NO_ERODE
 
         return mutate_success;
@@ -287,7 +289,7 @@ struct PathTeam::PImpl {
 
         bool mutate_success = false;
 #ifndef NO_DELETE
-        if (not _.free_chains_.empty()) {
+        if (_.size() > 1) {
             // Walk through all nodes to collect delete points.
             std::vector<mutation::DeletePoint> delete_points;
 
@@ -685,9 +687,7 @@ FreeChain const& PathTeam::get_tip_chain(
     bool const mutable_hint) const
 {
     // PathTeam ignores mutable_hint.
-    auto fc_itr = begin(free_chains_);
-    advance(fc_itr, random::get_dice(free_chains_.size()));
-    return *fc_itr;
+    return random::pick(free_chains_);
 }
 
 void PathTeam::mutation_invariance_check() const {
