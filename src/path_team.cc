@@ -8,7 +8,7 @@
 
 // #define NO_ERODE
 #define NO_DELETE       // Seems to generate bad candidates
-// #define NO_INSERT 
+// #define NO_INSERT
 #define NO_SWAP         // Seems to generate bad candidates
 // #define NO_CROSS
 
@@ -23,16 +23,15 @@ struct PathTeam::PImpl {
     PImpl(PathTeam& interface) : _(interface) {}
 
     /*modifiers */
-    void fix_limb_transforms(Link const& arrow)
-    {
-        auto limb_gen = arrow.gen_path();
-        while (not limb_gen.is_done()) {
-            Link const* curr_link = limb_gen.curr_link();
-            auto curr_node = limb_gen.curr_node();
-            auto next_node = limb_gen.next();
+    NodeKey add_node(ProtoModule const* const prot,
+                     Transform const& tx) {
+        _.add_node_check(prot);
 
-            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
-        }
+        auto new_node = std::make_unique<Node>(prot, tx);
+        auto new_node_key = new_node.get();
+
+        _.nodes_.emplace(new_node_key, std::move(new_node));
+        return new_node_key;
     }
 
     NodeKey grow_tip(FreeChain const& free_chain_a,
@@ -89,6 +88,18 @@ struct PathTeam::PImpl {
         _.nodes_.erase(tip_node);
     }
 
+    void fix_limb_transforms(Link const& arrow)
+    {
+        auto limb_gen = arrow.gen_path();
+        while (not limb_gen.is_done()) {
+            Link const* curr_link = limb_gen.curr_link();
+            auto curr_node = limb_gen.curr_node();
+            auto next_node = limb_gen.next();
+
+            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
+        }
+    }
+
     void build_bridge(mutation::InsertPoint const& insert_point,
                       FreeChain::Bridge const* bridge = nullptr)
     {
@@ -106,8 +117,8 @@ struct PathTeam::PImpl {
         node2->remove_link(port2);
 
         // Create a new node in the middle.
-        auto new_node_key = _.add_node(bridge->pt_link1->module_,
-                                       node1->tx_ * bridge->pt_link1->tx_);
+        auto new_node_key = add_node(bridge->pt_link1->module_,
+                                     node1->tx_ * bridge->pt_link1->tx_);
         auto new_node = get_node(new_node_key);
 
         //
@@ -211,9 +222,6 @@ struct PathTeam::PImpl {
 
             // Occupy src chain.
             _.free_chains_.remove(src);
-            DEBUG(_.free_chains_.size() != 1,
-                  "%zu free chains\n",
-                  _.free_chains_.size());
 
             tip_node = grow_tip(src, curr_link->prototype());
             DEBUG(curr_link->dst().node->prototype_ != tip_node->prototype_,
@@ -621,17 +629,8 @@ struct PathTeam::PImpl {
                     if (sd) {
                         cross_points.emplace_back(
                             sd,
-                            m_arrow,            // { } --m_arrow--v { del  }
-                            f_arrow, false);    // { } --f_arrow--> { copy }
-                    }
-
-                    ProtoLink const* ss =
-                        m_arrow->src().find_link_to(f_arrow->src());
-                    if (ss) {
-                        cross_points.emplace_back(
-                            ss,
-                            m_arrow,            // {      } --m_arrow--v { del }
-                            f_arrow, true);     // { copy } <---f_rev--- {     }
+                            m_arrow,   // { } --m_arrow--v { del  }
+                            f_arrow);  // { } --f_arrow--> { copy }
                     }
                 }
             }
@@ -639,10 +638,9 @@ struct PathTeam::PImpl {
             if (not cross_points.empty()) {
                 auto const& cp = random::pick(cross_points);
 
-                Link m_arrow = *cp.m_arrow;  // Make a copy.
-                Link f_arrow = cp.f_rev ?
-                               cp.f_arrow->reversed() :
-                               *cp.f_arrow;  // Make a copy.
+                // Make copies.
+                Link m_arrow = *cp.m_arrow;
+                Link f_arrow = *cp.f_arrow;
 
                 // Always keep m_arrow.src, del m_arrow.dst, and copy from
                 // f_arrow.dst().
@@ -735,20 +733,9 @@ void PathTeam::virtual_copy(NodeTeam const& other) {
     }
 }
 
-NodeKey PathTeam::add_node(ProtoModule const* const prot,
-                           Transform const& tx) {
-    add_node_check(prot);
-
-    auto new_node = std::make_unique<Node>(prot, tx);
-    auto new_node_key = new_node.get();
-
-    nodes_.emplace(new_node_key, std::move(new_node));
-    return new_node_key;
-}
-
 NodeKey PathTeam::add_free_node(ProtoModule const* const prot,
                                 Transform const& tx) {
-    auto new_node_key = add_node(prot, tx);
+    auto new_node_key = pimpl_->add_node(prot, tx);
 
     for (auto& proto_chain : prot->chains()) {
         if (not proto_chain.n_term().links().empty()) {

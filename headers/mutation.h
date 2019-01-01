@@ -85,15 +85,12 @@ struct CrossPoint {
     ProtoLink const* const  pt_link;
     Link const* const       m_arrow;
     Link const* const       f_arrow;
-    bool const              f_rev;
     CrossPoint(ProtoLink const* const _pt_link,
                Link const* const _m_arrow,
-               Link const* const _f_arrow,
-               bool const _f_rev) :
+               Link const* const _f_arrow) :
         pt_link(_pt_link),
         m_arrow(_m_arrow),
-        f_arrow(_f_arrow),
-        f_rev(_f_rev) {}
+        f_arrow(_f_arrow) {}
 };
 
 /* free functions */

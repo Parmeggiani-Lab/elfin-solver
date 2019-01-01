@@ -45,8 +45,6 @@ protected:
     /* modifiers */
     virtual void restart();
     virtual void virtual_copy(NodeTeam const& other);
-    NodeKey add_node(ProtoModule const* const prot,
-                     Transform const& tx = Transform());
     NodeKey add_free_node(ProtoModule const* const prot,
                           Transform const& tx = Transform());
     void remove_free_chains(NodeKey const node);
