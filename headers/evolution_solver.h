@@ -5,6 +5,7 @@
 
 #include "population.h"
 #include "work_area.h"
+#include "move_heap.h"
 
 #define DEBUG_PRINT_POP 4
 
@@ -12,8 +13,16 @@ namespace elfin {
 
 /* types */
 struct TestStat;
-typedef std::vector<NodeTeamSP> NodeTeamSPList;
-typedef std::unordered_map <std::string, NodeTeamSPList > SolutionMap;
+
+// A MAX score heap (worst solutions at the top).
+typedef MoveHeap<NodeTeamSP,
+        std::vector<NodeTeamSP>,
+        NodeTeam::SPLess> TeamSPMinHeap;
+typedef std::priority_queue<NodeTeam const*,
+        std::vector<NodeTeam const*>,
+        NodeTeam::PtrGreater> TeamPtrMaxHeap;
+typedef std::unordered_map <std::string,
+        TeamSPMinHeap > SolutionMap;
 
 class EvolutionSolver {
 private:
@@ -22,14 +31,14 @@ private:
 
 public:
 	/* ctors */
-	EvolutionSolver(size_t const debug_pop_print_n=4);
+	EvolutionSolver(size_t const debug_pop_print_n = 4);
 
 	/* dtors */
 	virtual ~EvolutionSolver();
 
 	/* accessors */
 	bool has_result() const;
-	SolutionMap const& best_sols() const;
+	TeamPtrMaxHeap best_sols(std::string const& wa_name) const;
 
 	/* modifiers */
 	void run();

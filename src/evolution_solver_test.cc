@@ -38,15 +38,11 @@ TestStat EvolutionSolver::test() {
                  n_work_areas);
 
         auto const& [work_area_name, work_area] = *begin(SPEC.work_areas());
-        auto& solutions = solver.best_sols().at(work_area_name);
-        size_t const n_solutions = solutions.size();
-        PANIC_IF(n_solutions != OPTIONS.keep_n,
-                 "Expected %zu solutions, but there is %zu\n",
-                 OPTIONS.keep_n, n_solutions);
+        auto const& solutions = solver.best_sols(work_area_name);  // TeamPtrMaxHeap
 
         try { // Catch bad_cast
             auto best_pt =
-                static_cast<PathTeam const&>(*solutions.at(0));
+                static_cast<PathTeam const&>(*solutions.top());
             auto path_gen = best_pt.gen_path();
 
             // Might need to reverse recipe because data exported from

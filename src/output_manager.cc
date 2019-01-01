@@ -40,6 +40,8 @@ void OutputManager::write_output(
         return;
     }
 
+    JUtil.info("Writing results\n");
+
     // Compute final output dir string.
     std::ostringstream output_dir_ss;
     output_dir_ss << OPTIONS.output_dir << "/"
@@ -48,27 +50,25 @@ void OutputManager::write_output(
     JUtil.mkdir_ifn_exists(output_dir_str.c_str());
 
     JSON output_json;
-    for (auto& itr : SPEC.work_areas()) {
-        std::string const& wa_name = itr.first;
-        auto& wa = itr.second;
+    for (auto& [wa_name, wa] : SPEC.work_areas()) {
         JSON work_area_json;
 
         try {
-            auto& solutions =
-                solver.best_sols().at(wa_name);
-            for (size_t i = 0; i < solutions.size(); ++i)
-            {
-                JSON sol_json;
-                TRACE(not solutions.at(i),
-                      "Team memory corrupted in work area \"%s\" (ptr=%p)\n",
-                      wa_name.c_str(),
-                      solutions.at(i).get());
+            auto solutions = solver.best_sols(wa_name);  // TeamPtrMaxHeap
 
-                NodeTeam const& team = *solutions.at(i);
-                sol_json["nodes"] = team.to_json();
-                sol_json["score"] = team.score();
-
-                work_area_json[i] = sol_json;
+            size_t i = 0;
+            while (not solutions.empty()) {
+                auto team = solutions.top();
+                solutions.pop();
+                if (team) {
+                    JSON sol_json;
+                    sol_json["nodes"] = team->to_json();
+                    sol_json["score"] = team->score();
+                    work_area_json[i++] = sol_json;
+                }
+                else {
+                    JUtil.error("team=%p in %s\n", team, wa_name);
+                }
             }
             output_json[wa_name] = work_area_json;
         }

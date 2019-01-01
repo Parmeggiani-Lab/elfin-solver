@@ -29,7 +29,7 @@ struct Options {
     // comparison
     float ga_stop_score = 0.001f;
 
-    size_t ga_restart_trigger = 30;
+    size_t ga_restart_trigger = 10;
     size_t ga_stop_trigger = 10;
 
     bool run_tests = false;

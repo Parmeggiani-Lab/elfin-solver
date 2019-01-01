@@ -31,6 +31,20 @@ protected:
     virtual void virtual_copy(NodeTeam const& other) = 0;
 
 public:
+    /* types */
+    struct SPLess {
+        bool operator()(NodeTeamSP const& lhs,
+                        NodeTeamSP const& rhs) {
+            return lhs->score_ < rhs->score_;
+        }
+    };
+    struct PtrGreater {
+        bool operator()(NodeTeam const* const lhs,
+                        NodeTeam const* const rhs) {
+            return lhs->score_ > rhs->score_;
+        }
+    };
+
     /* ctors */
     NodeTeam(WorkArea const* const wa) : work_area_(wa) {}
     static NodeTeamSP create_team(WorkArea const* const work_area);
@@ -44,10 +58,6 @@ public:
     float score() const { return score_; }
     Crc32 checksum() const { return checksum_; }
     virtual size_t size() const = 0;
-    static bool ScoreCompareSP(NodeTeamSP const& lhs,
-                               NodeTeamSP const& rhs) {
-        return lhs->score_ < rhs->score_;
-    }
 
     /* modifiers */
     virtual void randomize() = 0;
