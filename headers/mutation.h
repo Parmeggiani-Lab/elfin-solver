@@ -84,17 +84,14 @@ struct SwapPoint : public InsertPoint {
 struct CrossPoint {
     ProtoLink const* const  pt_link;
     Link const* const       m_arrow;
-    bool const              m_rev;
     Link const* const       f_arrow;
     bool const              f_rev;
     CrossPoint(ProtoLink const* const _pt_link,
                Link const* const _m_arrow,
-               bool const _m_rev,
                Link const* const _f_arrow,
                bool const _f_rev) :
         pt_link(_pt_link),
         m_arrow(_m_arrow),
-        m_rev(_m_rev),
         f_arrow(_f_arrow),
         f_rev(_f_rev) {}
 };

@@ -6,19 +6,11 @@
 #include "id_types.h"
 #include "mutation.h"
 
-#define NO_ERODE
-#define NO_DELETE
-#define NO_INSERT
-#define NO_SWAP
+// #define NO_ERODE
+#define NO_DELETE       // Seems to generate bad candidates
+// #define NO_INSERT 
+#define NO_SWAP         // Seems to generate bad candidates
 // #define NO_CROSS
-
-#if defined(NO_ERODE) || \
-defined(NO_DELETE) || \
-defined(NO_INSERT) || \
-defined(NO_SWAP) || \
-defined(NO_CROSS)
-// #warning "At least one mutation function is DISABLED!!"
-#endif
 
 namespace elfin {
 
@@ -629,8 +621,8 @@ struct PathTeam::PImpl {
                     if (sd) {
                         cross_points.emplace_back(
                             sd,
-                            m_arrow, false,   // { } --m_arrow--v { del  }
-                            f_arrow, false);  // { } --f_arrow--> { copy }
+                            m_arrow,            // { } --m_arrow--v { del  }
+                            f_arrow, false);    // { } --f_arrow--> { copy }
                     }
 
                     ProtoLink const* ss =
@@ -638,26 +630,8 @@ struct PathTeam::PImpl {
                     if (ss) {
                         cross_points.emplace_back(
                             ss,
-                            m_arrow, false,   // {      } --m_arrow--v { del }
-                            f_arrow, true);   // { copy } <---f_rev--- {     }
-                    }
-
-                    ProtoLink const* dd =
-                        m_arrow->dst().find_link_to(f_arrow->dst());
-                    if (dd) {
-                        cross_points.emplace_back(
-                            dd,
-                            m_arrow, true,    // { del } v---m_rev--- {      }
-                            f_arrow, false);  // {     } --f_arrow--> { copy }
-                    }
-
-                    ProtoLink const* ds =
-                        m_arrow->dst().find_link_to(f_arrow->src());
-                    if (ds) {
-                        cross_points.emplace_back(
-                            ds,
-                            m_arrow, true,    // { del  } v---m_rev--- { }
-                            f_arrow, true);   // { keep } <---f_rev--- { }
+                            m_arrow,            // {      } --m_arrow--v { del }
+                            f_arrow, true);     // { copy } <---f_rev--- {     }
                     }
                 }
             }
@@ -665,9 +639,7 @@ struct PathTeam::PImpl {
             if (not cross_points.empty()) {
                 auto const& cp = random::pick(cross_points);
 
-                Link m_arrow = cp.m_rev ?
-                               cp.m_arrow->reversed() :
-                               *cp.m_arrow;  // Make a copy.
+                Link m_arrow = *cp.m_arrow;  // Make a copy.
                 Link f_arrow = cp.f_rev ?
                                cp.f_arrow->reversed() :
                                *cp.f_arrow;  // Make a copy.
