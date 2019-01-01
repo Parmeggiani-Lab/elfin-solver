@@ -55,7 +55,7 @@ void Elfin::crash_dump() const {
 /* handlers */
 void Elfin::interrupt_handler(int const signal) {
     static bool interrupt_caught = false;
-    
+
     if (interrupt_caught) {
         fprintf(stderr, "\n\n");
         PANIC("Caught interrupt signal (second). Aborting NOW.\n");
@@ -84,7 +84,9 @@ int main(int const argc, const char ** argv) {
         return 0;
     }
     catch (elfin::ExitException e) {
-        JUtil.error("Aborting due to code: %d\n", e.code);
+        if (e.code) {
+            JUtil.error("Aborting due to none zero code: %d\n", e.code);
+        }
         return e.code;
     }
 }
