@@ -54,7 +54,7 @@ void ArgBundle::print_to(std::ostream& os) const {
 ArgBundle const* ArgParser::match_arg_bundle(char const* arg_in) const {
     // Anything shorter than 2 chars cannot match
     if (arg_in[0] == '-') {
-        arg_in++; // Skip "-"
+        arg_in++;  // Skip "-"
     }
 
     for (auto const& ab : argb_) {
@@ -324,7 +324,7 @@ ARG_PARSER_CALLBACK_DEF(help_and_exit) {
     std::cout << ss.rdbuf();
     throw ExitException{0};
 
-    return false; // Suppress warning.
+    return false;  // Suppress warning.
 }
 
 #undef ARG_PARSER_CALLBACK_DEF

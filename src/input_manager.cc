@@ -21,7 +21,7 @@ GATimes const& GA_TIMES =
 void InputManager::setup_cutoffs() {
     Cutoffs& cutoffs = instance().cutoffs_;
 
-    cutoffs = {}; // zero struct
+    cutoffs = {};  // zero struct
 
     cutoffs.pop_size =
         OPTIONS.ga_pop_size;

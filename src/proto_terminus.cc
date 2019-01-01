@@ -22,7 +22,7 @@ ProtoLink const& ProtoTerminus::pick_random_link(
     }
     else {
         bad_terminus(term);
-        throw ExitException{1}; // Suppress no return warning.
+        throw ExitException{1};  // Suppress no return warning.
     }
 }
 

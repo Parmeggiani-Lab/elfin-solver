@@ -159,7 +159,7 @@ struct PathTeam::PImpl {
 
             // Check temporary tip node.
             num_links = next_node->links().size();
-            DEBUG_NOMSG(num_links > 1); // Must be 0 or 1.
+            DEBUG_NOMSG(num_links > 1);  // Must be 0 or 1.
 
             if (num_links == 1) {
                 curr_arrow = *begin(next_node->links());
@@ -248,7 +248,7 @@ struct PathTeam::PImpl {
             _.remove_free_chains(tip_node);
 
             FreeChain last_free_chain;
-            float p = 1.0f; // p for Probability.
+            float p = 1.0f;  // p for Probability.
 
             // Loop condition is always true on first entrance, hence do-while.
             bool next_loop = false;
@@ -263,7 +263,7 @@ struct PathTeam::PImpl {
                 // 3/6; p=0.3333333333333333
                 // 2/6; p=0.16666666666666666
                 // 1/6; p=0.0
-                p = p * (_.size() - 2) / (_.size() - 1); // size() is at least 2
+                p = p * (_.size() - 2) / (_.size() - 1);  // size() is at least 2
                 next_loop = random::get_dice_0to1() <= p;
 
                 // Check node is tip node.
@@ -311,10 +311,10 @@ struct PathTeam::PImpl {
             auto path_gen = start_node->gen_path();
 
             NodeKey curr_node = nullptr;
-            auto next_node = path_gen.next(); // Starts with start_node.
+            auto next_node = path_gen.next();  // Starts with start_node.
             do {
                 curr_node = next_node;
-                next_node = path_gen.next(); // Can be nullptr.
+                next_node = path_gen.next();  // Can be nullptr.
                 size_t const num_links = curr_node->links().size();
 
                 if (num_links == 1) {
@@ -444,10 +444,10 @@ struct PathTeam::PImpl {
             auto path_gen = start_node->gen_path();
 
             NodeKey curr_node = nullptr;
-            auto next_node = path_gen.next(); // Starts with start_node.
+            auto next_node = path_gen.next();  // Starts with start_node.
             do {
                 curr_node = next_node;
-                next_node = path_gen.next(); // Can be nullptr.
+                next_node = path_gen.next();  // Can be nullptr.
                 size_t const num_links = curr_node->links().size();
 
                 if (num_links == 1) {
@@ -538,11 +538,11 @@ struct PathTeam::PImpl {
 
             NodeKey prev_node = nullptr;
             NodeKey curr_node = nullptr;
-            auto next_node = path_gen.next(); // Starts with start_node/
+            auto next_node = path_gen.next();  // Starts with start_node/
             do {
                 prev_node = curr_node;
                 curr_node = next_node;
-                next_node = path_gen.next(); // Can be nullptr.
+                next_node = path_gen.next();  // Can be nullptr.
                 size_t const num_links = curr_node->links().size();
 
                 if (num_links == 1) {
@@ -679,10 +679,10 @@ struct PathTeam::PImpl {
 
                         Link m_arrow = cp.m_rev ?
                                        cp.m_arrow->reversed() :
-                                       *cp.m_arrow; // Make a copy.
+                                       *cp.m_arrow;  // Make a copy.
                         Link f_arrow = cp.f_rev ?
                                        cp.f_arrow->reversed() :
-                                       *cp.f_arrow; // Make a copy.
+                                       *cp.f_arrow;  // Make a copy.
 
                         // Always keep m_arrow.src, del m_arrow.dst, and copy from
                         // f_arrow.dst().
@@ -910,13 +910,13 @@ PathTeam::PathTeam(WorkArea const* wa) :
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_)
 {
-    *this = other; // Calls operator=(T const&)
+    *this = other;  // Calls operator=(T const&)
 }
 
 PathTeam::PathTeam(PathTeam&& other) :
     PathTeam(other.work_area_)
 {
-    *this = std::move(other); // Calls operator=(T&&)
+    *this = std::move(other);  // Calls operator=(T&&)
 }
 
 /* dtors */
@@ -1137,3 +1137,9 @@ JSON PathTeam::to_json() const {
 }
 
 }  /* elfin */
+
+#undef NO_ERODE
+#undef NO_DELETE
+#undef NO_INSERT
+#undef NO_SWAP
+#undef NO_CROSS

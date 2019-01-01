@@ -38,7 +38,7 @@ TestStat InputManager::test() {
                     SPEC.work_areas().size());
     }
     else {
-        auto& [wa_name, wa] = *begin(SPEC.work_areas()); // unique_ptr
+        auto& [wa_name, wa] = *begin(SPEC.work_areas());  // unique_ptr
 
         // Test parsed points.
         auto const& test_points = wa->points;

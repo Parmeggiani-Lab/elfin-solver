@@ -1,20 +1,21 @@
 // Need to implement:
-// Returns a tip free chain, possibly randomly chosen. For a hinged team,
-// fixed nodes must not be returned unlress there are no other nodes.
+
 // virtual FreeChain const& pick_tip_chain() const;
-// Checks free_chains_.size() etc. are correct on entry to a mutation
-// method. Called before calling mutation methods from evolve().
+//   Returns a tip free chain, possibly randomly chosen. For a hinged team,
+//   fixed nodes must not be returned unlress there are no other nodes.
+
 // virtual void mutation_invariance_check() const;
+//   Checks free_chains_.size() etc. are correct on entry to a mutation
+//   method. Called before calling mutation methods from evolve().
 
+// virtual void calc_checksum():
+//   Only enforce (DEBUG) 0 < free_chains_.size() <= 2
+//   Compute & cascade checksum starting from each tip
 
-// calc_checksum():
-//     // Only enforce (DEBUG) 0 < free_chains_.size() <= 2
-//     // Compute & cascade checksum starting from each tip
-
-// calc_score():
-//     // Only enforce (DEBUG) 0 < free_chains_.size() <= 2
-//     // NO NEED KABSCH - resample & calc RMS
-//     // Simply loop through each tip and get min score
+// virtual void calc_score():
+//   Only enforce (DEBUG) 0 < free_chains_.size() <= 2
+//   NO NEED KABSCH - resample & calc RMS
+//   Simply loop through each tip and get min score
 
 fix_limb_transforms():
     // Input arrow must not point towards fixed end
@@ -30,23 +31,23 @@ sever_limb():
 //     // No change
 
 // erode_mutate():
-//     // Receive tip node choice from virtual pick_tip_node()
+//     // Receive tip node choice from virtual pick_tip_chain()
 
 delete_mutate():
-    // Receive tip node choice from virtual pick_tip_node()
+    // Receive tip node choice from virtual pick_tip_chain()
     // Must not include fixed end as deletable
 
 insert_mutate():
-    // Receive tip node choice from virtual pick_tip_node()
+    // Receive tip node choice from virtual pick_tip_chain()
     // Must not include fixed end as insertable
 
 swap_mutate():
-    // Receive tip node choice from virtual pick_tip_node()
+    // Receive tip node choice from virtual pick_tip_chain()
     // Must not include fixed end as swappable
 
 cross_mutate():
-    // Receive tip node choice from virtual pick_tip_node(), also call for father team
+    // Receive tip node choice from virtual pick_tip_chain(), also call for father team
     // The portion near to fixed end must not be deleted as a result of cross
 
 // regenerate():
-//     // Receive tip node choice from virtual pick_tip_node()
+//     // Receive tip node choice from virtual pick_tip_chain()

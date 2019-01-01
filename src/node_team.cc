@@ -24,7 +24,7 @@ NodeTeamSP NodeTeam::create_team(WorkArea const* const work_area) {
     //     break;
     default:
         bad_work_type(work_area->type);
-        return nullptr; // Suppress warning.
+        return nullptr;  // Suppress warning.
     }
 
     return team_up;

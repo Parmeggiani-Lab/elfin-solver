@@ -18,7 +18,7 @@ ProtoTerminus const& ProtoChain::get_term(
     }
     else {
         bad_terminus(term);
-        throw ExitException{1}; // Suppress warning.
+        throw ExitException{1};  // Suppress warning.
     }
 }
 

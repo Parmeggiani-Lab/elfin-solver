@@ -76,7 +76,7 @@ size_t ProtoModule::find_chain_id(
         }
 
         TRACE_NOMSG("Chain Not Found\n");
-        throw ExitException{1}; // Suppress warning.
+        throw ExitException{1};  // Suppress warning.
     }
     else {
         return chain_itr->id;
