@@ -89,8 +89,8 @@ void HingeTeam::add_node_check(ProtoModule const* const prot) const {
 }
 
 /* modifiers */
-void HingeTeam::reset() {
-    PathTeam::reset();
+void HingeTeam::restart() {
+    PathTeam::restart();
 
     hinge_ = nullptr;
     hinge_ = pimpl_->place_hinge();

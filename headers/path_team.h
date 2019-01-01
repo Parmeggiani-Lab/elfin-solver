@@ -41,7 +41,7 @@ protected:
     virtual void add_node_check(ProtoModule const* const prot) const;
 
     /* modifiers */
-    virtual void reset();
+    virtual void restart();
     virtual void virtual_copy(NodeTeam const& other);
     NodeKey add_node(ProtoModule const* const prot,
                      Transform const& tx = Transform());

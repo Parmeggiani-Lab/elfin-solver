@@ -6,11 +6,11 @@
 #include "id_types.h"
 #include "mutation.h"
 
-#define NO_ERODE
-#define NO_DELETE
-#define NO_INSERT
-#define NO_SWAP
-#define NO_CROSS
+// #define NO_ERODE
+// #define NO_DELETE
+// #define NO_INSERT
+// #define NO_SWAP
+// #define NO_CROSS
 
 #if defined(NO_ERODE) || \
 defined(NO_DELETE) || \
@@ -758,7 +758,7 @@ void PathTeam::add_node_check(ProtoModule const* const prot) const {
 }
 
 /* modifiers */
-void PathTeam::reset() {
+void PathTeam::restart() {
     nodes_.clear();
     free_chains_.clear();
     checksum_ = 0x0000;
@@ -985,7 +985,7 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
 }
 
 void PathTeam::randomize() {
-    reset();
+    restart();
     pimpl_->regenerate();
 
     mutation_invariance_check();
