@@ -114,7 +114,7 @@ std::string ArgParser::radius_types_setting_string() const {
             oss << ", ";
         }
     }
-    oss << " }, default=" << Options().radius_type;
+    oss << " }";
     return oss.str();
 }
 
@@ -161,8 +161,37 @@ void ArgParser::parse_options(int const argc, char const* const argv[]) {
 #define ARG_PARSER_CALLBACK_DEF(FUNC_NAME) \
     bool ArgParser::FUNC_NAME(std::string const& arg_in)
 
+ARG_PARSER_CALLBACK_DEF(set_spec_file) {
+    options_.spec_file = arg_in;
+    return true;
+}
+
 ARG_PARSER_CALLBACK_DEF(set_xdb) {
     options_.xdb_file = arg_in;
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(parse_config) {
+    options_.config_file = arg_in;
+
+    PANIC_IF(not JUtil.file_exists(options_.config_file.c_str()),
+             "Settings file does not exist: \"%s\"\n",
+             options_.config_file.c_str());
+
+    JSON const json = parse_json(options_.config_file);
+
+    for (auto& [opt_key, opt_json] : json.items()) {
+        std::string const opt_name = "--" + opt_key;
+        auto ab = match_arg_bundle(opt_name.c_str());
+        if (ab) {
+            (this->*ab->callback)(json_to_clean_str(json[ab->long_form]));
+        } else {
+            JUtil.error("Unrecognized option: %s\n", opt_name.c_str());
+            arg_parse_failure(opt_name.c_str(), ab);
+            return true;
+        }
+    }
+
     return true;
 }
 
@@ -209,9 +238,15 @@ ARG_PARSER_CALLBACK_DEF(set_ga_stop_score) {
     return true;
 }
 
-ARG_PARSER_CALLBACK_DEF(set_ga_stop_stagnancy) {
+ARG_PARSER_CALLBACK_DEF(set_ga_restart_factor) {
     long const l = JUtil.parse_long(arg_in.c_str());
-    options_.ga_stop_stagnancy = l < 0 ? 0 : l;
+    options_.ga_restart_factor = l < 0 ? 0 : l;
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_ga_stop_factor) {
+    long const l = JUtil.parse_long(arg_in.c_str());
+    options_.ga_stop_factor = l < 0 ? 0 : l;
     return true;
 }
 
@@ -262,36 +297,6 @@ ARG_PARSER_CALLBACK_DEF(set_radius_type) {
     }
 
     return radiu_type_is_valid;
-}
-
-ARG_PARSER_CALLBACK_DEF(parse_config) {
-    options_.config_file = arg_in;
-
-    PANIC_IF(
-        not JUtil.file_exists(options_.config_file.c_str()),
-        "Settings file does not exist: \"%s\"\n",
-        options_.config_file.c_str());
-
-    JSON const json = parse_json(options_.config_file);
-
-    for (auto& [opt_key, opt_json] : json.items()) {
-        std::string const opt_name = "--" + opt_key;
-        auto ab = match_arg_bundle(opt_name.c_str());
-        if (ab) {
-            (this->*ab->callback)(json_to_clean_str(json[ab->long_form]));
-        } else {
-            JUtil.error("Unrecognized option: %s\n", opt_name.c_str());
-            arg_parse_failure(opt_name.c_str(), ab);
-            return true;
-        }
-    }
-
-    return true;
-}
-
-ARG_PARSER_CALLBACK_DEF(set_spec_file) {
-    options_.spec_file = arg_in;
-    return true;
 }
 
 /* printers */
