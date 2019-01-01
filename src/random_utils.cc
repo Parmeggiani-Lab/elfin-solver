@@ -41,7 +41,7 @@ float get_dice_0to1() {
           "Thread #%d; TWISTERS size: %zu\n",
           omp_get_thread_num(),
           TWISTERS.size());
-    std::mt19937& mt = TWISTERS.at(omp_get_thread_num());
+    auto& mt = TWISTERS.at(omp_get_thread_num());
     return (float) mt() / mt.max();
 }
 
