@@ -14,7 +14,7 @@ struct HingeTeam::PImpl {
     /* ctors */
     PImpl(HingeTeam& interface) : _(interface) { }
 
-    NodeKey find_hinge() {
+    NodeKey place_hinge() {
         auto const& occ_joints = _.work_area_->occupied_joints;
         size_t const n_occ_joints = occ_joints.size();
         DEBUG_NOMSG(n_occ_joints != 1);
@@ -89,6 +89,13 @@ void HingeTeam::add_node_check(ProtoModule const* const prot) const {
 }
 
 /* modifiers */
+void HingeTeam::reset() {
+    PathTeam::reset();
+
+    hinge_ = nullptr;
+    hinge_ = pimpl_->place_hinge();
+}
+
 void HingeTeam::virtual_copy(NodeTeam const& other) {
     try {  // Catch bad cast
         HingeTeam::operator=(static_cast<HingeTeam const&>(other));
@@ -134,9 +141,9 @@ HingeTeam::HingeTeam(WorkArea const* wa) :
     PathTeam(wa),
     pimpl_(make_pimpl())
 {
-    // Call find_hinge() after initializer list because hinge_ needs to be
+    // Call place_hinge() after initializer list because hinge_ needs to be
     // initialiezd as nullptr.
-    hinge_ = pimpl_->find_hinge();
+    hinge_ = pimpl_->place_hinge();
     DEBUG_NOMSG(not hinge_);
 }
 
@@ -158,7 +165,7 @@ HingeTeam::~HingeTeam() {}
 /* modifiers */
 HingeTeam& HingeTeam::operator=(HingeTeam const& other) {
     PathTeam::operator=(other);
-    hinge_ = other.hinge_;
+    hinge_ = other.hinge_ ? nk_map_.at(other.hinge_) : nullptr;
     return *this;
 }
 

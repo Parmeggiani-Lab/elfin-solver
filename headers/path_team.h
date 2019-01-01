@@ -28,6 +28,7 @@ protected:
     std::unordered_map<NodeKey, NodeSP> nodes_;
     std::list<FreeChain> free_chains_;
     NodeKey scored_tip_ = nullptr;
+    NodeKeyMap nk_map_;
 
     /* accessors */
     virtual PathTeam* virtual_clone() const;
@@ -40,6 +41,7 @@ protected:
     virtual void add_node_check(ProtoModule const* const prot) const;
 
     /* modifiers */
+    virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
     NodeKey add_node(ProtoModule const* const prot,
                      Transform const& tx = Transform());

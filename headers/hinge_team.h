@@ -26,6 +26,7 @@ protected:
     virtual void add_node_check(ProtoModule const* const prot) const;
 
     /* modifiers */
+    virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
     virtual void calc_checksum();
     virtual void calc_score();

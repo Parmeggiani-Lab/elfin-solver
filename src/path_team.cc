@@ -6,18 +6,18 @@
 #include "id_types.h"
 #include "mutation.h"
 
-// #define NO_ERODE
-// #define NO_DELETE
-// #define NO_INSERT
-// #define NO_SWAP
-// #define NO_CROSS
+#define NO_ERODE
+#define NO_DELETE
+#define NO_INSERT
+#define NO_SWAP
+#define NO_CROSS
 
 #if defined(NO_ERODE) || \
 defined(NO_DELETE) || \
 defined(NO_INSERT) || \
 defined(NO_SWAP) || \
 defined(NO_CROSS)
-#warning "At least one mutation function is DISABLED!!"
+// #warning "At least one mutation function is DISABLED!!"
 #endif
 
 namespace elfin {
@@ -718,17 +718,6 @@ struct PathTeam::PImpl {
         return true;
     }
 
-    bool randomize_mutate() {
-        _.nodes_.clear();
-        _.free_chains_.clear();
-        _.checksum_ = 0x0000;
-        _.score_ = INFINITY;
-        bool const mutate_success = regenerate();
-
-        _.mutation_invariance_check();
-        return mutate_success;
-    }
-
     Node* get_node(NodeKey const nk) {
         DEBUG_NOMSG(_.nodes_.find(nk) == end(_.nodes_));
         return _.nodes_.at(nk).get();
@@ -769,6 +758,13 @@ void PathTeam::add_node_check(ProtoModule const* const prot) const {
 }
 
 /* modifiers */
+void PathTeam::reset() {
+    nodes_.clear();
+    free_chains_.clear();
+    checksum_ = 0x0000;
+    score_ = INFINITY;
+}
+
 void PathTeam::virtual_copy(NodeTeam const& other) {
     try { // Catch bad cast
         PathTeam::operator=(static_cast<PathTeam const&>(other));
@@ -943,30 +939,31 @@ PathTeam& PathTeam::operator=(PathTeam const& other) {
 
         // Clone nodes and create address mapping for remapping pointers.
         {
-            NodeKeyMap nk_map; // other addr -> my addr
+            // Create new node addr mapping: other addr -> my addr
+            nk_map_.clear();
 
             nodes_.clear();
             for (auto& [other_nk, other_node] : other.nodes_) {
                 NodeSP my_node = other_node->clone();
-                nk_map[other_nk] = my_node.get();
+                nk_map_[other_nk] = my_node.get();
                 nodes_.emplace(my_node.get(), std::move(my_node));
             }
 
             // Fix pointer addresses and assign to my own nodes.
             for (auto& [nk, node] : nodes_) {
-                node->update_link_ptrs(nk_map);
+                node->update_link_ptrs(nk_map_);
             }
 
             // Copy free_chains_.
             free_chains_.clear();
             for (auto& other_fc : other.free_chains_) {
-                free_chains_.emplace_back(nk_map.at(other_fc.node),
+                free_chains_.emplace_back(nk_map_.at(other_fc.node),
                                           other_fc.term,
                                           other_fc.chain_id);
             }
 
             scored_tip_ = other.scored_tip_ ?
-                          nk_map.at(other.scored_tip_) :
+                          nk_map_.at(other.scored_tip_) :
                           nullptr;
         }
     }
@@ -981,13 +978,17 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
         std::swap(nodes_, other.nodes_);
         std::swap(free_chains_, other.free_chains_);
         std::swap(scored_tip_, other.scored_tip_);
+        std::swap(nk_map_, other.nk_map_);
     }
 
     return *this;
 }
 
 void PathTeam::randomize() {
-    pimpl_->randomize_mutate();
+    reset();
+    pimpl_->regenerate();
+
+    mutation_invariance_check();
 }
 
 mutation::Mode PathTeam::evolve(
@@ -1032,8 +1033,8 @@ mutation::Mode PathTeam::evolve(
     }
 
     if (not mutate_success) {
-        mutate_success = pimpl_->randomize_mutate();
-        TRACE_NOMSG(not mutate_success);
+        randomize();
+        mutate_success = true;
     }
 
     calc_checksum();
@@ -1072,37 +1073,23 @@ JSON PathTeam::to_json() const {
     JSON output;
 
     if (not free_chains_.empty()) {
-        DEBUG_NOMSG(free_chains_.size() != 2);
-
         // Kabsch outputs for forward and backward paths.
-        elfin::Mat3f rot[2];
-        Vector3f tran[2];
-        float rms[2] = { 0 };
+        elfin::Mat3f rot;
+        Vector3f tran;
+        float rms = INFINITY;
 
-        auto fc_itr = begin(free_chains_);
-        for (size_t i = 0; i < 2; ++i) {
-            advance(fc_itr, i);
-            V3fList const& points =
-                fc_itr->node->gen_path().collect_points();
+        V3fList const& points =
+            scored_tip_->gen_path().collect_points();
 
-            scoring::calc_alignment(
-                /*mobile=*/ points,
-                /*ref=*/ work_area_->points,
-                rot[i],
-                tran[i],
-                rms[i]);
-        }
+        scoring::calc_alignment(
+            /*mobile=*/ points,
+            /*ref=*/ work_area_->points,
+            rot, tran, rms);
 
-        // Start at tip that yields lower score.
-        size_t const better_tip_id = rms[0] < rms[1] ? 0 : 1;
-
-        fc_itr = begin(free_chains_);
-        advance(fc_itr, better_tip_id);
-        NodeKey tip_node = fc_itr->node;
-        Transform kabsch_alignment(rot[better_tip_id], tran[better_tip_id]);
+        Transform kabsch_alignment(rot, tran);
 
         size_t member_id = 0;  // UID for node in team.
-        auto path_gen = tip_node->gen_path();
+        auto path_gen = scored_tip_->gen_path();
         while (not path_gen.is_done()) {
             auto curr_node = path_gen.next();
 
