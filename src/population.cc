@@ -9,20 +9,22 @@
 
 namespace elfin {
 
-void print_mutation_ratios(mutation::ModeList mode_tally) {
+void print_mutation_ratios(mutation::ModeList const& mode_tally) {
     if (JUtil.check_log_lvl(LOGLVL_DEBUG)) {
         mutation::Counter mc;
-        for (mutation::Mode const& mode : mode_tally) {
+        for (auto mode : mode_tally) {
             mc[mode]++;
         }
 
         auto mutation_modes = mutation::gen_mode_list();
+        mutation_modes.insert(begin(mutation_modes), mutation::Mode::NONE);
+
         std::ostringstream mutation_ss;
-        mutation_ss << "Mutation Ratios (out of " << CUTOFFS.non_survivors << "):\n";
-        for (mutation::Mode mode : mutation_modes) {
+        mutation_ss << "Mutation Ratios (out of " << CUTOFFS.pop_size << "):\n";
+        for (auto const& mode : mutation_modes) {
             mutation_ss << "  " << mutation::ModeToCStr(mode) << ':';
 
-            float const mode_ratio = 100.f * mc[mode] / CUTOFFS.non_survivors;
+            float const mode_ratio = 100.f * mc[mode] / CUTOFFS.pop_size;
             mutation_ss << " " << string_format("%.1f", mode_ratio) << "% ";
             mutation_ss << "(" << mc[mode] << ")\n";
         }
@@ -65,8 +67,8 @@ void Population::evolve() {
     {
         JUtil.info("Evolving population...\n");
 
-        mutation::ModeList mutation_mode_tally;
-        mutation_mode_tally.reserve(CUTOFFS.pop_size);
+        mutation::ModeList mutation_mode_tally(
+            CUTOFFS.pop_size, mutation::Mode::NONE);
 
         OMP_PAR_FOR
         for (size_t rank = 0; rank < CUTOFFS.pop_size; rank++) {
