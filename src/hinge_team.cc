@@ -37,7 +37,7 @@ struct HingeTeam::PImpl {
         // auto nb_ui_joint = *begin(neighbors);
         // auto proto_chain_itr = std::find_if(...);
 
-        return _.add_member(proto_mod, ui_mod->tx);
+        return _.add_free_node(proto_mod, ui_mod->tx);
     }
 };
 
@@ -52,9 +52,25 @@ HingeTeam* HingeTeam::virtual_clone() const {
     return new HingeTeam(*this);
 }
 
-// NodeKey PathTeam::pick_tip_node() const {
+FreeChain const& HingeTeam::pick_tip_chain() const {
+    // If the only node is the hinge, then we allow modification to one random
+    // tip.
+    if (size() == 1) {
+        return PathTeam::pick_tip_chain();
+    }
+    else {
+        DEBUG_NOMSG(not hinge_);
 
-// }
+        for (auto const& fc : free_chains_) {
+            if (fc.node != hinge_) {
+                return fc;
+            }
+        }
+
+        TRACE_NOMSG("No tip available");
+        throw ExitException{1};
+    }
+}
 
 void HingeTeam::mutation_invariance_check() const {
     // TRACE(free_chains_.size() != 2,
@@ -63,6 +79,13 @@ void HingeTeam::mutation_invariance_check() const {
 
     TRACE(size() == 0,
           "Invariance broken: size() = 0\n");
+}
+
+void HingeTeam::add_node_check(ProtoModule const* const prot) const {
+    // Allow any module for hinge but other than that, same as PathTeam.
+    if (hinge_) {
+        PathTeam::add_node_check(prot);
+    }
 }
 
 /* modifiers */
@@ -77,7 +100,7 @@ void HingeTeam::virtual_copy(NodeTeam const& other) {
 
 void HingeTeam::calc_checksum() {
     // Unlike PathTeam, here we can compute one-way checksum from hinge.
-    DEBUG_NOMSG(size() == 0);
+    DEBUG_NOMSG(not hinge_);
     checksum_ = hinge_->gen_path().path_checksum();
 }
 
@@ -87,9 +110,9 @@ void HingeTeam::calc_score() {
 
     // Should use simple_rms(), but there's some floating point rounding error
     // that's causing unit tests to fail. If we used inner_product() in
-    // simple_rms(), that'd yield the same result but then an extra vector is
+    // simple_rms(), that'd yield the satisfactory result but then an extra vector is
     // required. Until transform_reduce() is supported, Kabsch RMS should be
-    // fine performance wise?
+    // fine performance-wise?
     score_ = scoring::score(my_points,
                             work_area_->points);
     scored_tip_ = hinge_;
@@ -98,6 +121,8 @@ void HingeTeam::calc_score() {
 NodeKey HingeTeam::follow_recipe(tests::Recipe const& recipe,
                                  Transform const& shift_tx)
 {
+    hinge_ = nullptr;  // Clear hinge_ so add_node_check() can pass.
+
     hinge_ = PathTeam::follow_recipe(recipe, shift_tx);
 
     return hinge_;
@@ -107,9 +132,11 @@ NodeKey HingeTeam::follow_recipe(tests::Recipe const& recipe,
 /* ctors */
 HingeTeam::HingeTeam(WorkArea const* wa) :
     PathTeam(wa),
-    pimpl_(make_pimpl()),
-    hinge_(pimpl_->find_hinge())
+    pimpl_(make_pimpl())
 {
+    // Call find_hinge() after initializer list because hinge_ needs to be
+    // initialiezd as nullptr.
+    hinge_ = pimpl_->find_hinge();
     DEBUG_NOMSG(not hinge_);
 }
 

@@ -56,7 +56,7 @@ struct PathTeam::PImpl {
         // tip node.
         DEBUG_NOMSG(node_a->links().size() > 1);
 
-        auto node_b = _.add_member(
+        auto node_b = _.add_free_node(
                           pt_link->module_,
                           node_a->tx_ * pt_link->tx_);
 
@@ -114,11 +114,9 @@ struct PathTeam::PImpl {
         node2->remove_link(port2);
 
         // Create a new node in the middle.
-        auto new_node = std::make_unique<Node>(
-                            bridge->pt_link1->module_,
-                            node1->tx_ * bridge->pt_link1->tx_);
-        auto new_node_key = new_node.get();
-        _.nodes_.emplace(new_node_key, std::move(new_node));
+        auto new_node_key = _.add_node(bridge->pt_link1->module_,
+                                       node1->tx_ * bridge->pt_link1->tx_);
+        auto new_node = get_node(new_node_key);
 
         //
         // Link up
@@ -137,13 +135,13 @@ struct PathTeam::PImpl {
         Link const new_link1_rev(port1, bridge->pt_link1, nn_src1);
 
         node1->add_link(new_link1_rev);
-        new_node_key->add_link(new_link1_rev.reversed());
+        new_node->add_link(new_link1_rev.reversed());
 
         FreeChain nn_src2(
             new_node_key, port1.term, bridge->pt_link2->reverse()->chain_id_);
         Link const new_link2(nn_src2, bridge->pt_link2, port2);
 
-        new_node_key->add_link(new_link2);
+        new_node->add_link(new_link2);
         node2->add_link(new_link2.reversed());
 
         fix_limb_transforms(new_link2);
@@ -710,15 +708,11 @@ struct PathTeam::PImpl {
     bool regenerate() {
         if (_.nodes_.empty()) {
             // Pick random initial member.
-            _.add_member(XDB.basic_mods().draw());
+            _.add_free_node(XDB.basic_mods().draw());
         }
 
         while (_.size() < _.work_area_->target_size) {
-            // Pick next tip chain.
-            auto fc_itr = begin(_.free_chains_);
-            advance(fc_itr, random::get_dice(_.free_chains_.size()));
-
-            grow_tip(*fc_itr);
+            grow_tip(_.pick_tip_chain());
         }
 
         return true;
@@ -735,7 +729,7 @@ struct PathTeam::PImpl {
         return mutate_success;
     }
 
-    Node* get_node(NodeKey nk) {
+    Node* get_node(NodeKey const nk) {
         DEBUG_NOMSG(_.nodes_.find(nk) == end(_.nodes_));
         return _.nodes_.at(nk).get();
     }
@@ -752,6 +746,28 @@ PathTeam* PathTeam::virtual_clone() const {
     return new PathTeam(*this);
 }
 
+FreeChain const& PathTeam::pick_tip_chain() const {
+    auto fc_itr = begin(free_chains_);
+    advance(fc_itr, random::get_dice(free_chains_.size()));
+    return *fc_itr;
+}
+
+void PathTeam::mutation_invariance_check() const {
+    size_t const fc_size = free_chains_.size();
+    TRACE(fc_size != 2,
+          "Invariance broken: %zu free chains\n",
+          fc_size);
+
+    TRACE(size() == 0,
+          "Invariance broken: size() = 0\n");
+}
+
+void PathTeam::add_node_check(ProtoModule const* const prot) const {
+    // Only allow basic modules i.e. those with exactly 2 interfaces.
+    size_t const n_intf = prot->counts().all_interfaces();
+    DEBUG(n_intf != 2, "%zu\n", n_intf);
+}
+
 /* modifiers */
 void PathTeam::virtual_copy(NodeTeam const& other) {
     try { // Catch bad cast
@@ -762,14 +778,20 @@ void PathTeam::virtual_copy(NodeTeam const& other) {
     }
 }
 
-NodeKey PathTeam::add_member(
-    ProtoModule const* const prot,
-    Transform const& tx) {
-    // We only allow basic modules, which at max can have 2 chains (a 2-termini hub).
-    DEBUG_NOMSG(prot->chains().size() == 0 or prot->chains().size() > 2);
+NodeKey PathTeam::add_node(ProtoModule const* const prot,
+                           Transform const& tx) {
+    add_node_check(prot);
 
     auto new_node = std::make_unique<Node>(prot, tx);
     auto new_node_key = new_node.get();
+
+    nodes_.emplace(new_node_key, std::move(new_node));
+    return new_node_key;
+}
+
+NodeKey PathTeam::add_free_node(ProtoModule const* const prot,
+                                Transform const& tx) {
+    auto new_node_key = add_node(prot, tx);
 
     for (auto& proto_chain : prot->chains()) {
         if (not proto_chain.n_term().links().empty()) {
@@ -787,7 +809,6 @@ NodeKey PathTeam::add_member(
         }
     }
 
-    nodes_.emplace(new_node_key, std::move(new_node));
     return new_node_key;
 }
 
@@ -802,11 +823,6 @@ void PathTeam::calc_checksum() {
     // We want the same checksum for two node teams that consist of the same
     // sequence of nodes even if they are in reverse order. This can be
     // achieved by XOR'ing the forward and backward checksums.
-    DEBUG(free_chains_.size() != 2,
-          "There are %zu free chains!",
-          free_chains_.size());
-    DEBUG_NOMSG(size() == 0);
-
     checksum_ = 0x0000;
     for (auto& free_chain : free_chains_) {
         Crc32 const crc_half =
@@ -852,7 +868,7 @@ NodeKey PathTeam::follow_recipe(tests::Recipe const& recipe,
     NodeKey first_node = nullptr;
     if (not recipe.empty()) {
         std::string const& first_mod_name = recipe[0].mod_name;
-        auto last_node = add_member(XDB.get_module(first_mod_name));
+        auto last_node = add_free_node(XDB.get_module(first_mod_name));
         first_node = last_node;
         pimpl_->get_node(last_node)->tx_ = shift_tx;
 
@@ -920,53 +936,38 @@ PathGenerator PathTeam::gen_path() const {
     return scored_tip_->gen_path();
 }
 
-// NodeKey PathTeam::pick_tip_node() const {
-
-// }
-
-void PathTeam::mutation_invariance_check() const {
-    TRACE(free_chains_.size() != 2,
-          "Invariance broken: %zu free chains\n",
-          free_chains_.size());
-
-    TRACE(size() == 0,
-          "Invariance broken: size() = 0\n");
-}
-
 /* modifiers */
 PathTeam& PathTeam::operator=(PathTeam const& other) {
     if (this != &other) {
-        nodes_.clear();
-        free_chains_.clear();
-
         NodeTeam::operator=(other);
 
         // Clone nodes and create address mapping for remapping pointers.
         {
-            NodeKeyMap nk_map; // old addr -> new addr
+            NodeKeyMap nk_map; // other addr -> my addr
 
-            for (auto& other_node_itr : other.nodes_) {
-                auto& other_node = other_node_itr.second;
-                NodeSP node = other_node->clone();
-                nk_map[other_node.get()] = node.get();
-                nodes_.emplace(node.get(), std::move(node));
+            nodes_.clear();
+            for (auto& [other_nk, other_node] : other.nodes_) {
+                NodeSP my_node = other_node->clone();
+                nk_map[other_nk] = my_node.get();
+                nodes_.emplace(my_node.get(), std::move(my_node));
             }
 
-            free_chains_ = other.free_chains_;
-
-            // Fix pointer addresses and assign to my own nodes
-            for (auto& node_itr : nodes_) {
-                auto& node = node_itr.second;
+            // Fix pointer addresses and assign to my own nodes.
+            for (auto& [nk, node] : nodes_) {
                 node->update_link_ptrs(nk_map);
             }
 
-            for (auto& fc : free_chains_) {
-                fc.node = nk_map.at(fc.node);
+            // Copy free_chains_.
+            free_chains_.clear();
+            for (auto& other_fc : other.free_chains_) {
+                free_chains_.emplace_back(nk_map.at(other_fc.node),
+                                          other_fc.term,
+                                          other_fc.chain_id);
             }
 
-            if (other.scored_tip_) {
-                scored_tip_ = nk_map.at(other.scored_tip_);
-            }
+            scored_tip_ = other.scored_tip_ ?
+                          nk_map.at(other.scored_tip_) :
+                          nullptr;
         }
     }
 
@@ -975,9 +976,6 @@ PathTeam& PathTeam::operator=(PathTeam const& other) {
 
 PathTeam& PathTeam::operator=(PathTeam&& other) {
     if (this != &other) {
-        nodes_.clear();
-        free_chains_.clear();
-
         NodeTeam::operator=(std::move(other));
 
         std::swap(nodes_, other.nodes_);
@@ -1045,7 +1043,7 @@ mutation::Mode PathTeam::evolve(
 }
 
 void PathTeam::implement_recipe(tests::Recipe const& recipe,
-                                    Transform const& shift_tx) {
+                                Transform const& shift_tx) {
     NodeKey start_node = follow_recipe(recipe, shift_tx);
 
     calc_checksum();

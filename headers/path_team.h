@@ -1,6 +1,8 @@
 #ifndef PATH_TEAM_H_
 #define PATH_TEAM_H_
 
+#include <stack>
+
 #include "node_team.h"
 #include "node.h"
 #include "test_data.h"
@@ -29,17 +31,20 @@ protected:
 
     /* accessors */
     virtual PathTeam* virtual_clone() const;
-    // Returns a tip node, may be random. For a hinged team, fixed nodes must
-    // not be returned unlress there are no other nodes.
-    // virtual NodeKey pick_tip_node() const;
+    // Returns a tip free chain, possibly randomly chosen. For a hinged team,
+    // fixed nodes must not be returned unlress there are no other nodes.
+    virtual FreeChain const& pick_tip_chain() const;
     // Checks free_chains_.size() etc. are correct on entry to a mutation
     // method. Called before calling mutation methods from evolve().
     virtual void mutation_invariance_check() const;
+    virtual void add_node_check(ProtoModule const* const prot) const;
 
     /* modifiers */
     virtual void virtual_copy(NodeTeam const& other);
-    NodeKey add_member(ProtoModule const* const prot,
-                       Transform const& tx = Transform());
+    NodeKey add_node(ProtoModule const* const prot,
+                     Transform const& tx = Transform());
+    NodeKey add_free_node(ProtoModule const* const prot,
+                          Transform const& tx = Transform());
     void remove_free_chains(NodeKey const node);
     virtual void calc_checksum();
     virtual void calc_score();

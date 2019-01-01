@@ -24,7 +24,7 @@ TestStat EvolutionSolver::test() {
 
         JUtilLogLvl original_ll = JUtil.get_log_lvl();
 
-        // JUtil.set_log_lvl(LOGLVL_WARNING);
+        JUtil.set_log_lvl(LOGLVL_WARNING);
         solver.run();
         JUtil.set_log_lvl(original_ll);
     }

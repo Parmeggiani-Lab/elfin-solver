@@ -17,19 +17,20 @@ private:
     std::unique_ptr<PImpl> make_pimpl();
 protected:
     /* data */
-    NodeKey hinge_;
+    NodeKey hinge_ = nullptr;
 
     /* accessors */
     virtual HingeTeam* virtual_clone() const;
-    // virtual NodeKey pick_tip_node() const;
+    virtual FreeChain const& pick_tip_chain() const;
     virtual void mutation_invariance_check() const;
+    virtual void add_node_check(ProtoModule const* const prot) const;
 
     /* modifiers */
     virtual void virtual_copy(NodeTeam const& other);
     virtual void calc_checksum();
     virtual void calc_score();
     virtual NodeKey follow_recipe(tests::Recipe const& recipe,
-                     Transform const& shift_tx = Transform());
+                                  Transform const& shift_tx = Transform());
 
 public:
     /* ctors */
