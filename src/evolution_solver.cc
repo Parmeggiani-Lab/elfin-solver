@@ -13,12 +13,15 @@ namespace elfin {
 
 char const* const get_score_msg_format =
     "Restart #%zu Gen #%zu: "
-    "[best %.2f (%.2f/module), worst=%.2f, %.0fms]\n";
+    "[best %.2f (cksm%x; %.2f/module), worst=%.2f, %.0fms]\n";
 
 char const* const timing_msg_format =
     "Avg Times: "
     "[Evolve=%.0f, Score=%.0f, Rank=%.0f, "
     "Select=%.0f, Gen=%.0f]\n";
+
+char const* const print_pop_fmt =
+    "%s #%zu [cksm:%x] [len:%zu] [score:%.2f]\n";
 
 /* private */
 struct EvolutionSolver::PImpl {
@@ -30,8 +33,7 @@ struct EvolutionSolver::PImpl {
     SolutionMap best_sols_;
     double start_time_in_us_ = 0;
     size_t const debug_pop_print_n_;
-    char const* const print_pop_fmt_ =
-        "%s #%zu [cksm:%p] [len:%zu] [score:%.2f]\n";
+    Crc32 last_best_checksum_;
 
     /* ctors */
     PImpl(size_t const debug_pop_print_n) :
@@ -44,14 +46,14 @@ struct EvolutionSolver::PImpl {
                               double const gen_start_time,
                               double& tot_gen_time,
                               size_t& stagnant_count,
-                              float& lastgen_best_score,
                               TeamSPMinHeap& best_sols)
     {
         // Stat collection
         auto const& best_team = pop.front_buffer()->front();
         auto const& worst_team = pop.front_buffer()->back();
 
-        float const gen_best_score = best_team->score();
+        float const best_score = best_team->score();
+        Crc32 const& best_checksum = best_team->checksum();
         double const gen_time =
             (JUtil.get_timestamp_us() - gen_start_time) / 1e3;
 
@@ -61,24 +63,21 @@ struct EvolutionSolver::PImpl {
         JUtil.info(get_score_msg_format,
                    restart_id,
                    gen_id,
-                   gen_best_score,
-                   gen_best_score / best_team->size(),
+                   best_score,
+                   best_checksum,
+                   best_score / best_team->size(),
                    worst_team->score(),
                    gen_time);
 
         // Compute stagnancy & check inverted scores.
-        if (JUtil.float_approximates(gen_best_score, lastgen_best_score, 1e-6)) {
+        if (best_checksum == last_best_checksum_) {
             stagnant_count++;
         }
         else {
-            if (gen_best_score > lastgen_best_score) {
-                print_pop("Error debug", pop);
-                TRACE_NOMSG("Best score is worse than last gen.\n");
-            }
             stagnant_count = 0;
         }
 
-        lastgen_best_score = gen_best_score;
+        last_best_checksum_ = best_checksum;
 
         // Print timing stats.
         size_t const n_gens = gen_id + 1;
@@ -108,7 +107,7 @@ struct EvolutionSolver::PImpl {
         }
 
         // Check stop conditions.
-        if (gen_best_score < OPTIONS.ga_stop_score) {
+        if (best_score <= OPTIONS.ga_stop_score) {
             // Check needed for fprintf().
             if (JUtil.check_log_lvl(LOGLVL_INFO)) {
                 fprintf(
@@ -181,14 +180,22 @@ struct EvolutionSolver::PImpl {
 
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.front_buffer()->at(i);
-                oss << string_format(print_pop_fmt_,
-                                     "  front", i, c->checksum(), c->size(), c->score());
+                oss << string_format(print_pop_fmt,
+                                     "  front",
+                                     i,
+                                     c->checksum(),
+                                     c->size(),
+                                     c->score());
             }
 
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.back_buffer()->at(i);
-                oss << string_format(print_pop_fmt_,
-                                     "  back ", i, c->checksum(), c->size(), c->score());
+                oss << string_format(print_pop_fmt,
+                                     "  back ",
+                                     i,
+                                     c->checksum(),
+                                     c->size(),
+                                     c->score());
             }
 
             JUtil.debug(oss.str().c_str());
@@ -215,7 +222,6 @@ struct EvolutionSolver::PImpl {
 
                 double tot_gen_time = 0.0f;
                 size_t stagnant_count = 0;
-                float lastgen_best_score = INFINITY;
 
                 if (!OPTIONS.dry_run) {
                     size_t gen_id = 0;
@@ -237,7 +243,6 @@ struct EvolutionSolver::PImpl {
                                              gen_start_time,
                                              tot_gen_time,
                                              stagnant_count,
-                                             lastgen_best_score,
                                              best_sols_[wa_name]);
 
                         if (should_restart_ga or should_stop_ga) break;

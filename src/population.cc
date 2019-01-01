@@ -81,13 +81,12 @@ void Population::evolve() {
                 mode = mutation::Mode::NONE;
             }
             else {
-                // Replicate mother
+                // Choose parents.
                 size_t const mother_id =
-                    random::get_dice(CUTOFFS.survivors);  // only elites
+                    random::get_dice(CUTOFFS.survivors);
                 auto& mother_team = back_buffer_->at(mother_id);
-
                 size_t const father_id =
-                    random::get_dice(CUTOFFS.pop_size);  // include all back_buffer_ teams
+                    random::get_dice(CUTOFFS.survivors);
                 auto& father_team = back_buffer_->at(father_id);
 
                 mode = team->evolve(*mother_team, *father_team);
