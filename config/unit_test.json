@@ -5,7 +5,7 @@
     "len_dev": 3,
     "keep_n": 3,
     "ga_pop_size": 9723,
-    "ga_iters": 11,
+    "ga_iters": 30,
     "ga_survive_rate": 0.0666,
-    "ga_stop_stagnancy": 5
+    "ga_stop_stagnancy": 10
 }

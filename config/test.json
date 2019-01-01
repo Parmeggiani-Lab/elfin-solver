@@ -1,5 +1,5 @@
 {
-    "spec_file": "examples/half_snake_2x1h.json",
+    "spec_file": "examples/half_snake_free.json",
     "xdb": "xdb.json",
     "output_dir": "./output/",
 
@@ -8,10 +8,10 @@
     "len_dev": 1,
 
     "keep_n": 1,
-    "ga_pop_size": 16000,
-    "ga_iters": 100,
+    "ga_pop_size": 16384,
+    "ga_iters": -1,
 
     "ga_survive_rate": 0.02,
 
-    "ga_stop_stagnancy": 10
+    "ga_stop_stagnancy": -1
 }

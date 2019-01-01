@@ -47,6 +47,21 @@ static Recipe const quarter_snake_free_recipe {
     {"D79_j2_D14", TerminusType::C, "A", "A"},
 };
 
+static Recipe const half_snake_free_recipe {
+    {"D54_j1_D79", TerminusType::N, "A", "A"},
+    {"D54", TerminusType::N, "A", "A"},
+    {"D14_j1_D54", TerminusType::N, "A", "A"},
+    {"D14_j2_D14", TerminusType::N, "A", "A"},
+    {"D79_j2_D14", TerminusType::N, "A", "A"},
+    {"D79_aC2_04", TerminusType::C, "B", "A"},
+    {"D79", TerminusType::C, "A", "A"},
+    {"D79", TerminusType::C, "A", "A"},
+    {"D79", TerminusType::C, "A", "A"},
+    {"D79_j1_D54", TerminusType::C, "A", "A"},
+    {"D54_j1_D79", TerminusType::C, "A", "A"},
+    {"D79_j2_D14", TerminusType::C, "A", "A"},
+};
+
 static Recipe const H_1h_recipe {
     {"D49_aC2_ext", TerminusType::N, "D", "A"},
     {"D49", TerminusType::N, "A", "A"},

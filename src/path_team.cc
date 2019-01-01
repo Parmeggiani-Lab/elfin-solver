@@ -6,11 +6,11 @@
 #include "id_types.h"
 #include "mutation.h"
 
-// #define NO_ERODE
-// #define NO_DELETE
-// #define NO_INSERT
-// #define NO_SWAP
-#define NO_CROSS
+#define NO_ERODE
+#define NO_DELETE
+#define NO_INSERT
+#define NO_SWAP
+// #define NO_CROSS
 
 #if defined(NO_ERODE) || \
 defined(NO_DELETE) || \
@@ -431,7 +431,6 @@ struct PathTeam::PImpl {
         // Walk through all links to collect insert points.
         std::vector<mutation::InsertPoint> insert_points;
 
-        // Starting at either end is fine.
         auto start_node = _.get_tip_chain(/*mutable_hint=*/false).node;
         auto path_gen = start_node->gen_path();
 
@@ -524,7 +523,6 @@ struct PathTeam::PImpl {
         // Walk through all links to collect swap points.
         std::vector<mutation::SwapPoint> swap_points;
 
-        // Starting at either end is fine.
         auto start_node = _.get_tip_chain(/*mutable_hint=*/false).node;
         auto path_gen = start_node->gen_path();
 
@@ -612,75 +610,74 @@ struct PathTeam::PImpl {
 #ifndef NO_CROSS
         try { // Catch bad cast
             auto& pt_father = static_cast<PathTeam const&>(father);
-            if (not pt_father.free_chains_.empty()) {
-                // First, collect arrows from both parents.
 
-                // Starting at either end is fine.
-                auto m_arrows =
-                    begin(_.free_chains_)->node->gen_path().collect_arrows();
-                DEBUG_NOMSG(pt_father.free_chains_.size() != 2);
-                auto f_arrows =
-                    begin(pt_father.free_chains_)->node->gen_path().collect_arrows();
+            // First, collect arrows from both parents.
+            auto m_arrows =
+                _.get_tip_chain(/*mutable_hint=*/false).node->
+                gen_path().collect_arrows();
 
-                // Walk through all link pairs to collect cross points.
-                std::vector<mutation::CrossPoint> cross_points;
-                for (Link const* m_arrow : m_arrows) {
-                    for (Link const* f_arrow : f_arrows) {
-                        ProtoLink const* sd =
-                            m_arrow->src().find_link_to(f_arrow->dst());
-                        if (sd) {
-                            cross_points.emplace_back(
-                                sd,
-                                m_arrow, false,   // { } --m_arrow--v { del  }
-                                f_arrow, false);  // { } --f_arrow--> { copy }
-                        }
+            auto f_arrows =
+                pt_father.get_tip_chain(/*mutable_hint=*/false).node->
+                gen_path().collect_arrows();
 
-                        ProtoLink const* ss =
-                            m_arrow->src().find_link_to(f_arrow->src());
-                        if (ss) {
-                            cross_points.emplace_back(
-                                ss,
-                                m_arrow, false,   // {      } --m_arrow--v { del }
-                                f_arrow, true);   // { copy } <---f_rev--- {     }
-                        }
+            // Walk through all link pairs to collect cross points.
+            std::vector<mutation::CrossPoint> cross_points;
+            for (Link const* m_arrow : m_arrows) {
+                for (Link const* f_arrow : f_arrows) {
+                    ProtoLink const* sd =
+                        m_arrow->src().find_link_to(f_arrow->dst());
+                    if (sd) {
+                        cross_points.emplace_back(
+                            sd,
+                            m_arrow, false,   // { } --m_arrow--v { del  }
+                            f_arrow, false);  // { } --f_arrow--> { copy }
+                    }
 
-                        ProtoLink const* dd =
-                            m_arrow->dst().find_link_to(f_arrow->dst());
-                        if (dd) {
-                            cross_points.emplace_back(
-                                dd,
-                                m_arrow, true,    // { del } v---m_rev--- {      }
-                                f_arrow, false);  // {     } --f_arrow--> { copy }
-                        }
+                    ProtoLink const* ss =
+                        m_arrow->src().find_link_to(f_arrow->src());
+                    if (ss) {
+                        cross_points.emplace_back(
+                            ss,
+                            m_arrow, false,   // {      } --m_arrow--v { del }
+                            f_arrow, true);   // { copy } <---f_rev--- {     }
+                    }
 
-                        ProtoLink const* ds =
-                            m_arrow->dst().find_link_to(f_arrow->src());
-                        if (ds) {
-                            cross_points.emplace_back(
-                                ds,
-                                m_arrow, true,    // { del  } v---m_rev--- { }
-                                f_arrow, true);   // { keep } <---f_rev--- { }
-                        }
+                    ProtoLink const* dd =
+                        m_arrow->dst().find_link_to(f_arrow->dst());
+                    if (dd) {
+                        cross_points.emplace_back(
+                            dd,
+                            m_arrow, true,    // { del } v---m_rev--- {      }
+                            f_arrow, false);  // {     } --f_arrow--> { copy }
+                    }
+
+                    ProtoLink const* ds =
+                        m_arrow->dst().find_link_to(f_arrow->src());
+                    if (ds) {
+                        cross_points.emplace_back(
+                            ds,
+                            m_arrow, true,    // { del  } v---m_rev--- { }
+                            f_arrow, true);   // { keep } <---f_rev--- { }
                     }
                 }
+            }
 
-                if (not cross_points.empty()) {
-                    auto const& cp = random::pick(cross_points);
+            if (not cross_points.empty()) {
+                auto const& cp = random::pick(cross_points);
 
-                    Link m_arrow = cp.m_rev ?
-                                   cp.m_arrow->reversed() :
-                                   *cp.m_arrow;  // Make a copy.
-                    Link f_arrow = cp.f_rev ?
-                                   cp.f_arrow->reversed() :
-                                   *cp.f_arrow;  // Make a copy.
+                Link m_arrow = cp.m_rev ?
+                               cp.m_arrow->reversed() :
+                               *cp.m_arrow;  // Make a copy.
+                Link f_arrow = cp.f_rev ?
+                               cp.f_arrow->reversed() :
+                               *cp.f_arrow;  // Make a copy.
 
-                    // Always keep m_arrow.src, del m_arrow.dst, and copy from
-                    // f_arrow.dst().
-                    sever_limb(m_arrow);
-                    copy_limb(m_arrow, f_arrow);
+                // Always keep m_arrow.src, del m_arrow.dst, and copy from
+                // f_arrow.dst().
+                sever_limb(m_arrow);
+                copy_limb(m_arrow, f_arrow);
 
-                    mutate_success = true;
-                }
+                mutate_success = true;
             }
         }
         catch (std::bad_cast const& e) {
@@ -992,7 +989,7 @@ mutation::Mode PathTeam::evolve(
     auto modes = mutation::gen_mode_list();
 
     bool mutate_success = false;
-    mutation::Mode mode;
+    mutation::Mode mode = mutation::Mode::NONE;
 
     while (not mutate_success and not modes.empty()) {
         mutation_invariance_check();
