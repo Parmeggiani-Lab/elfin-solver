@@ -238,15 +238,15 @@ ARG_PARSER_CALLBACK_DEF(set_ga_stop_score) {
     return true;
 }
 
-ARG_PARSER_CALLBACK_DEF(set_ga_restart_factor) {
+ARG_PARSER_CALLBACK_DEF(set_ga_restart_trigger) {
     long const l = JUtil.parse_long(arg_in.c_str());
-    options_.ga_restart_factor = l < 0 ? 0 : l;
+    options_.ga_restart_trigger = l < 0 ? 0 : l;
     return true;
 }
 
-ARG_PARSER_CALLBACK_DEF(set_ga_stop_factor) {
+ARG_PARSER_CALLBACK_DEF(set_ga_stop_trigger) {
     long const l = JUtil.parse_long(arg_in.c_str());
-    options_.ga_stop_factor = l < 0 ? 0 : l;
+    options_.ga_stop_trigger = l < 0 ? 0 : l;
     return true;
 }
 

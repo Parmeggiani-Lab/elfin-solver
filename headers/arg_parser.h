@@ -129,19 +129,19 @@ private:
             &ArgParser::set_ga_stop_score
         },
         {   "rf",
-            "ga_restart_factor",
+            "ga_restart_trigger",
             string_format("Set number of stagnant generations "
             "before GA restarts (default=%zu).\n    Value of 0 means "
-            "no restarting.", options_.ga_restart_factor),
-            true, &ArgParser::set_ga_restart_factor
+            "no restarting.", options_.ga_restart_trigger),
+            true, &ArgParser::set_ga_restart_trigger
         },
         {   "sf",
-            "ga_stop_factor",
-            string_format("Set number of stagnant generations "
-            "before GA exits (default=%zu).\n    Value of 0 means "
-            "no stopping by reason of stagnancy.",
-            options_.ga_stop_factor),
-            true, &ArgParser::set_ga_stop_factor
+            "ga_stop_trigger",
+            string_format(
+                "Set number of restarts before GA exits (default=%zu)."
+                "\n    Value of 0 means no stopping by reason of stagnancy.",
+                options_.ga_stop_trigger),
+            true, &ArgParser::set_ga_stop_trigger
         },
         {   "v",
             "verbosity",
@@ -222,8 +222,8 @@ private:
     ARG_CALLBACK_DECL(set_ga_iters);
     ARG_CALLBACK_DECL(set_ga_survive_rate);
     ARG_CALLBACK_DECL(set_ga_stop_score);
-    ARG_CALLBACK_DECL(set_ga_restart_factor);
-    ARG_CALLBACK_DECL(set_ga_stop_factor);
+    ARG_CALLBACK_DECL(set_ga_restart_trigger);
+    ARG_CALLBACK_DECL(set_ga_stop_trigger);
     ARG_CALLBACK_DECL(set_verbosity);
     ARG_CALLBACK_DECL(set_run_tests);
     ARG_CALLBACK_DECL(set_device);
