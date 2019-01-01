@@ -7,10 +7,10 @@
 #include "mutation.h"
 
 // #define NO_ERODE
-// #define NO_DELETE
-// #define NO_INSERT
-// #define NO_SWAP
-// #define NO_CROSS
+#define NO_DELETE
+#define NO_INSERT
+#define NO_SWAP
+#define NO_CROSS
 
 #if defined(NO_ERODE) || \
 defined(NO_DELETE) || \
@@ -31,7 +31,8 @@ struct PathTeam::PImpl {
     PImpl(PathTeam& interface) : _(interface) {}
 
     /*modifiers */
-    void fix_limb_transforms(Link const& arrow) {
+    void fix_limb_transforms(Link const& arrow)
+    {
         auto limb_gen = arrow.gen_path();
         while (not limb_gen.is_done()) {
             Link const* curr_link = limb_gen.curr_link();
@@ -42,9 +43,8 @@ struct PathTeam::PImpl {
         }
     }
 
-    NodeKey grow_tip(
-        FreeChain const& free_chain_a,
-        ProtoLink const* pt_link = nullptr)
+    NodeKey grow_tip(FreeChain const& free_chain_a,
+                     ProtoLink const* pt_link = nullptr)
     {
         if (not pt_link) {
             pt_link = &free_chain_a.random_proto_link();
@@ -75,17 +75,15 @@ struct PathTeam::PImpl {
         return node_b;
     }
 
-    void nip_tip(
-        NodeKey tip_node) {
+    void nip_tip(NodeKey tip_node)
+    {
         // Check node is a tip node.
         size_t const num_links = tip_node->links().size();
         TRACE_NOMSG(num_links != 1);
 
-        NodeKey new_tip = nullptr;
-
         FreeChain const& new_free_chain =
             begin(tip_node->links())->dst();
-        new_tip = new_free_chain.node;
+        NodeKey new_tip = new_free_chain.node;
 
         // Unlink chain.
         get_node(new_tip)->remove_link(new_free_chain);
@@ -93,13 +91,15 @@ struct PathTeam::PImpl {
         // Restore FreeChain.
         _.free_chains_.push_back(new_free_chain);
 
+        // Remove tip node. Don't do this before restoring the FreeChain
+        // unless new_free_chain is a copy rather than a reference.
         _.remove_free_chains(tip_node);
         _.nodes_.erase(tip_node);
     }
 
-    void build_bridge(
-        mutation::InsertPoint const& insert_point,
-        FreeChain::Bridge const* bridge = nullptr) {
+    void build_bridge(mutation::InsertPoint const& insert_point,
+                      FreeChain::Bridge const* bridge = nullptr)
+    {
         if (not bridge) {
             bridge = &random::pick(insert_point.bridges);
         }
@@ -177,11 +177,9 @@ struct PathTeam::PImpl {
     }
 
     // Copy nodes starting from f_arrow.dst to m_arrow.src().
-    void copy_limb(
-        Link const& m_arrow,
-        Link const& f_arrow) {
-        DEBUG_NOMSG(_.size() == 0);
-
+    void copy_limb(Link const& m_arrow,
+                   Link const& f_arrow)
+    {
         NodeKey tip_node = m_arrow.src().node;
         size_t num_links = tip_node->links().size();
         DEBUG_NOMSG(_.size() > 1 and num_links != 1);
@@ -204,7 +202,7 @@ struct PathTeam::PImpl {
         DEBUG_NOMSG(num_links != 1);
 
         auto path_gen = f_arrow.gen_path();
-        path_gen.next(); // Same as f_arrow.dst().node.
+        path_gen.next();  // Same as f_arrow.dst().node.
         while (not path_gen.is_done()) {
             auto curr_link = path_gen.curr_link();
             DEBUG_NOMSG(curr_link->dst().node->prototype_ !=
@@ -246,9 +244,7 @@ struct PathTeam::PImpl {
 #ifndef NO_ERODE
         if (not _.free_chains_.empty()) {
             // Pick random tip node if not specified.
-            auto fc_itr = begin(_.free_chains_);
-            advance(fc_itr, random::get_dice(_.free_chains_.size()));
-            NodeKey tip_node = fc_itr->node;
+            NodeKey tip_node = _.pick_tip_chain().node;
             _.remove_free_chains(tip_node);
 
             FreeChain last_free_chain;

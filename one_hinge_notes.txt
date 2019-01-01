@@ -1,7 +1,7 @@
 // Need to implement:
 // Returns a tip free chain, possibly randomly chosen. For a hinged team,
 // fixed nodes must not be returned unlress there are no other nodes.
-virtual FreeChain const& pick_tip_chain() const;
+// virtual FreeChain const& pick_tip_chain() const;
 // Checks free_chains_.size() etc. are correct on entry to a mutation
 // method. Called before calling mutation methods from evolve().
 // virtual void mutation_invariance_check() const;
@@ -19,15 +19,15 @@ virtual FreeChain const& pick_tip_chain() const;
 fix_limb_transforms():
     // Input arrow must not point towards fixed end
 
-grow_tip():
-nip_tip():
-    // No change
+// grow_tip():
+// nip_tip():
+//     // No change
 
 sever_limb():
     // Input arrow must not point towards fixed end
 
-copy_limb():
-    // No change
+// copy_limb():
+//     // No change
 
 erode_mutate():
     // Receive tip node choice from virtual pick_tip_node()

@@ -1,5 +1,5 @@
 {
-    "spec_file": "examples/quarter_snake_free_far.json",
+    "spec_file": "examples/quarter_snake_1h.json",
     "xdb": "xdb.json",
     "output_dir": "./output/",
 

@@ -158,22 +158,38 @@ bool Transform::is_approx(
 JSON Transform::rot_json() const {
     JSON out;
 #ifdef USE_EIGEN
-    out = {
-
-    };
+    for (size_t i = 0; i < 3; ++i) {
+        out[i] = std::array<float, 3> {
+            (*this)(i, 0),
+            (*this)(i, 1),
+            (*this)(i, 2)
+        };
+    }
 #else
     for (size_t i = 0; i < 3; ++i) {
-        out[i] = std::vector<float>(rot_[i], rot_[i] + 3);
+        out[i] = std::array<float, 3> {
+            rot_[i][0],
+            rot_[i][1],
+            rot_[i][2]
+        };
     }
 #endif  /* ifdef USE_EIGEN */
     return out;
 }
 
 JSON Transform::tran_json() const {
-    JSON out;
 #ifdef USE_EIGEN
+    JSON out(std::array<float, 3> {
+        (*this)(0, 3),
+        (*this)(1, 3),
+        (*this)(2, 3)
+    });
 #else
-    out = std::vector<float>(tran_, tran_ + 3);
+    JSON out(std::array<float, 3> {
+        tran_[0],
+        tran_[1],
+        tran_[2]
+    });
 #endif  /* ifdef USE_EIGEN */
     return out;
 }
