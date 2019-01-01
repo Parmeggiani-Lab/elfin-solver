@@ -52,32 +52,32 @@ HingeTeam* HingeTeam::virtual_clone() const {
     return new HingeTeam(*this);
 }
 
-FreeChain const& HingeTeam::pick_tip_chain() const {
+FreeChain const& HingeTeam::get_tip_chain(
+    bool const mutable_hint) const {
     // If the only node is the hinge, then we allow modification to one random
     // tip.
     if (size() == 1) {
-        return PathTeam::pick_tip_chain();
+        return PathTeam::get_tip_chain(mutable_hint);
     }
     else {
         DEBUG_NOMSG(not hinge_);
 
-        for (auto const& fc : free_chains_) {
-            // There should be only one instance that this condition is true.
-            if (fc.node != hinge_) {
-                return fc;
-            }
-        }
+        if (mutable_hint) {
+            auto fc_itr = find_if(begin(free_chains_), end(free_chains_),
+            [&](FreeChain const & fc) { return fc.node != hinge_; });
 
-        TRACE_NOMSG("No tip available");
-        throw ExitException{1};
+            DEBUG(fc_itr == end(free_chains_),
+                  "No mutable free chain available\n");
+
+            return *fc_itr;
+        }
+        else {
+            return begin(hinge_->links())->src();
+        }
     }
 }
 
 void HingeTeam::mutation_invariance_check() const {
-    // TRACE(free_chains_.size() != 2,
-    //       "Invariance broken: %zu free chains\n",
-    //       free_chains_.size());
-
     TRACE(size() == 0,
           "Invariance broken: size() = 0\n");
 }
@@ -89,7 +89,7 @@ void HingeTeam::add_node_check(ProtoModule const* const prot) const {
     }
 }
 
-bool HingeTeam::can_modify(NodeKey const tip) const {
+bool HingeTeam::is_mutable(NodeKey const tip) const {
     return tip != hinge_;
 }
 

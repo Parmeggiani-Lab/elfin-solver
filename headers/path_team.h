@@ -34,12 +34,13 @@ protected:
     virtual PathTeam* virtual_clone() const;
     // Returns a tip free chain, possibly randomly chosen. For a hinged team,
     // fixed nodes must not be returned unlress there are no other nodes.
-    virtual FreeChain const& pick_tip_chain() const;
+    virtual FreeChain const& get_tip_chain(
+        bool const mutable_hint) const;
     // Checks free_chains_.size() etc. are correct on entry to a mutation
     // method. Called before calling mutation methods from evolve().
     virtual void mutation_invariance_check() const;
     virtual void add_node_check(ProtoModule const* const prot) const;
-    virtual bool can_modify(NodeKey const nk) const;
+    virtual bool is_mutable(NodeKey const nk) const;
 
     /* modifiers */
     virtual void restart();

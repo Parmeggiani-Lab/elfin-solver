@@ -9,7 +9,7 @@
 // #define NO_ERODE
 // #define NO_DELETE
 // #define NO_INSERT
-#define NO_SWAP
+// #define NO_SWAP
 #define NO_CROSS
 
 #if defined(NO_ERODE) || \
@@ -242,57 +242,48 @@ struct PathTeam::PImpl {
 
         bool mutate_success = false;
 #ifndef NO_ERODE
-        if (not _.free_chains_.empty()) {
-            // Pick random tip node if not specified.
-            NodeKey tip_node = _.pick_tip_chain().node;
-            _.remove_free_chains(tip_node);
+        // Pick random tip node if not specified.
+        NodeKey tip_node = _.get_tip_chain(/*mutable_hint=*/true).node;
+        _.remove_free_chains(tip_node);
 
-            FreeChain last_free_chain;
-            float p = 1.0f;  // p for Probability.
+        FreeChain last_free_chain;
+        float p = 1.0f;  // p for Probability.
 
-            // Loop condition is always true on first entrance, hence do-while.
-            bool next_loop = false;
-            do {
-                // Calculate next iteration condition.
-                //
-                // The following formula gives:
-                // remaining size / original size; p
-                // 6/6; p=0.8333333333333334
-                // 5/6; p=0.6666666666666667
-                // 4/6; p=0.5
-                // 3/6; p=0.3333333333333333
-                // 2/6; p=0.16666666666666666
-                // 1/6; p=0.0
-                p = p * (_.size() - 2) / (_.size() - 1);  // size() is at least 2
-                next_loop = random::get_dice_0to1() <= p;
+        // Loop condition is always true on first entrance, hence do-while.
+        bool next_loop = false;
+        size_t const original_size = _.size();
+        do {
+            // Calculate next iteration condition - linearly falling
+            // probability.
+            p = (_.size() - 1) / original_size;
+            next_loop = random::get_dice_0to1() <= p;
 
-                // Check node is tip node.
-                size_t const num_links = tip_node->links().size();
-                TRACE_NOMSG(num_links != 1);
+            // Check node is tip node.
+            size_t const num_links = tip_node->links().size();
+            TRACE_NOMSG(num_links != 1);
 
-                FreeChain const& new_free_chain =
-                    begin(tip_node->links())->dst();
-                NodeKey new_tip = new_free_chain.node;
+            FreeChain const& new_free_chain =
+                begin(tip_node->links())->dst();
+            NodeKey new_tip = new_free_chain.node;
 
-                // Unlink
-                get_node(new_tip)->remove_link(new_free_chain);
+            // Unlink
+            get_node(new_tip)->remove_link(new_free_chain);
 
-                if (not next_loop) {
-                    last_free_chain = new_free_chain;
-                }
+            if (not next_loop) {
+                last_free_chain = new_free_chain;
+            }
 
-                _.nodes_.erase(tip_node);
+            _.nodes_.erase(tip_node);
 
-                tip_node = new_tip;
-            } while (next_loop);
+            tip_node = new_tip;
+        } while (next_loop);
 
-            // Restore chain.
-            _.free_chains_.push_back(last_free_chain);
+        // Restore chain.
+        _.free_chains_.push_back(last_free_chain);
 
-            regenerate();
+        regenerate();
 
-            mutate_success = true;
-        }
+        mutate_success = true;
 #endif // NO_ERODE
 
         return mutate_success;
@@ -318,7 +309,7 @@ struct PathTeam::PImpl {
                 size_t const num_links = curr_node->links().size();
 
                 if (num_links == 1) {
-                    if ( _.can_modify(curr_node)) {
+                    if ( _.is_mutable(curr_node)) {
                         //
                         // curr_node is a tip node, which can always be deleted trivially.
                         // Use ProtoLink* = nullptr to mark a tip node. Pointers
@@ -437,92 +428,90 @@ struct PathTeam::PImpl {
 
         bool mutate_success = false;
 #ifndef NO_INSERT
-        if (not _.free_chains_.empty()) {
-            // Walk through all links to collect insert points.
-            std::vector<mutation::InsertPoint> insert_points;
+        // Walk through all links to collect insert points.
+        std::vector<mutation::InsertPoint> insert_points;
 
-            // Starting at either end is fine.
-            auto start_node = _.pick_tip_chain().node;
-            auto path_gen = start_node->gen_path();
+        // Starting at either end is fine.
+        auto start_node = _.get_tip_chain(/*mutable_hint=*/false).node;
+        auto path_gen = start_node->gen_path();
 
-            NodeKey curr_node = nullptr;
-            auto next_node = path_gen.next();
-            do {
-                curr_node = next_node;
-                next_node = path_gen.next();  // Can be nullptr.
-                size_t const num_links = curr_node->links().size();
+        NodeKey curr_node = nullptr;
+        auto next_node = path_gen.next();
+        do {
+            curr_node = next_node;
+            next_node = path_gen.next();  // Can be nullptr.
+            size_t const num_links = curr_node->links().size();
 
-                if (num_links == 1 and _.can_modify(curr_node)) {
-                    //
-                    // curr_node is a tip node. A new node can be inserted on the
-                    // unconnected terminus of a tip node trivially. Use nullptr
-                    // in dst().node to flag that this is tip node.
-                    //
-                    // Either:
-                    //             X---- [curr_node] ----> [next_node]
-                    // Or:
-                    // [prev_node] <---- [curr_node] ----X
-                    //
+            if (num_links == 1 and _.is_mutable(curr_node)) {
+                //
+                // curr_node is a tip node. A new node can be inserted on the
+                // unconnected terminus of a tip node trivially. Use nullptr
+                // in dst().node to flag that this is tip node.
+                //
+                // Either:
+                //             X---- [curr_node] ----> [next_node]
+                // Or:
+                // [prev_node] <---- [curr_node] ----X
+                //
 
-                    insert_points.emplace_back(
-                        FreeChain(curr_node, TerminusType::NONE, 0),
-                        FreeChain());
+                insert_points.emplace_back(
+                    FreeChain(curr_node, TerminusType::NONE, 0),
+                    FreeChain());
+            }
+
+            if (next_node) {
+                //
+                // curr_node and next_node are linked.
+                // [curr_node] -------------link1-------------> [next_node]
+                //
+                // Find all pt_link1, pt_link2 that:
+                // [curr_node] -pt_link1-> [new_node] -pt_link2-> [next_node]
+                //
+                // Where src chain_id and term are known for curr_node, and
+                // dst chain_id and term are known for next_node.
+                //
+                Link const* link1 = curr_node->find_link_to(next_node);
+
+                insert_points.emplace_back(link1->src(), link1->dst());
+                auto const& ip = insert_points.back();
+                if (ip.bridges.size() == 0) {
+                    insert_points.pop_back();
                 }
+            }
+        } while (not path_gen.is_done());
 
-                if (next_node) {
-                    //
-                    // curr_node and next_node are linked.
-                    // [curr_node] -------------link1-------------> [next_node]
-                    //
-                    // Find all pt_link1, pt_link2 that:
-                    // [curr_node] -pt_link1-> [new_node] -pt_link2-> [next_node]
-                    //
-                    // Where src chain_id and term are known for curr_node, and
-                    // dst chain_id and term are known for next_node.
-                    //
-                    Link const* link1 = curr_node->find_link_to(next_node);
+        // insert_points might be empty (if HingeTeam has no other nodes
+        // than hinge_).
+        if (not insert_points.empty()) {
+            // Insert a node using a random insert point
+            auto const& insert_point = random::pick(insert_points);
+            if (insert_point.dst.node) {
+                // This is a non-tip node.
+                build_bridge(insert_point);
+            }
+            else {
+                // This is a tip node. Inserting is the same as grow_tip().
+                auto fc_itr = find_if(begin(_.free_chains_),
+                                      end(_.free_chains_),
+                [&](auto const & fc) {
+                    return fc.node == insert_point.src.node;
+                });
 
-                    insert_points.emplace_back(link1->src(), link1->dst());
-                    auto const& ip = insert_points.back();
-                    if (ip.bridges.size() == 0) {
-                        insert_points.pop_back();
+                if (fc_itr == end(_.free_chains_)) {
+                    JUtil.error("FreeChain not found for %s\n",
+                                insert_point.src.node->to_string().c_str());
+                    JUtil.error("Available FreeChain(s):\n");
+                    for (FreeChain const& fc : _.free_chains_) {
+                        JUtil.error("%s\n", fc.to_string().c_str());
                     }
-                }
-            } while (not path_gen.is_done());
-
-            // insert_points might be empty (if HingeTeam has no other nodes
-            // than hinge_).
-            if (not insert_points.empty()) {
-                // Insert a node using a random insert point
-                auto const& insert_point = random::pick(insert_points);
-                if (insert_point.dst.node) {
-                    // This is a non-tip node.
-                    build_bridge(insert_point);
+                    TRACE_NOMSG("FreeChain not found");
                 }
                 else {
-                    // This is a tip node. Inserting is the same as grow_tip().
-                    auto fc_itr = find_if(begin(_.free_chains_),
-                                          end(_.free_chains_),
-                    [&](auto const & fc) {
-                        return fc.node == insert_point.src.node;
-                    });
-
-                    if (fc_itr == end(_.free_chains_)) {
-                        JUtil.error("FreeChain not found for %s\n",
-                                    insert_point.src.node->to_string().c_str());
-                        JUtil.error("Available FreeChain(s):\n");
-                        for (FreeChain const& fc : _.free_chains_) {
-                            JUtil.error("%s\n", fc.to_string().c_str());
-                        }
-                        TRACE_NOMSG("FreeChain not found");
-                    }
-                    else {
-                        grow_tip(*fc_itr);
-                    }
+                    grow_tip(*fc_itr);
                 }
-
-                mutate_success = true;
             }
+
+            mutate_success = true;
         }
 #endif
         return mutate_success;
@@ -532,88 +521,86 @@ struct PathTeam::PImpl {
 
         bool mutate_success = false;
 #ifndef NO_SWAP
-        if (not _.free_chains_.empty()) {
-            // Walk through all links to collect swap points.
-            std::vector<mutation::SwapPoint> swap_points;
+        // Walk through all links to collect swap points.
+        std::vector<mutation::SwapPoint> swap_points;
 
-            // Starting at either end is fine.
-            auto start_node = begin(_.free_chains_)->node;
-            auto path_gen = start_node->gen_path();
+        // Starting at either end is fine.
+        auto start_node = _.get_tip_chain(/*mutable_hint=*/false).node;
+        auto path_gen = start_node->gen_path();
 
-            NodeKey prev_node = nullptr;
-            NodeKey curr_node = nullptr;
-            auto next_node = path_gen.next();  // Starts with start_node/
-            do {
-                prev_node = curr_node;
-                curr_node = next_node;
-                next_node = path_gen.next();  // Can be nullptr.
-                size_t const num_links = curr_node->links().size();
+        NodeKey prev_node = nullptr;
+        NodeKey curr_node = nullptr;
+        auto next_node = path_gen.next();  // Starts with start_node/
+        do {
+            prev_node = curr_node;
+            curr_node = next_node;
+            next_node = path_gen.next();  // Can be nullptr.
+            size_t const num_links = curr_node->links().size();
 
-                if (num_links == 1) {
-                    //
-                    // curr_node is a tip node. A tip node can be swapped by
-                    // deleting it, then randomly growing the tip into a
-                    // different ProtoModule. The only time this is not possible
-                    // is when the neighbor ProtoModule has no other ProtoLinks
-                    // on the terminus in question.
-                    //
-                    //             X---- [curr_node] -src->-<-dst- [neighbor]
-                    //                                         /
-                    //                [other choices?] <-------
-                    //
+            if (num_links == 1 and _.is_mutable(curr_node)) {
+                //
+                // curr_node is a tip node. A tip node can be swapped by
+                // deleting it, then randomly growing the tip into a
+                // different ProtoModule. The only time this is not possible
+                // is when the neighbor ProtoModule has no other ProtoLinks
+                // on the terminus in question.
+                //
+                //             X---- [curr_node] -src->-<-dst- [neighbor]
+                //                                         /
+                //                [other choices?] <-------
+                //
 
-                    // Check that neighbor can indead grow into a different
-                    // ProtoModule.
-                    FreeChain const& tip_fc = begin(curr_node->links())->dst();
-                    ProtoModule const* neighbor = tip_fc.node->prototype_;
-                    ProtoChain const& chain = neighbor->chains().at(tip_fc.chain_id);
+                // Check that neighbor can indead grow into a different
+                // ProtoModule.
+                FreeChain const& tip_fc = begin(curr_node->links())->dst();
+                ProtoModule const* neighbor = tip_fc.node->prototype_;
+                ProtoChain const& chain = neighbor->chains().at(tip_fc.chain_id);
 
-                    if (chain.get_term(tip_fc.term).links().size() > 1) {
-                        swap_points.emplace_back(tip_fc, curr_node, FreeChain());
-                    }
+                if (chain.get_term(tip_fc.term).links().size() > 1) {
+                    swap_points.emplace_back(tip_fc, curr_node, FreeChain());
                 }
-
-                if (prev_node and next_node) {
-                    //
-                    // Linkage:
-                    // [prev_node] --link1--> [curr_node] --link2--> [next_node]
-                    //             src                           dst
-                    //
-                    // Find all pt_link1, pt_link2 that:
-                    // [prev_node] -pt_link1-> [diff_node] -pt_link2-> [next_node]
-                    //
-                    // Where src chain_id and term are known for curr_node, and
-                    // dst chain_id and term are known for next_node.
-                    //
-                    Link const* link1 = prev_node->find_link_to(curr_node);
-                    Link const* link2 = curr_node->find_link_to(next_node);
-
-                    swap_points.emplace_back(link1->src(), curr_node, link2->dst());
-                    auto const& sp = swap_points.back();
-                    if (sp.bridges.size() == 0) {
-                        swap_points.pop_back();
-                    }
-                }
-            } while (not path_gen.is_done());
-
-            // swap_points may not even contain tip nodes if they can't possibly
-            // be swapped.
-            if (not swap_points.empty()) {
-                // Insert a node using a random insert point.
-                auto const& swap_point = random::pick(swap_points);
-                if (swap_point.dst.node) {
-                    // This is a non-tip node.
-                    _.nodes_.erase(swap_point.del_node);
-                    build_bridge(swap_point);
-                }
-                else {
-                    // This is a tip node.
-                    nip_tip(swap_point.del_node);
-                    grow_tip(swap_point.src);
-                }
-
-                mutate_success = true;
             }
+
+            if (prev_node and next_node) {
+                //
+                // Linkage:
+                // [prev_node] --link1--> [curr_node] --link2--> [next_node]
+                //             src                           dst
+                //
+                // Find all pt_link1, pt_link2 that:
+                // [prev_node] -pt_link1-> [diff_node] -pt_link2-> [next_node]
+                //
+                // Where src chain_id and term are known for curr_node, and
+                // dst chain_id and term are known for next_node.
+                //
+                Link const* link1 = prev_node->find_link_to(curr_node);
+                Link const* link2 = curr_node->find_link_to(next_node);
+
+                swap_points.emplace_back(link1->src(), curr_node, link2->dst());
+                auto const& sp = swap_points.back();
+                if (sp.bridges.size() == 0) {
+                    swap_points.pop_back();
+                }
+            }
+        } while (not path_gen.is_done());
+
+        // swap_points may not even contain tip nodes if they can't possibly
+        // be swapped.
+        if (not swap_points.empty()) {
+            // Insert a node using a random insert point.
+            auto const& swap_point = random::pick(swap_points);
+            if (swap_point.dst.node) {
+                // This is a non-tip node.
+                _.nodes_.erase(swap_point.del_node);
+                build_bridge(swap_point);
+            }
+            else {
+                // This is a tip node.
+                nip_tip(swap_point.del_node);
+                grow_tip(swap_point.src);
+            }
+
+            mutate_success = true;
         }
 #endif
         return mutate_success;
@@ -623,83 +610,81 @@ struct PathTeam::PImpl {
 
         bool mutate_success = false;
 #ifndef NO_CROSS
-        if (not _.free_chains_.empty()) {
-            try { // Catch bad cast
-                auto& pt_father = static_cast<PathTeam const&>(father);
-                if (not pt_father.free_chains_.empty()) {
-                    // First, collect arrows from both parents.
+        try { // Catch bad cast
+            auto& pt_father = static_cast<PathTeam const&>(father);
+            if (not pt_father.free_chains_.empty()) {
+                // First, collect arrows from both parents.
 
-                    // Starting at either end is fine.
-                    auto m_arrows =
-                        begin(_.free_chains_)->node->gen_path().collect_arrows();
-                    DEBUG_NOMSG(pt_father.free_chains_.size() != 2);
-                    auto f_arrows =
-                        begin(pt_father.free_chains_)->node->gen_path().collect_arrows();
+                // Starting at either end is fine.
+                auto m_arrows =
+                    begin(_.free_chains_)->node->gen_path().collect_arrows();
+                DEBUG_NOMSG(pt_father.free_chains_.size() != 2);
+                auto f_arrows =
+                    begin(pt_father.free_chains_)->node->gen_path().collect_arrows();
 
-                    // Walk through all link pairs to collect cross points.
-                    std::vector<mutation::CrossPoint> cross_points;
-                    for (Link const* m_arrow : m_arrows) {
-                        for (Link const* f_arrow : f_arrows) {
-                            ProtoLink const* sd =
-                                m_arrow->src().find_link_to(f_arrow->dst());
-                            if (sd) {
-                                cross_points.emplace_back(
-                                    sd,
-                                    m_arrow, false,   // { } --m_arrow--v { del  }
-                                    f_arrow, false);  // { } --f_arrow--> { copy }
-                            }
+                // Walk through all link pairs to collect cross points.
+                std::vector<mutation::CrossPoint> cross_points;
+                for (Link const* m_arrow : m_arrows) {
+                    for (Link const* f_arrow : f_arrows) {
+                        ProtoLink const* sd =
+                            m_arrow->src().find_link_to(f_arrow->dst());
+                        if (sd) {
+                            cross_points.emplace_back(
+                                sd,
+                                m_arrow, false,   // { } --m_arrow--v { del  }
+                                f_arrow, false);  // { } --f_arrow--> { copy }
+                        }
 
-                            ProtoLink const* ss =
-                                m_arrow->src().find_link_to(f_arrow->src());
-                            if (ss) {
-                                cross_points.emplace_back(
-                                    ss,
-                                    m_arrow, false,   // {      } --m_arrow--v { del }
-                                    f_arrow, true);   // { copy } <---f_rev--- {     }
-                            }
+                        ProtoLink const* ss =
+                            m_arrow->src().find_link_to(f_arrow->src());
+                        if (ss) {
+                            cross_points.emplace_back(
+                                ss,
+                                m_arrow, false,   // {      } --m_arrow--v { del }
+                                f_arrow, true);   // { copy } <---f_rev--- {     }
+                        }
 
-                            ProtoLink const* dd =
-                                m_arrow->dst().find_link_to(f_arrow->dst());
-                            if (dd) {
-                                cross_points.emplace_back(
-                                    dd,
-                                    m_arrow, true,    // { del } v---m_rev--- {      }
-                                    f_arrow, false);  // {     } --f_arrow--> { copy }
-                            }
+                        ProtoLink const* dd =
+                            m_arrow->dst().find_link_to(f_arrow->dst());
+                        if (dd) {
+                            cross_points.emplace_back(
+                                dd,
+                                m_arrow, true,    // { del } v---m_rev--- {      }
+                                f_arrow, false);  // {     } --f_arrow--> { copy }
+                        }
 
-                            ProtoLink const* ds =
-                                m_arrow->dst().find_link_to(f_arrow->src());
-                            if (ds) {
-                                cross_points.emplace_back(
-                                    ds,
-                                    m_arrow, true,    // { del  } v---m_rev--- { }
-                                    f_arrow, true);   // { keep } <---f_rev--- { }
-                            }
+                        ProtoLink const* ds =
+                            m_arrow->dst().find_link_to(f_arrow->src());
+                        if (ds) {
+                            cross_points.emplace_back(
+                                ds,
+                                m_arrow, true,    // { del  } v---m_rev--- { }
+                                f_arrow, true);   // { keep } <---f_rev--- { }
                         }
                     }
+                }
 
-                    if (not cross_points.empty()) {
-                        auto const& cp = random::pick(cross_points);
+                if (not cross_points.empty()) {
+                    auto const& cp = random::pick(cross_points);
 
-                        Link m_arrow = cp.m_rev ?
-                                       cp.m_arrow->reversed() :
-                                       *cp.m_arrow;  // Make a copy.
-                        Link f_arrow = cp.f_rev ?
-                                       cp.f_arrow->reversed() :
-                                       *cp.f_arrow;  // Make a copy.
+                    Link m_arrow = cp.m_rev ?
+                                   cp.m_arrow->reversed() :
+                                   *cp.m_arrow;  // Make a copy.
+                    Link f_arrow = cp.f_rev ?
+                                   cp.f_arrow->reversed() :
+                                   *cp.f_arrow;  // Make a copy.
 
-                        // Always keep m_arrow.src, del m_arrow.dst, and copy from
-                        // f_arrow.dst().
-                        sever_limb(m_arrow);
-                        copy_limb(m_arrow, f_arrow);
+                    // Always keep m_arrow.src, del m_arrow.dst, and copy from
+                    // f_arrow.dst().
+                    sever_limb(m_arrow);
+                    copy_limb(m_arrow, f_arrow);
 
-                        mutate_success = true;
-                    }
+                    mutate_success = true;
                 }
             }
-            catch (std::bad_cast const& e) {
-                PANIC("Bad cast in %s\n", __PRETTY_FUNCTION__);
-            }
+        }
+        catch (std::bad_cast const& e) {
+            PANIC("Bad cast in %s\n", __PRETTY_FUNCTION__);
         }
 #endif
         return mutate_success;
@@ -712,7 +697,7 @@ struct PathTeam::PImpl {
         }
 
         while (_.size() < _.work_area_->target_size) {
-            grow_tip(_.pick_tip_chain());
+            grow_tip(_.get_tip_chain(/*mutable_hint=*/true));
         }
 
         return true;
@@ -735,7 +720,10 @@ PathTeam* PathTeam::virtual_clone() const {
     return new PathTeam(*this);
 }
 
-FreeChain const& PathTeam::pick_tip_chain() const {
+FreeChain const& PathTeam::get_tip_chain(
+    bool const mutable_hint) const
+{
+    // PathTeam ignores mutable_hint.
     auto fc_itr = begin(free_chains_);
     advance(fc_itr, random::get_dice(free_chains_.size()));
     return *fc_itr;
@@ -757,7 +745,7 @@ void PathTeam::add_node_check(ProtoModule const* const prot) const {
     DEBUG(n_intf != 2, "%zu\n", n_intf);
 }
 
-bool PathTeam::can_modify(NodeKey const tip) const {
+bool PathTeam::is_mutable(NodeKey const tip) const {
     return true;
 }
 

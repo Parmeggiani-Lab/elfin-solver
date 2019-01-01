@@ -36,12 +36,11 @@ sever_limb():
 // delete_mutate():
 //     // Must not include hinge as deletable
 
-insert_mutate():
-    // Must not include hinge as insertable
+// insert_mutate():
+//     // Must not include hinge as insertable
 
-swap_mutate():
-    // Receive tip node choice from virtual pick_tip_chain()
-    // Must not include hinge as swappable
+// swap_mutate():
+//     // Must not include hinge as swappable
 
 cross_mutate():
     // Receive tip node choice from virtual pick_tip_chain(), also call for father team
