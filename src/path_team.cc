@@ -6,12 +6,6 @@
 #include "id_types.h"
 #include "mutation.h"
 
-// #define NO_ERODE
-#define NO_DELETE       // Seems to generate bad candidates
-// #define NO_INSERT
-#define NO_SWAP         // Seems to generate bad candidates
-// #define NO_CROSS
-
 namespace elfin {
 
 /* private */
@@ -854,10 +848,7 @@ NodeKey PathTeam::follow_recipe(tests::Recipe const& recipe,
 /* ctors */
 PathTeam::PathTeam(WorkArea const* wa) :
     NodeTeam(wa),
-    pimpl_(make_pimpl())
-{
-    TRACE_NOMSG(not work_area_);
-}
+    pimpl_(make_pimpl()) {}
 
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_)
@@ -1089,9 +1080,3 @@ JSON PathTeam::to_json() const {
 }
 
 }  /* elfin */
-
-#undef NO_ERODE
-#undef NO_DELETE
-#undef NO_INSERT
-#undef NO_SWAP
-#undef NO_CROSS

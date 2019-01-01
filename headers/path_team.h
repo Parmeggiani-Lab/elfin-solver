@@ -1,11 +1,9 @@
 #ifndef PATH_TEAM_H_
 #define PATH_TEAM_H_
 
-#include <stack>
-
 #include "node_team.h"
 #include "node.h"
-#include "test_data.h"
+#include "recipe.h"
 
 namespace elfin {
 
@@ -70,9 +68,8 @@ public:
     PathTeam& operator=(PathTeam const& other);
     PathTeam& operator=(PathTeam && other);
     virtual void randomize();
-    virtual mutation::Mode evolve(
-        NodeTeam const& mother,
-        NodeTeam const& father);
+    virtual mutation::Mode evolve(NodeTeam const& mother,
+                                  NodeTeam const& father);
     void implement_recipe(tests::Recipe const& recipe,
                           Transform const& shift_tx = Transform());
 

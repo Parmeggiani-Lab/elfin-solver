@@ -5,6 +5,8 @@
 
 namespace elfin {
 
+// A HingeTeam has one module already fixed by the user (or from hub
+// assignment).
 class HingeTeam : public PathTeam {
 private:
     /* type */

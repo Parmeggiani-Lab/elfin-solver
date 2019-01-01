@@ -10,8 +10,9 @@ namespace elfin {
 /* public */
 /* ctors */
 NodeTeamSP NodeTeam::create_team(WorkArea const* const work_area) {
-    NodeTeamSP team_up;
+    TRACE_NOMSG(not work_area);
 
+    NodeTeamSP team_up;
     switch (work_area->type) {
     case WorkType::FREE:
         team_up = std::make_unique<PathTeam>(work_area);

@@ -3,18 +3,11 @@
 
 #include "geometry.h"
 #include "terminus_type.h"
+#include "recipe.h"
 
 namespace elfin {
 
 namespace tests {
-
-struct RecipeStep {
-    std::string mod_name;
-    TerminusType src_term = TerminusType::NONE;
-    std::string src_chain;
-    std::string dst_chain;
-};
-typedef std::vector<RecipeStep> Recipe;
 
 /* default test input */
 static V3fList const quarter_snake_free_coordinates = {

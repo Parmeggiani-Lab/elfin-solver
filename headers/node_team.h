@@ -25,8 +25,10 @@ protected:
 
     /* accessors */
     // Allow copying from/cloning of derived objects without cast.
-    virtual void virtual_copy(NodeTeam const& other) = 0;
     virtual NodeTeam* virtual_clone() const = 0;
+
+    /* modifiers */
+    virtual void virtual_copy(NodeTeam const& other) = 0;
 
 public:
     /* ctors */
@@ -42,15 +44,15 @@ public:
     float score() const { return score_; }
     Crc32 checksum() const { return checksum_; }
     virtual size_t size() const = 0;
-    static bool ScoreCompareSP(
-        NodeTeamSP const& lhs,
-        NodeTeamSP const& rhs) { return lhs->score_ < rhs->score_; }
+    static bool ScoreCompareSP(NodeTeamSP const& lhs,
+                               NodeTeamSP const& rhs) {
+        return lhs->score_ < rhs->score_;
+    }
 
     /* modifiers */
     virtual void randomize() = 0;
-    virtual mutation::Mode evolve(
-        NodeTeam const& mother,
-        NodeTeam const& father) = 0;
+    virtual mutation::Mode evolve(NodeTeam const& mother,
+                                  NodeTeam const& father) = 0;
 
     /* printers */
     virtual JSON to_json() const = 0;
