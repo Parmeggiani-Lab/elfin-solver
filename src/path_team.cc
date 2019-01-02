@@ -17,36 +17,9 @@ struct PathTeam::PImpl {
     PImpl(PathTeam& interface) : _(interface) {}
 
     /*modifiers */
-    NodeKey add_free_node(ProtoModule const* const prot,
-                          Transform const& tx = Transform()) {
-        auto new_node_key = _.add_node(prot, tx);
-
-        // Only add 2 free terms to maintain the path property.
-        for (auto const& fc : prot->free_terms()) {
-            _.free_terms_.emplace_back(new_node_key, fc.term, fc.chain_id);
-        }
-
-        // for (auto& proto_chain : prot->chains()) {
-        //     if (not proto_chain.n_term().links().empty()) {
-        //         free_terms_.emplace_back(
-        //             new_node_key,
-        //             TermType::N,
-        //             proto_chain.id);
-        //     }
-
-        //     if (not proto_chain.c_term().links().empty()) {
-        //         free_terms_.emplace_back(
-        //             new_node_key,
-        //             TermType::C,
-        //             proto_chain.id);
-        //     }
-        // }
-
-        return new_node_key;
-    }
-
     NodeKey grow_tip(FreeTerm const& free_term_a,
-                     ProtoLink const* pt_link = nullptr)
+                     ProtoLink const* pt_link = nullptr,
+                     bool const innert = false)
     {
         if (not pt_link) {
             pt_link = &free_term_a.random_proto_link();
@@ -56,22 +29,33 @@ struct PathTeam::PImpl {
 
         // Check that the provided free term is attached to a node that is a
         // tip node.
-        DEBUG_NOMSG(node_a->links().size() > 1);
-
-        auto node_b = add_free_node(pt_link->module_,
-                                    node_a->tx_ * pt_link->tx_);
+        {
+            size_t const n_links = node_a->links().size();
+            DEBUG(n_links > 1, "%zu\n", n_links);
+        }
 
         TermType const term_a = free_term_a.term;
         TermType const term_b = opposite_term(term_a);
 
-        FreeTerm const free_term_b =
-            FreeTerm(node_b, term_b, pt_link->chain_id_);
+        FreeTerm free_term_b = FreeTerm(nullptr, term_b, pt_link->chain_id_);
+
+        auto node_b = _.add_node(pt_link->module_,
+                                 node_a->tx_ * pt_link->tx_,
+                                 innert,
+                                 /*exclude_ft=*/&free_term_b);
+
+        free_term_b.node = node_b;
 
         _.get_node(node_a)->add_link(free_term_a, pt_link, free_term_b);
         _.get_node(node_b)->add_link(free_term_b, pt_link->reverse(), free_term_a);
 
         _.free_terms_.remove(free_term_a);
-        _.free_terms_.remove(free_term_b);
+
+        // Check that newly grown node is a tip node.
+        {
+            size_t const n_links = node_b->links().size();
+            DEBUG(n_links > 1, "%zu\n", n_links);
+        }
 
         return node_b;
     }
@@ -90,7 +74,9 @@ struct PathTeam::PImpl {
         _.get_node(new_tip)->remove_link(new_free_term);
 
         // Restore FreeTerm.
-        _.free_terms_.push_back(new_free_term);
+        if (new_free_term.should_restore) {
+            _.free_terms_.push_back(new_free_term);
+        }
 
         // Remove tip node. Don't do this before restoring the FreeTerm
         // unless new_free_term is a copy rather than a reference.
@@ -128,7 +114,8 @@ struct PathTeam::PImpl {
 
         // Create a new node in the middle.
         auto new_node_key = _.add_node(bridge->pt_link1->module_,
-                                       node1->tx_ * bridge->pt_link1->tx_);
+                                       node1->tx_ * bridge->pt_link1->tx_,
+                                       /*innert=*/true);
         auto new_node = _.get_node(new_node_key);
 
         //
@@ -163,63 +150,43 @@ struct PathTeam::PImpl {
     void sever_limb(Link const& arrow) {
         // Delete the dst side of arrow.
 
-        Link curr_arrow = arrow;
-        size_t num_links = 0;
-        do {
-            // Unlink nodes.
-            NodeKey next_node = curr_arrow.dst().node;
-            _.get_node(next_node)->remove_link(curr_arrow.dst());
+        auto start_node_key = arrow.dst().node;
+        _.get_node(start_node_key)->remove_link(arrow.dst());
 
-            // Check temporary tip node.
-            num_links = next_node->links().size();
-            DEBUG_NOMSG(num_links > 1);  // Must be 0 or 1.
+        PathGenerator pg(start_node_key);
+        while (not pg.is_done()) {
+            auto next_key = pg.next();
+            _.nodes_.erase(next_key);
+        }
 
-            if (num_links == 1) {
-                curr_arrow = *begin(next_node->links());
-            }
-            else {
-                _.remove_free_terms(next_node);
-            }
-
-            // Safe to delete node.
-            _.nodes_.erase(next_node);
-        } while (num_links > 0);
+        _.remove_free_terms(pg.curr_node());
 
         _.get_node(arrow.src().node)->remove_link(arrow.src());
-        _.free_terms_.push_back(arrow.src());
+
+        auto const& would_be_free = arrow.src();
+        if (would_be_free.should_restore) {
+            _.free_terms_.push_back(would_be_free);
+        }
     }
 
-    // Copy nodes starting from f_arrow.dst to m_arrow.src().
-    void copy_limb(Link const& m_arrow,
+    // Copy nodes starting from f_arrow.dst to m_free_term.
+    void copy_limb(FreeTerm const& m_free_term,
+                   ProtoLink const* cross_link,
                    Link const& f_arrow)
     {
-        NodeKey tip_node = m_arrow.src().node;
-        size_t num_links = tip_node->links().size();
-        DEBUG_NOMSG(_.size() > 1 and num_links != 1);
-
-        // Occupy src chain.
-        _.free_terms_.remove(m_arrow.src());
-
-        // Form first link.
-        ProtoLink const* pt_link =
-            tip_node->prototype_->find_link_to(
-                m_arrow.src().chain_id,
-                m_arrow.src().term,
-                f_arrow.dst().node->prototype_,
-                f_arrow.dst().chain_id);
-        DEBUG_NOMSG(not pt_link);
-
-        tip_node = grow_tip(m_arrow.src(), pt_link);
-
-        num_links = tip_node->links().size();
-        DEBUG_NOMSG(num_links != 1);
-
         auto path_gen = f_arrow.gen_path();
-        path_gen.next();  // Same as f_arrow.dst().node.
+
+        // Form first link. It's special because m_free_term may not equal
+        // f_arrow.src(). It just happens that m_free_term's ProtoModule has a
+        // ProtoLink to f_arrow.src()'s.
+        path_gen.next();  // Advance past the non identical arrow.
+
+        auto tip_node = grow_tip(m_free_term,
+                                 cross_link,
+                                 /*innert=*/path_gen.peek());
+
         while (not path_gen.is_done()) {
             auto curr_link = path_gen.curr_link();
-            DEBUG_NOMSG(curr_link->dst().node->prototype_ !=
-                        curr_link->prototype()->module_);
 
             // Modify copy of curr_link->src().
             FreeTerm src = curr_link->src();
@@ -230,20 +197,16 @@ struct PathTeam::PImpl {
                   tip_node->prototype_->name.c_str());
             src.node = tip_node;
 
-            // Occupy src chain.
-            _.free_terms_.remove(src);
+            path_gen.next();
 
-            tip_node = grow_tip(src, curr_link->prototype());
+            tip_node = grow_tip(src,
+                                curr_link->prototype(),
+                                /*innert=*/path_gen.peek());
+
             DEBUG(curr_link->dst().node->prototype_ != tip_node->prototype_,
                   "%s vs %s\n",
                   curr_link->dst().node->prototype_->name.c_str(),
                   tip_node->prototype_->name.c_str());
-
-            num_links = tip_node->links().size();
-            DEBUG(num_links != 1,
-                  "%zu links\n", num_links);
-
-            path_gen.next();
         }
     }
 
@@ -290,7 +253,9 @@ struct PathTeam::PImpl {
             } while (next_loop);
 
             // Restore chain.
-            _.free_terms_.push_back(last_free_term);
+            if (last_free_term.should_restore) {
+                _.free_terms_.push_back(last_free_term);
+            }
 
             regenerate();
 
@@ -501,23 +466,23 @@ struct PathTeam::PImpl {
             }
             else {
                 // This is a tip node. Inserting is the same as grow_tip().
-                auto fc_itr = find_if(begin(_.free_terms_),
+                auto ft_itr = find_if(begin(_.free_terms_),
                                       end(_.free_terms_),
-                [&](auto const & fc) {
-                    return fc.node == insert_point.src.node;
+                [&](auto const & ft) {
+                    return ft.node == insert_point.src.node;
                 });
 
-                if (fc_itr == end(_.free_terms_)) {
+                if (ft_itr == end(_.free_terms_)) {
                     JUtil.error("FreeTerm not found for %s\n",
                                 insert_point.src.node->to_string().c_str());
                     JUtil.error("Available FreeTerm(s):\n");
-                    for (FreeTerm const& fc : _.free_terms_) {
-                        JUtil.error("%s\n", fc.to_string().c_str());
+                    for (auto const& ft : _.free_terms_) {
+                        JUtil.error("%s\n", ft.to_string().c_str());
                     }
                     TRACE_NOMSG("FreeTerm not found");
                 }
                 else {
-                    grow_tip(*fc_itr);
+                    grow_tip(*ft_itr);
                 }
             }
 
@@ -561,12 +526,12 @@ struct PathTeam::PImpl {
 
                 // Check that neighbor can indead grow into a different
                 // ProtoModule.
-                FreeTerm const& tip_fc = begin(curr_node->links())->dst();
-                ProtoModule const* neighbor = tip_fc.node->prototype_;
-                ProtoChain const& chain = neighbor->chains().at(tip_fc.chain_id);
+                FreeTerm const& tip_ft = begin(curr_node->links())->dst();
+                ProtoModule const* neighbor = tip_ft.node->prototype_;
+                ProtoChain const& chain = neighbor->chains().at(tip_ft.chain_id);
 
-                if (chain.get_term(tip_fc.term).links().size() > 1) {
-                    swap_points.emplace_back(tip_fc, curr_node, FreeTerm());
+                if (chain.get_term(tip_ft.term).links().size() > 1) {
+                    swap_points.emplace_back(tip_ft, curr_node, FreeTerm());
                 }
             }
 
@@ -654,7 +619,7 @@ struct PathTeam::PImpl {
                 // Always keep m_arrow.src, del m_arrow.dst, and copy from
                 // f_arrow.dst().
                 sever_limb(m_arrow);
-                copy_limb(m_arrow, f_arrow);
+                copy_limb(m_arrow.src(), cp.pt_link, f_arrow);
 
                 mutate_success = true;
             }
@@ -669,7 +634,7 @@ struct PathTeam::PImpl {
     bool regenerate() {
         if (_.nodes_.empty()) {
             // Pick random initial member.
-            add_free_node(XDB.basic_mods().draw());
+            _.add_node(XDB.basic_mods().draw());
         }
 
         while (_.size() < _.work_area_->target_size) {
@@ -707,6 +672,11 @@ NodeKey PathTeam::get_tip(bool const mutable_hint) const {
 }
 
 void PathTeam::mutation_invariance_check() const {
+    if (free_terms_.size() != 2) {
+        for (auto& ft : free_terms_) {
+            JUtil.warn("ft: %s\n", ft.to_string().c_str());
+        }
+    }
     DEBUG_NOMSG(free_terms_.size() != 2);
     DEBUG_NOMSG(size() == 0);
 }
@@ -734,18 +704,46 @@ void PathTeam::virtual_copy(NodeTeam const& other) {
 }
 
 NodeKey PathTeam::add_node(ProtoModule const* const prot,
-                           Transform const& tx) {
+                           Transform const& tx,
+                           bool const innert,
+                           FreeTerm const* const exclude_ft)
+{
     auto new_node = std::make_unique<Node>(prot, tx);
     auto new_node_key = new_node.get();
 
     nodes_.emplace(new_node_key, std::move(new_node));
+
+    if (not innert) {
+        // Only add 2 free terms to maintain the path property.
+        auto prot_free_terms = prot->free_terms();
+        DEBUG_NOMSG(prot_free_terms.size() < 2);  // What module is this??
+
+        size_t n_ft_to_add = exclude_ft ? 1 : 2;
+
+        while (n_ft_to_add) {
+            DEBUG_NOMSG(prot_free_terms.empty());
+
+            auto const& ft = random::pop(prot_free_terms);
+
+            if (not (exclude_ft and
+                     exclude_ft->term == ft.term and
+                     exclude_ft->chain_id == ft.chain_id))
+            {
+                free_terms_.emplace_back(new_node_key,
+                                         ft.term,
+                                         ft.chain_id);
+                n_ft_to_add--;
+            }
+        }
+    }
+
     return new_node_key;
 }
 
 void PathTeam::remove_free_terms(NodeKey const node) {
     // Remove any FreeTerm originating from node
-    free_terms_.remove_if([&](auto const & fc) {
-        return fc.node == node;
+    free_terms_.remove_if([&](auto const & ft) {
+        return ft.node == node;
     });
 }
 
@@ -813,13 +811,13 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
     NodeKey first_node = nullptr;
     if (not recipe.empty()) {
         std::string const& first_mod_name = recipe[0].mod_name;
-        first_node = pimpl_->add_free_node(XDB.get_module(first_mod_name));
+        first_node = add_node(XDB.get_module(first_mod_name), shift_tx);
+
         if (cb_on_first_node) {
             cb_on_first_node(first_node);
         }
 
         auto last_node = first_node;
-        get_node(last_node)->tx_ = shift_tx;
 
         for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
             auto const& step = *itr;
@@ -840,9 +838,9 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
                                dst_mod,
                                dst_chain_id);
 
-            FreeTerm const src_fc(last_node, step.src_term, src_chain_id);
+            FreeTerm const src_ft(last_node, step.src_term, src_chain_id);
 
-            last_node = pimpl_->grow_tip(src_fc, pt_link);
+            last_node = pimpl_->grow_tip(src_ft, pt_link);
         }
     }
 
@@ -896,11 +894,9 @@ PathTeam& PathTeam::operator=(PathTeam const& other) {
             }
 
             // Copy free_terms_.
-            free_terms_.clear();
-            for (auto& other_fc : other.free_terms_) {
-                free_terms_.emplace_back(nk_map_.at(other_fc.node),
-                                          other_fc.term,
-                                          other_fc.chain_id);
+            free_terms_ = other.free_terms_;
+            for (auto& ft : free_terms_) {
+                ft.node = nk_map_.at(ft.node);
             }
 
             scored_path_ = other.scored_path_;

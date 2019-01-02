@@ -27,13 +27,16 @@ struct FreeTerm : public Printable {
     NodeKey node;
     TermType term;
     size_t chain_id;
+    bool should_restore = true;
 
     /* ctors */
-    FreeTerm() :
-        node(nullptr), term(TermType::NONE), chain_id(0) {}
     FreeTerm(NodeKey const _node,
               TermType const _term,
               size_t const _chain_id);
+    FreeTerm() : FreeTerm(nullptr, TermType::NONE, 0) {}
+
+    /* dtors */
+    virtual ~FreeTerm() {}
 
     /* accessors */
     bool operator==(FreeTerm const& other) const;

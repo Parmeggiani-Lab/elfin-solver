@@ -23,15 +23,15 @@ namespace elfin {
     } while(0)
 
 #ifdef NDEBUG
-#define DEBUG(...) 
-#define DEBUG_NOMSG(...) 
+#define DEBUG(...)
+#define DEBUG_NOMSG(...)
 #else
 #define DEBUG(COND_EXPR, ...) TRACE(COND_EXPR, __VA_ARGS__)
 #define DEBUG_NOMSG(COND_EXPR) TRACE_NOMSG(COND_EXPR)
 #endif  /* ifndef NDEBUG */
 
 #define UNIMP() DEBUG("Unimplemented", "Unimplemented")
-#define PROB_FUNC() \
+#define PROBE_FUNC() \
     do {\
         JUtil.warn(\
             "%s called at %s:%d\n",\

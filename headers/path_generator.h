@@ -31,7 +31,6 @@ public:
     //  - arrow must be a valid pointer that lives longer than the genereator
     //    itself.
     //
-    //
     PathGenerator(Link const* const arrow);
 
     /* dtors */

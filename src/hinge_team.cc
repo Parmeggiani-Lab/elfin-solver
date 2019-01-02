@@ -37,7 +37,7 @@ struct HingeTeam::PImpl {
 
         // Do not add any free term. Let get_mutable_chain() handle the case
         // where the team consists of only hinge_.
-        _.hinge_ = _.add_node(proto_mod, ui_mod->tx);
+        _.hinge_ = _.add_node(proto_mod, ui_mod->tx, /*innert=*/true);
     }
 
     UIJointKey find_ui_joint(tests::RecipeStep const& first_step) {
@@ -65,8 +65,11 @@ FreeTerm HingeTeam::get_mutable_chain() const
 {
     // If the only node is the hinge, then return random free term from hinge.
     if (size() == 1) {
-        auto const& rand_hinge_fc = random::pick(hinge_->prototype_->free_terms());
-        return FreeTerm(hinge_, rand_hinge_fc.term, rand_hinge_fc.chain_id);
+        auto const& rand_hinge_ft = random::pick(hinge_->prototype_->free_terms());
+
+        FreeTerm ft(hinge_, rand_hinge_ft.term, rand_hinge_ft.chain_id);
+        ft.should_restore = false;
+        return ft;
     }
     else {
         // Return a random free term from mutable tip.
@@ -96,6 +99,11 @@ void HingeTeam::mutation_invariance_check() const {
     size_t const n_free_terms = free_terms_.size();
     if (size() == 1) {
         // There are no "free terms" when only hinge exists.
+        if(n_free_terms != 0) {
+            for(auto& ft : free_terms_) {
+                JUtil.error("ft %s\n", ft.to_string().c_str());
+            }
+        }
         DEBUG_NOMSG(n_free_terms != 0);
     }
     else {

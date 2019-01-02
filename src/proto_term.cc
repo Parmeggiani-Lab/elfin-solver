@@ -74,46 +74,27 @@ void ProtoTerm::finalize() {
         ProtoLink const* row_link_ptr = link.get();
         link_set_.insert(row_link_ptr);
 
-
-        //
-        // Note: assigning 0 probability for ProtoLinks that have more than 2
-        // interfaces.
-        //
-        // The reason for doing this is that in the current paradigm we only
-        // work with simple path candidates. In order to select a valid basic
-        // proto module in O(1), we ignore anything that has more than 2
-        // interfaces (which are all hubs). Some hubs have only 2 interfaces
-        // and can be used to reverse terminus polarity while maintaining a
-        // simple path shape.
-        //
-        // If progress down the road comes to dealing with generalized shape
-        // candidates, it might be advisable to remove this restriction so
-        // hubs > 2 interfaces can also be drawn from a ProtoModule's
-        // ProtoLinks.
-        //
         size_t n_cpd = 0, c_cpd = 0;
 
         ProtoModule const* target_prot = link->module_;
-        if (target_prot->counts().all_interfaces() <= 2) {
-            size_t const ncount = target_prot->counts().n_links;
-            size_t const ccount = target_prot->counts().c_links;
+        size_t const ncount = target_prot->counts().n_links;
+        size_t const ccount = target_prot->counts().c_links;
 
-            if (ncount == 0)
-            {
-                // zero N-count means all interfaces are C type
-                n_cpd = ccount;
-                c_cpd = ccount;
-            }
-            else if (ccount == 0)
-            {
-                // zero C-count means all interfaces are N type
-                n_cpd = ncount;
-                c_cpd = ncount;
-            }
-            else {
-                n_cpd = ncount;
-                c_cpd = ccount;
-            }
+        if (ncount == 0)
+        {
+            // zero N-count means all interfaces are C type
+            n_cpd = ccount;
+            c_cpd = ccount;
+        }
+        else if (ccount == 0)
+        {
+            // zero C-count means all interfaces are N type
+            n_cpd = ncount;
+            c_cpd = ncount;
+        }
+        else {
+            n_cpd = ncount;
+            c_cpd = ccount;
         }
 
         n_roulette_.push_back(n_cpd, row_link_ptr);
@@ -121,9 +102,9 @@ void ProtoTerm::finalize() {
 
 #ifdef PRINT_FINALIZE
         JUtil.warn("ProtoLink to %s into chain %zu with %zu interfaces\n",
-            link_ptr->module_->name.c_str(),
-            link_ptr->chain_id_,
-            link_ptr->module_->counts().all_interfaces());
+                   link_ptr->module_->name.c_str(),
+                   link_ptr->chain_id_,
+                   link_ptr->module_->counts().all_interfaces());
 #endif  /* ifdef PRINT_FINALIZE */
     }
 }

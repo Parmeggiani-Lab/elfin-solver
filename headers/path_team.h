@@ -44,7 +44,9 @@ protected:
     virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
     NodeKey add_node(ProtoModule const* const prot,
-                     Transform const& tx = Transform());
+                     Transform const& tx = Transform(),
+                     bool const innert = false,
+                     FreeTerm const* const exclude_ft = nullptr);
     void remove_free_terms(NodeKey const node);
     virtual void calc_checksum();
     virtual void calc_score();
