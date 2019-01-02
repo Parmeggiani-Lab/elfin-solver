@@ -137,6 +137,8 @@ void HingeTeam::calc_score() {
     // fine performance-wise?
     auto const& ref_path = work_area_->path_map.at(hinge_ui_joint_);
     score_ = scoring::score(my_points, ref_path);
+
+    scored_path_ = &ref_path;
 }
 
 void HingeTeam::virtual_implement_recipe(
