@@ -31,11 +31,11 @@ struct HingeTeam::PImpl {
 
         // Here, if elfin-ui provides info about which specific chain of
         // the hinge module interfaces with the next unknown module
-        // (joint), then we could remove free chains that are outside of
+        // (joint), then we could remove free terms that are outside of
         // this work area. However right now that functionality is not
         // implemented by elfin-ui so we'll leave the selection to GA.
 
-        // Do not add any free chain. Let get_mutable_chain() handle the case
+        // Do not add any free term. Let get_mutable_chain() handle the case
         // where the team consists of only hinge_.
         _.hinge_ = _.add_node(proto_mod, ui_mod->tx);
     }
@@ -61,15 +61,15 @@ HingeTeam* HingeTeam::virtual_clone() const {
     return new HingeTeam(*this);
 }
 
-FreeChain HingeTeam::get_mutable_chain() const
+FreeTerm HingeTeam::get_mutable_chain() const
 {
-    // If the only node is the hinge, then return random free chain from hinge.
+    // If the only node is the hinge, then return random free term from hinge.
     if (size() == 1) {
-        auto const& rand_hinge_fc = random::pick(hinge_->prototype_->free_chains());
-        return FreeChain(hinge_, rand_hinge_fc.term, rand_hinge_fc.chain_id);
+        auto const& rand_hinge_fc = random::pick(hinge_->prototype_->free_terms());
+        return FreeTerm(hinge_, rand_hinge_fc.term, rand_hinge_fc.chain_id);
     }
     else {
-        // Return a random free chain from mutable tip.
+        // Return a random free term from mutable tip.
         return PathTeam::get_mutable_chain();
     }
 }
@@ -78,11 +78,11 @@ NodeKey HingeTeam::get_tip(bool const mutable_hint) const {
     if (mutable_hint) {
         DEBUG(size() == 1, "Cannot request mutable tip when team has only hinge.\n");
 
-        DEBUG_NOMSG(free_chains_.size() != 1);
+        DEBUG_NOMSG(free_terms_.size() != 1);
 
-        // Return the only other node, which all (only one) free chains
+        // Return the only other node, which all (only one) free terms
         // currently belong to.
-        return begin(free_chains_)->node;
+        return begin(free_terms_)->node;
     }
     else {
         return hinge_;
@@ -93,14 +93,14 @@ void HingeTeam::mutation_invariance_check() const {
     DEBUG_NOMSG(not hinge_);
     DEBUG_NOMSG(size() == 0);
 
-    size_t const n_free_chains = free_chains_.size();
+    size_t const n_free_terms = free_terms_.size();
     if (size() == 1) {
-        // There are no "free chains" when only hinge exists.
-        DEBUG_NOMSG(n_free_chains != 0);
+        // There are no "free terms" when only hinge exists.
+        DEBUG_NOMSG(n_free_terms != 0);
     }
     else {
-        // There are always exactly one free chain for size() > 1.
-        DEBUG_NOMSG(n_free_chains != 1);
+        // There are always exactly one free term for size() > 1.
+        DEBUG_NOMSG(n_free_terms != 1);
     }
 }
 
@@ -166,9 +166,9 @@ void HingeTeam::virtual_implement_recipe(
 
         hinge_ = nk;
 
-        // PathTeam::implement_recipe() uses add_free_node(), so free chains
+        // PathTeam::implement_recipe() uses add_free_node(), so free terms
         // belonging to hinge_ need to be cleared.
-        free_chains_.clear();
+        free_terms_.clear();
     });
 
     PathTeam::virtual_implement_recipe(recipe, cb, shift_tx);

@@ -32,7 +32,7 @@ void Node::update_link_ptrs(NodeKeyMap const& nam) {
     }
 }
 
-void Node::remove_link(FreeChain const& src) {
+void Node::remove_link(FreeTerm const& src) {
     auto link_itr = std::find_if(
                         begin(links_),
                         end(links_),

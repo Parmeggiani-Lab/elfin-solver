@@ -21,21 +21,21 @@ struct PathTeam::PImpl {
                           Transform const& tx = Transform()) {
         auto new_node_key = _.add_node(prot, tx);
 
-        // Only add 2 free chains to maintain the path property.
-        for (auto const& fc : prot->free_chains()) {
-            _.free_chains_.emplace_back(new_node_key, fc.term, fc.chain_id);
+        // Only add 2 free terms to maintain the path property.
+        for (auto const& fc : prot->free_terms()) {
+            _.free_terms_.emplace_back(new_node_key, fc.term, fc.chain_id);
         }
 
         // for (auto& proto_chain : prot->chains()) {
         //     if (not proto_chain.n_term().links().empty()) {
-        //         free_chains_.emplace_back(
+        //         free_terms_.emplace_back(
         //             new_node_key,
         //             TermType::N,
         //             proto_chain.id);
         //     }
 
         //     if (not proto_chain.c_term().links().empty()) {
-        //         free_chains_.emplace_back(
+        //         free_terms_.emplace_back(
         //             new_node_key,
         //             TermType::C,
         //             proto_chain.id);
@@ -45,33 +45,33 @@ struct PathTeam::PImpl {
         return new_node_key;
     }
 
-    NodeKey grow_tip(FreeChain const& free_chain_a,
+    NodeKey grow_tip(FreeTerm const& free_term_a,
                      ProtoLink const* pt_link = nullptr)
     {
         if (not pt_link) {
-            pt_link = &free_chain_a.random_proto_link();
+            pt_link = &free_term_a.random_proto_link();
         }
 
-        auto node_a = free_chain_a.node;
+        auto node_a = free_term_a.node;
 
-        // Check that the provided free chain is attached to a node that is a
+        // Check that the provided free term is attached to a node that is a
         // tip node.
         DEBUG_NOMSG(node_a->links().size() > 1);
 
         auto node_b = add_free_node(pt_link->module_,
                                     node_a->tx_ * pt_link->tx_);
 
-        TermType const term_a = free_chain_a.term;
+        TermType const term_a = free_term_a.term;
         TermType const term_b = opposite_term(term_a);
 
-        FreeChain const free_chain_b =
-            FreeChain(node_b, term_b, pt_link->chain_id_);
+        FreeTerm const free_term_b =
+            FreeTerm(node_b, term_b, pt_link->chain_id_);
 
-        _.get_node(node_a)->add_link(free_chain_a, pt_link, free_chain_b);
-        _.get_node(node_b)->add_link(free_chain_b, pt_link->reverse(), free_chain_a);
+        _.get_node(node_a)->add_link(free_term_a, pt_link, free_term_b);
+        _.get_node(node_b)->add_link(free_term_b, pt_link->reverse(), free_term_a);
 
-        _.free_chains_.remove(free_chain_a);
-        _.free_chains_.remove(free_chain_b);
+        _.free_terms_.remove(free_term_a);
+        _.free_terms_.remove(free_term_b);
 
         return node_b;
     }
@@ -82,19 +82,19 @@ struct PathTeam::PImpl {
         size_t const num_links = tip_node->links().size();
         TRACE_NOMSG(num_links != 1);
 
-        FreeChain const& new_free_chain =
+        FreeTerm const& new_free_term =
             begin(tip_node->links())->dst();
-        NodeKey new_tip = new_free_chain.node;
+        NodeKey new_tip = new_free_term.node;
 
         // Unlink chain.
-        _.get_node(new_tip)->remove_link(new_free_chain);
+        _.get_node(new_tip)->remove_link(new_free_term);
 
-        // Restore FreeChain.
-        _.free_chains_.push_back(new_free_chain);
+        // Restore FreeTerm.
+        _.free_terms_.push_back(new_free_term);
 
-        // Remove tip node. Don't do this before restoring the FreeChain
-        // unless new_free_chain is a copy rather than a reference.
-        _.remove_free_chains(tip_node);
+        // Remove tip node. Don't do this before restoring the FreeTerm
+        // unless new_free_term is a copy rather than a reference.
+        _.remove_free_terms(tip_node);
         _.nodes_.erase(tip_node);
     }
 
@@ -111,14 +111,14 @@ struct PathTeam::PImpl {
     }
 
     void build_bridge(mutation::InsertPoint const& insert_point,
-                      FreeChain::Bridge const* bridge = nullptr)
+                      FreeTerm::Bridge const* bridge = nullptr)
     {
         if (not bridge) {
             bridge = &random::pick(insert_point.bridges);
         }
 
-        FreeChain const& port1 = insert_point.src;
-        FreeChain const& port2 = insert_point.dst;
+        FreeTerm const& port1 = insert_point.src;
+        FreeTerm const& port2 = insert_point.dst;
         auto node1 = _.get_node(port1.node);
         auto node2 = _.get_node(port2.node);
 
@@ -143,14 +143,14 @@ struct PathTeam::PImpl {
         //
         // Prototype ---pt_link1--->              ---pt_link2--->
         //
-        FreeChain nn_src1(
+        FreeTerm nn_src1(
             new_node_key, port2.term, bridge->pt_link1->chain_id_);
         Link const new_link1_rev(port1, bridge->pt_link1, nn_src1);
 
         node1->add_link(new_link1_rev);
         new_node->add_link(new_link1_rev.reversed());
 
-        FreeChain nn_src2(
+        FreeTerm nn_src2(
             new_node_key, port1.term, bridge->pt_link2->reverse()->chain_id_);
         Link const new_link2(nn_src2, bridge->pt_link2, port2);
 
@@ -178,7 +178,7 @@ struct PathTeam::PImpl {
                 curr_arrow = *begin(next_node->links());
             }
             else {
-                _.remove_free_chains(next_node);
+                _.remove_free_terms(next_node);
             }
 
             // Safe to delete node.
@@ -186,7 +186,7 @@ struct PathTeam::PImpl {
         } while (num_links > 0);
 
         _.get_node(arrow.src().node)->remove_link(arrow.src());
-        _.free_chains_.push_back(arrow.src());
+        _.free_terms_.push_back(arrow.src());
     }
 
     // Copy nodes starting from f_arrow.dst to m_arrow.src().
@@ -198,7 +198,7 @@ struct PathTeam::PImpl {
         DEBUG_NOMSG(_.size() > 1 and num_links != 1);
 
         // Occupy src chain.
-        _.free_chains_.remove(m_arrow.src());
+        _.free_terms_.remove(m_arrow.src());
 
         // Form first link.
         ProtoLink const* pt_link =
@@ -222,7 +222,7 @@ struct PathTeam::PImpl {
                         curr_link->prototype()->module_);
 
             // Modify copy of curr_link->src().
-            FreeChain src = curr_link->src();
+            FreeTerm src = curr_link->src();
 
             DEBUG(src.node->prototype_ != tip_node->prototype_,
                   "%s vs %s\n",
@@ -231,7 +231,7 @@ struct PathTeam::PImpl {
             src.node = tip_node;
 
             // Occupy src chain.
-            _.free_chains_.remove(src);
+            _.free_terms_.remove(src);
 
             tip_node = grow_tip(src, curr_link->prototype());
             DEBUG(curr_link->dst().node->prototype_ != tip_node->prototype_,
@@ -255,9 +255,9 @@ struct PathTeam::PImpl {
         if (_.size() > 1) {
             // Pick random tip node if not specified.
             NodeKey tip_node = _.get_tip(/*mutable_hint=*/true);
-            _.remove_free_chains(tip_node);
+            _.remove_free_terms(tip_node);
 
-            FreeChain last_free_chain;
+            FreeTerm last_free_term;
             float p = 1.0f;  // p for Probability.
 
             // Loop condition is always true on first entrance, hence do-while.
@@ -273,15 +273,15 @@ struct PathTeam::PImpl {
                 size_t const num_links = tip_node->links().size();
                 TRACE(num_links != 1, "num_links=%zu", num_links);
 
-                FreeChain const& new_free_chain =
+                FreeTerm const& new_free_term =
                     begin(tip_node->links())->dst();
-                NodeKey new_tip = new_free_chain.node;
+                NodeKey new_tip = new_free_term.node;
 
                 // Unlink
-                _.get_node(new_tip)->remove_link(new_free_chain);
+                _.get_node(new_tip)->remove_link(new_free_term);
 
                 if (not next_loop) {
-                    last_free_chain = new_free_chain;
+                    last_free_term = new_free_term;
                 }
 
                 _.nodes_.erase(tip_node);
@@ -290,7 +290,7 @@ struct PathTeam::PImpl {
             } while (next_loop);
 
             // Restore chain.
-            _.free_chains_.push_back(last_free_chain);
+            _.free_terms_.push_back(last_free_term);
 
             regenerate();
 
@@ -309,7 +309,7 @@ struct PathTeam::PImpl {
             std::vector<mutation::DeletePoint> delete_points;
 
             // Starting at either end is fine.
-            auto start_node = begin(_.free_chains_)->node;
+            auto start_node = begin(_.free_terms_)->node;
             auto path_gen = start_node->gen_path();
 
             NodeKey curr_node = nullptr;
@@ -328,8 +328,8 @@ struct PathTeam::PImpl {
                         //
                         delete_points.emplace_back(
                             /*delete_node=*/ curr_node,
-                            /*src=*/ FreeChain(),
-                            /*dst=*/ FreeChain(),
+                            /*src=*/ FreeTerm(),
+                            /*dst=*/ FreeTerm(),
                             /*skipper=*/ nullptr);
                     }
                 }
@@ -344,8 +344,8 @@ struct PathTeam::PImpl {
                     Link const& link1 = *itr;
                     advance(itr, 1);
                     Link const& link2 = *itr;
-                    FreeChain const& src = link1.dst();
-                    FreeChain const& dst = link2.dst();
+                    FreeTerm const& src = link1.dst();
+                    FreeTerm const& dst = link2.dst();
 
                     //
                     // X--[neighbor1]--src->-<-dst               dst->-<-src--[neighbor2]--...
@@ -420,7 +420,7 @@ struct PathTeam::PImpl {
                     _.nodes_.erase(delete_point.delete_node);
 
                     // delete_node is guranteed to not be a tip so no need to clean up
-                    // _.free_chains_.
+                    // _.free_terms_.
                     fix_limb_transforms(arrow1);
                 }
                 else {
@@ -465,8 +465,8 @@ struct PathTeam::PImpl {
                 //
 
                 insert_points.emplace_back(
-                    FreeChain(curr_node, TermType::NONE, 0),
-                    FreeChain());
+                    FreeTerm(curr_node, TermType::NONE, 0),
+                    FreeTerm());
             }
 
             if (next_node) {
@@ -501,20 +501,20 @@ struct PathTeam::PImpl {
             }
             else {
                 // This is a tip node. Inserting is the same as grow_tip().
-                auto fc_itr = find_if(begin(_.free_chains_),
-                                      end(_.free_chains_),
+                auto fc_itr = find_if(begin(_.free_terms_),
+                                      end(_.free_terms_),
                 [&](auto const & fc) {
                     return fc.node == insert_point.src.node;
                 });
 
-                if (fc_itr == end(_.free_chains_)) {
-                    JUtil.error("FreeChain not found for %s\n",
+                if (fc_itr == end(_.free_terms_)) {
+                    JUtil.error("FreeTerm not found for %s\n",
                                 insert_point.src.node->to_string().c_str());
-                    JUtil.error("Available FreeChain(s):\n");
-                    for (FreeChain const& fc : _.free_chains_) {
+                    JUtil.error("Available FreeTerm(s):\n");
+                    for (FreeTerm const& fc : _.free_terms_) {
                         JUtil.error("%s\n", fc.to_string().c_str());
                     }
-                    TRACE_NOMSG("FreeChain not found");
+                    TRACE_NOMSG("FreeTerm not found");
                 }
                 else {
                     grow_tip(*fc_itr);
@@ -561,12 +561,12 @@ struct PathTeam::PImpl {
 
                 // Check that neighbor can indead grow into a different
                 // ProtoModule.
-                FreeChain const& tip_fc = begin(curr_node->links())->dst();
+                FreeTerm const& tip_fc = begin(curr_node->links())->dst();
                 ProtoModule const* neighbor = tip_fc.node->prototype_;
                 ProtoChain const& chain = neighbor->chains().at(tip_fc.chain_id);
 
                 if (chain.get_term(tip_fc.term).links().size() > 1) {
-                    swap_points.emplace_back(tip_fc, curr_node, FreeChain());
+                    swap_points.emplace_back(tip_fc, curr_node, FreeTerm());
                 }
             }
 
@@ -697,9 +697,9 @@ PathTeam* PathTeam::virtual_clone() const {
     return new PathTeam(*this);
 }
 
-FreeChain PathTeam::get_mutable_chain() const
+FreeTerm PathTeam::get_mutable_chain() const
 {
-    return random::pick(free_chains_);
+    return random::pick(free_terms_);
 }
 
 NodeKey PathTeam::get_tip(bool const mutable_hint) const {
@@ -707,7 +707,7 @@ NodeKey PathTeam::get_tip(bool const mutable_hint) const {
 }
 
 void PathTeam::mutation_invariance_check() const {
-    DEBUG_NOMSG(free_chains_.size() != 2);
+    DEBUG_NOMSG(free_terms_.size() != 2);
     DEBUG_NOMSG(size() == 0);
 }
 
@@ -719,7 +719,7 @@ bool PathTeam::is_mutable(NodeKey const tip) const {
 void PathTeam::reset() {
     NodeTeam::reset();
     nodes_.clear();
-    free_chains_.clear();
+    free_terms_.clear();
     scored_path_ = nullptr;
     nk_map_.clear();
 }
@@ -742,9 +742,9 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
     return new_node_key;
 }
 
-void PathTeam::remove_free_chains(NodeKey const node) {
-    // Remove any FreeChain originating from node
-    free_chains_.remove_if([&](auto const & fc) {
+void PathTeam::remove_free_terms(NodeKey const node) {
+    // Remove any FreeTerm originating from node
+    free_terms_.remove_if([&](auto const & fc) {
         return fc.node == node;
     });
 }
@@ -754,9 +754,9 @@ void PathTeam::calc_checksum() {
     // sequence of nodes even if they are in reverse order. This can be
     // achieved by XOR'ing the forward and backward checksums.
     checksum_ = 0x0000;
-    for (auto& free_chain : free_chains_) {
+    for (auto& free_term : free_terms_) {
         Crc32 const crc_half =
-            free_chain.node->gen_path().path_checksum();
+            free_term.node->gen_path().path_checksum();
 
         Crc32 tmp = checksum_ ^ crc_half;
         if (not tmp) {
@@ -840,7 +840,7 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
                                dst_mod,
                                dst_chain_id);
 
-            FreeChain const src_fc(last_node, step.src_term, src_chain_id);
+            FreeTerm const src_fc(last_node, step.src_term, src_chain_id);
 
             last_node = pimpl_->grow_tip(src_fc, pt_link);
         }
@@ -895,10 +895,10 @@ PathTeam& PathTeam::operator=(PathTeam const& other) {
                 node->update_link_ptrs(nk_map_);
             }
 
-            // Copy free_chains_.
-            free_chains_.clear();
-            for (auto& other_fc : other.free_chains_) {
-                free_chains_.emplace_back(nk_map_.at(other_fc.node),
+            // Copy free_terms_.
+            free_terms_.clear();
+            for (auto& other_fc : other.free_terms_) {
+                free_terms_.emplace_back(nk_map_.at(other_fc.node),
                                           other_fc.term,
                                           other_fc.chain_id);
             }
@@ -915,7 +915,7 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
         NodeTeam::operator=(std::move(other));
 
         std::swap(nodes_, other.nodes_);
-        std::swap(free_chains_, other.free_chains_);
+        std::swap(free_terms_, other.free_terms_);
         std::swap(scored_path_, other.scored_path_);
         std::swap(nk_map_, other.nk_map_);
     }
@@ -982,8 +982,8 @@ mutation::Mode PathTeam::evolve(NodeTeam const& mother,
 
 /* printers */
 void PathTeam::print_to(std::ostream& os) const {
-    TRACE_NOMSG(free_chains_.empty());
-    auto start_node = begin(free_chains_)->node;
+    TRACE_NOMSG(free_terms_.empty());
+    auto start_node = begin(free_terms_)->node;
     auto path_gen = start_node->gen_path();
 
     while (not path_gen.is_done()) {
@@ -1001,7 +1001,7 @@ void PathTeam::print_to(std::ostream& os) const {
 JSON PathTeam::to_json() const {
     JSON output;
 
-    if (not free_chains_.empty()) {
+    if (not free_terms_.empty()) {
         // Kabsch outputs for forward and backward paths.
         elfin::Mat3f rot;
         Vector3f tran;

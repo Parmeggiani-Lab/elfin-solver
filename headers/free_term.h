@@ -1,5 +1,5 @@
-#ifndef FREE_CHAIN_H
-#define FREE_CHAIN_H
+#ifndef FREE_TERM_H
+#define FREE_TERM_H
 
 #include <functional>
 #include <sstream>
@@ -13,7 +13,7 @@ namespace elfin {
 class Node;
 typedef Node const* NodeKey;
 
-struct FreeChain : public Printable {
+struct FreeTerm : public Printable {
     /* types */
     struct Bridge {
         ProtoLink const* const pt_link1, * const pt_link2;
@@ -29,18 +29,18 @@ struct FreeChain : public Printable {
     size_t chain_id;
 
     /* ctors */
-    FreeChain() :
+    FreeTerm() :
         node(nullptr), term(TermType::NONE), chain_id(0) {}
-    FreeChain(NodeKey const _node,
+    FreeTerm(NodeKey const _node,
               TermType const _term,
               size_t const _chain_id);
 
     /* accessors */
-    bool operator==(FreeChain const& other) const;
-    bool operator!=(FreeChain const& other) const { return not this->operator==(other); }
+    bool operator==(FreeTerm const& other) const;
+    bool operator!=(FreeTerm const& other) const { return not this->operator==(other); }
     ProtoLink const& random_proto_link() const;
-    BridgeList find_bridges(FreeChain const& dst) const;
-    ProtoLink const* find_link_to(FreeChain const& dst) const;
+    BridgeList find_bridges(FreeTerm const& dst) const;
+    ProtoLink const* find_link_to(FreeTerm const& dst) const;
 
     /* printers */
     virtual void print_to(std::ostream& os) const;
@@ -50,8 +50,8 @@ struct FreeChain : public Printable {
 
 namespace std {
 
-template <> struct hash<elfin::FreeChain> {
-    size_t operator()(elfin::FreeChain const& x) const {
+template <> struct hash<elfin::FreeTerm> {
+    size_t operator()(elfin::FreeTerm const& x) const {
         return hash<void*>()((void*) x.node) ^
                hash<size_t>()(static_cast<int>(x.term)) ^
                hash<size_t>()(x.chain_id);
@@ -64,4 +64,4 @@ namespace elfin {
 
 }  /* elfin */
 
-#endif  /* end of include guard: FREE_CHAIN_H */
+#endif  /* end of include guard: FREE_TERM_H */

@@ -55,7 +55,7 @@ struct EqualProtoLinkWithoutTx {
 /*
  * Note: with c++20, std::unordered_set::find(K& key) becomes a template
  * method. We'll be able to search the pointer set without creating a new
- * ProtoLink instance (by comparing ProtoLink* with FreeChain *).
+ * ProtoLink instance (by comparing ProtoLink* with FreeTerm *).
  */
 typedef std::unordered_set <
 ConstProtoLinkPtr,

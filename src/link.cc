@@ -7,9 +7,9 @@ namespace elfin {
 
 /* public */
 /* ctors */
-Link::Link(FreeChain const& src,
+Link::Link(FreeTerm const& src,
            ProtoLink const* prot,
-           FreeChain const& dst) :
+           FreeTerm const& dst) :
   src_(src),
   prototype_(prot),
   dst_(dst)

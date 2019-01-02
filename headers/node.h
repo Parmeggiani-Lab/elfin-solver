@@ -22,7 +22,7 @@ protected:
     //
     // I chose to use vector because as far as we are concerned now, modules
     // have very few termini e.g. max 4 at the time of writing. Although it's
-    // O(n) to access the wanted FreeChain, using more complex structure to
+    // O(n) to access the wanted FreeTerm, using more complex structure to
     // support O(1) operations is probably not worth the memory/dev time due
     // to how tiny the vectors are.
     //
@@ -52,16 +52,16 @@ public:
 
     /* modifiers */
     void add_link(
-        FreeChain const& src,
+        FreeTerm const& src,
         ProtoLink const* proto_link,
-        FreeChain const& dst) {
+        FreeTerm const& dst) {
         links_.emplace_back(src, proto_link, dst);
     }
     void add_link(Link const& link) {
         links_.emplace_back(link);
     }
     void update_link_ptrs(NodeKeyMap const& nam);
-    void remove_link(FreeChain const& fc);
+    void remove_link(FreeTerm const& fc);
 
     /* printers */
     virtual void print_to(std::ostream& os) const;

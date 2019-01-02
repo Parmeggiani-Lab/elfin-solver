@@ -114,14 +114,14 @@ void ProtoModule::finalize() {
         proto_chain.finalize();
 
         if (not proto_chain.n_term().links().empty()) {
-            free_chains_.emplace_back(
+            free_terms_.emplace_back(
                 nullptr,
                 TermType::N,
                 proto_chain.id);
         }
 
         if (not proto_chain.c_term().links().empty()) {
-            free_chains_.emplace_back(
+            free_terms_.emplace_back(
                 nullptr,
                 TermType::C,
                 proto_chain.id);

@@ -29,13 +29,13 @@ protected:
 
     /* data */
     std::unordered_map<NodeKey, NodeSP> nodes_;
-    std::list<FreeChain> free_chains_;
+    std::list<FreeTerm> free_terms_;
     V3fList const* scored_path_ = nullptr;
     NodeKeyMap nk_map_;
 
     /* accessors */
     virtual PathTeam* virtual_clone() const;
-    virtual FreeChain get_mutable_chain() const;
+    virtual FreeTerm get_mutable_chain() const;
     virtual NodeKey get_tip(bool const mutable_hint) const;
     virtual void mutation_invariance_check() const;
     virtual bool is_mutable(NodeKey const nk) const;
@@ -45,7 +45,7 @@ protected:
     virtual void virtual_copy(NodeTeam const& other);
     NodeKey add_node(ProtoModule const* const prot,
                      Transform const& tx = Transform());
-    void remove_free_chains(NodeKey const node);
+    void remove_free_terms(NodeKey const node);
     virtual void calc_checksum();
     virtual void calc_score();
     Node* get_node(NodeKey const nk);

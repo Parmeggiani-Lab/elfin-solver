@@ -1,11 +1,11 @@
-#include "free_chain.h"
+#include "free_term.h"
 
 #include "node.h"
 
 namespace elfin {
 
 /* ctors */
-FreeChain::FreeChain(NodeKey const _node,
+FreeTerm::FreeTerm(NodeKey const _node,
                      TermType const _term,
                      size_t const _chain_id) :
     node(_node),
@@ -15,21 +15,21 @@ FreeChain::FreeChain(NodeKey const _node,
 }
 
 /* accessors */
-bool FreeChain::operator==(FreeChain const& other) const {
+bool FreeTerm::operator==(FreeTerm const& other) const {
     return node == other.node and
            term == other.term and
            chain_id == other.chain_id;
 }
 
-ProtoLink const& FreeChain::random_proto_link() const {
+ProtoLink const& FreeTerm::random_proto_link() const {
     ProtoChain const& proto_chain =
         node->prototype_->chains().at(chain_id);
 
     return proto_chain.pick_random_link(term);
 }
 
-FreeChain::BridgeList FreeChain::find_bridges(
-    FreeChain const& dst) const
+FreeTerm::BridgeList FreeTerm::find_bridges(
+    FreeTerm const& dst) const
 {
     BridgeList res;
     ProtoModule const* dst_mod = dst.node->prototype_;
@@ -70,8 +70,8 @@ FreeChain::BridgeList FreeChain::find_bridges(
     return res;
 }
 
-ProtoLink const* FreeChain::find_link_to(
-    FreeChain const& dst) const
+ProtoLink const* FreeTerm::find_link_to(
+    FreeTerm const& dst) const
 {
     if (dst.term != opposite_term(term)) {
         return nullptr;
@@ -85,8 +85,8 @@ ProtoLink const* FreeChain::find_link_to(
 }
 
 /* printers */
-void FreeChain::print_to(std::ostream& os) const {
-    os << "FreeChain[node: " << node->prototype_->name;
+void FreeTerm::print_to(std::ostream& os) const {
+    os << "FreeTerm[node: " << node->prototype_->name;
     os << " (Ptr: " << (void*) node << "), ";
     os << "term: " << TermTypeToCStr(term) << ", ";
     os << "chain: " << chain_id << "]";

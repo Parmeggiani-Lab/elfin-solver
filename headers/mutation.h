@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-#include "free_chain.h"
+#include "free_term.h"
 
 namespace elfin {
 
@@ -39,12 +39,12 @@ struct DeletePoint {
     //             --------------skipper------------->
     //
     NodeKey const       delete_node;
-    FreeChain const     src;
-    FreeChain const     dst;
+    FreeTerm const     src;
+    FreeTerm const     dst;
     ProtoLink const*    skipper;
     DeletePoint(NodeKey const _delete_node,
-                FreeChain const&  _src,
-                FreeChain const&  _dst,
+                FreeTerm const&  _src,
+                FreeTerm const&  _dst,
                 ProtoLink const* _skipper) :
         delete_node(_delete_node),
         src(_src),
@@ -60,23 +60,23 @@ struct InsertPoint {
     // Each bridge has pt_link1 and pt_link2 that:
     // [  node1 ] -pt_link1-> [new_node] -pt_link2-> [ node2  ]
     //
-    FreeChain const             src;
-    FreeChain const             dst;
-    FreeChain::BridgeList const bridges;
-    InsertPoint(FreeChain const& _src,
-                FreeChain const& _dst) :
+    FreeTerm const             src;
+    FreeTerm const             dst;
+    FreeTerm::BridgeList const bridges;
+    InsertPoint(FreeTerm const& _src,
+                FreeTerm const& _dst) :
         src(_src),
         dst(_dst),
         bridges(dst.node ?
                 src.find_bridges(dst) :
-                FreeChain::BridgeList()) { }
+                FreeTerm::BridgeList()) { }
 };
 
 struct SwapPoint : public InsertPoint {
     NodeKey const del_node;
-    SwapPoint(FreeChain const& _src,
+    SwapPoint(FreeTerm const& _src,
               NodeKey const _del_node,
-              FreeChain const& _dst) :
+              FreeTerm const& _dst) :
         InsertPoint(_src, _dst),
         del_node(_del_node) {}
 };
