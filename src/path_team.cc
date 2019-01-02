@@ -30,14 +30,14 @@ struct PathTeam::PImpl {
         //     if (not proto_chain.n_term().links().empty()) {
         //         free_chains_.emplace_back(
         //             new_node_key,
-        //             TerminusType::N,
+        //             TermType::N,
         //             proto_chain.id);
         //     }
 
         //     if (not proto_chain.c_term().links().empty()) {
         //         free_chains_.emplace_back(
         //             new_node_key,
-        //             TerminusType::C,
+        //             TermType::C,
         //             proto_chain.id);
         //     }
         // }
@@ -61,8 +61,8 @@ struct PathTeam::PImpl {
         auto node_b = add_free_node(pt_link->module_,
                                     node_a->tx_ * pt_link->tx_);
 
-        TerminusType const term_a = free_chain_a.term;
-        TerminusType const term_b = opposite_term(term_a);
+        TermType const term_a = free_chain_a.term;
+        TermType const term_b = opposite_term(term_a);
 
         FreeChain const free_chain_b =
             FreeChain(node_b, term_b, pt_link->chain_id_);
@@ -465,7 +465,7 @@ struct PathTeam::PImpl {
                 //
 
                 insert_points.emplace_back(
-                    FreeChain(curr_node, TerminusType::NONE, 0),
+                    FreeChain(curr_node, TermType::NONE, 0),
                     FreeChain());
             }
 
@@ -990,10 +990,10 @@ void PathTeam::print_to(std::ostream& os) const {
         os << path_gen.next()->to_string();
         Link const* link_ptr = path_gen.curr_link();
         if (link_ptr) {
-            TerminusType const src_term = link_ptr->src().term;
-            TerminusType const dst_term = link_ptr->dst().term;
-            os << "\n(" << TerminusTypeToCStr(src_term) << ", ";
-            os << TerminusTypeToCStr(dst_term) << ")\n";
+            TermType const src_term = link_ptr->src().term;
+            TermType const dst_term = link_ptr->dst().term;
+            os << "\n(" << TermTypeToCStr(src_term) << ", ";
+            os << TermTypeToCStr(dst_term) << ")\n";
         }
     }
 }
@@ -1030,7 +1030,7 @@ JSON PathTeam::to_json() const {
             auto link = path_gen.curr_link();
             if (link) {  //  Not reached end of nodes yet.
                 node_output["src_term"] =
-                    TerminusTypeToCStr(link->src().term);
+                    TermTypeToCStr(link->src().term);
 
                 std::string const& src_chain_name =
                     curr_node->prototype_->chains().at(
@@ -1044,7 +1044,7 @@ JSON PathTeam::to_json() const {
             else
             {
                 node_output["src_term"] =
-                    TerminusTypeToCStr(TerminusType::NONE);
+                    TermTypeToCStr(TermType::NONE);
                 node_output["src_chain_name"] = "NONE";
                 node_output["dst_chain_name"] = "NONE";
             }

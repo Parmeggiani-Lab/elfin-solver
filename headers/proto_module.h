@@ -58,7 +58,7 @@ public:
     size_t find_chain_id(std::string const& chain_name) const;
     ProtoLink const* find_link_to(
         size_t const src_chain_id,
-        TerminusType const src_term,
+        TermType const src_term,
         ProtoModule const* dst_module,
         size_t const dst_chain_id) const;
 

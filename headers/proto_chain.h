@@ -32,11 +32,11 @@ public:
     virtual ~ProtoChain() {}
 
     /* accessors */
-    ProtoTerminus const& get_term(TerminusType const term) const;
+    ProtoTerminus const& get_term(TermType const term) const;
     ProtoTerminus const& n_term() const { return n_term_; }
     ProtoTerminus const& c_term() const { return c_term_; }
     ProtoLink const& pick_random_link(
-        TerminusType const term) const;
+        TermType const term) const;
 
     /* modifiers */
     void finalize();

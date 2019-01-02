@@ -25,72 +25,72 @@ V3fList const QUARTER_SNAKE_FREE_COORDINATES_ORIGIN = {
 };
 
 Recipe const QUARTER_SNAKE_FREE_RECIPE {
-    {"D79_aC2_04", TerminusType::C, "B", "A", "D79_aC2_04"},
-    {"D79", TerminusType::C, "A", "A", "D79.001"},
-    {"D79", TerminusType::C, "A", "A", "D79.002"},
-    {"D79", TerminusType::C, "A", "A", "D79.003"},
-    {"D79_j1_D54", TerminusType::C, "A", "A", "D79_j1_D54.001"},
-    {"D54_j1_D79", TerminusType::C, "A", "A", "D54_j1_D79.003"},
-    {"D79_j2_D14", TerminusType::C, "?", "?", "D79_j2_D14.003"}
+    {"D79_aC2_04", TermType::C, "B", "A", "D79_aC2_04"},
+    {"D79", TermType::C, "A", "A", "D79.001"},
+    {"D79", TermType::C, "A", "A", "D79.002"},
+    {"D79", TermType::C, "A", "A", "D79.003"},
+    {"D79_j1_D54", TermType::C, "A", "A", "D79_j1_D54.001"},
+    {"D54_j1_D79", TermType::C, "A", "A", "D54_j1_D79.003"},
+    {"D79_j2_D14", TermType::C, "?", "?", "D79_j2_D14.003"}
 };
 
 Recipe const HALF_SNAKE_FREE_RECIPE {
-    {"D54_j1_D79", TerminusType::N, "A", "A", "D54_j1_D79"},
-    {"D54", TerminusType::N, "A", "A", "D54"},
-    {"D14_j1_D54", TerminusType::N, "A", "A", "D14_j1_D54"},
-    {"D14_j2_D14", TerminusType::N, "A", "A", "D14_j2_D14.001"},
-    {"D79_j2_D14", TerminusType::N, "A", "A", "D79_j2_D14.002"},
-    {"D79_aC2_04", TerminusType::C, "B", "A", "D79_aC2_04"},
-    {"D79", TerminusType::C, "A", "A", "D79.001"},
-    {"D79", TerminusType::C, "A", "A", "D79.002"},
-    {"D79", TerminusType::C, "A", "A", "D79.003"},
-    {"D79_j1_D54", TerminusType::C, "A", "A", "D79_j1_D54.001"},
-    {"D54_j1_D79", TerminusType::C, "A", "A", "D54_j1_D79.003"},
-    {"D79_j2_D14", TerminusType::C, "?", "?", "D79_j2_D14.003"}
+    {"D54_j1_D79", TermType::N, "A", "A", "D54_j1_D79"},
+    {"D54", TermType::N, "A", "A", "D54"},
+    {"D14_j1_D54", TermType::N, "A", "A", "D14_j1_D54"},
+    {"D14_j2_D14", TermType::N, "A", "A", "D14_j2_D14.001"},
+    {"D79_j2_D14", TermType::N, "A", "A", "D79_j2_D14.002"},
+    {"D79_aC2_04", TermType::C, "B", "A", "D79_aC2_04"},
+    {"D79", TermType::C, "A", "A", "D79.001"},
+    {"D79", TermType::C, "A", "A", "D79.002"},
+    {"D79", TermType::C, "A", "A", "D79.003"},
+    {"D79_j1_D54", TermType::C, "A", "A", "D79_j1_D54.001"},
+    {"D54_j1_D79", TermType::C, "A", "A", "D54_j1_D79.003"},
+    {"D79_j2_D14", TermType::C, "?", "?", "D79_j2_D14.003"}
 };
 
 Recipe const H_1H_RECIPE {
-    {"D49_aC2_ext", TerminusType::N, "D", "A", "D49_aC2_ext.002"},
-    {"D49", TerminusType::N, "A", "A", "D49.012"},
-    {"D49", TerminusType::N, "A", "A", "D49.015"},
-    {"D49", TerminusType::N, "A", "A", "D49.016"},
-    {"D49", TerminusType::N, "?", "?", "D49.019"}
+    {"D49_aC2_ext", TermType::N, "D", "A", "D49_aC2_ext.002"},
+    {"D49", TermType::N, "A", "A", "D49.012"},
+    {"D49", TermType::N, "A", "A", "D49.015"},
+    {"D49", TermType::N, "A", "A", "D49.016"},
+    {"D49", TermType::N, "?", "?", "D49.019"}
 };
 
 Recipe const HALF_SNAKE_1H_RECIPE {
-    {"D79_j2_D14", TerminusType::C, "A", "A", "D79_j2_D14.003"},
-    {"D54_j1_D79", TerminusType::C, "A", "A", "D54_j1_D79.003"},
-    {"D79_j1_D54", TerminusType::C, "A", "A", "D79_j1_D54.001"},
-    {"D79", TerminusType::C, "A", "A", "D79.003"},
-    {"D79", TerminusType::C, "A", "A", "D79.002"},
-    {"D79", TerminusType::C, "B", "A", "D79.001"},
-    {"D79_aC2_04", TerminusType::N, "A", "A", "D79_aC2_04"},
-    {"D79_j2_D14", TerminusType::N, "A", "A", "D79_j2_D14.002"},
-    {"D14_j2_D14", TerminusType::N, "A", "A", "D14_j2_D14.001"},
-    {"D14_j1_D54", TerminusType::N, "A", "A", "D14_j1_D54"},
-    {"D54", TerminusType::N, "A", "A", "D54"},
-    {"D54_j1_D79", TerminusType::N, "?", "?", "D54_j1_D79"}
+    {"D79_j2_D14", TermType::C, "A", "A", "D79_j2_D14.003"},
+    {"D54_j1_D79", TermType::C, "A", "A", "D54_j1_D79.003"},
+    {"D79_j1_D54", TermType::C, "A", "A", "D79_j1_D54.001"},
+    {"D79", TermType::C, "A", "A", "D79.003"},
+    {"D79", TermType::C, "A", "A", "D79.002"},
+    {"D79", TermType::C, "B", "A", "D79.001"},
+    {"D79_aC2_04", TermType::N, "A", "A", "D79_aC2_04"},
+    {"D79_j2_D14", TermType::N, "A", "A", "D79_j2_D14.002"},
+    {"D14_j2_D14", TermType::N, "A", "A", "D14_j2_D14.001"},
+    {"D14_j1_D54", TermType::N, "A", "A", "D14_j1_D54"},
+    {"D54", TermType::N, "A", "A", "D54"},
+    {"D54_j1_D79", TermType::N, "?", "?", "D54_j1_D79"}
 };
 
 Recipe const H_2H_RECIPE {
-    {"D49_aC2_ext", TerminusType::C, "D", "A", "D49_aC2_ext.001"},
-    {"D49", TerminusType::C, "A", "A", "D49.007"},
-    {"D49", TerminusType::C, "A", "A", "D49.005"},
-    {"D49", TerminusType::C, "A", "A", "D49.004"},
-    {"D49", TerminusType::C, "A", "D", "D49.003"},
-    {"D49_aC2_ext", TerminusType::N, "C", "A", "D49_aC2_ext"},
-    {"D49", TerminusType::C, "?", "?", "D49"}
+    {"D49_aC2_ext", TermType::C, "D", "A", "D49_aC2_ext.001"},
+    {"D49", TermType::C, "A", "A", "D49.007"},
+    {"D49", TermType::C, "A", "A", "D49.005"},
+    {"D49", TermType::C, "A", "A", "D49.004"},
+    {"D49", TermType::C, "A", "D", "D49.003"},
+    {"D49_aC2_ext", TermType::N, "C", "A", "D49_aC2_ext"},
+    {"D49", TermType::C, "?", "?", "D49"}
 };
 
 // Reversed version
 Recipe const H_2H_RECIPE_REV {
-    {"D49", TerminusType::C, "A", "C", "D49"},
-    {"D49_aC2_ext", TerminusType::N, "D", "A", "D49_aC2_ext"},
-    {"D49", TerminusType::N, "A", "A", "D49.003"},
-    {"D49", TerminusType::N, "A", "A", "D49.004"},
-    {"D49", TerminusType::N, "A", "A", "D49.005"},
-    {"D49", TerminusType::N, "A", "D", "D49.007"},
-    {"D49_aC2_ext", TerminusType::N, "?", "?", "D49_aC2_ext.001"},
+    {"D49", TermType::C, "A", "C", "D49"},
+    {"D49_aC2_ext", TermType::N, "D", "A", "D49_aC2_ext"},
+    {"D49", TermType::N, "A", "A", "D49.003"},
+    {"D49", TermType::N, "A", "A", "D49.004"},
+    {"D49", TermType::N, "A", "A", "D49.005"},
+    {"D49", TermType::N, "A", "D", "D49.007"},
+    {"D49_aC2_ext", TermType::N, "?", "?", "D49_aC2_ext.001"},
 };
 
 }  /* tests */

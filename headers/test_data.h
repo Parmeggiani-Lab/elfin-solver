@@ -2,7 +2,7 @@
 #define TEST_DATA_H_
 
 #include "geometry.h"
-#include "terminus_type.h"
+#include "term_type.h"
 #include "recipe.h"
 
 namespace elfin {

@@ -7,7 +7,7 @@ namespace tests {
 
 struct RecipeStep {
     std::string const mod_name;
-    TerminusType const src_term = TerminusType::NONE;
+    TermType const src_term = TermType::NONE;
     std::string const src_chain;
     std::string const dst_chain;
     std::string const ui_name;

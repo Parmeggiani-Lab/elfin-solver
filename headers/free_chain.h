@@ -5,7 +5,7 @@
 #include <sstream>
 #include <vector>
 
-#include "terminus_type.h"
+#include "term_type.h"
 #include "proto_link.h"
 
 namespace elfin {
@@ -25,16 +25,15 @@ struct FreeChain : public Printable {
 
     /* data */
     NodeKey node;
-    TerminusType term;
+    TermType term;
     size_t chain_id;
 
     /* ctors */
     FreeChain() :
-        node(nullptr), term(TerminusType::NONE), chain_id(0) {}
-    FreeChain(
-        NodeKey const _node,
-        TerminusType const _term,
-        size_t const _chain_id);
+        node(nullptr), term(TermType::NONE), chain_id(0) {}
+    FreeChain(NodeKey const _node,
+              TermType const _term,
+              size_t const _chain_id);
 
     /* accessors */
     bool operator==(FreeChain const& other) const;
@@ -44,7 +43,7 @@ struct FreeChain : public Printable {
     ProtoLink const* find_link_to(FreeChain const& dst) const;
 
     /* printers */
-   virtual void print_to(std::ostream& os) const;
+    virtual void print_to(std::ostream& os) const;
 };
 
 }  /* elfin */

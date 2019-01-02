@@ -9,15 +9,15 @@ namespace elfin {
 
 /* public */
 ProtoTerminus const& ProtoChain::get_term(
-    TerminusType const term) const {
-    if (term == TerminusType::N) {
+    TermType const term) const {
+    if (term == TermType::N) {
         return n_term_;
     }
-    else if (term == TerminusType::C) {
+    else if (term == TermType::C) {
         return c_term_;
     }
     else {
-        bad_terminus(term);
+        bad_term(term);
         throw ExitException{1};  // Suppress warning.
     }
 }
@@ -40,7 +40,7 @@ void ProtoChain::finalize() {
 }
 
 ProtoLink const& ProtoChain::pick_random_link(
-    TerminusType const term) const {
+    TermType const term) const {
     return get_term(term).pick_random_link(term);
 }
 

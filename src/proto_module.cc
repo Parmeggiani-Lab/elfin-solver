@@ -82,7 +82,7 @@ size_t ProtoModule::find_chain_id(std::string const& chain_name) const
 }
 
 ProtoLink const* ProtoModule::find_link_to(size_t const src_chain_id,
-        TerminusType const src_term,
+        TermType const src_term,
         ProtoModule const* dst_module,
         size_t const dst_chain_id) const
 {
@@ -116,14 +116,14 @@ void ProtoModule::finalize() {
         if (not proto_chain.n_term().links().empty()) {
             free_chains_.emplace_back(
                 nullptr,
-                TerminusType::N,
+                TermType::N,
                 proto_chain.id);
         }
 
         if (not proto_chain.c_term().links().empty()) {
             free_chains_.emplace_back(
                 nullptr,
-                TerminusType::C,
+                TermType::C,
                 proto_chain.id);
         }
     }

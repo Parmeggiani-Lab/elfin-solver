@@ -13,15 +13,15 @@ namespace elfin {
 /* public */
 /* accessors */
 ProtoLink const& ProtoTerminus::pick_random_link(
-    TerminusType const term) const {
-    if (term == TerminusType::N) {
+    TermType const term) const {
+    if (term == TermType::N) {
         return *n_roulette_.draw();
     }
-    else if (term == TerminusType::C) {
+    else if (term == TermType::C) {
         return *c_roulette_.draw();
     }
     else {
-        bad_terminus(term);
+        bad_term(term);
         throw ExitException{1};  // Suppress no return warning.
     }
 }

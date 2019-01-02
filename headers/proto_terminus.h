@@ -2,7 +2,7 @@
 #define PROTO_TERMINUS_H_
 
 #include "proto_link.h"
-#include "terminus_type.h"
+#include "term_type.h"
 #include "roulette.h"
 
 namespace elfin {
@@ -31,7 +31,7 @@ public:
 
     /* accessors */
     ProtoLinkSPList const& links() const { return links_; }
-    ProtoLink const& pick_random_link(TerminusType const term) const;
+    ProtoLink const& pick_random_link(TermType const term) const;
     ProtoLinkPtrSet const& link_set() const { return link_set_; }
     ProtoLinkPtrSetCItr find_link_to(
         ConstProtoModulePtr dst_module,

@@ -6,7 +6,7 @@ namespace elfin {
 
 /* ctors */
 FreeChain::FreeChain(NodeKey const _node,
-                     TerminusType const _term,
+                     TermType const _term,
                      size_t const _chain_id) :
     node(_node),
     term(_term),
@@ -88,7 +88,7 @@ ProtoLink const* FreeChain::find_link_to(
 void FreeChain::print_to(std::ostream& os) const {
     os << "FreeChain[node: " << node->prototype_->name;
     os << " (Ptr: " << (void*) node << "), ";
-    os << "term: " << TerminusTypeToCStr(term) << ", ";
+    os << "term: " << TermTypeToCStr(term) << ", ";
     os << "chain: " << chain_id << "]";
 }
 
