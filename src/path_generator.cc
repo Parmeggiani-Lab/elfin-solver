@@ -16,56 +16,10 @@ PathGenerator::PathGenerator(NodeKey start_node) :
     DEBUG_NOMSG(start_node->links().size() > 1);
 }
 
-PathGenerator::PathGenerator(Link const* const arrow) :
+PathGenerator::PathGenerator(LinkCPtr const arrow) :
     curr_node_(arrow->src().node),
     curr_link_(arrow),
     next_node_(arrow->dst().node) {}
-
-/* accessors */
-std::vector<Link const*> PathGenerator::collect_arrows() const
-{
-    DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
-    auto pg = PathGenerator(next_node_);
-    std::vector<Link const*> arrows;
-    while (not pg.is_done()) {
-        pg.next();
-        if (pg.curr_link()) {  // The last call to .next() has nullptr for curr_link.
-            arrows.push_back(pg.curr_link());
-        }
-    }
-    return arrows;
-}
-
-Crc32 PathGenerator::path_checksum() const {
-    DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
-    auto pg = PathGenerator(next_node_);
-    Crc32 res = 0xffff;
-    while (not pg.is_done()) {
-        auto nk = pg.next();
-        ProtoModule const* prot = nk->prototype_;
-
-        // Calculate checksum from the pointer, not the value!
-        checksum_cascade(&res, &prot, sizeof(prot));
-    }
-    return res;
-}
-
-V3fList PathGenerator::collect_points(size_t skip) const {
-    DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
-    auto pg = PathGenerator(next_node_);
-    V3fList points;
-    while (not pg.is_done()) {
-        auto node = pg.next();
-
-        if (skip > 0) {
-            skip--;
-        }
-        else {
-            points.push_back(node->tx_.collapsed());
-        }
-    }
-    return points;
-}
 
 /* modifiers */
 NodeKey PathGenerator::next()
@@ -92,6 +46,41 @@ NodeKey PathGenerator::next()
     }
 
     return curr_node_;
+}
+Crc32 PathGenerator::checksum() {
+    DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
+    Crc32 res = 0xffff;
+    while (not is_done()) {
+        auto nk = next();
+        ProtoModule const* prot = nk->prototype_;
+
+        // Calculate checksum from the pointer, not the value!
+        checksum_cascade(&res, &prot, sizeof(prot));
+    }
+    return res;
+}
+
+std::vector<LinkCPtr> PathGenerator::collect_arrows()
+{
+    auto res = collect(CollectFunc<LinkCPtr>([](NodeKey const nk, LinkCPtr link) {
+        return link;
+    }));
+
+    res.pop_back();  // Last link is nullptr!
+
+    return res;
+}
+
+V3fList PathGenerator::collect_points() {
+    return collect(CollectFunc<Vector3f>([](NodeKey const nk, LinkCPtr link) {
+        return nk->tx_.collapsed();
+    }));
+}
+
+std::vector<NodeKey> PathGenerator::collect_keys() {
+    return collect(CollectFunc<NodeKey>([](NodeKey const nk, LinkCPtr link) {
+        return nk;
+    }));
 }
 
 }  /* elfin */
