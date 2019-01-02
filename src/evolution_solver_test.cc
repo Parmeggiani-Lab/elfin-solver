@@ -11,31 +11,24 @@ namespace elfin {
 TestStat EvolutionSolver::test() {
     TestStat ts;
 
-    // Test solving free body type work area.
-    // Force 1 thread for reproduciblility.
-    InputManager::load_test_config(
-        /*spec_file=*/ "examples/quarter_snake_free_far.json",
-        /*n_workers=*/ 1);
-
-    EvolutionSolver solver;
-    // Test solver runs without crashing.
+    // Test expected solution.
+    auto test_fragment =
+        [&](std::string const & spec, tests::Recipe const & recipe)
     {
         ts.tests++;
+
+        // Force 1 thread for reproduciblility.
+        InputManager::load_test_config(
+            /*spec_file=*/ spec,
+            /*n_workers=*/ 1);
+
 
         JUtilLogLvl original_ll = JUtil.get_log_lvl();
 
         JUtil.set_log_lvl(LOGLVL_WARNING);
+        EvolutionSolver solver;
         solver.run();
         JUtil.set_log_lvl(original_ll);
-    }
-
-    // Test that expected solution was obtained.
-    {
-        ts.tests++;
-        size_t const n_work_areas = SPEC.work_areas().size();
-        PANIC_IF(n_work_areas != 1,
-                 "Expected spec to have exactly 1 work area, but there is %zu\n",
-                 n_work_areas);
 
         auto const& [work_area_name, work_area] = *begin(SPEC.work_areas());
         auto const& solutions = solver.best_sols(work_area_name);  // TeamPtrMaxHeap
@@ -47,19 +40,17 @@ TestStat EvolutionSolver::test() {
 
             // Might need to reverse recipe because data exported from
             // elfin-ui does not gurantee consistent starting tip.
-            bool const should_reverse =
-                tests::quarter_snake_free_recipe[0].mod_name !=
-                path_gen.peek()->prototype_->name;
+            bool const should_reverse = recipe[0].mod_name !=
+                                        path_gen.peek()->prototype_->name;
 
-            auto recipe = should_reverse ?
-                          tests::Recipe(rbegin(tests::quarter_snake_free_recipe),
-                            rend(tests::quarter_snake_free_recipe)) :
-                          tests::quarter_snake_free_recipe;
-            auto step_itr = begin(recipe);
+            auto recipe_fwd = should_reverse ?
+                              tests::Recipe(rbegin(recipe), rend(recipe)) :
+                              recipe;
+            auto step_itr = begin(recipe_fwd);
 
             while (not path_gen.is_done()) {
                 auto node = path_gen.next();
-                if (step_itr == end(recipe) or
+                if (step_itr == end(recipe_fwd) or
                         step_itr->mod_name != node->prototype_->name) {
                     ts.errors++;
                     JUtil.error("Solver best solution differs from expectation.\n");
@@ -75,7 +66,7 @@ TestStat EvolutionSolver::test() {
 
                     std::ostringstream exp_oss;
                     exp_oss << "Expected solution:\n";
-                    for (auto& step : recipe) {
+                    for (auto& step : recipe_fwd) {
                         exp_oss << step.mod_name << "\n";
                     }
 
@@ -89,7 +80,31 @@ TestStat EvolutionSolver::test() {
             ts.errors++;
             JUtil.error("Bad cast in %s\n", __PRETTY_FUNCTION__);
         }
-    }
+    };
+
+    // Test short free type work area.
+    test_fragment("examples/quarter_snake_free.json",
+                  tests::quarter_snake_free_recipe);
+
+    // Test medium free type work area.
+    test_fragment("examples/half_snake_free.json",
+                  tests::half_snake_free_recipe);
+
+    // Test short 1H type work area.
+    test_fragment("examples/quarter_snake_1h.json",
+                  tests::quarter_snake_free_recipe);
+
+    // Test medium 1H type work area.
+    test_fragment("examples/half_snake_1h.json",
+                  tests::half_snake_free_recipe);
+
+    // Test 2x medium 1H type work area.
+    test_fragment("examples/half_snake_2x1h.json",
+                  tests::half_snake_free_recipe);
+
+    // Test short 2H type work area.
+    // test_fragment("examples/H_2h.json",
+    //               tests::H_2h_recipe);
 
     return ts;
 }
