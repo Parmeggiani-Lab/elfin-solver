@@ -232,10 +232,10 @@ struct PathTeam::PImpl {
     }
 
     /* mutation methods */
-    bool erode_mutate() {
-
+    bool erode_mutate()
+    {
         bool mutate_success = false;
-#ifndef NO_ERODE
+
         if (_.size() > 1) {
             // Pick random tip node if not specified.
             NodeKey tip_node = _.get_tip_chain(/*mutable_hint=*/true).node;
@@ -280,15 +280,14 @@ struct PathTeam::PImpl {
 
             mutate_success = true;
         }
-#endif // NO_ERODE
 
         return mutate_success;
     }
 
-    bool delete_mutate() {
-
+    bool delete_mutate()
+    {
         bool mutate_success = false;
-#ifndef NO_DELETE
+
         if (_.size() > 1) {
             // Walk through all nodes to collect delete points.
             std::vector<mutation::DeletePoint> delete_points;
@@ -416,14 +415,14 @@ struct PathTeam::PImpl {
                 mutate_success = true;
             }
         }
-#endif
+
         return mutate_success;
     }
 
-    bool insert_mutate() {
-
+    bool insert_mutate()
+    {
         bool mutate_success = false;
-#ifndef NO_INSERT
+
         // Walk through all links to collect insert points.
         std::vector<mutation::InsertPoint> insert_points;
 
@@ -508,14 +507,14 @@ struct PathTeam::PImpl {
 
             mutate_success = true;
         }
-#endif
+
         return mutate_success;
     }
 
-    bool swap_mutate() {
-
+    bool swap_mutate()
+    {
         bool mutate_success = false;
-#ifndef NO_SWAP
+
         // Walk through all links to collect swap points.
         std::vector<mutation::SwapPoint> swap_points;
 
@@ -596,14 +595,14 @@ struct PathTeam::PImpl {
 
             mutate_success = true;
         }
-#endif
+
         return mutate_success;
     }
 
-    bool cross_mutate(NodeTeam const& father) {
-
+    bool cross_mutate(NodeTeam const& father)
+    {
         bool mutate_success = false;
-#ifndef NO_CROSS
+
         try { // Catch bad cast
             auto& pt_father = static_cast<PathTeam const&>(father);
 
@@ -649,7 +648,7 @@ struct PathTeam::PImpl {
         catch (std::bad_cast const& e) {
             PANIC("Bad cast in %s\n", __PRETTY_FUNCTION__);
         }
-#endif
+
         return mutate_success;
     }
 
@@ -711,11 +710,12 @@ bool PathTeam::is_mutable(NodeKey const tip) const {
 }
 
 /* modifiers */
-void PathTeam::restart() {
+void PathTeam::reset() {
+    NodeTeam::reset();
     nodes_.clear();
     free_chains_.clear();
-    checksum_ = 0x0000;
-    score_ = INFINITY;
+    scored_path_ = nullptr;
+    nk_map_.clear();
 }
 
 void PathTeam::virtual_copy(NodeTeam const& other) {
@@ -783,65 +783,24 @@ void PathTeam::calc_score() {
     // algorithm relies on point-wise correspondance. Different ordering
     // can yield different RMSD scores.
     score_ = INFINITY;
-    for (auto& free_chain : free_chains_) {
-        auto const my_points =
-            free_chain.node->gen_path().collect_points();
-        float const new_score = scoring::score(my_points,
-                                               work_area_->points);
 
-        if (new_score < score_) {
-            score_ = new_score;
-            scored_tip_ = free_chain.node;
-        }
+    auto const& my_points = get_tip_chain(/*mutable_hint=*/false).node->
+                            gen_path().collect_points();
+
+    auto const& [fwd_ui_key, fwd_path] = *begin(work_area_->path_map);
+    float const fwd_score = scoring::score(my_points, fwd_path);
+
+    auto const& [bwd_ui_key, bwd_path] = *(++begin(work_area_->path_map));
+    float const bwd_score = scoring::score(my_points, bwd_path);
+
+    if (fwd_score < bwd_score) {
+        score_ = fwd_score;
+        scored_path_ = &fwd_path;
     }
-}
-
-NodeKey PathTeam::follow_recipe(tests::Recipe const& recipe,
-                                Transform const& shift_tx)
-{
-    nodes_.clear();
-    free_chains_.clear();
-    scored_tip_ = nullptr;
-
-    NodeKey first_node = nullptr;
-    if (not recipe.empty()) {
-        std::string const& first_mod_name = recipe[0].mod_name;
-        auto last_node = add_free_node(XDB.get_module(first_mod_name));
-        first_node = last_node;
-        pimpl_->get_node(last_node)->tx_ = shift_tx;
-
-        for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
-            auto const& step = *itr;
-
-            // Create next node.
-            auto src_mod = XDB.get_module(step.mod_name);
-            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
-            TRACE_NOMSG(not src_mod);
-            TRACE_NOMSG(not dst_mod);
-
-            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
-            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
-
-            // Find ProtoLink.
-            auto pt_link = src_mod->find_link_to(
-                               src_chain_id,
-                               step.src_term,
-                               dst_mod,
-                               dst_chain_id);
-
-            // Find FreeChain.
-            mutation_invariance_check();
-            FreeChain const src_fc(last_node, step.src_term, src_chain_id);
-
-            TRACE_NOMSG(std::find(begin(free_chains_),
-                                  end(free_chains_),
-                                  src_fc) == end(free_chains_));
-
-            last_node = pimpl_->grow_tip(src_fc, pt_link);
-        }
+    else {
+        score_ = bwd_score;
+        scored_path_ = &bwd_path;
     }
-
-    return first_node;
 }
 
 /* public */
@@ -852,23 +811,19 @@ PathTeam::PathTeam(WorkArea const* wa) :
 
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_)
-{
-    *this = other;  // Calls operator=(T const&)
-}
+{ this->operator=(other); }
 
 PathTeam::PathTeam(PathTeam&& other) :
     PathTeam(other.work_area_)
-{
-    *this = std::move(other);  // Calls operator=(T&&)
-}
+{ this->operator=(std::move(other)); }
 
 /* dtors */
 PathTeam::~PathTeam() {}
 
 /* accessors */
 PathGenerator PathTeam::gen_path() const {
-    DEBUG(not scored_tip_, "calc_score() not called\n");
-    return scored_tip_->gen_path();
+    DEBUG(not scored_path_, "calc_score() not called\n");
+    return get_tip_chain(/*mutable_hint=*/false).node->gen_path();
 }
 
 /* modifiers */
@@ -880,8 +835,8 @@ PathTeam& PathTeam::operator=(PathTeam const& other) {
         {
             // Create new node addr mapping: other addr -> my addr
             nk_map_.clear();
-
             nodes_.clear();
+
             for (auto& [other_nk, other_node] : other.nodes_) {
                 NodeSP my_node = other_node->clone();
                 nk_map_[other_nk] = my_node.get();
@@ -901,9 +856,7 @@ PathTeam& PathTeam::operator=(PathTeam const& other) {
                                           other_fc.chain_id);
             }
 
-            scored_tip_ = other.scored_tip_ ?
-                          nk_map_.at(other.scored_tip_) :
-                          nullptr;
+            scored_path_ = other.scored_path_;
         }
     }
 
@@ -916,7 +869,7 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
 
         std::swap(nodes_, other.nodes_);
         std::swap(free_chains_, other.free_chains_);
-        std::swap(scored_tip_, other.scored_tip_);
+        std::swap(scored_path_, other.scored_path_);
         std::swap(nk_map_, other.nk_map_);
     }
 
@@ -924,9 +877,8 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
 }
 
 void PathTeam::randomize() {
-    restart();
+    reset();
     pimpl_->regenerate();
-
     mutation_invariance_check();
 }
 
@@ -981,9 +933,56 @@ mutation::Mode PathTeam::evolve(NodeTeam const& mother,
     return mode;
 }
 
-void PathTeam::implement_recipe(tests::Recipe const& recipe,
-                                Transform const& shift_tx) {
-    NodeKey start_node = follow_recipe(recipe, shift_tx);
+void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
+                                        NodeKeyCallback const& cb_on_first_node,
+                                        Transform const& shift_tx) {
+
+    TRACE_NOMSG(recipe.empty());
+
+    // Let derived classes do their own partial reset.
+    PathTeam::reset();
+
+    NodeKey first_node = nullptr;
+    if (not recipe.empty()) {
+        std::string const& first_mod_name = recipe[0].mod_name;
+        first_node = add_free_node(XDB.get_module(first_mod_name));
+        if (cb_on_first_node) {
+            cb_on_first_node(first_node);
+        }
+
+        auto last_node = first_node;
+        pimpl_->get_node(last_node)->tx_ = shift_tx;
+
+        for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
+            auto const& step = *itr;
+
+            // Create next node.
+            auto src_mod = XDB.get_module(step.mod_name);
+            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
+            TRACE_NOMSG(not src_mod);
+            TRACE_NOMSG(not dst_mod);
+
+            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
+            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
+
+            // Find ProtoLink.
+            auto pt_link = src_mod->find_link_to(
+                               src_chain_id,
+                               step.src_term,
+                               dst_mod,
+                               dst_chain_id);
+
+            // Find FreeChain.
+            mutation_invariance_check();
+            FreeChain const src_fc(last_node, step.src_term, src_chain_id);
+
+            TRACE_NOMSG(std::find(begin(free_chains_),
+                                  end(free_chains_),
+                                  src_fc) == end(free_chains_));
+
+            last_node = pimpl_->grow_tip(src_fc, pt_link);
+        }
+    }
 
     calc_checksum();
     calc_score();
@@ -1016,18 +1015,19 @@ JSON PathTeam::to_json() const {
         Vector3f tran;
         float rms = INFINITY;
 
-        V3fList const& points =
-            scored_tip_->gen_path().collect_points();
+        auto path_gen = gen_path();
+
+        // Make a throw-away path_gen copy to call collect_points() on.
+        V3fList const& points = PathGenerator(path_gen).collect_points();
 
         scoring::calc_alignment(
             /*mobile=*/ points,
-            /*ref=*/ work_area_->points,
+            /*ref=*/ *scored_path_,
             rot, tran, rms);
 
         Transform kabsch_alignment(rot, tran);
 
         size_t member_id = 0;  // UID for node in team.
-        auto path_gen = scored_tip_->gen_path();
         while (not path_gen.is_done()) {
             auto curr_node = path_gen.next();
 

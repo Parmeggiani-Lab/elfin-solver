@@ -1,6 +1,8 @@
 #ifndef PATH_TEAM_H_
 #define PATH_TEAM_H_
 
+#include <functional>
+
 #include "node_team.h"
 #include "node.h"
 #include "recipe.h"
@@ -22,10 +24,13 @@ private:
     /*modifiers */
     std::unique_ptr<PImpl> make_pimpl();
 protected:
+    /* types */
+    typedef std::function<void(NodeKey)> NodeKeyCallback;
+
     /* data */
     std::unordered_map<NodeKey, NodeSP> nodes_;
     std::list<FreeChain> free_chains_;
-    NodeKey scored_tip_ = nullptr;
+    V3fList const* scored_path_ = nullptr;
     NodeKeyMap nk_map_;
 
     /* accessors */
@@ -41,7 +46,7 @@ protected:
     virtual bool is_mutable(NodeKey const nk) const;
 
     /* modifiers */
-    virtual void restart();
+    virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
     NodeKey add_free_node(ProtoModule const* const prot,
                           Transform const& tx = Transform());
@@ -49,8 +54,9 @@ protected:
     virtual void calc_checksum();
     virtual void calc_score();
     // For testing: builds node team from recipe and returns the starting node.
-    virtual NodeKey follow_recipe(tests::Recipe const& recipe,
-                                  Transform const& shift_tx = Transform());
+    virtual void virtual_implement_recipe(tests::Recipe const& recipe,
+                                          NodeKeyCallback const& cb_on_first_node,
+                                          Transform const& shift_tx);
 public:
     /* ctors */
     PathTeam(WorkArea const* wa);
@@ -71,7 +77,9 @@ public:
     virtual mutation::Mode evolve(NodeTeam const& mother,
                                   NodeTeam const& father);
     void implement_recipe(tests::Recipe const& recipe,
-                          Transform const& shift_tx = Transform());
+                          Transform const& shift_tx = Transform()) {
+        virtual_implement_recipe(recipe, NodeKeyCallback(), shift_tx);
+    }
 
     /* printers */
     virtual void print_to(std::ostream& os) const;

@@ -44,7 +44,7 @@ TestStat HingeTeam::test() {
             JUtil.error(const_oss.str().c_str());
 
             std::ostringstream inp_oss;
-            auto const& inp_points = wa->points;
+            auto const& [ui_key, inp_points] = *begin(wa->path_map);
             inp_oss << "Input modules:\n";
             for (auto& p : inp_points) {
                 inp_oss << p << "\n";

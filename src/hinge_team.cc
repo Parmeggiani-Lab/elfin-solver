@@ -14,15 +14,19 @@ struct HingeTeam::PImpl {
     /* ctors */
     PImpl(HingeTeam& interface) : _(interface) { }
 
-    NodeKey place_hinge() {
-        auto const& occ_joints = _.work_area_->occupied_joints;
-        size_t const n_occ_joints = occ_joints.size();
-        DEBUG_NOMSG(n_occ_joints != 1);
+    void place_hinge() {
+        _.hinge_ui_joint_ = nullptr;
+        _.hinge_ = nullptr;
 
-        auto& occ_joint = *begin(occ_joints);
+        auto const& omap = _.work_area_->occupant_map;
+
+        // There can be 1 or 2 occupied joints. Allow size of 2 for
+        // DoubleHingeTeam.
+        auto const& [oname, ojoint] = random::pick(omap);
+        _.hinge_ui_joint_ = ojoint;
 
         // Place hinge node.
-        auto const& ui_mod = occ_joint->occupant.ui_module;
+        auto const& ui_mod = _.hinge_ui_joint_->occupant.ui_module;
         auto proto_mod = XDB.get_module(ui_mod->module_name);
 
         // Here, if elfin-ui provides info about which specific chain of
@@ -30,14 +34,17 @@ struct HingeTeam::PImpl {
         // (joint), then we could remove free chains that are outside of
         // this work area. However right now that functionality is not
         // implemented by elfin-ui so we'll leave the selection to GA.
-        //
-        //
-        // auto const& neighbors = occ_joint->neighbors;
-        // DEBUG_NOMSG(neighbors.size() != 1);
-        // auto nb_ui_joint = *begin(neighbors);
-        // auto proto_chain_itr = std::find_if(...);
 
-        return _.add_free_node(proto_mod, ui_mod->tx);
+        _.hinge_ = _.add_free_node(proto_mod, ui_mod->tx);
+    }
+
+    UIJointKey find_ui_joint(tests::RecipeStep const& first_step) {
+        auto const& omap = _.work_area_->occupant_map;
+
+        auto itr = omap.find(first_step.ui_name);
+        TRACE_NOMSG(itr == end(omap));
+
+        return itr->second;
     }
 };
 
@@ -52,8 +59,8 @@ HingeTeam* HingeTeam::virtual_clone() const {
     return new HingeTeam(*this);
 }
 
-FreeChain const& HingeTeam::get_tip_chain(
-    bool const mutable_hint) const {
+FreeChain const& HingeTeam::get_tip_chain(bool const mutable_hint) const
+{
     // If the only node is the hinge, then we allow modification to one random
     // tip.
     if (size() == 1) {
@@ -78,6 +85,7 @@ FreeChain const& HingeTeam::get_tip_chain(
 }
 
 void HingeTeam::mutation_invariance_check() const {
+    DEBUG_NOMSG(not hinge_);
     TRACE(size() == 0,
           "Invariance broken: size() = 0\n");
 }
@@ -94,11 +102,12 @@ bool HingeTeam::is_mutable(NodeKey const tip) const {
 }
 
 /* modifiers */
-void HingeTeam::restart() {
-    PathTeam::restart();
-
+void HingeTeam::reset() {
+    PathTeam::reset();
+    hinge_ui_joint_ = nullptr;
     hinge_ = nullptr;
-    hinge_ = pimpl_->place_hinge();
+
+    pimpl_->place_hinge();
 }
 
 void HingeTeam::virtual_copy(NodeTeam const& other) {
@@ -112,12 +121,13 @@ void HingeTeam::virtual_copy(NodeTeam const& other) {
 
 void HingeTeam::calc_checksum() {
     // Unlike PathTeam, here we can compute one-way checksum from hinge.
-    DEBUG_NOMSG(not hinge_);
     checksum_ = hinge_->gen_path().path_checksum();
 }
 
 void HingeTeam::calc_score() {
-    auto const my_points =
+    score_ = INFINITY;
+
+    auto const& my_points =
         hinge_->gen_path().collect_points();
 
     // Should use simple_rms(), but there's some floating point rounding error
@@ -125,19 +135,29 @@ void HingeTeam::calc_score() {
     // simple_rms(), that'd yield the satisfactory result but then an extra vector is
     // required. Until transform_reduce() is supported, Kabsch RMS should be
     // fine performance-wise?
-    score_ = scoring::score(my_points,
-                            work_area_->points);
-    scored_tip_ = hinge_;
+    auto const& ref_path = work_area_->path_map.at(hinge_ui_joint_);
+    score_ = scoring::score(my_points, ref_path);
 }
 
-NodeKey HingeTeam::follow_recipe(tests::Recipe const& recipe,
-                                 Transform const& shift_tx)
+void HingeTeam::virtual_implement_recipe(
+    tests::Recipe const& recipe,
+    NodeKeyCallback const& cb_on_first_node,
+    Transform const& shift_tx)
 {
-    hinge_ = nullptr;  // Clear hinge_ so add_node_check() can pass.
+    // Partial reset: do not place hinge.
+    PathTeam::reset();
+    hinge_ui_joint_ = pimpl_->find_ui_joint(recipe.at(0));
+    hinge_ = nullptr;
 
-    hinge_ = PathTeam::follow_recipe(recipe, shift_tx);
+    auto const& cb =
+    NodeKeyCallback([&](NodeKey nk) {
+        if (cb_on_first_node) {
+            cb_on_first_node(nk);
+        }
+        hinge_ = nk;
+    });
 
-    return hinge_;
+    PathTeam::virtual_implement_recipe(recipe, cb, shift_tx);
 }
 
 /* public */
@@ -148,21 +168,17 @@ HingeTeam::HingeTeam(WorkArea const* wa) :
 {
     // Call place_hinge() after initializer list because hinge_ needs to be
     // initialiezd as nullptr.
-    hinge_ = pimpl_->place_hinge();
-    DEBUG_NOMSG(not hinge_);
+    pimpl_->place_hinge();
+    mutation_invariance_check();
 }
 
 HingeTeam::HingeTeam(HingeTeam const& other) :
     HingeTeam(other.work_area_)
-{
-    HingeTeam::operator=(other);
-}
+{ HingeTeam::operator=(other); }
 
 HingeTeam::HingeTeam(HingeTeam&& other)  :
     HingeTeam(other.work_area_)
-{
-    HingeTeam::operator=(std::move(other));
-}
+{ HingeTeam::operator=(std::move(other)); }
 
 /* dtors */
 HingeTeam::~HingeTeam() {}
@@ -170,12 +186,14 @@ HingeTeam::~HingeTeam() {}
 /* modifiers */
 HingeTeam& HingeTeam::operator=(HingeTeam const& other) {
     PathTeam::operator=(other);
+    hinge_ui_joint_ = other.hinge_ui_joint_;
     hinge_ = other.hinge_ ? nk_map_.at(other.hinge_) : nullptr;
     return *this;
 }
 
 HingeTeam& HingeTeam::operator=(HingeTeam && other) {
     PathTeam::operator=(std::move(other));
+    std::swap(hinge_ui_joint_, other.hinge_ui_joint_);
     std::swap(hinge_, other.hinge_);
     return *this;
 }

@@ -11,11 +11,10 @@ namespace elfin {
 TestStat PathTeam::test() {
     TestStat ts;
 
-    auto construciton_test = [&](std::string const & spec_file,
-    tests::Recipe const & recipe) {
+    auto construction_test =
+    [&](std::string const & spec_file, tests::Recipe const & recipe) {
         InputManager::load_test_config(spec_file);
 
-        TRACE_NOMSG(SPEC.work_areas().size() != 1);
         auto& [wa_name, wa] = *begin(SPEC.work_areas());
         PathTeam team(wa.get());
         team.implement_recipe(recipe);
@@ -27,7 +26,7 @@ TestStat PathTeam::test() {
             ts.errors++;
             JUtil.error("PathTeam construction test of %s failed.\n"
                         "Expected score 0\nGot score: %f\n",
-                        spec_file,
+                        spec_file.c_str(),
                         team.score());
 
             auto const& const_points =
@@ -42,7 +41,7 @@ TestStat PathTeam::test() {
             JUtil.error(const_oss.str().c_str());
 
             std::ostringstream inp_oss;
-            auto const& inp_points = wa->points;
+            auto const& [ui_key, inp_points] = *begin(wa->path_map);
             inp_oss << "Input modules:\n";
             for (auto& p : inp_points) {
                 inp_oss << p << "\n";
@@ -53,11 +52,11 @@ TestStat PathTeam::test() {
     };
 
     // Short construction test.
-    construciton_test("examples/quarter_snake_free.json",
+    construction_test("examples/quarter_snake_free.json",
                       tests::quarter_snake_free_recipe);
 
     // Long construction test.
-    construciton_test("examples/half_snake_free.json",
+    construction_test("examples/half_snake_free.json",
                       tests::half_snake_free_recipe);
 
     // Mutation test.

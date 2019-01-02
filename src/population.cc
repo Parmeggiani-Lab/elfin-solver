@@ -144,8 +144,8 @@ void Population::select() {
 
         // Insert map-value-indexed individual back into population
         size_t pop_index = 0;
-        for (auto& kv : crc_map) {
-            front_buffer_->at(pop_index) = std::move(kv.second);
+        for (auto& [key, val] : crc_map) {
+            front_buffer_->at(pop_index) = std::move(val);
             pop_index++;
         }
 

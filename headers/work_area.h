@@ -29,13 +29,18 @@ GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 void bad_work_type(WorkType type);
 
 struct WorkArea {
+    /* types */
+    typedef std::unordered_map<UIJointKey, V3fList> PathMap;
+    typedef std::unordered_map<std::string, UIJointKey> OccupantMap;
+
     /* data */
     std::string const   name;
     UIJointMap const    joints;
     UIJointKeys const   leaf_joints;      // Leaf joints are tips of the path.
-    UIJointKeys const   occupied_joints;  // Occupied joints are a subset of leaf joints.
+    OccupantMap const   occupant_map;  // Occupied joints are a subset of leaf joints.
     WorkType const      type;
-    V3fList const       points;
+    PathMap const       path_map;
+    size_t const        path_len;
     size_t const        target_size;
 
     /* ctors */

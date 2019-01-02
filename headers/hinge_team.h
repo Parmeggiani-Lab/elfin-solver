@@ -19,6 +19,7 @@ private:
     std::unique_ptr<PImpl> make_pimpl();
 protected:
     /* data */
+    UIJointKey hinge_ui_joint_ = nullptr;
     NodeKey hinge_ = nullptr;
 
     /* accessors */
@@ -30,12 +31,13 @@ protected:
     virtual bool is_mutable(NodeKey const tip) const;
 
     /* modifiers */
-    virtual void restart();
+    virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
     virtual void calc_checksum();
     virtual void calc_score();
-    virtual NodeKey follow_recipe(tests::Recipe const& recipe,
-                                  Transform const& shift_tx = Transform());
+    virtual void virtual_implement_recipe(tests::Recipe const& recipe,
+                                          NodeKeyCallback const& cb_on_first_node,
+                                          Transform const& shift_tx);
 
 public:
     /* ctors */

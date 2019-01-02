@@ -16,9 +16,8 @@ private:
     UIJointKey next_joint_ = nullptr;
 public:
     /* ctors */
-    UIJointPathGenerator(
-        UIJointMap const* const joints,
-        UIJointKey const start_joint) :
+    UIJointPathGenerator(UIJointMap const* const joints,
+                         UIJointKey const start_joint) :
         joints_(joints)
     {
         TRACE_NOMSG(not start_joint);

@@ -6,10 +6,11 @@ namespace elfin {
 namespace tests {
 
 struct RecipeStep {
-    std::string mod_name;
-    TerminusType src_term = TerminusType::NONE;
-    std::string src_chain;
-    std::string dst_chain;
+    std::string const mod_name;
+    TerminusType const src_term = TerminusType::NONE;
+    std::string const src_chain;
+    std::string const dst_chain;
+    std::string const ui_name;
 };
 typedef std::vector<RecipeStep> Recipe;
 

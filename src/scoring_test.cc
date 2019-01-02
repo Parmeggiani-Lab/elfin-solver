@@ -128,213 +128,6 @@ TestStat test_score() {
     JUtil.info("Testing kabsch score\n");
     TestStat ts;
 
-    // Test randomly transformed solution results in kabsch score 0.
-    TRACE(SPEC.work_areas().size() != 1,
-          "%zu work areas\n",
-          SPEC.work_areas().size());
-    auto& [wa_name, wa] = *begin(SPEC.work_areas());
-
-    // Identity (no transform) score 0.
-    {
-        auto const& expect_points = tests::quarter_snake_free_coordinates;
-        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
-
-        auto const& input_points = wa->points;
-        float const kscore = std::min(
-                                 score(expect_points, input_points),
-                                 score(expect_points_rev, input_points));
-        ts.tests++;
-        if (kscore > 1e-6) {
-            ts.errors++;
-            JUtil.error("kabsch identity score test failed.\n"
-                        "Expected 0\nGot %f\n", kscore);
-
-            std::ostringstream hc_oss;
-            hc_oss << "Hard coded points:\n";
-            for (auto const& point : expect_points) {
-                hc_oss << point.to_string() << "\n";
-            }
-            JUtil.error(hc_oss.str().c_str());
-
-            std::ostringstream ex_oss;
-            ex_oss << "Input file points:\n";
-            for (auto const& point : input_points) {
-                ex_oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(ex_oss.str().c_str());
-        }
-    }
-
-    // Test translation score 0.
-    {
-        Transform trans_tx({
-            {   "rot", {
-                    {1, 0, 0},
-                    {0, 1, 0},
-                    {0, 0, 1}
-                }
-            },
-            {"tran", { -7.7777, -30, 150.12918}}
-        });
-
-        V3fList expect_points = tests::quarter_snake_free_coordinates;
-        for (auto& point : expect_points) {
-            point = trans_tx * point;
-        }
-        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
-
-        V3fList const& input_points = wa->points;
-        float const kscore = std::min(
-                                 score(expect_points, input_points),
-                                 score(expect_points_rev, input_points));
-        ts.tests++;
-        if (kscore > 1e-6) {
-            ts.errors++;
-            JUtil.error("kabsch translation score test failed.\n"
-                        "Expected 0\nGot %f\n", kscore);
-
-            std::ostringstream hc_oss;
-            hc_oss << "Hard coded points:\n";
-            for (auto const& point : expect_points) {
-                hc_oss << point.to_string() << "\n";
-            }
-            JUtil.error(hc_oss.str().c_str());
-
-            std::ostringstream ex_oss;
-            ex_oss << "Input file points:\n";
-            for (auto const& point : input_points) {
-                ex_oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(ex_oss.str().c_str());
-        }
-    }
-
-    // Test rotation score 0.
-    {
-        Transform rot_tx({
-            {   "rot", {
-                    {0.28878074884414673, -0.9471790194511414, -0.13949079811573029},
-                    { -0.5077904462814331, -0.27504783868789673, 0.8163931369781494},
-                    { -0.8116370439529419, -0.16492657363414764, -0.5603969693183899}
-                }
-            },
-            {"tran", {0, 0, 0}}
-        });
-
-        V3fList expect_points = tests::quarter_snake_free_coordinates;
-        for (auto& point : expect_points) {
-            point = rot_tx * point;
-        }
-        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
-
-        V3fList const& input_points = wa->points;
-        float const kscore = std::min(
-                                 score(expect_points, input_points),
-                                 score(expect_points_rev, input_points));
-        ts.tests++;
-        if (kscore > 1e-6) {
-            ts.errors++;
-            JUtil.error("kabsch rotation score test failed.\n"
-                        "Expected 0\nGot %f\n", kscore);
-
-            std::ostringstream hc_oss;
-            hc_oss << "Hard coded points:\n";
-            for (auto const& point : expect_points) {
-                hc_oss << point.to_string() << "\n";
-            }
-            JUtil.error(hc_oss.str().c_str());
-
-            std::ostringstream ex_oss;
-            ex_oss << "Input file points:\n";
-            for (auto const& point : input_points) {
-                ex_oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(ex_oss.str().c_str());
-        }
-    }
-
-    // Test random transformation score 0.
-    {
-        // This tx is produced by taking the matrix_world of a transformed
-        // Blender object.
-        Transform random_tx({
-            {   "rot", {
-                    {0.2617338001728058, 0.08983021974563599, 0.9609506130218506},
-                    {0.9230813384056091, 0.26742106676101685, -0.27641811966896057},
-                    { -0.2818091809749603, 0.959383487701416, -0.012927504256367683}
-                }
-            },
-            {"tran", {3.15165638923645, -5.339916229248047, 3.290015935897827}}
-        });
-
-        V3fList expect_points = tests::quarter_snake_free_coordinates;
-        for (auto& point : expect_points) {
-            point = random_tx * point;
-        }
-        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
-
-        V3fList const& input_points = wa->points;
-        float const kscore = std::min(
-                                 score(expect_points, input_points),
-                                 score(expect_points_rev, input_points));
-        ts.tests++;
-        if (kscore > 1e-6) {
-            ts.errors++;
-            JUtil.error("kabsch random transform score test failed.\n"
-                        "Expected 0\nGot %f\n", kscore);
-
-            std::ostringstream hc_oss;
-            hc_oss << "Hard coded points:\n";
-            for (auto const& point : expect_points) {
-                hc_oss << point.to_string() << "\n";
-            }
-            JUtil.error(hc_oss.str().c_str());
-
-            std::ostringstream ex_oss;
-            ex_oss << "Input file points:\n";
-            for (auto const& point : input_points) {
-                ex_oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(ex_oss.str().c_str());
-        }
-    }
-
-    // Test Blender origin transform score 0.
-    {
-        auto const& expect_points = tests::quarter_snake_free_coordinates_origin;
-        V3fList const expect_points_rev(rbegin(expect_points), rend(expect_points));
-
-        V3fList const& input_points = wa->points;
-        float const kscore = std::min(
-                                 score(expect_points, input_points),
-                                 score(expect_points_rev, input_points));
-        ts.tests++;
-        if (kscore > 1e-6) {
-            ts.errors++;
-            JUtil.error("kabsch Blender origin transform score test failed.\n"
-                        "Expected 0\nGot %f\n", kscore);
-
-            std::ostringstream hc_oss;
-            hc_oss << "Blender origin points:\n";
-            for (auto const& point : expect_points) {
-                hc_oss << point.to_string() << "\n";
-            }
-            JUtil.error(hc_oss.str().c_str());
-
-            std::ostringstream ex_oss;
-            ex_oss << "Input file points:\n";
-            for (auto const& point : input_points) {
-                ex_oss << point.to_string() << "\n";
-            }
-
-            JUtil.error(ex_oss.str().c_str());
-        }
-    }
-
     // Test unrelated point Kabsch score > 0;
     {
         float const kscore = score(points10a, points10b);
@@ -360,6 +153,117 @@ TestStat test_score() {
             JUtil.error(b_oss.str().c_str());
         }
     }
+
+    InputManager::load_test_config("examples/quarter_snake_free.json");
+    auto& [wa_name, wa] = *begin(SPEC.work_areas());
+
+    auto const& [fwd_ui_key, fwd_input_points] = *begin(wa->path_map);
+    auto const& [bwd_ui_key, bwd_input_points] = *(++begin(wa->path_map));
+
+    auto score_test_fragment =
+    [&](V3fList const & expected_points, std::string const & err_msg) {
+        ts.tests++;
+
+        float const kscore =
+            std::min(score(expected_points, fwd_input_points),
+                     score(expected_points, bwd_input_points));
+        if (kscore > 1e-6) {
+            ts.errors++;
+
+            JUtil.error((err_msg + "Expected 0\nGot %f\n").c_str(), kscore);
+            {
+                std::ostringstream oss;
+                oss << "Expected points (hardcoded):\n";
+                for (auto const& point : expected_points) {
+                    oss << point.to_string() << "\n";
+                }
+                JUtil.error(oss.str().c_str());
+            }
+
+            {
+                std::ostringstream oss;
+                oss << "Input file points:\n";
+                for (auto const& point : fwd_input_points) {
+                    oss << point.to_string() << "\n";
+                }
+
+                JUtil.error(oss.str().c_str());
+            }
+        }
+    };
+
+    // Identity (no transform) score 0.
+    score_test_fragment(tests::quarter_snake_free_coordinates,
+                        "kabsch identity score test failed.\n");
+
+    // Test translation score 0.
+    {
+        Transform trans_tx({
+            {   "rot", {
+                    {1, 0, 0},
+                    {0, 1, 0},
+                    {0, 0, 1}
+                }
+            },
+            {"tran", { -7.7777, -30, 150.12918}}
+        });
+
+        V3fList expect_points = tests::quarter_snake_free_coordinates;
+        for (auto& point : expect_points) {
+            point = trans_tx * point;
+        }
+
+        score_test_fragment(expect_points,
+                            "kabsch translation score test failed.\n");
+    }
+
+    // Test rotation score 0.
+    {
+        Transform rot_tx({
+            {   "rot", {
+                    {0.28878074884414673, -0.9471790194511414, -0.13949079811573029},
+                    { -0.5077904462814331, -0.27504783868789673, 0.8163931369781494},
+                    { -0.8116370439529419, -0.16492657363414764, -0.5603969693183899}
+                }
+            },
+            {"tran", {0, 0, 0}}
+        });
+
+        V3fList expect_points = tests::quarter_snake_free_coordinates;
+        for (auto& point : expect_points) {
+            point = rot_tx * point;
+        }
+
+        score_test_fragment(expect_points,
+                            "kabsch rotation score test failed.\n");
+    }
+
+    // Test random transformation score 0.
+    {
+        // This tx is produced by taking the matrix_world of a transformed
+        // Blender object.
+        Transform random_tx({
+            {   "rot", {
+                    {0.2617338001728058, 0.08983021974563599, 0.9609506130218506},
+                    {0.9230813384056091, 0.26742106676101685, -0.27641811966896057},
+                    { -0.2818091809749603, 0.959383487701416, -0.012927504256367683}
+                }
+            },
+            {"tran", {3.15165638923645, -5.339916229248047, 3.290015935897827}}
+        });
+
+        V3fList expect_points = tests::quarter_snake_free_coordinates;
+        for (auto& point : expect_points) {
+            point = random_tx * point;
+        }
+
+        score_test_fragment(expect_points,
+                            "kabsch random transform score test failed.\n");
+    }
+
+    // Test Blender origin transform score 0.
+    score_test_fragment(tests::quarter_snake_free_coordinates_origin,
+                        "kabsch Blender origin transform score test failed.\n");
 
     return ts;
 }

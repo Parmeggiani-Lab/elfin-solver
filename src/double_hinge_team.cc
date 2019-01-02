@@ -11,32 +11,6 @@ struct DoubleHingeTeam::PImpl {
 
     /* ctors */
     PImpl(DoubleHingeTeam& interface) : _(interface) {}
-
-    NodeKey get_hinge() {
-        auto const& occ_joints = _.work_area_->occupied_joints;
-        size_t const n_occ_joints = occ_joints.size();
-        DEBUG_NOMSG(n_occ_joints != 2);
-
-        auto& occ_joint = random::pick(occ_joints);
-
-        // Place hinge node.
-        auto const& ui_mod = occ_joint->occupant.ui_module;
-        auto proto_mod = XDB.get_module(ui_mod->module_name);
-
-        // Here, if elfin-ui provides info about which specific chain of
-        // the hinge module interfaces with the next unknown module
-        // (joint), then we could remove free chains that are outside of
-        // this work area. However right now that functionality is not
-        // implemented by elfin-ui so we'll leave the selection to GA.
-        //
-        //
-        // auto const& neighbors = occ_joint->neighbors;
-        // DEBUG_NOMSG(neighbors.size() != 1);
-        // auto nb_ui_joint = *begin(neighbors);
-        // auto proto_chain_itr = std::find_if(...);
-
-        return _.add_free_node(proto_mod, ui_mod->tx);
-    }
 };
 
 /*modifiers */
@@ -51,11 +25,8 @@ DoubleHingeTeam* DoubleHingeTeam::virtual_clone() const {
 }
 
 /* modifiers */
-void DoubleHingeTeam::restart() {
-    PathTeam::restart();
-
-    hinge_ = nullptr;
-    hinge_ = pimpl_->get_hinge();
+void DoubleHingeTeam::reset() {
+    HingeTeam::reset();
 }
 
 void DoubleHingeTeam::virtual_copy(NodeTeam const& other) {
@@ -72,7 +43,10 @@ void DoubleHingeTeam::virtual_copy(NodeTeam const& other) {
 /* ctors */
 DoubleHingeTeam::DoubleHingeTeam(WorkArea const* wa) :
     HingeTeam(wa),
-    pimpl_(make_pimpl()) {}
+    pimpl_(make_pimpl())
+{
+    mutation_invariance_check();
+}
 
 DoubleHingeTeam::DoubleHingeTeam(DoubleHingeTeam const& other) :
     DoubleHingeTeam(other.work_area_) {

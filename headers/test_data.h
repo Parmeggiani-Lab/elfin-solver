@@ -31,36 +31,51 @@ static V3fList const quarter_snake_free_coordinates_origin = {
 };
 
 static Recipe const quarter_snake_free_recipe {
-    {"D79_aC2_04", TerminusType::C, "B", "A"},
-    {"D79", TerminusType::C, "A", "A"},
-    {"D79", TerminusType::C, "A", "A"},
-    {"D79", TerminusType::C, "A", "A"},
-    {"D79_j1_D54", TerminusType::C, "A", "A"},
-    {"D54_j1_D79", TerminusType::C, "A", "A"},
-    {"D79_j2_D14", TerminusType::C, "A", "A"},
+    {"D79_aC2_04", TerminusType::C, "B", "A", "D79_aC2_04"},
+    {"D79", TerminusType::C, "A", "A", "D79.001"},
+    {"D79", TerminusType::C, "A", "A", "D79.002"},
+    {"D79", TerminusType::C, "A", "A", "D79.003"},
+    {"D79_j1_D54", TerminusType::C, "A", "A", "D79_j1_D54.001"},
+    {"D54_j1_D79", TerminusType::C, "A", "A", "D54_j1_D79.003"},
+    {"D79_j2_D14", TerminusType::C, "A", "A", "D79_j2_D14.003"}
 };
 
 static Recipe const half_snake_free_recipe {
-    {"D54_j1_D79", TerminusType::N, "A", "A"},
-    {"D54", TerminusType::N, "A", "A"},
-    {"D14_j1_D54", TerminusType::N, "A", "A"},
-    {"D14_j2_D14", TerminusType::N, "A", "A"},
-    {"D79_j2_D14", TerminusType::N, "A", "A"},
-    {"D79_aC2_04", TerminusType::C, "B", "A"},
-    {"D79", TerminusType::C, "A", "A"},
-    {"D79", TerminusType::C, "A", "A"},
-    {"D79", TerminusType::C, "A", "A"},
-    {"D79_j1_D54", TerminusType::C, "A", "A"},
-    {"D54_j1_D79", TerminusType::C, "A", "A"},
-    {"D79_j2_D14", TerminusType::C, "A", "A"},
+    {"D54_j1_D79", TerminusType::N, "A", "A", "D54_j1_D79"},
+    {"D54", TerminusType::N, "A", "A", "D54"},
+    {"D14_j1_D54", TerminusType::N, "A", "A", "D14_j1_D54"},
+    {"D14_j2_D14", TerminusType::N, "A", "A", "D14_j2_D14.001"},
+    {"D79_j2_D14", TerminusType::N, "A", "A", "D79_j2_D14.002"},
+    {"D79_aC2_04", TerminusType::C, "B", "A", "D79_aC2_04"},
+    {"D79", TerminusType::C, "A", "A", "D79.001"},
+    {"D79", TerminusType::C, "A", "A", "D79.002"},
+    {"D79", TerminusType::C, "A", "A", "D79.003"},
+    {"D79_j1_D54", TerminusType::C, "A", "A", "D79_j1_D54.001"},
+    {"D54_j1_D79", TerminusType::C, "A", "A", "D54_j1_D79.003"},
+    {"D79_j2_D14", TerminusType::C, "A", "A", "D79_j2_D14.003"}
 };
 
 static Recipe const H_1h_recipe {
-    {"D49_aC2_ext", TerminusType::N, "D", "A"},
-    {"D49", TerminusType::N, "A", "A"},
-    {"D49", TerminusType::N, "A", "A"},
-    {"D49", TerminusType::N, "A", "A"},
-    {"D49", TerminusType::N, "A", "A"}
+    {"D49_aC2_ext", TerminusType::N, "D", "A", "D49_aC2_ext.002"},
+    {"D49", TerminusType::N, "A", "A", "D49.012"},
+    {"D49", TerminusType::N, "A", "A", "D49.015"},
+    {"D49", TerminusType::N, "A", "A", "D49.016"},
+    {"D49", TerminusType::N, "A", "A", "D49.019"}
+};
+
+static Recipe const half_snake_1h_recipe {
+    {"D79_j2_D14", TerminusType::C, "A", "A", "D79_j2_D14.003"},
+    {"D54_j1_D79", TerminusType::C, "A", "A", "D54_j1_D79.003"},
+    {"D79_j1_D54", TerminusType::C, "A", "A", "D79_j1_D54.001"},
+    {"D79", TerminusType::C, "A", "A", "D79.003"},
+    {"D79", TerminusType::C, "A", "A", "D79.002"},
+    {"D79", TerminusType::C, "B", "A", "D79.001"},
+    {"D79_aC2_04", TerminusType::N, "A", "A", "D79_aC2_04"},
+    {"D79_j2_D14", TerminusType::N, "A", "A", "D79_j2_D14.002"},
+    {"D14_j2_D14", TerminusType::N, "A", "A", "D14_j2_D14.001"},
+    {"D14_j1_D54", TerminusType::N, "A", "A", "D14_j1_D54"},
+    {"D54", TerminusType::N, "A", "A", "D54"},
+    {"D54_j1_D79", TerminusType::N, "A", "A", "D54_j1_D79"}
 };
 
 }  /* tests */

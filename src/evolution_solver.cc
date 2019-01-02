@@ -33,7 +33,7 @@ struct EvolutionSolver::PImpl {
     SolutionMap best_sols_;
     double start_time_in_us_ = 0;
     size_t const debug_pop_print_n_;
-    Crc32 last_best_checksum_;
+    Crc32 last_best_checksum_ = 0x0000;
 
     /* ctors */
     PImpl(size_t const debug_pop_print_n) :
@@ -143,7 +143,7 @@ struct EvolutionSolver::PImpl {
     void print_start_msg(WorkArea const& wa) const
     {
         JUtil.info("Length guess=%zu; Spec has %d points\n",
-                   wa.target_size, wa.points.size());
+                   wa.target_size, wa.path_len);
         JUtil.info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
         JUtil.info("Max Iterations: %zu\n", OPTIONS.ga_max_iters);
         JUtil.info("Surviors: %u\n", CUTOFFS.survivors);

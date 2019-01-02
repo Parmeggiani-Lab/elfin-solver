@@ -40,23 +40,23 @@ UIJointKeys parse_leaf_joints(UIJointMap const& _joints)
 }
 
 // Occupied joints are supposed to be a subset of leaves.
-UIJointKeys parse_occupied_joints(UIJointKeys const& _leaf_joints)
+WorkArea::OccupantMap parse_occupant_map(UIJointKeys const& _leaf_joints)
 {
-    UIJointKeys res;
+    WorkArea::OccupantMap res;
     for (auto& leaf_joint : _leaf_joints) {
         if (leaf_joint->occupant.ui_module) {
-            res.push_back(leaf_joint);
+            res.emplace(leaf_joint->occupant.ui_module->name, leaf_joint);
         }
     }
     return res;
 }
 
 WorkType parse_type(UIJointMap const& _joints,
-                    UIJointKeys const& _occupied_joints)
+                    WorkArea::OccupantMap const& _occupant_map)
 {
     WorkType res = WorkType::NONE;
 
-    size_t const n_occ_joints = _occupied_joints.size();
+    size_t const n_occ_joints = _occupant_map.size();
     TRACE(n_occ_joints > 2,
           "Parsing error: too many occupied joints (%zu) for WorkArea\n",
           n_occ_joints);
@@ -80,38 +80,46 @@ WorkType parse_type(UIJointMap const& _joints,
     return res;
 }
 
-V3fList parse_points(UIJointMap const& _joints,
-                     UIJointKeys const& _leaf_joints,
-                     UIJointKeys const& _occupied_joints)
+WorkArea::PathMap parse_path_map(UIJointMap const& _joints,
+                                 UIJointKeys const& _leaf_joints)
 {
-    V3fList res;
+    WorkArea::PathMap res;
     TRACE(_leaf_joints.size() != 2,
           "Size of _leaf_joints not exactly 2 in work_area\n");
 
-    // Start at the first occupied joint if there are any.
-    auto start_joint_key = _occupied_joints.empty() ?
-                           _leaf_joints.at(0) :
-                           _occupied_joints.at(0);
+    auto& first_key = _leaf_joints.at(0);
 
-    UIJointPathGenerator gen(&_joints, start_joint_key);
+    V3fList points;
+    UIJointPathGenerator gen(&_joints, first_key);
     while (not gen.is_done()) {
-        res.emplace_back(gen.next()->tx.collapsed());
+        points.emplace_back(gen.next()->tx.collapsed());
     }
+
+    TRACE_NOMSG(points.empty());
+    res.emplace(first_key, points);
+
+    // The second path is just the reversed path.
+    std::reverse(begin(points), end(points));
+    auto& second_key = _leaf_joints.at(1);
+    res.emplace(second_key, points);
 
     return res;
 }
 
-size_t parse_target_size(V3fList const& _points)
+size_t parse_path_len(WorkArea::PathMap const& _path_map) {
+    auto const& [ui_key, path] = *begin(_path_map);
+    return path.size();
+}
+
+size_t parse_target_size(WorkArea::PathMap const& _path_map)
 {
-    /*
-     * Calculate expected length as sum of point
-     * displacements over avg pair module distance
-     */
-    TRACE_NOMSG(_points.size() == 0);
+    // Calculate expected length as sum of point
+    // displacements over avg pair module distance
 
     float sum_dist = 0.0f;
-    for (auto i = begin(_points) + 1; i != end(_points); ++i) {
-        sum_dist += (i - 1)->dist_to(*i);
+    auto const& [ui_key, path] = *(begin(_path_map));
+    for (auto itr = begin(path) + 1; itr != end(path); ++itr) {
+        sum_dist += (itr - 1)->dist_to(*itr);
     }
 
     // Add one to nubmer of segments.
@@ -133,11 +141,12 @@ WorkArea::WorkArea(
     name(_name),
     joints(parse_joints(json, fam)),
     leaf_joints(parse_leaf_joints(joints)),
-    occupied_joints(parse_occupied_joints(leaf_joints)),
-    type(parse_type(joints, occupied_joints)),
-    points(parse_points(joints, leaf_joints, occupied_joints)),
-    target_size(parse_target_size(points))
-{ }
+    occupant_map(parse_occupant_map(leaf_joints)),
+    type(parse_type(joints, occupant_map)),
+    path_map(parse_path_map(joints, leaf_joints)),
+    path_len(parse_path_len(path_map)),
+    target_size(parse_target_size(path_map))
+{}
 
 /* dtors */
 WorkArea::~WorkArea() {}

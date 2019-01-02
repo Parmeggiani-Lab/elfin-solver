@@ -22,7 +22,7 @@ protected:
     virtual DoubleHingeTeam* virtual_clone() const;
 
     /* modifiers */
-    virtual void restart();
+    virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
 public:
     /* ctors */
