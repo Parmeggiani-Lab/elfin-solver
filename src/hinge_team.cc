@@ -136,14 +136,14 @@ void HingeTeam::virtual_copy(NodeTeam const& other) {
 
 void HingeTeam::calc_checksum() {
     // Unlike PathTeam, here we can compute one-way checksum from hinge.
-    checksum_ = hinge_->gen_path().path_checksum();
+    checksum_ = PathGenerator(hinge_).checksum();
 }
 
 void HingeTeam::calc_score() {
     score_ = INFINITY;
 
     // Collect points without hinge itself.
-    auto const& my_points = hinge_->gen_path().collect_points();
+    auto const& my_points = PathGenerator(hinge_).collect_points();
 
     // Should use simple_rms(), but there's some floating point rounding error
     // that's causing unit tests to fail. If we used inner_product() in

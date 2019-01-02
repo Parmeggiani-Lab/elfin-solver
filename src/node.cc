@@ -21,10 +21,6 @@ Link const* Node::find_link_to(NodeKey dst_node) const {
     return nullptr;
 }
 
-PathGenerator Node::gen_path() const {
-    return PathGenerator(this);
-}
-
 /* modifiers */
 void Node::update_link_ptrs(NodeKeyMap const& nam) {
     for (Link& link : links_) {

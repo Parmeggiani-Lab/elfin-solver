@@ -49,15 +49,4 @@ public:
 
 }  /* elfin */
 
-// namespace std {
-
-// template <> struct hash<elfin::Link> {
-//     size_t operator()(const elfin::Link& x) const {
-//         return std::hash<elfin::FreeTerm>()(x.src()) ^
-//                std::hash<elfin::FreeTerm>()(x.dst());
-//     }
-// };
-
-// }  /* std */
-
 #endif  /* end of include guard: LINK_H_ */

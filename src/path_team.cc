@@ -17,6 +17,18 @@ struct PathTeam::PImpl {
     PImpl(PathTeam& interface) : _(interface) {}
 
     /*modifiers */
+    Node* get_node(NodeKey const nk) {
+        DEBUG_NOMSG(_.nodes_.find(nk) == end(_.nodes_));
+        return _.nodes_.at(nk).get();
+    }
+
+    void remove_free_terms(NodeKey const node) {
+        // Remove any FreeTerm originating from node
+        _.free_terms_.remove_if([&](auto const & ft) {
+            return ft.node == node;
+        });
+    }
+
     NodeKey grow_tip(FreeTerm const& free_term_a,
                      ProtoLink const* pt_link = nullptr,
                      bool const innert = false)
@@ -46,8 +58,8 @@ struct PathTeam::PImpl {
 
         free_term_b.node = node_b;
 
-        _.get_node(node_a)->add_link(free_term_a, pt_link, free_term_b);
-        _.get_node(node_b)->add_link(free_term_b, pt_link->reverse(), free_term_a);
+        get_node(node_a)->add_link(free_term_a, pt_link, free_term_b);
+        get_node(node_b)->add_link(free_term_b, pt_link->reverse(), free_term_a);
 
         _.free_terms_.remove(free_term_a);
 
@@ -71,7 +83,7 @@ struct PathTeam::PImpl {
         NodeKey new_tip = new_free_term.node;
 
         // Unlink chain.
-        _.get_node(new_tip)->remove_link(new_free_term);
+        get_node(new_tip)->remove_link(new_free_term);
 
         // Restore FreeTerm.
         if (new_free_term.should_restore) {
@@ -80,19 +92,19 @@ struct PathTeam::PImpl {
 
         // Remove tip node. Don't do this before restoring the FreeTerm
         // unless new_free_term is a copy rather than a reference.
-        _.remove_free_terms(tip_node);
+        remove_free_terms(tip_node);
         _.nodes_.erase(tip_node);
     }
 
     void fix_limb_transforms(Link const& arrow)
     {
-        auto limb_gen = arrow.gen_path();
+        PathGenerator limb_gen(&arrow);
         while (not limb_gen.is_done()) {
             Link const* curr_link = limb_gen.curr_link();
             auto curr_node = limb_gen.curr_node();
             auto next_node = limb_gen.next();
 
-            _.get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
+            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
         }
     }
 
@@ -105,8 +117,8 @@ struct PathTeam::PImpl {
 
         FreeTerm const& port1 = insert_point.src;
         FreeTerm const& port2 = insert_point.dst;
-        auto node1 = _.get_node(port1.node);
-        auto node2 = _.get_node(port2.node);
+        auto node1 = get_node(port1.node);
+        auto node2 = get_node(port2.node);
 
         // Break link.
         node1->remove_link(port1);
@@ -116,7 +128,7 @@ struct PathTeam::PImpl {
         auto new_node_key = _.add_node(bridge->pt_link1->module_,
                                        node1->tx_ * bridge->pt_link1->tx_,
                                        /*innert=*/true);
-        auto new_node = _.get_node(new_node_key);
+        auto new_node = get_node(new_node_key);
 
         //
         // Link up
@@ -151,7 +163,7 @@ struct PathTeam::PImpl {
         // Delete the dst side of arrow.
 
         auto start_node_key = arrow.dst().node;
-        _.get_node(start_node_key)->remove_link(arrow.dst());
+        get_node(start_node_key)->remove_link(arrow.dst());
 
         PathGenerator pg(start_node_key);
         while (not pg.is_done()) {
@@ -159,9 +171,9 @@ struct PathTeam::PImpl {
             _.nodes_.erase(next_key);
         }
 
-        _.remove_free_terms(pg.curr_node());
+        remove_free_terms(pg.curr_node());
 
-        _.get_node(arrow.src().node)->remove_link(arrow.src());
+        get_node(arrow.src().node)->remove_link(arrow.src());
 
         auto const& would_be_free = arrow.src();
         if (would_be_free.should_restore) {
@@ -174,7 +186,7 @@ struct PathTeam::PImpl {
                    ProtoLink const* cross_link,
                    Link const& f_arrow)
     {
-        auto path_gen = f_arrow.gen_path();
+        PathGenerator path_gen(&f_arrow);
 
         // Form first link. It's special because m_free_term may not equal
         // f_arrow.src(). It just happens that m_free_term's ProtoModule has a
@@ -218,7 +230,7 @@ struct PathTeam::PImpl {
         if (_.size() > 1) {
             // Pick random tip node if not specified.
             NodeKey tip_node = _.get_tip(/*mutable_hint=*/true);
-            _.remove_free_terms(tip_node);
+            remove_free_terms(tip_node);
 
             FreeTerm last_free_term;
             float p = 1.0f;  // p for Probability.
@@ -241,7 +253,7 @@ struct PathTeam::PImpl {
                 NodeKey new_tip = new_free_term.node;
 
                 // Unlink
-                _.get_node(new_tip)->remove_link(new_free_term);
+                get_node(new_tip)->remove_link(new_free_term);
 
                 if (not next_loop) {
                     last_free_term = new_free_term;
@@ -275,7 +287,7 @@ struct PathTeam::PImpl {
 
             // Starting at either end is fine.
             auto start_node = begin(_.free_terms_)->node;
-            auto path_gen = start_node->gen_path();
+            PathGenerator path_gen(start_node);
 
             NodeKey curr_node = nullptr;
             auto next_node = path_gen.next();  // Starts with start_node.
@@ -354,8 +366,8 @@ struct PathTeam::PImpl {
                     //                 ^^^                                 ^^^
                     //                (src)                               (dst)
                     //
-                    auto neighbor1 = _.get_node(delete_point.src.node);
-                    auto neighbor2 = _.get_node(delete_point.dst.node);
+                    auto neighbor1 = get_node(delete_point.src.node);
+                    auto neighbor2 = get_node(delete_point.dst.node);
 
                     neighbor1->remove_link(delete_point.src);
                     neighbor2->remove_link(delete_point.dst);
@@ -408,7 +420,7 @@ struct PathTeam::PImpl {
         std::vector<mutation::InsertPoint> insert_points;
 
         auto start_node = _.get_tip(/*mutable_hint=*/false);
-        auto path_gen = start_node->gen_path();
+        PathGenerator path_gen(start_node);
 
         NodeKey curr_node = nullptr;
         auto next_node = path_gen.next();
@@ -500,7 +512,7 @@ struct PathTeam::PImpl {
         std::vector<mutation::SwapPoint> swap_points;
 
         auto start_node = _.get_tip(/*mutable_hint=*/false);
-        auto path_gen = start_node->gen_path();
+        PathGenerator path_gen(start_node);
 
         NodeKey prev_node = nullptr;
         NodeKey curr_node = nullptr;
@@ -588,11 +600,11 @@ struct PathTeam::PImpl {
             auto& pt_father = static_cast<PathTeam const&>(father);
 
             // First, collect arrows from both parents.
-            auto m_arrows = _.get_tip(/*mutable_hint=*/false)->
-                            gen_path().collect_arrows();
+            auto mother_tip = _.get_tip(/*mutable_hint=*/false);
+            auto m_arrows = PathGenerator(mother_tip).collect_arrows();
 
-            auto f_arrows = pt_father.get_tip(/*mutable_hint=*/false)->
-                            gen_path().collect_arrows();
+            auto father_tip = pt_father.get_tip(/*mutable_hint=*/false);
+            auto f_arrows = PathGenerator(father_tip).collect_arrows();
 
             // Walk through all link pairs to collect cross points.
             std::vector<mutation::CrossPoint> cross_points;
@@ -740,13 +752,6 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
     return new_node_key;
 }
 
-void PathTeam::remove_free_terms(NodeKey const node) {
-    // Remove any FreeTerm originating from node
-    free_terms_.remove_if([&](auto const & ft) {
-        return ft.node == node;
-    });
-}
-
 void PathTeam::calc_checksum() {
     // We want the same checksum for two node teams that consist of the same
     // sequence of nodes even if they are in reverse order. This can be
@@ -754,7 +759,7 @@ void PathTeam::calc_checksum() {
     checksum_ = 0x0000;
     for (auto& free_term : free_terms_) {
         Crc32 const crc_half =
-            free_term.node->gen_path().path_checksum();
+            PathGenerator(free_term.node).checksum();
 
         Crc32 tmp = checksum_ ^ crc_half;
         if (not tmp) {
@@ -774,8 +779,8 @@ void PathTeam::calc_score() {
     // can yield different RMSD scores.
     score_ = INFINITY;
 
-    auto const& my_points = get_tip(/*mutable_hint=*/false)->
-                            gen_path().collect_points();
+    auto tip = get_tip(/*mutable_hint=*/false);
+    auto const& my_points = PathGenerator(tip).collect_points();
 
     auto const& [fwd_ui_key, fwd_path] = *begin(work_area_->path_map);
     float const fwd_score = scoring::score(my_points, fwd_path);
@@ -791,11 +796,6 @@ void PathTeam::calc_score() {
         score_ = bwd_score;
         scored_path_ = &bwd_path;
     }
-}
-
-Node* PathTeam::get_node(NodeKey const nk) {
-    DEBUG_NOMSG(nodes_.find(nk) == end(nodes_));
-    return nodes_.at(nk).get();
 }
 
 void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
@@ -868,7 +868,7 @@ PathTeam::~PathTeam() {}
 /* accessors */
 PathGenerator PathTeam::gen_path() const {
     // DEBUG(not scored_path_, "calc_score() not called\n"); // Why does this matter again?
-    return get_tip(/*mutable_hint=*/false)->gen_path();
+    return PathGenerator(get_tip(/*mutable_hint=*/false));
 }
 
 /* modifiers */
@@ -980,7 +980,7 @@ mutation::Mode PathTeam::evolve(NodeTeam const& mother,
 void PathTeam::print_to(std::ostream& os) const {
     TRACE_NOMSG(free_terms_.empty());
     auto start_node = begin(free_terms_)->node;
-    auto path_gen = start_node->gen_path();
+    PathGenerator path_gen(start_node);
 
     while (not path_gen.is_done()) {
         os << path_gen.next()->to_string();

@@ -48,7 +48,6 @@ public:
     /* accessors */
     std::list<Link> const& links() const { return links_; }
     Link const* find_link_to(NodeKey dst_node) const;
-    PathGenerator gen_path() const;
 
     /* modifiers */
     void add_link(

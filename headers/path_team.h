@@ -47,10 +47,8 @@ protected:
                      Transform const& tx = Transform(),
                      bool const innert = false,
                      FreeTerm const* const exclude_ft = nullptr);
-    void remove_free_terms(NodeKey const node);
     virtual void calc_checksum();
     virtual void calc_score();
-    Node* get_node(NodeKey const nk);
     // For testing: builds node team from recipe and returns the starting node.
     virtual void virtual_implement_recipe(tests::Recipe const& recipe,
                                           NodeKeyCallback const& cb_on_first_node,
