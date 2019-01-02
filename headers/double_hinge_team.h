@@ -20,6 +20,7 @@ private:
 protected:
     /* accessors */
     virtual DoubleHingeTeam* virtual_clone() const;
+    virtual void add_node_check(ProtoModule const* const prot) const;
 
     /* modifiers */
     virtual void reset();

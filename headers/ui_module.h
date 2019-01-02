@@ -27,6 +27,7 @@ struct UIModule : public UIObject {
 };
 
 typedef SPMap<UIModule> UIModuleMap;
+typedef UIModule const* UIModuleKey;
 
 }  /* elfin */
 

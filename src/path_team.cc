@@ -809,6 +809,61 @@ void PathTeam::calc_score() {
     }
 }
 
+void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
+                                        NodeKeyCallback const& cb_on_first_node,
+                                        Transform const& shift_tx) {
+
+    TRACE_NOMSG(recipe.empty());
+
+    // Let derived classes do their own partial reset.
+    PathTeam::reset();
+
+    NodeKey first_node = nullptr;
+    if (not recipe.empty()) {
+        std::string const& first_mod_name = recipe[0].mod_name;
+        first_node = add_free_node(XDB.get_module(first_mod_name));
+        if (cb_on_first_node) {
+            cb_on_first_node(first_node);
+        }
+
+        auto last_node = first_node;
+        pimpl_->get_node(last_node)->tx_ = shift_tx;
+
+        for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
+            auto const& step = *itr;
+
+            // Create next node.
+            auto src_mod = XDB.get_module(step.mod_name);
+            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
+            TRACE_NOMSG(not src_mod);
+            TRACE_NOMSG(not dst_mod);
+
+            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
+            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
+
+            // Find ProtoLink.
+            auto pt_link = src_mod->find_link_to(
+                               src_chain_id,
+                               step.src_term,
+                               dst_mod,
+                               dst_chain_id);
+
+            // Find FreeChain.
+            mutation_invariance_check();
+            FreeChain const src_fc(last_node, step.src_term, src_chain_id);
+
+            TRACE_NOMSG(std::find(begin(free_chains_),
+                                  end(free_chains_),
+                                  src_fc) == end(free_chains_));
+
+            last_node = pimpl_->grow_tip(src_fc, pt_link);
+        }
+    }
+
+    calc_checksum();
+    calc_score();
+}
+
 /* public */
 /* ctors */
 PathTeam::PathTeam(WorkArea const* wa) :
@@ -937,61 +992,6 @@ mutation::Mode PathTeam::evolve(NodeTeam const& mother,
     calc_score();
 
     return mode;
-}
-
-void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
-                                        NodeKeyCallback const& cb_on_first_node,
-                                        Transform const& shift_tx) {
-
-    TRACE_NOMSG(recipe.empty());
-
-    // Let derived classes do their own partial reset.
-    PathTeam::reset();
-
-    NodeKey first_node = nullptr;
-    if (not recipe.empty()) {
-        std::string const& first_mod_name = recipe[0].mod_name;
-        first_node = add_free_node(XDB.get_module(first_mod_name));
-        if (cb_on_first_node) {
-            cb_on_first_node(first_node);
-        }
-
-        auto last_node = first_node;
-        pimpl_->get_node(last_node)->tx_ = shift_tx;
-
-        for (auto itr = begin(recipe); itr < end(recipe) - 1; ++itr) {
-            auto const& step = *itr;
-
-            // Create next node.
-            auto src_mod = XDB.get_module(step.mod_name);
-            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
-            TRACE_NOMSG(not src_mod);
-            TRACE_NOMSG(not dst_mod);
-
-            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
-            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
-
-            // Find ProtoLink.
-            auto pt_link = src_mod->find_link_to(
-                               src_chain_id,
-                               step.src_term,
-                               dst_mod,
-                               dst_chain_id);
-
-            // Find FreeChain.
-            mutation_invariance_check();
-            FreeChain const src_fc(last_node, step.src_term, src_chain_id);
-
-            TRACE_NOMSG(std::find(begin(free_chains_),
-                                  end(free_chains_),
-                                  src_fc) == end(free_chains_));
-
-            last_node = pimpl_->grow_tip(src_fc, pt_link);
-        }
-    }
-
-    calc_checksum();
-    calc_score();
 }
 
 /* printers */

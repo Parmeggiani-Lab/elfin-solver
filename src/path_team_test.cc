@@ -53,11 +53,11 @@ TestStat PathTeam::test() {
 
     // Short construction test.
     construction_test("examples/quarter_snake_free.json",
-                      tests::quarter_snake_free_recipe);
+                      tests::QUARTER_SNAKE_FREE_RECIPE);
 
     // Long construction test.
     construction_test("examples/half_snake_free.json",
-                      tests::half_snake_free_recipe);
+                      tests::HALF_SNAKE_FREE_RECIPE);
 
     // Mutation test.
     {

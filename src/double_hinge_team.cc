@@ -24,6 +24,10 @@ DoubleHingeTeam* DoubleHingeTeam::virtual_clone() const {
     return new DoubleHingeTeam(*this);
 }
 
+void DoubleHingeTeam::add_node_check(ProtoModule const* const prot) const {
+    // Allow any module.
+}
+
 /* modifiers */
 void DoubleHingeTeam::reset() {
     HingeTeam::reset();

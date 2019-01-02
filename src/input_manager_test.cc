@@ -46,7 +46,7 @@ TestStat InputManager::test() {
         auto const& [fwd_ui_key, fwd_test_points] = *pm_itr;
         auto const& [bwd_ui_key, bwd_test_points] = *(++pm_itr);
 
-        auto const& expect_points = tests::quarter_snake_free_coordinates;
+        auto const& expect_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
 
         ts.tests++;
         if (fwd_test_points != expect_points and
@@ -55,7 +55,7 @@ TestStat InputManager::test() {
             JUtil.error("Work area point parsing test failed\n");
             std::ostringstream oss;
             oss << "Expected:\n";
-            for (auto& p : tests::quarter_snake_free_coordinates) {
+            for (auto& p : tests::QUARTER_SNAKE_FREE_COORDINATES) {
                 oss << p.to_string() << "\n";
             }
 

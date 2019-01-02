@@ -193,7 +193,7 @@ TestStat test_score() {
     };
 
     // Identity (no transform) score 0.
-    score_test_fragment(tests::quarter_snake_free_coordinates,
+    score_test_fragment(tests::QUARTER_SNAKE_FREE_COORDINATES,
                         "kabsch identity score test failed.\n");
 
     // Test translation score 0.
@@ -208,7 +208,7 @@ TestStat test_score() {
             {"tran", { -7.7777, -30, 150.12918}}
         });
 
-        V3fList expect_points = tests::quarter_snake_free_coordinates;
+        V3fList expect_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
         for (auto& point : expect_points) {
             point = trans_tx * point;
         }
@@ -229,7 +229,7 @@ TestStat test_score() {
             {"tran", {0, 0, 0}}
         });
 
-        V3fList expect_points = tests::quarter_snake_free_coordinates;
+        V3fList expect_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
         for (auto& point : expect_points) {
             point = rot_tx * point;
         }
@@ -252,7 +252,7 @@ TestStat test_score() {
             {"tran", {3.15165638923645, -5.339916229248047, 3.290015935897827}}
         });
 
-        V3fList expect_points = tests::quarter_snake_free_coordinates;
+        V3fList expect_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
         for (auto& point : expect_points) {
             point = random_tx * point;
         }
@@ -262,7 +262,7 @@ TestStat test_score() {
     }
 
     // Test Blender origin transform score 0.
-    score_test_fragment(tests::quarter_snake_free_coordinates_origin,
+    score_test_fragment(tests::QUARTER_SNAKE_FREE_COORDINATES_ORIGIN,
                         "kabsch Blender origin transform score test failed.\n");
 
     return ts;

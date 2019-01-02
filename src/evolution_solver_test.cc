@@ -88,28 +88,28 @@ TestStat EvolutionSolver::test() {
 
     // Test short free type work area.
     test_fragment("examples/quarter_snake_free.json",
-                  tests::quarter_snake_free_recipe);
+                  tests::QUARTER_SNAKE_FREE_RECIPE);
 
     // Test medium free type work area.
     test_fragment("examples/half_snake_free.json",
-                  tests::half_snake_free_recipe);
+                  tests::HALF_SNAKE_FREE_RECIPE);
 
     // Test short 1H type work area.
     test_fragment("examples/quarter_snake_1h.json",
-                  tests::quarter_snake_free_recipe);
+                  tests::QUARTER_SNAKE_FREE_RECIPE);
 
     // Test medium 1H type work area.
     test_fragment("examples/half_snake_1h.json",
-                  tests::half_snake_free_recipe);
+                  tests::HALF_SNAKE_FREE_RECIPE);
 
     // Test 2x medium 1H type work area.
     test_fragment("examples/half_snake_2x1h.json",
-                  tests::half_snake_free_recipe,
+                  tests::HALF_SNAKE_FREE_RECIPE,
                   /*allow_partial=*/true);
 
     // Test short 2H type work area.
     // test_fragment("examples/H_2h.json",
-    //               tests::H_2h_recipe);
+    //               tests::H_2H_RECIPE);
 
     return ts;
 }

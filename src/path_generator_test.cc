@@ -22,7 +22,7 @@ TestStat PathGenerator::test() {
         TRACE_NOMSG(SPEC.work_areas().size() != 1);
         auto& [wa_name, wa] = *begin(SPEC.work_areas());
         PathTeam team(wa.get());
-        team.implement_recipe(tests::quarter_snake_free_recipe);
+        team.implement_recipe(tests::QUARTER_SNAKE_FREE_RECIPE);
 
         auto const& points = team.gen_path().collect_points();
         if (points.size() != team.size()) {
