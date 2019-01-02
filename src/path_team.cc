@@ -669,6 +669,12 @@ struct PathTeam::PImpl {
         DEBUG_NOMSG(_.nodes_.find(nk) == end(_.nodes_));
         return _.nodes_.at(nk).get();
     }
+
+    void randomize() {
+        _.reset();
+        regenerate();
+        _.mutation_invariance_check();
+    }
 };
 
 /* modifiers */
@@ -877,9 +883,9 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
 }
 
 void PathTeam::randomize() {
-    reset();
-    pimpl_->regenerate();
-    mutation_invariance_check();
+    pimpl_->randomize();
+    calc_checksum();
+    calc_score();
 }
 
 mutation::Mode PathTeam::evolve(NodeTeam const& mother,
@@ -923,7 +929,7 @@ mutation::Mode PathTeam::evolve(NodeTeam const& mother,
     }
 
     if (not mutate_success) {
-        randomize();
+        pimpl_->randomize();
         mutate_success = true;
     }
 
