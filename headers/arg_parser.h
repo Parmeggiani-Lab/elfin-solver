@@ -86,7 +86,7 @@ private:
         {   "a",
             "avg_pair_dist",
             string_format(
-                "Set average distance between doubles of CoMs "
+                "Set average distance between CoMs "
                 "(default=%.4f).",
                 options_.avg_pair_dist),
             true,
@@ -95,7 +95,7 @@ private:
         {   "S",
             "seed",
             string_format("Set RNG seed (default=0x%x). "
-            "Value of 0 uses time as seed.",
+            "Value of 0 uses current time as seed.",
             options_.seed),
             true,
             &ArgParser::set_seed
@@ -108,11 +108,12 @@ private:
             &ArgParser::set_ga_pop_size
         },
         {   "I",
-            "ga_iters",
-            string_format("Set GA iterations (default=%zu).",
-            options_.ga_iters),
+            "ga_max_iters",
+            string_format("Set max iterations for GA (default=%zu). "
+            "\n    Values <= 0 means no limit.",
+            options_.ga_max_iters),
             true,
-            &ArgParser::set_ga_iters
+            &ArgParser::set_ga_max_iters
         },
         {   "sv",
             "ga_survive_rate",
@@ -131,17 +132,18 @@ private:
         {   "rf",
             "ga_restart_trigger",
             string_format("Set number of stagnant generations "
-            "before GA restarts (default=%zu).\n    Value of 0 means "
-            "no restarting.", options_.ga_restart_trigger),
+            "before GA restarts (default=%zu)."
+            "\n    Values <= 0 means no restarting.",
+            options_.ga_restart_trigger),
             true, &ArgParser::set_ga_restart_trigger
         },
         {   "sf",
-            "ga_stop_trigger",
+            "ga_max_restarts",
             string_format(
                 "Set number of restarts before GA exits (default=%zu)."
-                "\n    Value of 0 means no stopping by reason of stagnancy.",
-                options_.ga_stop_trigger),
-            true, &ArgParser::set_ga_stop_trigger
+                "\n    Values <= 0 means no exit by reason of too many restarts.",
+                options_.ga_max_restarts),
+            true, &ArgParser::set_ga_max_restarts
         },
         {   "v",
             "verbosity",
@@ -219,11 +221,11 @@ private:
     ARG_CALLBACK_DECL(set_avg_pair_dist);
     ARG_CALLBACK_DECL(set_seed);
     ARG_CALLBACK_DECL(set_ga_pop_size);
-    ARG_CALLBACK_DECL(set_ga_iters);
+    ARG_CALLBACK_DECL(set_ga_max_iters);
     ARG_CALLBACK_DECL(set_ga_survive_rate);
     ARG_CALLBACK_DECL(set_ga_stop_score);
     ARG_CALLBACK_DECL(set_ga_restart_trigger);
-    ARG_CALLBACK_DECL(set_ga_stop_trigger);
+    ARG_CALLBACK_DECL(set_ga_max_restarts);
     ARG_CALLBACK_DECL(set_verbosity);
     ARG_CALLBACK_DECL(set_run_tests);
     ARG_CALLBACK_DECL(set_device);

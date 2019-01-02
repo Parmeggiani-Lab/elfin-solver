@@ -930,9 +930,8 @@ void PathTeam::randomize() {
     mutation_invariance_check();
 }
 
-mutation::Mode PathTeam::evolve(
-    NodeTeam const& mother,
-    NodeTeam const& father)
+mutation::Mode PathTeam::evolve(NodeTeam const& mother,
+                                NodeTeam const& father)
 {
     virtual_copy(mother);
 

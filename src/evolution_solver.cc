@@ -12,7 +12,7 @@
 namespace elfin {
 
 char const* const get_score_msg_format =
-    "Restart #%zu Gen #%zu: "
+    "R #%zu G #%zu ITR #%zu "
     "[best %.2f (cksm%x; %.2f/module), worst=%.2f, %.0fms]\n";
 
 char const* const timing_msg_format =
@@ -26,7 +26,7 @@ char const* const print_pop_fmt =
 /* private */
 struct EvolutionSolver::PImpl {
     /* data */
-    bool should_stop_ga = false;
+    bool score_satisfied_ = false;
     bool should_restart_ga = false;
     bool has_result_ = false;
     bool run_already_called = false;
@@ -43,6 +43,7 @@ struct EvolutionSolver::PImpl {
     void summarize_generation(Population const& pop,
                               size_t const restart_id,
                               size_t const gen_id,
+                              size_t const itr_id,
                               double const gen_start_time,
                               double& tot_gen_time,
                               size_t& stagnant_count,
@@ -63,6 +64,7 @@ struct EvolutionSolver::PImpl {
         JUtil.info(get_score_msg_format,
                    restart_id,
                    gen_id,
+                   itr_id,
                    best_score,
                    best_checksum,
                    best_score / best_team->size(),
@@ -118,7 +120,7 @@ struct EvolutionSolver::PImpl {
                     "---------------------------------------------\n",
                     OPTIONS.ga_stop_score);
             }
-            should_stop_ga = true;
+            score_satisfied_ = true;
         }
         else {
             if (OPTIONS.ga_restart_trigger == 0 or
@@ -143,7 +145,7 @@ struct EvolutionSolver::PImpl {
         JUtil.info("Length guess=%zu; Spec has %d points\n",
                    wa.target_size, wa.points.size());
         JUtil.info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);
-        JUtil.info("Max Iterations: %zu\n", OPTIONS.ga_iters);
+        JUtil.info("Max Iterations: %zu\n", OPTIONS.ga_max_iters);
         JUtil.info("Surviors: %u\n", CUTOFFS.survivors);
 
         JUtil.info("There are %d devices. Host ID=%d; currently using ID=%d\n",
@@ -210,9 +212,10 @@ struct EvolutionSolver::PImpl {
         for (auto& [wa_name, wa] : SPEC.work_areas()) {
             best_sols_[wa_name] = TeamSPMinHeap();
 
+            size_t itr_id = 0;
             size_t restart_id = 0;
-            while (OPTIONS.ga_stop_trigger == 0 or
-                    restart_id < OPTIONS.ga_stop_trigger) {
+            while (OPTIONS.ga_max_restarts == 0 or
+                    restart_id < OPTIONS.ga_max_restarts) {
                 should_restart_ga = false;
 
                 // Initialize population and solution list.
@@ -225,7 +228,7 @@ struct EvolutionSolver::PImpl {
 
                 if (!OPTIONS.dry_run) {
                     size_t gen_id = 0;
-                    while (OPTIONS.ga_iters == 0 or gen_id < OPTIONS.ga_iters) {
+                    while (OPTIONS.ga_max_iters == 0 or itr_id < OPTIONS.ga_max_iters) {
                         double const gen_start_time = JUtil.get_timestamp_us();
 
                         population.evolve();
@@ -240,20 +243,22 @@ struct EvolutionSolver::PImpl {
                         summarize_generation(population,
                                              restart_id,
                                              gen_id,
+                                             itr_id,
                                              gen_start_time,
                                              tot_gen_time,
                                              stagnant_count,
                                              best_sols_[wa_name]);
 
-                        if (should_restart_ga or should_stop_ga) break;
+                        if (should_restart_ga or score_satisfied_) break;
 
                         population.swap_buffer();
 
                         gen_id++;
+                        itr_id++;
                     }  // generation
                 }  // dry run
 
-                if (should_stop_ga) break;
+                if (score_satisfied_) break;
                 restart_id++;
             }  // restart
         }  // work area

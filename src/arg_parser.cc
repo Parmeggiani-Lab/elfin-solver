@@ -222,9 +222,9 @@ ARG_PARSER_CALLBACK_DEF(set_ga_pop_size) {
     return true;
 }
 
-ARG_PARSER_CALLBACK_DEF(set_ga_iters) {
+ARG_PARSER_CALLBACK_DEF(set_ga_max_iters) {
     long const l = JUtil.parse_long(arg_in.c_str());
-    options_.ga_iters = l < 0 ? 0 : l;
+    options_.ga_max_iters = l < 0 ? 0 : l;
     return true;
 }
 
@@ -244,9 +244,9 @@ ARG_PARSER_CALLBACK_DEF(set_ga_restart_trigger) {
     return true;
 }
 
-ARG_PARSER_CALLBACK_DEF(set_ga_stop_trigger) {
+ARG_PARSER_CALLBACK_DEF(set_ga_max_restarts) {
     long const l = JUtil.parse_long(arg_in.c_str());
-    options_.ga_stop_trigger = l < 0 ? 0 : l;
+    options_.ga_max_restarts = l < 0 ? 0 : l;
     return true;
 }
 

@@ -22,15 +22,14 @@ struct Options {
     /* GA parameters */
     uint32_t seed = 0x1337cafe;
     size_t ga_pop_size = 8096;
-    size_t ga_iters = 1000;
+    size_t ga_max_iters = 0;
+    size_t ga_restart_trigger = 10;
+    size_t ga_max_restarts = 10;
     float ga_survive_rate = 0.05f;
 
     // Use a small number but not exactly 0.0 because of imprecise float
     // comparison
     float ga_stop_score = 0.001f;
-
-    size_t ga_restart_trigger = 10;
-    size_t ga_stop_trigger = 10;
 
     bool run_tests = false;
 
