@@ -10,13 +10,14 @@
 #include "path_generator.h"
 #include "path_team.h"
 #include "hinge_team.h"
+#include "double_hinge_team.h"
 #include "evolution_solver.h"
 
 namespace elfin {
 
 namespace tests {
 
-size_t test_units() {
+TestStat test_units() {
     JUtil.info("Running unit tests...\n");
     TestStat total;
 
@@ -45,35 +46,38 @@ size_t test_units() {
     if (total.errors == 0)
         total += HingeTeam::test();
 
-    JUtil.info("%zu/%zu unit tests passed.\n",
-               (total.tests - total.errors), total.tests);
+    if (total.errors == 0)
+        total += DoubleHingeTeam::test();
 
-    return total.errors;
+    return total;
 }
 
-size_t test_integration() {
+TestStat test_integration() {
     JUtil.info("Running integration tests...\n");
     TestStat total = EvolutionSolver::test();
 
-    JUtil.info("%zu/%zu integration tests passed.\n",
-               (total.tests - total.errors), total.tests);
-
-    return total.errors;
+    return total;
 }
 
 void run_all() {
-    size_t const unit_test_errors = test_units();
+    auto const unit_ts = test_units();
 
-    if (unit_test_errors > 0) {
+    if (unit_ts.errors > 0) {
         PANIC("%zu unit tests failed. Not continuing to integration tests.\n",
-              unit_test_errors);
+              unit_ts.errors);
     }
     else {
-        size_t const int_test_errors = test_integration();
+        auto const inte_ts = test_integration();
 
-        PANIC_IF(int_test_errors > 0,
+        PANIC_IF(inte_ts.errors > 0,
                  "%zu integration tests failed.\n",
-                 int_test_errors);
+                 inte_ts.errors);
+
+        JUtil.info("%zu/%zu unit tests passed.\n",
+                   unit_ts.tests, unit_ts.tests);
+
+        JUtil.info("%zu/%zu integration tests passed.\n",
+                   inte_ts.tests, inte_ts.tests);
 
         if (JUtil.check_log_lvl(LOGLVL_INFO)) {
             printf("- - - - - - - - - -"
