@@ -261,6 +261,12 @@ struct EvolutionSolver::PImpl {
                 if (score_satisfied_) break;
                 restart_id++;
             }  // restart
+
+            if (restart_id != 0 and restart_id == OPTIONS.ga_max_restarts) {
+                JUtil.warn("Reached max restarts (%zu)\n", OPTIONS.ga_max_restarts);
+            }
+
+            JUtil.info("Total: %zu iterations\n", itr_id);
         }  // work area
 
         print_end_msg();
