@@ -16,7 +16,10 @@ typedef Node const* NodeKey;
 struct TestStat;
 class Vector3f;
 typedef std::vector<Vector3f> V3fList;
+
+/* types */
 typedef Link const* LinkCPtr;
+typedef std::pair<NodeKey, LinkCPtr> NodeLinkPair;
 
 class PathGenerator {
 private:
@@ -55,15 +58,21 @@ public:
     Crc32 checksum();
     std::vector<LinkCPtr> collect_arrows();
     V3fList collect_points();
-    std::vector<NodeKey> collect_keys();
+    std::vector<NodeKey> collect_keys(size_t skip = 0);
+    std::vector<NodeLinkPair> collect_all(size_t skip = 0);
 
     template<typename T, template <typename... Args> class C = std::vector>
-    C<T> collect(CollectFunc<T> const& func) {
+    C<T> collect(CollectFunc<T> const& func, size_t skip = 0) {
         DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
         C<T> res;
         while (not is_done()) {
             NodeKey nk = next();
-            res.push_back(func(nk, curr_link_));
+            if (skip > 0) {
+                skip--;
+            }
+            else {
+                res.push_back(func(nk, curr_link_));
+            }
         }
         return res;
     }

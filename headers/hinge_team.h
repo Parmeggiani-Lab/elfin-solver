@@ -28,6 +28,7 @@ protected:
     virtual NodeKey get_tip(bool const mutable_hint) const;
     virtual void mutation_invariance_check() const;
     virtual bool is_mutable(NodeKey const tip) const;
+    virtual void postprocess_json(JSON& output) const;
 
     /* modifiers */
     virtual void reset();

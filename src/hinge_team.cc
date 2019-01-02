@@ -99,8 +99,8 @@ void HingeTeam::mutation_invariance_check() const {
     size_t const n_free_terms = free_terms_.size();
     if (size() == 1) {
         // There are no "free terms" when only hinge exists.
-        if(n_free_terms != 0) {
-            for(auto& ft : free_terms_) {
+        if (n_free_terms != 0) {
+            for (auto& ft : free_terms_) {
                 JUtil.error("ft %s\n", ft.to_string().c_str());
             }
         }
@@ -114,6 +114,13 @@ void HingeTeam::mutation_invariance_check() const {
 
 bool HingeTeam::is_mutable(NodeKey const tip) const {
     return tip != hinge_;
+}
+
+void HingeTeam::postprocess_json(JSON& output) const {
+    if (output.size() > 0) {
+        // Skip first hinge.
+        output.erase(0);
+    }
 }
 
 /* modifiers */

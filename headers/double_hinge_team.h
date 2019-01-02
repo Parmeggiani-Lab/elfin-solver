@@ -20,6 +20,7 @@ private:
 protected:
     /* accessors */
     virtual DoubleHingeTeam* virtual_clone() const;
+    virtual void postprocess_json(JSON& json) const;
 
     /* modifiers */
     virtual void reset();

@@ -6,6 +6,7 @@
 #include "node_team.h"
 #include "node.h"
 #include "recipe.h"
+#include "path_generator.h"
 
 namespace elfin {
 
@@ -39,6 +40,7 @@ protected:
     virtual NodeKey get_tip(bool const mutable_hint) const;
     virtual void mutation_invariance_check() const;
     virtual bool is_mutable(NodeKey const nk) const;
+    virtual void postprocess_json(JSON& output) const;
 
     /* modifiers */
     virtual void reset();

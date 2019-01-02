@@ -1,6 +1,7 @@
 #include "double_hinge_team.h"
 
 #include "input_manager.h"
+#include "path_generator.h"
 
 namespace elfin {
 
@@ -22,6 +23,15 @@ std::unique_ptr<DoubleHingeTeam::PImpl> DoubleHingeTeam::make_pimpl() {
 /* accessors */
 DoubleHingeTeam* DoubleHingeTeam::virtual_clone() const {
     return new DoubleHingeTeam(*this);
+}
+
+void DoubleHingeTeam::postprocess_json(JSON& output) const {
+    HingeTeam::postprocess_json(output);  // Remove first hinge.
+
+    if (output.size() > 0) {
+        // Skip last *supposed* hinge.
+        output.erase(output.size() - 1);
+    }
 }
 
 /* modifiers */

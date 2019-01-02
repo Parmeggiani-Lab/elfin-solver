@@ -697,6 +697,8 @@ bool PathTeam::is_mutable(NodeKey const tip) const {
     return true;
 }
 
+void PathTeam::postprocess_json(JSON& output) const {}
+
 /* modifiers */
 void PathTeam::reset() {
     NodeTeam::reset();
@@ -998,44 +1000,40 @@ JSON PathTeam::to_json() const {
     JSON output;
 
     if (not free_terms_.empty()) {
-        // Kabsch outputs for forward and backward paths.
+        // Compute Kabsch alignment.
         elfin::Mat3f rot;
         Vector3f tran;
-        float rms = INFINITY;
 
-        auto path_gen = gen_path();
-
-        // Make a throw-away path_gen copy to call collect_points() on.
-        V3fList const& points = PathGenerator(path_gen).collect_points();
-
-        scoring::calc_alignment(
-            /*mobile=*/ points,
-            /*ref=*/ *scored_path_,
-            rot, tran, rms);
+        {
+            float rms = INFINITY;
+            V3fList const& points = gen_path().collect_points();
+            scoring::calc_alignment(
+                /*mobile=*/ points, /*ref=*/ *scored_path_, rot, tran, rms);
+        }
 
         Transform kabsch_alignment(rot, tran);
 
         size_t member_id = 0;  // UID for node in team.
-        while (not path_gen.is_done()) {
-            auto curr_node = path_gen.next();
+        auto pg = gen_path();
+        while (not pg.is_done()) {
+            auto node_key = pg.next();
 
             JSON node_output;
-            node_output["name"] = curr_node->prototype_->name;
+            node_output["name"] = node_key->prototype_->name;
             node_output["member_id"] = member_id;
 
-            auto link = path_gen.curr_link();
-            if (link) {  //  Not reached end of nodes yet.
+            auto link = pg.curr_link();
+            if (link) {  //  Not reached end of nodes yet, so peek() != nullptr.
                 node_output["src_term"] =
                     TermTypeToCStr(link->src().term);
 
-                std::string const& src_chain_name =
-                    curr_node->prototype_->chains().at(
+                node_output["src_chain_name"] =
+                    node_key->prototype_->chains().at(
                         link->src().chain_id).name;
-                std::string const& dst_chain_name =
-                    path_gen.peek()->prototype_->chains().at(
+
+                node_output["dst_chain_name"] =
+                    pg.peek()->prototype_->chains().at(
                         link->dst().chain_id).name;
-                node_output["src_chain_name"] = src_chain_name;
-                node_output["dst_chain_name"] = dst_chain_name;
             }
             else
             {
@@ -1045,10 +1043,7 @@ JSON PathTeam::to_json() const {
                 node_output["dst_chain_name"] = "NONE";
             }
 
-            Transform tx = curr_node->tx_;
-
-            // Apply Kabsch alignment
-            tx = kabsch_alignment * tx;
+            Transform const tx = kabsch_alignment * node_key->tx_;
 
             node_output["rot"] = tx.rot_json();
             node_output["tran"] = tx.tran_json();
@@ -1062,6 +1057,8 @@ JSON PathTeam::to_json() const {
               output.size(),
               this->size());
     }
+
+    postprocess_json(output);
 
     return output;
 }

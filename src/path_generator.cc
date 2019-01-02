@@ -62,7 +62,9 @@ Crc32 PathGenerator::checksum() {
 
 std::vector<LinkCPtr> PathGenerator::collect_arrows()
 {
-    auto res = collect(CollectFunc<LinkCPtr>([](NodeKey const nk, LinkCPtr link) {
+    auto res = collect(
+                   CollectFunc<LinkCPtr>(
+    [](NodeKey const nk, LinkCPtr link) {
         return link;
     }));
 
@@ -72,15 +74,29 @@ std::vector<LinkCPtr> PathGenerator::collect_arrows()
 }
 
 V3fList PathGenerator::collect_points() {
-    return collect(CollectFunc<Vector3f>([](NodeKey const nk, LinkCPtr link) {
+    return collect(
+               CollectFunc<Vector3f>(
+    [](NodeKey const nk, LinkCPtr link) {
         return nk->tx_.collapsed();
     }));
 }
 
-std::vector<NodeKey> PathGenerator::collect_keys() {
-    return collect(CollectFunc<NodeKey>([](NodeKey const nk, LinkCPtr link) {
+std::vector<NodeKey> PathGenerator::collect_keys(size_t skip) {
+    return collect(
+               CollectFunc<NodeKey>(
+    [](NodeKey const nk, LinkCPtr link) {
         return nk;
-    }));
+    }),
+    skip);
+}
+
+std::vector<NodeLinkPair> PathGenerator::collect_all(size_t skip) {
+    return collect(
+               CollectFunc<NodeLinkPair>(
+    [](NodeKey const nk, LinkCPtr link) {
+        return std::make_pair(nk, link);
+    }),
+    skip);
 }
 
 }  /* elfin */
