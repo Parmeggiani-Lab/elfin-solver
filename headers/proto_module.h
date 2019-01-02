@@ -6,6 +6,7 @@
 
 #include "json.h"
 #include "proto_chain.h"
+#include "free_chain.h"
 
 namespace elfin {
 
@@ -15,6 +16,9 @@ namespace elfin {
     MACRO(UNKNOWN) \
 
 GEN_ENUM_AND_STRING(ModuleType, ModuleTypeNames, FOREACH_MODULETYPE);
+
+struct FreeChain;
+
 
 class ProtoModule : public Printable {
 public:
@@ -27,9 +31,12 @@ public:
     };
 
 private:
+    /* types */
+    typedef std::vector<FreeChain> FreeChains;
     /* data */
     bool already_finalized_ = false;
     ProtoChainList chains_;
+    FreeChains free_chains_;
     Counts counts_ = {};
 
 public:
@@ -39,14 +46,14 @@ public:
     float const radius;
 
     /* ctors */
-    ProtoModule(
-        std::string const& name,
-        ModuleType const type,
-        float const radius,
-        StrList const& chain_names);
+    ProtoModule(std::string const& name,
+                ModuleType const type,
+                float const radius,
+                StrList const& chain_names);
 
     /* accessors */
     ProtoChainList const& chains() const { return chains_; }
+    FreeChains const& free_chains() const { return free_chains_; }
     Counts const& counts() const { return counts_; }
     size_t find_chain_id(std::string const& chain_name) const;
     ProtoLink const* find_link_to(

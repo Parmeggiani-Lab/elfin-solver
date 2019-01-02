@@ -5,10 +5,9 @@
 namespace elfin {
 
 /* ctors */
-FreeChain::FreeChain(
-    NodeKey const _node,
-    TerminusType const _term,
-    size_t const _chain_id) :
+FreeChain::FreeChain(NodeKey const _node,
+                     TerminusType const _term,
+                     size_t const _chain_id) :
     node(_node),
     term(_term),
     chain_id(_chain_id) {
@@ -30,7 +29,8 @@ ProtoLink const& FreeChain::random_proto_link() const {
 }
 
 FreeChain::BridgeList FreeChain::find_bridges(
-    FreeChain const& dst) const {
+    FreeChain const& dst) const
+{
     BridgeList res;
     ProtoModule const* dst_mod = dst.node->prototype_;
     size_t const dst_chain_id = dst.chain_id;
@@ -71,7 +71,8 @@ FreeChain::BridgeList FreeChain::find_bridges(
 }
 
 ProtoLink const* FreeChain::find_link_to(
-    FreeChain const& dst) const {
+    FreeChain const& dst) const
+{
     if (dst.term != opposite_term(term)) {
         return nullptr;
     }

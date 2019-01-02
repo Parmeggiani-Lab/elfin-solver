@@ -35,7 +35,9 @@ struct HingeTeam::PImpl {
         // this work area. However right now that functionality is not
         // implemented by elfin-ui so we'll leave the selection to GA.
 
-        _.hinge_ = _.add_free_node(proto_mod, ui_mod->tx);
+        // Do not add any free chain. Let get_mutable_chain() handle the case
+        // where the team consists of only hinge_.
+        _.hinge_ = _.add_node(proto_mod, ui_mod->tx);
     }
 
     UIJointKey find_ui_joint(tests::RecipeStep const& first_step) {
@@ -59,41 +61,46 @@ HingeTeam* HingeTeam::virtual_clone() const {
     return new HingeTeam(*this);
 }
 
-FreeChain const& HingeTeam::get_tip_chain(bool const mutable_hint) const
+FreeChain HingeTeam::get_mutable_chain() const
 {
-    // If the only node is the hinge, then we allow modification to one random
-    // tip.
+    // If the only node is the hinge, then return random free chain from hinge.
     if (size() == 1) {
-        return PathTeam::get_tip_chain(mutable_hint);
+        auto const& rand_hinge_fc = random::pick(hinge_->prototype_->free_chains());
+        return FreeChain(hinge_, rand_hinge_fc.term, rand_hinge_fc.chain_id);
     }
     else {
-        DEBUG_NOMSG(not hinge_);
+        // Return a random free chain from mutable tip.
+        return PathTeam::get_mutable_chain();
+    }
+}
 
-        if (mutable_hint) {
-            auto fc_itr = find_if(begin(free_chains_), end(free_chains_),
-            [&](FreeChain const & fc) { return fc.node != hinge_; });
+NodeKey HingeTeam::get_tip(bool const mutable_hint) const {
+    if (mutable_hint) {
+        DEBUG(size() == 1, "Cannot request mutable tip when team has only hinge.\n");
 
-            DEBUG(fc_itr == end(free_chains_),
-                  "No mutable free chain available\n");
+        DEBUG_NOMSG(free_chains_.size() != 1);
 
-            return *fc_itr;
-        }
-        else {
-            return begin(hinge_->links())->src();
-        }
+        // Return the only other node, which all (only one) free chains
+        // currently belong to.
+        return begin(free_chains_)->node;
+    }
+    else {
+        return hinge_;
     }
 }
 
 void HingeTeam::mutation_invariance_check() const {
     DEBUG_NOMSG(not hinge_);
-    TRACE(size() == 0,
-          "Invariance broken: size() = 0\n");
-}
+    DEBUG_NOMSG(size() == 0);
 
-void HingeTeam::add_node_check(ProtoModule const* const prot) const {
-    // Allow any module for hinge but other than that, same as PathTeam.
-    if (hinge_) {
-        PathTeam::add_node_check(prot);
+    size_t const n_free_chains = free_chains_.size();
+    if (size() == 1) {
+        // There are no "free chains" when only hinge exists.
+        DEBUG_NOMSG(n_free_chains != 0);
+    }
+    else {
+        // There are always exactly one free chain for size() > 1.
+        DEBUG_NOMSG(n_free_chains != 1);
     }
 }
 
@@ -127,8 +134,8 @@ void HingeTeam::calc_checksum() {
 void HingeTeam::calc_score() {
     score_ = INFINITY;
 
-    auto const& my_points =
-        hinge_->gen_path().collect_points();
+    // Collect points without hinge itself.
+    auto const& my_points = hinge_->gen_path().collect_points();
 
     // Should use simple_rms(), but there's some floating point rounding error
     // that's causing unit tests to fail. If we used inner_product() in
@@ -156,7 +163,12 @@ void HingeTeam::virtual_implement_recipe(
         if (cb_on_first_node) {
             cb_on_first_node(nk);
         }
+
         hinge_ = nk;
+
+        // PathTeam::implement_recipe() uses add_free_node(), so free chains
+        // belonging to hinge_ need to be cleared.
+        free_chains_.clear();
     });
 
     PathTeam::virtual_implement_recipe(recipe, cb, shift_tx);

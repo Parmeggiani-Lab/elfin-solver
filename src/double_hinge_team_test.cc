@@ -21,7 +21,6 @@ TestStat DoubleHingeTeam::test() {
         // apply transform.
         DoubleHingeTeam team(wa.get());
 
-        // Make a copy of the tx because it's gonna get clear()'ed.
         auto const& recipe = tests::H_2H_RECIPE;
         auto const& omap = wa->occupant_map;
 

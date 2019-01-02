@@ -27,7 +27,7 @@ TestStat HingeTeam::test() {
         team.implement_recipe(tests::H_1H_RECIPE, hinge_tx);
 
         ts.tests++;
-        if (team.score() > 1e-6) {
+        if (team.score() > 1e-4) {
             ts.errors++;
             JUtil.error("HingeTeam construction test failed.\n"
                         "Expected score 0\nGot score: %f\n",

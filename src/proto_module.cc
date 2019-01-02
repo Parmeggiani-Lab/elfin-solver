@@ -13,25 +13,22 @@
 namespace elfin {
 
 /* free */
-Transform get_tx(
-    JSON const& xdb,
-    size_t const tx_id) {
-    TRACE(
-        tx_id >= xdb["n_to_c_tx"].size(),
-        ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
-         "  Either xdb.json is corrupted or "
-         "there is an error in dbgen.py.\n"));
+Transform get_tx(JSON const& xdb,
+                 size_t const tx_id) {
+    TRACE(tx_id >= xdb["n_to_c_tx"].size(),
+          ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
+           "  Either xdb.json is corrupted or "
+           "there is an error in dbgen.py.\n"));
 
     return Transform(xdb["n_to_c_tx"][tx_id]);
 }
 
 /* public */
 /* ctors */
-ProtoModule::ProtoModule(
-    std::string const& _name,
-    ModuleType const _type,
-    float const _radius,
-    StrList const& _chain_names) :
+ProtoModule::ProtoModule(std::string const& _name,
+                         ModuleType const _type,
+                         float const _radius,
+                         StrList const& _chain_names) :
     name(_name),
     type(_type),
     radius(_radius) {
@@ -40,10 +37,11 @@ ProtoModule::ProtoModule(
 #endif  /* ifdef PRINT_INIT */
 
     for (std::string const& cn : _chain_names) {
-        chains_.emplace_back(cn, chains_.size());
+        chains_.emplace_back(/*chain_name=*/cn, /*chain_id=*/chains_.size());
 #ifdef PRINT_INIT
         Chain& actual = chains_.back();
-        JUtil.warn("Created chain[%s] chains_.size()=%zu at %p; actual: %p, %p, %p, %p\n",
+        JUtil.warn("Created chain[%s] chains_.size()=%zu at %p; "
+                   "actual: %p, %p, %p, %p\n",
                    cn.c_str(),
                    chains_.size(),
                    &actual,
@@ -60,12 +58,12 @@ ProtoModule::ProtoModule(
 }
 
 /* accessors */
-size_t ProtoModule::find_chain_id(
-    std::string const& chain_name) const {
-    auto chain_itr = std::find_if(
-                         begin(chains_),
-                         end(chains_),
+size_t ProtoModule::find_chain_id(std::string const& chain_name) const
+{
+    auto chain_itr = std::find_if(begin(chains_),
+                                  end(chains_),
     [&](auto const & chain) { return chain.name == chain_name; });
+
     if (chain_itr == end(chains_)) {
         // Verbose diagnostics.
         JUtil.error("Could not find chain named %s in ProtoModule %s\n",
@@ -82,11 +80,12 @@ size_t ProtoModule::find_chain_id(
         return chain_itr->id;
     }
 }
-ProtoLink const* ProtoModule::find_link_to(
-    size_t const src_chain_id,
-    TerminusType const src_term,
-    ProtoModule const* dst_module,
-    size_t const dst_chain_id) const {
+
+ProtoLink const* ProtoModule::find_link_to(size_t const src_chain_id,
+        TerminusType const src_term,
+        ProtoModule const* dst_module,
+        size_t const dst_chain_id) const
+{
 
     ProtoTerminus const& proto_term =
         chains_.at(src_chain_id).get_term(src_term);
@@ -113,6 +112,20 @@ void ProtoModule::finalize() {
 
     for (ProtoChain& proto_chain : chains_) {
         proto_chain.finalize();
+
+        if (not proto_chain.n_term().links().empty()) {
+            free_chains_.emplace_back(
+                nullptr,
+                TerminusType::N,
+                proto_chain.id);
+        }
+
+        if (not proto_chain.c_term().links().empty()) {
+            free_chains_.emplace_back(
+                nullptr,
+                TerminusType::C,
+                proto_chain.id);
+        }
     }
 }
 
@@ -129,7 +142,8 @@ void ProtoModule::create_proto_link_pair(
     ProtoModule& mod_a,
     std::string const& a_chain_name,
     ProtoModule& mod_b,
-    std::string const& b_chain_name) {
+    std::string const& b_chain_name)
+{
 
     // Find A chains.
     ProtoChainList& a_chains = mod_a.chains_;

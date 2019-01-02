@@ -50,12 +50,19 @@ Crc32 PathGenerator::path_checksum() const {
     return res;
 }
 
-V3fList PathGenerator::collect_points() const {
+V3fList PathGenerator::collect_points(size_t skip) const {
     DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
     auto pg = PathGenerator(next_node_);
     V3fList points;
     while (not pg.is_done()) {
-        points.push_back(pg.next()->tx_.collapsed());
+        auto node = pg.next();
+
+        if (skip > 0) {
+            skip--;
+        }
+        else {
+            points.push_back(node->tx_.collapsed());
+        }
     }
     return points;
 }

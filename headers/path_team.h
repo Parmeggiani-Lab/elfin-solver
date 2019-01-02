@@ -35,24 +35,20 @@ protected:
 
     /* accessors */
     virtual PathTeam* virtual_clone() const;
-    // Returns a tip free chain, possibly randomly chosen. For a hinged team,
-    // fixed nodes must not be returned unlress there are no other nodes.
-    virtual FreeChain const& get_tip_chain(
-        bool const mutable_hint) const;
-    // Checks free_chains_.size() etc. are correct on entry to a mutation
-    // method. Called before calling mutation methods from evolve().
+    virtual FreeChain get_mutable_chain() const;
+    virtual NodeKey get_tip(bool const mutable_hint) const;
     virtual void mutation_invariance_check() const;
-    virtual void add_node_check(ProtoModule const* const prot) const;
     virtual bool is_mutable(NodeKey const nk) const;
 
     /* modifiers */
     virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
-    NodeKey add_free_node(ProtoModule const* const prot,
-                          Transform const& tx = Transform());
+    NodeKey add_node(ProtoModule const* const prot,
+                     Transform const& tx = Transform());
     void remove_free_chains(NodeKey const node);
     virtual void calc_checksum();
     virtual void calc_score();
+    Node* get_node(NodeKey const nk);
     // For testing: builds node team from recipe and returns the starting node.
     virtual void virtual_implement_recipe(tests::Recipe const& recipe,
                                           NodeKeyCallback const& cb_on_first_node,

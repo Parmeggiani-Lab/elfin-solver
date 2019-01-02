@@ -44,7 +44,7 @@ public:
     Link const* curr_link() const { return curr_link_; }
     std::vector<Link const*> collect_arrows() const;
     Crc32 path_checksum() const;
-    V3fList collect_points() const;
+    V3fList collect_points(size_t skip = 0) const;
 
     /* modifiers */
     NodeKey next();

@@ -24,10 +24,9 @@ protected:
 
     /* accessors */
     virtual HingeTeam* virtual_clone() const;
-    virtual FreeChain const& get_tip_chain(
-        bool const mutable_hint) const;
+    virtual FreeChain get_mutable_chain() const;
+    virtual NodeKey get_tip(bool const mutable_hint) const;
     virtual void mutation_invariance_check() const;
-    virtual void add_node_check(ProtoModule const* const prot) const;
     virtual bool is_mutable(NodeKey const tip) const;
 
     /* modifiers */
