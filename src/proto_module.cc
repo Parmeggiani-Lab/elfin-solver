@@ -87,7 +87,7 @@ ProtoLink const* ProtoModule::find_link_to(size_t const src_chain_id,
         size_t const dst_chain_id) const
 {
 
-    ProtoTerminus const& proto_term =
+    ProtoTerm const& proto_term =
         chains_.at(src_chain_id).get_term(src_term);
     ProtoLinkPtrSetCItr itr =
         proto_term.find_link_to(dst_module, dst_chain_id);

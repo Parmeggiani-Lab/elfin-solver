@@ -35,7 +35,7 @@ FreeChain::BridgeList FreeChain::find_bridges(
     ProtoModule const* dst_mod = dst.node->prototype_;
     size_t const dst_chain_id = dst.chain_id;
 
-    ProtoTerminus const& ptterm_src =
+    ProtoTerm const& ptterm_src =
         node->prototype_->chains().at(chain_id).get_term(term);
 
     // For each middle ProtoModule that ptterm_src connects to...
@@ -55,7 +55,7 @@ FreeChain::BridgeList FreeChain::find_bridges(
             if (middle_chain.id == chain_id) continue;
 
             // dst.term is incoming term, the opposite of which is term.
-            ProtoTerminus const& ptterm_out =
+            ProtoTerm const& ptterm_out =
                 middle_chain.get_term(term);
             ProtoLinkPtrSetCItr itr =
                 ptterm_out.find_link_to(dst_mod, dst_chain_id);

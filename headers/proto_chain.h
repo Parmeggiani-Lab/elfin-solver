@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "proto_link.h"
-#include "proto_terminus.h"
+#include "proto_term.h"
 
 namespace elfin {
 
@@ -14,8 +14,8 @@ class ProtoChain {
 private:
     /* data members */
     bool already_finalized_ = false;
-    ProtoTerminus n_term_;
-    ProtoTerminus c_term_;
+    ProtoTerm n_term_;
+    ProtoTerm c_term_;
 
 public:
     /* data members */
@@ -32,9 +32,9 @@ public:
     virtual ~ProtoChain() {}
 
     /* accessors */
-    ProtoTerminus const& get_term(TermType const term) const;
-    ProtoTerminus const& n_term() const { return n_term_; }
-    ProtoTerminus const& c_term() const { return c_term_; }
+    ProtoTerm const& get_term(TermType const term) const;
+    ProtoTerm const& n_term() const { return n_term_; }
+    ProtoTerm const& c_term() const { return c_term_; }
     ProtoLink const& pick_random_link(
         TermType const term) const;
 

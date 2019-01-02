@@ -1,4 +1,4 @@
-#include "proto_terminus.h"
+#include "proto_term.h"
 
 #include <algorithm>
 
@@ -12,7 +12,7 @@ namespace elfin {
 
 /* public */
 /* accessors */
-ProtoLink const& ProtoTerminus::pick_random_link(
+ProtoLink const& ProtoTerm::pick_random_link(
     TermType const term) const {
     if (term == TermType::N) {
         return *n_roulette_.draw();
@@ -39,7 +39,7 @@ ProtoLink const& ProtoTerminus::pick_random_link(
 // In c++20 we could search without creating a new instance, by
 // implementing specialized comparators with custom key type.
 //
-ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
+ProtoLinkPtrSetCItr ProtoTerm::find_link_to(
     ConstProtoModulePtr dst_module,
     size_t const dst_chain_id) const {
     ProtoLink const key_link(Transform(), dst_module, dst_chain_id);
@@ -48,12 +48,12 @@ ProtoLinkPtrSetCItr ProtoTerminus::find_link_to(
 
 
 /* modifiers */
-void ProtoTerminus::finalize() {
+void ProtoTerm::finalize() {
     TRACE_NOMSG(already_finalized_);
     already_finalized_ = true;
 
 #ifdef PRINT_FINALIZE
-    JUtil.warn("Finalizing proto terminus with %zu links\n", links_.size());
+    JUtil.warn("Finalizing ProtoTerm with %zu links\n", links_.size());
 #endif  /* ifdef PRINT_FINALIZE */
 
     //

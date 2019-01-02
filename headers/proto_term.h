@@ -1,5 +1,5 @@
-#ifndef PROTO_TERMINUS_H_
-#define PROTO_TERMINUS_H_
+#ifndef PROTO_TERM_H_
+#define PROTO_TERM_H_
 
 #include "proto_link.h"
 #include "term_type.h"
@@ -9,7 +9,7 @@ namespace elfin {
 
 class ProtoModule;
 
-class ProtoTerminus {
+class ProtoTerm {
     friend ProtoModule;
 private:
     /* types */
@@ -23,11 +23,11 @@ private:
 
 public:
     /* ctors */
-    ProtoTerminus() {}
-    ProtoTerminus(ProtoTerminus const& other) = delete;
-    ProtoTerminus(ProtoTerminus&& other) = delete;
-    ProtoTerminus& operator=(ProtoTerminus const& other) = delete;
-    ProtoTerminus& operator=(ProtoTerminus&& other) = delete;
+    ProtoTerm() {}
+    ProtoTerm(ProtoTerm const& other) = delete;
+    ProtoTerm(ProtoTerm&& other) = delete;
+    ProtoTerm& operator=(ProtoTerm const& other) = delete;
+    ProtoTerm& operator=(ProtoTerm&& other) = delete;
 
     /* accessors */
     ProtoLinkSPList const& links() const { return links_; }
@@ -48,4 +48,4 @@ public:
 
 }  /* elfin */
 
-#endif  /* end of include guard: PROTO_TERMINUS_H_ */
+#endif  /* end of include guard: PROTO_TERM_H_ */

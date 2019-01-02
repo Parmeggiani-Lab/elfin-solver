@@ -8,7 +8,7 @@
 namespace elfin {
 
 /* public */
-ProtoTerminus const& ProtoChain::get_term(
+ProtoTerm const& ProtoChain::get_term(
     TermType const term) const {
     if (term == TermType::N) {
         return n_term_;
