@@ -105,13 +105,13 @@ $(BINRAY): $(OBJS)
 	$(COMPILE) $(OBJS) -o $(BINRAY) $(LD_FLAGS)
 
 test: $(BINRAY)
-	$(BINRAY) -c config/test.json $(ELFIN_ARGS)
+	$(BINRAY) -c config/default.json $(ELFIN_ARGS)
 
 unit: $(BINRAY)
 	$(BINRAY) -t $(ELFIN_ARGS)
 
 dry: $(BINRAY)
-	$(BINRAY) -c config/test.json -dry $(ELFIN_ARGS)
+	$(BINRAY) -c config/default.json -dry $(ELFIN_ARGS)
 
 VALGRIND_FLAGS += --track-origins=yes --leak-check=full --show-leak-kinds=all --show-reachable=no 
 
