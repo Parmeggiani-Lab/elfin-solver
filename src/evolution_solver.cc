@@ -12,8 +12,8 @@
 namespace elfin {
 
 char const* const get_score_msg_format =
-    "R #%zu G #%zu ITR #%zu "
-    "[best %.2f (cksm%x; %.2f/module), worst=%.2f, %.0fms]\n";
+    "GA Restart #%zu Generation #%zu Total Iterations #%zu\n"
+    "  -  [best %.2f (cksm:%x, %.2f/module), worst %.2f, %.0fms]\n";
 
 char const* const timing_msg_format =
     "Avg Times: "
