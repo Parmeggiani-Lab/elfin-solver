@@ -34,6 +34,7 @@ protected:
     Cutoffs cutoffs_;
     Database xdb_;
     Spec spec_;
+    static Args const test_args;
 
     GATimes ga_times_;
 
@@ -43,9 +44,6 @@ protected:
     /* modifiers */
     static void setup_cutoffs();
 public:
-    /* data */
-    static Args const test_args;
-
     /* accessors */
     static InputManager& instance() {
         static InputManager im;
@@ -70,8 +68,11 @@ public:
     }
 
     /* modifiers */
-    static void parse_options(int const argc, char const** argv);
-    static void setup();
+    static void parse(Args const& args);
+    static void parse(int const argc, char const** argv);
+    static void setup_test(Args const& args);
+    static void setup_xdb();  // Used for tests.cc only.
+    static void setup(bool const skip_xdb=false);
 
     /* tests */
     static void load_test_config(

@@ -6,24 +6,11 @@
 
 namespace elfin {
 
-void InputManager::load_test_config(
-    std::string const& spec_file,
-    size_t const n_workers) {
-    JUtil.info("Loading test config\n");
-
+void InputManager::setup_test(Args const& more_args) {
     Args args = test_args;
-    args.push_back("--spec_file");
-    args.push_back(spec_file);
-    args.push_back("--n_workers");
-    args.push_back(std::to_string(n_workers));
-
-    std::vector<char const*> argv;
-    for (auto const& arg : args) {
-        argv.push_back(arg.c_str());
-    }
-
-    InputManager::parse_options(argv.size(), argv.data());
-    InputManager::setup();
+    args.insert(end(args), begin(more_args), end(more_args));
+    parse(args);
+    setup(/*skip_xdb=*/true);
 }
 
 /* tests */
@@ -34,7 +21,8 @@ TestStat InputManager::test() {
     {
         ts.tests++;
 
-        load_test_config("examples/quarter_snake_free.json");
+        InputManager::setup_test({"--spec_file", "examples/quarter_snake_free.json"});
+
         if (SPEC.work_areas().size() != 1) {
             ts.errors++;
             JUtil.error("Spec parsing should get 1 work area but got %zu\n",

@@ -12,7 +12,9 @@ TestStat DoubleHingeTeam::test() {
 
     // Construction test.
     {
-        InputManager::load_test_config("examples/H_2h.json");
+        InputManager::setup_test({
+            "--spec_file", "examples/H_2h.json"
+        });
 
         TRACE_NOMSG(SPEC.work_areas().size() != 1);
         auto& [wa_name, wa] = *begin(SPEC.work_areas());

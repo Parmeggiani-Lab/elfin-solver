@@ -10,8 +10,10 @@ namespace elfin {
 TestStat PathGenerator::test() {
     TestStat ts;
 
-    InputManager::load_test_config(
-        "examples/quarter_snake_free.json");
+    InputManager::setup_test({
+        "--spec_file",
+        "examples/quarter_snake_free.json"
+    });
 
     // Test points gathered are of the correct size.
     {

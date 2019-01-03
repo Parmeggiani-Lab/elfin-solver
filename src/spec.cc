@@ -13,6 +13,11 @@ void Spec::parse(Options const& options) {
     work_areas_.clear();
     fixed_areas_.clear();
 
+    PANIC_IF(options.spec_file.empty(), "No input spec file provided.\n");
+
+    PANIC_IF(not JUtil.file_exists(options.spec_file.c_str()),
+             "Input file does not exist.\n");
+
     JSON const& spec_json = parse_json(options.spec_file);
     try {
         JUtil.info("Input spec has %zu work areas and %zu fixed areas\n",
@@ -37,7 +42,7 @@ void Spec::parse(Options const& options) {
                 return sum + (joint_json["neighbors"].size() > 2);
             });
 
-            if (num_branch_points > 2) {
+            if (num_branch_points > 0) {
                 UNIMP();
                 // Break it down to multiple simple ones by first choosing hubs
                 // and their orientations.

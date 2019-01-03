@@ -23,7 +23,7 @@ Elfin::Elfin(int const argc, char const** argv) {
     JUtil.set_log_lvl(LOGLVL_INFO);
 
     // Parse arguments and configuration.
-    InputManager::parse_options(argc, argv);
+    InputManager::parse(argc, argv);
 }
 
 /* dtors */

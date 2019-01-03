@@ -27,7 +27,7 @@ void arg_parse_failure(std::string const& arg_in,
     }
 
     JUtil.error("Use -h flag for full help.\n");
-    throw ExitException{1};
+    throw std::invalid_argument("argument parse failure");
 }
 
 /* ArgBundle */
@@ -69,17 +69,11 @@ ArgBundle const* ArgParser::match_arg_bundle(char const* arg_in) const {
 
 void ArgParser::check_options() const {
     // Files.
-    PANIC_IF(options_.xdb_file == "",
+    PANIC_IF(options_.xdb_file.empty(),
              "No xdb path provided.\n");
 
     PANIC_IF(not JUtil.file_exists(options_.xdb_file.c_str()),
              "xdb file could not be found.\n");
-
-    PANIC_IF(options_.spec_file == "",
-             "No input spec file given.\n");
-
-    PANIC_IF(not JUtil.file_exists(options_.spec_file.c_str()),
-             "Input file could not be found.\n");
 
     if (options_.config_file != "") {
         PANIC_IF(not JUtil.file_exists(options_.config_file.c_str()),
@@ -87,7 +81,7 @@ void ArgParser::check_options() const {
                  options_.config_file.c_str());
     }
 
-    PANIC_IF(options_.output_dir == "",
+    PANIC_IF(options_.output_dir.empty(),
              "No output directory given.");
 
     if (not JUtil.file_exists(options_.output_dir.c_str())) {
@@ -181,6 +175,11 @@ ARG_PARSER_CALLBACK_DEF(parse_config) {
     JSON const json = parse_json(options_.config_file);
 
     for (auto& [opt_key, opt_json] : json.items()) {
+        if(opt_key == config_file_long_from) {
+            JUtil.warn("Ignoring %s in config JSON.\n", config_file_long_from);
+            continue;
+        }
+
         std::string const opt_name = "--" + opt_key;
         auto ab = match_arg_bundle(opt_name.c_str());
         if (ab) {

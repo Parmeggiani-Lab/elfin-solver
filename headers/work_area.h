@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include <memory>
+// #include <string>
 
 #include "ui_joint.h"
 #include "geometry.h"
@@ -11,12 +12,10 @@
 
 namespace elfin {
 
-/*
- - FREE: a string-like path guide with no hinge on either side.
- - HINGED: like FREE, but one end or both ends are hinged i.e. superimposed by
-   fixed modules.
-*/
+/* Fwd Decl */
+struct TestStat;
 
+/* types */
 #define FOREACH_WORKTYPE(MACRO) \
     MACRO(NONE) \
     MACRO(FREE) \
@@ -32,7 +31,7 @@ struct WorkArea {
     /* types */
     typedef std::unordered_map<UIJointKey, V3fList> PathMap;
     typedef std::unordered_map<std::string, UIJointKey> OccupantMap;
-
+    
     /* data */
     std::string const   name;
     UIJointMap const    joints;
@@ -50,6 +49,8 @@ struct WorkArea {
 
     /* dtors */
     virtual ~WorkArea();
+
+    static TestStat test();
 };
 
 typedef SPMap<WorkArea> WorkAreaMap;

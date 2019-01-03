@@ -19,11 +19,7 @@ TestStat EvolutionSolver::test() {
     {
         ts.tests++;
 
-        // Force 1 thread for reproduciblility.
-        InputManager::load_test_config(
-            spec_file,
-            /*n_workers=*/ 1);
-
+        InputManager::setup_test({"--spec_file", spec_file});
 
         JUtilLogLvl original_ll = JUtil.get_log_lvl();
 

@@ -38,10 +38,19 @@ void InputManager::setup_cutoffs() {
 /* public */
 InputManager::Args const InputManager::test_args = {
     "elfin",  // Binary file name.
-    "--config_file", "config/unit_test.json"
+    "--config_file", "config/test_config.json"
 };
 
-void InputManager::parse_options(int const argc, const char ** argv) {
+void InputManager::parse(Args const& args) {
+    std::vector<char const*> argv;
+    for (auto const& arg : args) {
+        argv.push_back(arg.c_str());
+    }
+
+    InputManager::parse(argv.size(), argv.data());
+}
+
+void InputManager::parse(int const argc, char const** const argv) {
     // Parse arguments into options struct.
     instance().options_ = ArgParser(argc, argv).get_options();
 
@@ -52,8 +61,14 @@ void InputManager::parse_options(int const argc, const char ** argv) {
     setup_cutoffs();
 }
 
-void InputManager::setup() {
+void InputManager::setup_xdb() {
     instance().xdb_.parse(OPTIONS);
+}
+
+void InputManager::setup(bool const skip_xdb) {
+    if (not skip_xdb) {
+        setup_xdb();
+    }
 
     JUtil.info("Using spec file: %s\n", OPTIONS.spec_file.c_str());
     instance().spec_.parse(OPTIONS);

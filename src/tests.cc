@@ -21,9 +21,17 @@ TestStat test_units() {
     JUtil.info("Running unit tests...\n");
     TestStat total;
 
+    // Only setup XDB once.
+    InputManager::parse({ "elfin", "--xdb_file", "xdb.json" });
+    InputManager::setup_xdb();
+
     total += InputManager::test();
 
     // Stop doing more tests if there are failures.
+    
+    if (total.errors == 0)
+        total += WorkArea::test();
+
     if (total.errors == 0)
         total += random::test();
 

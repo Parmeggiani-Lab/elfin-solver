@@ -40,6 +40,7 @@ class ArgParser {
 private:
     /* data */
     Options options_;
+    char const* const config_file_long_from = "config_file";
 
     // Matching ArgBundle is O(n). Would be nice to do a map instead.
     std::vector<ArgBundle> const argb_ = {
@@ -63,7 +64,7 @@ private:
             &ArgParser::set_xdb
         },
         {   "c",
-            "config_file",
+            config_file_long_from,
             string_format("Set config file path (default=%s).",
             options_.config_file.c_str()),
             true,
