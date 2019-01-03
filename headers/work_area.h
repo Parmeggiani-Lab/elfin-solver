@@ -31,7 +31,7 @@ struct WorkArea {
     /* types */
     typedef std::unordered_map<UIJointKey, V3fList> PathMap;
     typedef std::unordered_map<std::string, UIJointKey> OccupantMap;
-    
+
     /* data */
     std::string const   name;
     UIJointMap const    joints;

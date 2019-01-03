@@ -32,7 +32,9 @@ public:
 
 private:
     /* types */
+    typedef std::vector<ProtoChain> ProtoChainList;
     typedef std::vector<FreeTerm> FreeTerms;
+
     /* data */
     bool already_finalized_ = false;
     ProtoChainList chains_;
@@ -56,11 +58,10 @@ public:
     FreeTerms const& free_terms() const { return free_terms_; }
     Counts const& counts() const { return counts_; }
     size_t find_chain_id(std::string const& chain_name) const;
-    ProtoLink const* find_link_to(
-        size_t const src_chain_id,
-        TermType const src_term,
-        ProtoModule const* dst_module,
-        size_t const dst_chain_id) const;
+    ProtoLink const* find_link_to(size_t const src_chain_id,
+                                  TermType const src_term,
+                                  ProtoModule const* dst_module,
+                                  size_t const dst_chain_id) const;
 
     /* modifiers */
     void finalize();

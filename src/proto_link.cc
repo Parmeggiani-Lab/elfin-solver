@@ -32,15 +32,15 @@ void ProtoLink::print_to(std::ostream& os) const {
     os << "]";
 }
 
-size_t HashProtoLinkWithoutTx::operator()(
-    ConstProtoLinkPtr const& link) const {
+size_t HashPtLinkWithoutTx::operator()(
+    PtLinkKey const& link) const {
     return std::hash<void *>()((void *) link->module_) ^
            std::hash<size_t>()(link->chain_id_);
 }
 
-bool EqualProtoLinkWithoutTx::operator()(
-    ConstProtoLinkPtr const& lh_link,
-    ConstProtoLinkPtr const& rh_link) const {
+bool EqualPtLinkWithoutTx::operator()(
+    PtLinkKey const& lh_link,
+    PtLinkKey const& rh_link) const {
     return lh_link->module_ == rh_link->module_ and
            lh_link->chain_id_ == rh_link->chain_id_;
 }

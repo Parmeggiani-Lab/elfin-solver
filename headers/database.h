@@ -39,6 +39,8 @@ protected:
     void print_db();
 public:
     /* accessors */
+    std::vector<ProtoModuleSP> const& all_mods() const { return all_mods_; }
+    StrIndexMap const& mod_idx_map() const { return mod_idx_map_; }
     ModPtrRoulette const& singles() const { return singles_; }
     ModPtrRoulette const& hubs() const { return hubs_; }
     ModPtrRoulette const& basic_mods() const { return basic_mods_; }

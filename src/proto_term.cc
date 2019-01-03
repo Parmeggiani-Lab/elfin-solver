@@ -4,7 +4,7 @@
 
 #include "proto_module.h"
 #include "debug_utils.h"
-#include "exit_exception.h"
+#include "exceptions.h"
 
 // #define PRINT_FINALIZE
 
@@ -22,11 +22,10 @@ ProtoLink const& ProtoTerm::pick_random_link(
     }
     else {
         bad_term(term);
-        throw ExitException{1};  // Suppress no return warning.
+        throw ExitException(1, "Bad Term.");  // Suppress no return warning.
     }
 }
 
-//
 // find_link_to()
 //  - This assumes that links are identical as long as their module and
 //    chain_id are identical. The transformation matrix does not need to
@@ -38,12 +37,17 @@ ProtoLink const& ProtoTerm::pick_random_link(
 //
 // In c++20 we could search without creating a new instance, by
 // implementing specialized comparators with custom key type.
-//
-ProtoLinkPtrSetCItr ProtoTerm::find_link_to(
-    ConstProtoModulePtr dst_module,
+PtLinkKey ProtoTerm::find_link_to(
+    PtModKey const dst_module,
     size_t const dst_chain_id) const {
     ProtoLink const key_link(Transform(), dst_module, dst_chain_id);
-    return link_set_.find(&key_link);
+    auto link_itr = link_set_.find(&key_link);
+
+    if (link_itr == end(link_set_)) {
+        return nullptr;
+    }
+
+    return *link_itr;
 }
 
 
@@ -60,9 +64,8 @@ void ProtoTerm::finalize() {
     // Sort links by interface count in ascending order to facilitate fast
     // pick_random() that support partitioning by interface count.
     //
-    std::sort(
-        begin(links_),
-        end(links_),
+    std::sort(begin(links_),
+              end(links_),
     [](auto const & lhs, auto const & rhs) {
         return lhs->module_->counts().all_interfaces() <
                rhs->module_->counts().all_interfaces();

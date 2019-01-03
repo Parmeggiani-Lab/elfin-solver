@@ -42,8 +42,6 @@ public:
     void finalize();
 };
 
-typedef std::vector<ProtoChain> ProtoChainList;
-
 }  /* elfin */
 
 #endif  /* end of include guard: PROTO_CHAIN_H_ */

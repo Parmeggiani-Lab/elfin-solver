@@ -21,7 +21,7 @@ void _debug(
         JUtil.error("Reason:    %s\n", msg.c_str());
         JUtil.error("Location:  %s:%d in %s\n", filename, line, function);
         print_stacktrace();
-        throw ExitException{1};
+        throw ExitException(1, msg.c_str());
     }
 }
 

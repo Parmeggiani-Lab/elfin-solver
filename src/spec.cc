@@ -59,8 +59,8 @@ void Spec::parse(Options const& options) {
                   "Work area \"%s\" has no joints associated.",
                   name.c_str());
         }
-    } catch (std::exception const& e) {
-        TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
+    } catch (JSON::exception const& je) {
+        JSON_LOG_EXIT(je);
     }
 }
 

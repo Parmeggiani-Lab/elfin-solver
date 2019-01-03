@@ -1,7 +1,7 @@
 #include "proto_chain.h"
 
 #include "debug_utils.h"
-#include "exit_exception.h"
+#include "exceptions.h"
 
 // #define PRINT_FINALIZE
 
@@ -18,7 +18,7 @@ ProtoTerm const& ProtoChain::get_term(
     }
     else {
         bad_term(term);
-        throw ExitException{1};  // Suppress warning.
+        throw ExitException(1, "Bad term.");  // Suppress warning.
     }
 }
 

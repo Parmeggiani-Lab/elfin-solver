@@ -4,7 +4,7 @@
 
 #include "json.h"
 #include "debug_utils.h"
-#include "exit_exception.h"
+#include "exceptions.h"
 
 namespace elfin {
 
@@ -313,7 +313,7 @@ ARG_PARSER_CALLBACK_DEF(help_and_exit) {
     }
 
     std::cout << ss.rdbuf();
-    throw ExitException{0};
+    throw ExitException(0, "Help nessage printed.");
 
     return false;  // Suppress warning.
 }

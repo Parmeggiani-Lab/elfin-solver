@@ -25,8 +25,8 @@ StrList parse_neighbors(JSON const& json) {
         for (auto neighbor_name : json["neighbors"]) {
             res.push_back(neighbor_name);
         }
-    } catch (const std::exception& e) {
-        TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
+    } catch (JSON::exception const& je) {
+        JSON_LOG_EXIT(je);
     }
 
     return res;
@@ -44,8 +44,8 @@ UIJoint::Occupant parse_occupant(JSON const& json,
             res.parent_name = occ_network;
             res.ui_module = fxn_modules.at(json["occupant"]).get();
         }
-    } catch (const std::exception& e) {
-        TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
+    } catch (JSON::exception const& je) {
+        JSON_LOG_EXIT(je);
     }
 
     return res;
@@ -56,8 +56,8 @@ std::string parse_hinge_name(JSON const& json) {
 
     try {
         res = json["hinge"];
-    } catch (const std::exception& e) {
-        TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
+    } catch (JSON::exception const& je) {
+        JSON_LOG_EXIT(je);
     }
 
     return res;

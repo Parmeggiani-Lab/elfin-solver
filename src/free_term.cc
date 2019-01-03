@@ -6,8 +6,8 @@ namespace elfin {
 
 /* ctors */
 FreeTerm::FreeTerm(NodeKey const _node,
-                     TermType const _term,
-                     size_t const _chain_id) :
+                   TermType const _term,
+                   size_t const _chain_id) :
     node(_node),
     term(_term),
     chain_id(_chain_id) {
@@ -28,8 +28,7 @@ ProtoLink const& FreeTerm::random_proto_link() const {
     return proto_chain.pick_random_link(term);
 }
 
-FreeTerm::BridgeList FreeTerm::find_bridges(
-    FreeTerm const& dst) const
+FreeTerm::BridgeList FreeTerm::find_bridges(FreeTerm const& dst) const
 {
     BridgeList res;
     ProtoModule const* dst_mod = dst.node->prototype_;
@@ -57,12 +56,10 @@ FreeTerm::BridgeList FreeTerm::find_bridges(
             // dst.term is incoming term, the opposite of which is term.
             ProtoTerm const& ptterm_out =
                 middle_chain.get_term(term);
-            ProtoLinkPtrSetCItr itr =
-                ptterm_out.find_link_to(dst_mod, dst_chain_id);
+            auto pt_link = ptterm_out.find_link_to(dst_mod, dst_chain_id);
 
-            if (itr != ptterm_out.link_set().end()) {
-                // We have found a ptlink2
-                res.emplace_back(ptlink1.get(), *itr);
+            if (pt_link) {
+                res.emplace_back(ptlink1.get(), pt_link);
             }
         }
     }
@@ -70,18 +67,16 @@ FreeTerm::BridgeList FreeTerm::find_bridges(
     return res;
 }
 
-ProtoLink const* FreeTerm::find_link_to(
-    FreeTerm const& dst) const
+ProtoLink const* FreeTerm::find_link_to(FreeTerm const& dst) const
 {
     if (dst.term != opposite_term(term)) {
         return nullptr;
     }
 
-    return node->prototype_->find_link_to(
-               chain_id,
-               term,
-               dst.node->prototype_,
-               dst.chain_id);
+    return node->prototype_->find_link_to(chain_id,
+                                          term,
+                                          dst.node->prototype_,
+                                          dst.chain_id);
 }
 
 /* printers */

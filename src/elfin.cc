@@ -8,7 +8,7 @@
 #include "output_manager.h"
 #include "parallel_utils.h"
 #include "tests.h"
-#include "exit_exception.h"
+#include "exceptions.h"
 
 namespace elfin {
 
@@ -84,7 +84,7 @@ int main(int const argc, const char ** argv) {
     }
     catch (elfin::ExitException const& e) {
         if (e.code) {
-            JUtil.warn("Abnormal exit (%d)\n", e.code);
+            JUtil.warn("Abort (code=%d). Readon: %s\n", e.code, e.what());
         }
         return e.code;
     }

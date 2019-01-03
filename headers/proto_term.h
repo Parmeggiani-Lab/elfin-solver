@@ -7,19 +7,31 @@
 
 namespace elfin {
 
+/* Fwd Decl */
 class ProtoModule;
+
+/* types */
+
+typedef ProtoModule const* PtModKey;
 
 class ProtoTerm {
     friend ProtoModule;
 private:
     /* types */
-    typedef Roulette<ProtoLink const*> ProtoLinkRoulette;
+    typedef Roulette<PtLinkKey> PtLinkRoulette;
+
+    // Note: with c++20, std::unordered_set::find(K& key) becomes a template
+    // method. We'll be able to search the pointer set without creating a new
+    // ProtoLink instance (by comparing ProtoLink* with FreeTerm *).
+    typedef std::unordered_set <PtLinkKey,
+            HashPtLinkWithoutTx,
+            EqualPtLinkWithoutTx > PtLinkKeySet;
 
     /* data */
     bool already_finalized_ = false;
-    ProtoLinkSPList links_;
-    ProtoLinkRoulette n_roulette_, c_roulette_;
-    ProtoLinkPtrSet link_set_;
+    PtLinkSPList links_;
+    PtLinkRoulette n_roulette_, c_roulette_;
+    PtLinkKeySet link_set_;
 
 public:
     /* ctors */
@@ -30,17 +42,11 @@ public:
     ProtoTerm& operator=(ProtoTerm&& other) = delete;
 
     /* accessors */
-    ProtoLinkSPList const& links() const { return links_; }
+    PtLinkSPList const& links() const { return links_; }
     ProtoLink const& pick_random_link(TermType const term) const;
-    ProtoLinkPtrSet const& link_set() const { return link_set_; }
-    ProtoLinkPtrSetCItr find_link_to(
-        ConstProtoModulePtr dst_module,
-        size_t const dst_chain_id) const;
-    bool has_link_to(
-        ConstProtoModulePtr dst_module,
-        size_t const dst_chain_id) const {
-        return find_link_to(dst_module, dst_chain_id) != end(link_set_);
-    }
+    PtLinkKeySet const& link_set() const { return link_set_; }
+    PtLinkKey find_link_to(PtModKey const dst_module,
+                           size_t const dst_chain_id) const;
 
     /* modifiers */
     void finalize();

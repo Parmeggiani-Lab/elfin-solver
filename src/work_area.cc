@@ -39,15 +39,77 @@ UIJointKeys parse_leaf_joints(UIJointMap const& _joints)
     return res;
 }
 
+using PtModKey = ProtoModule const*;
+using PtModVisitMap = std::unordered_map<PtModKey, bool>;
+bool has_path_to(PtModKey const target_mod,
+                 PtModKey const prev_mod,
+                 PtModVisitMap& visited)
+{
+    DEBUG_NOMSG(not target_mod);
+    DEBUG_NOMSG(not prev_mod);
+
+    // DFS search for target_mod.
+    visited[prev_mod] = true;
+
+    auto check_ptterm = [&](ProtoTerm const & ptterm) {
+        return any_of(begin(ptterm.links()), end(ptterm.links()),
+        [&](auto const & ptlink) {
+            auto const dst = ptlink->module_;
+            return dst == target_mod or
+                   (not visited[dst] and has_path_to(target_mod, dst, visited));
+        });
+    };
+
+    for (auto const& ptchain : prev_mod->chains()) {
+        if (check_ptterm(ptchain.n_term()) or
+                check_ptterm(ptchain.c_term())) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // Occupied joints are supposed to be a subset of leaves.
 WorkArea::OccupantMap parse_occupant_map(UIJointKeys const& _leaf_joints)
 {
+    //
+    // THIS TEST DOES NOT TAKE INTO ACCOUNT TERMINUS DIRECTIONS YET!!!
+    //
     WorkArea::OccupantMap res;
     for (auto& leaf_joint : _leaf_joints) {
         if (leaf_joint->occupant.ui_module) {
             res.emplace(leaf_joint->occupant.ui_module->name, leaf_joint);
         }
     }
+
+    if (res.size() == 2) {
+        // Do DFS to determine whether first hinge actually has a path to
+        // second hinge.
+        auto const& hinge_name1 =
+            begin(res)->second->occupant.ui_module->module_name;
+        auto const& hinge_name2 =
+            (++begin(res))->second->occupant.ui_module->module_name;
+
+        auto const& mimap = XDB.mod_idx_map();
+        size_t const hinge_id1 = mimap.at(hinge_name1);
+        size_t const hinge_id2 = mimap.at(hinge_name2);
+
+        auto const mod_key1 = XDB.all_mods()[hinge_id1].get();
+        auto const mod_key2 = XDB.all_mods()[hinge_id2].get();
+
+        PtModVisitMap visited;
+        for (auto const& mod : XDB.all_mods()) {
+            visited.emplace(mod.get(), false);
+        }
+
+        if (not has_path_to(mod_key2, mod_key1, visited)) {
+            throw InvalidHingeException(
+                "No path between " + hinge_name1 +
+                " and " + hinge_name2);
+        }
+    }
+
     return res;
 }
 

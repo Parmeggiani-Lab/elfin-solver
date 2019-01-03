@@ -37,36 +37,18 @@ public:
 };
 
 /* types */
-typedef ProtoLink const* ConstProtoLinkPtr;
-typedef std::unique_ptr<ProtoLink> ProtoLinkSP;
-typedef std::vector<ProtoLinkSP> ProtoLinkSPList;
-typedef ProtoModule const* ConstProtoModulePtr;
+typedef ProtoLink const* PtLinkKey;
+typedef std::unique_ptr<ProtoLink> PtLinkSP;
+typedef std::vector<PtLinkSP> PtLinkSPList;
 
-struct HashProtoLinkWithoutTx {
-    size_t operator()(ConstProtoLinkPtr const& link) const;
+struct HashPtLinkWithoutTx {
+    size_t operator()(PtLinkKey const& link) const;
 };
 
-struct EqualProtoLinkWithoutTx {
-    bool operator()(
-        ConstProtoLinkPtr const& lh_link,
-        ConstProtoLinkPtr const& rh_link) const;
+struct EqualPtLinkWithoutTx {
+    bool operator()(PtLinkKey const& lh_link,
+                    PtLinkKey const& rh_link) const;
 };
-
-/*
- * Note: with c++20, std::unordered_set::find(K& key) becomes a template
- * method. We'll be able to search the pointer set without creating a new
- * ProtoLink instance (by comparing ProtoLink* with FreeTerm *).
- */
-typedef std::unordered_set <
-ConstProtoLinkPtr,
-HashProtoLinkWithoutTx,
-EqualProtoLinkWithoutTx >
-ProtoLinkPtrSet;
-
-typedef typename ProtoLinkPtrSet::const_iterator
-ProtoLinkPtrSetCItr;
-
-typedef std::vector<ConstProtoLinkPtr> ProtoLinkPtrList;
 
 }  /* elfin */
 

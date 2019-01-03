@@ -4,7 +4,7 @@
 #include <string>
 
 #include "string_utils.h"
-#include "exit_exception.h"
+#include "exceptions.h"
 
 namespace elfin {
 
@@ -43,8 +43,9 @@ namespace elfin {
     do {\
         _Pragma("omp single")\
         {\
-            JUtil.error(__VA_ARGS__);\
-            throw ExitException{1};\
+            std::string const& reason = string_format(__VA_ARGS__);\
+            JUtil.error(reason.c_str());\
+            throw ExitException(1, reason);\
         }\
     } while(0)
 #define PANIC_IF(PREDICATE, ...) \
@@ -52,10 +53,19 @@ namespace elfin {
         if(PREDICATE) {\
             _Pragma("omp single")\
             {\
-                JUtil.error(__VA_ARGS__);\
-                throw ExitException{1};\
+                std::string const& reason = string_format(__VA_ARGS__);\
+                JUtil.error(reason.c_str());\
+                throw ExitException(1, reason);\
             }\
         }\
+    } while(0)
+#define JSON_LOG_EXIT(JSON_EX) \
+    do {\
+        JUtil.error("JSON parse failure due to: %s\n", JSON_EX.what());\
+        JUtil.error("Occured at %s:%zu\n", __FILE__, __LINE__);\
+        JUtil.error("Function %s\n", __PRETTY_FUNCTION__);\
+        JUtil.error("Check https://nlohmann.github.io/json/classnlohmann_1_1basic__json.html\n");\
+        throw JSON_EX;\
     } while(0)
 
 void _debug(

@@ -6,8 +6,8 @@ std::string parse_module_name(JSON const& json) {
     std::string res;
     try {
         res = json["module_name"];
-    } catch (const std::exception& e) {
-        TRACE("Failed to parse spec from JSON.", "%s\n", e.what());
+    } catch (JSON::exception const& je) {
+        JSON_LOG_EXIT(je);
     }
     return res;
 }

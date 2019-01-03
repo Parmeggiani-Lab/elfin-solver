@@ -5,7 +5,7 @@
 
 #include "debug_utils.h"
 #include "node.h"
-#include "exit_exception.h"
+#include "exceptions.h"
 
 // #define PRINT_INIT
 // #define PRINT_FINALIZE
@@ -74,7 +74,7 @@ size_t ProtoModule::find_chain_id(std::string const& chain_name) const
         }
 
         TRACE_NOMSG("Chain Not Found\n");
-        throw ExitException{1};  // Suppress warning.
+        throw ExitException(1, "Chain Not Found");  // Suppress warning.
     }
     else {
         return chain_itr->id;
@@ -86,17 +86,9 @@ ProtoLink const* ProtoModule::find_link_to(size_t const src_chain_id,
         ProtoModule const* dst_module,
         size_t const dst_chain_id) const
 {
-
     ProtoTerm const& proto_term =
         chains_.at(src_chain_id).get_term(src_term);
-    ProtoLinkPtrSetCItr itr =
-        proto_term.find_link_to(dst_module, dst_chain_id);
-
-    if (itr != proto_term.link_set().end()) {
-        return *itr;
-    }
-
-    return nullptr;
+    return proto_term.find_link_to(dst_module, dst_chain_id);
 }
 
 /* modifiers */
