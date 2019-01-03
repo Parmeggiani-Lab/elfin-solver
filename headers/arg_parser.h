@@ -92,6 +92,15 @@ private:
             true,
             &ArgParser::set_avg_pair_dist
         },
+        {   "r",
+            "radius",
+            string_format("Set radius type (default=%s).\n"
+            "    Valid values are: %s.",
+            options_.radius_type.c_str(),
+            radius_types_setting_string().c_str()),
+            true,
+            &ArgParser::set_radius_type
+        },
         {   "S",
             "seed",
             string_format("Set RNG seed (default=0x%x). "
@@ -115,7 +124,7 @@ private:
             true,
             &ArgParser::set_ga_max_iters
         },
-        {   "sv",
+        {   "sr",
             "ga_survive_rate",
             string_format("Set GA survival rate (default=%.4f).",
             options_.ga_survive_rate),
@@ -129,7 +138,7 @@ private:
             true,
             &ArgParser::set_ga_stop_score
         },
-        {   "rf",
+        {   "rt",
             "ga_restart_trigger",
             string_format("Set number of stagnant generations "
             "before GA restarts (default=%zu)."
@@ -137,7 +146,7 @@ private:
             options_.ga_restart_trigger),
             true, &ArgParser::set_ga_restart_trigger
         },
-        {   "sf",
+        {   "mr",
             "ga_max_restarts",
             string_format(
                 "Set number of restarts before GA exits (default=%zu)."
@@ -155,19 +164,13 @@ private:
             true,
             &ArgParser::set_verbosity
         },
-        {   "t",
-            "test",
-            "Run unit tests and integration tests.",
-            false,
-            &ArgParser::set_run_tests
-        },
-        {   "d",
-            "device",
-            string_format("Run on accelerator device ID (default=%d).",
-            options_.device),
-            true,
-            &ArgParser::set_device
-        },
+        // {   "d",
+        //     "device",
+        //     string_format("Run on accelerator device ID (default=%d).",
+        //     options_.device),
+        //     true,
+        //     &ArgParser::set_device
+        // },
         {   "w",
             "n_workers",
             string_format("Set number of worker threads  (default=%zu). "
@@ -186,18 +189,15 @@ private:
         },
         {   "dry",
             "dry_run",
-            "Use dry run mode - exit after initializing first population.",
+            "Dry run mode - exit after initializing first population.",
             false,
             &ArgParser::set_dry_run
         },
-        {   "R",
-            "radius",
-            string_format("Set radius type (default=%s).\n"
-            "    Valid values are: %s.",
-            options_.radius_type.c_str(),
-            radius_types_setting_string().c_str()),
-            true,
-            &ArgParser::set_radius_type
+        {   "t",
+            "test",
+            "Test mode - runs unit tests and integration tests.",
+            false,
+            &ArgParser::set_run_tests
         }
     };
 
