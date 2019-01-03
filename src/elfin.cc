@@ -19,8 +19,6 @@ Elfin::InstanceMap Elfin::instances_;
 Elfin::Elfin(int const argc, char const** argv) {
     instances_.insert(this);
 
-    std::signal(SIGINT, interrupt_handler);
-
     // Display all info + warnings by default.
     JUtil.set_log_lvl(LOGLVL_INFO);
 
@@ -71,7 +69,7 @@ void Elfin::interrupt_handler(int const signal) {
             inst->crash_dump();
         }
 
-        throw ExitException{signal};
+        exit(1);
     }
 }
 
@@ -80,13 +78,24 @@ void Elfin::interrupt_handler(int const signal) {
 
 int main(int const argc, const char ** argv) {
     try {
+        std::signal(SIGINT, elfin::Elfin::interrupt_handler);
         elfin::Elfin(argc, argv).run();
         return 0;
     }
-    catch (elfin::ExitException e) {
+    catch (elfin::ExitException const& e) {
         if (e.code) {
-            JUtil.error("Aborting due to none zero code: %d\n", e.code);
+            JUtil.warn("Abnormal exit (%d)\n", e.code);
         }
         return e.code;
     }
+    catch (std::exception const& e)
+    {
+        JUtil.error("Aborting. Reason: %s\n", e.what());
+    }
+    catch (...)
+    {
+        JUtil.error("Aborting due to unknown exception.\n");
+    }
+
+    return 1;
 }

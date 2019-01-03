@@ -9,7 +9,7 @@
 namespace elfin {
 
 class Elfin {
-public: 
+public:
     /* types */
     typedef std::unordered_set<Elfin const*> InstanceMap;
 
@@ -22,6 +22,9 @@ public:
     /* modifiers */
     void run();
 
+    /* signal handlers */
+    static void interrupt_handler(int const signal);
+
 private:
     /* data */
     EvolutionSolver solver_;
@@ -30,9 +33,6 @@ private:
     /* accessors */
     void crash_dump() const;
     void init() const;
-
-    /* handlers */
-    static void interrupt_handler(int const signal);
 };
 
 } /* elfin */
