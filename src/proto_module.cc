@@ -130,10 +130,9 @@ void ProtoModule::finalize() {
 }
 
 /*
- * Creates links for appropriate chains in both mod_a and mod_b (transform
- * for mod_b is inverted).
+ * Creates links for appropriate chains in both mod_a and mod_b.
  *
- * mod_a's C-terminus connects to mod_b's N-terminus
+ * Important: mod_a's C-terminus connects to mod_b's N-terminus
  * (static)
  */
 void ProtoModule::create_proto_link_pair(
@@ -160,46 +159,25 @@ void ProtoModule::create_proto_link_pair(
 
     if (mod_a.type == ModuleType::SINGLE and
             mod_b.type == ModuleType::SINGLE) {
-        // Raise frame = inverse tx.
-        tx = tx.inversed();
+        // Do nothing - Single-to-Single transform is taken care of by
+        // dbgen.py.
     }
     else if (mod_a.type == ModuleType::SINGLE and
              mod_b.type == ModuleType::HUB) {
-        // Drop frame = do nothing.
+        // Invert tx because dbgen.py only outputs n_to_c_tx for
+        // Hub-to-Single.
+        tx = tx.inversed();
     }
     else if (mod_a.type == ModuleType::HUB and
              mod_b.type == ModuleType::SINGLE) {
-
-        // First find tx from hub to single
-        JSON const& hub_json = xdb["modules"]["hubs"][mod_a.name];
-        std::string const& hub_single_name =
-            hub_json["chains"][a_chain_name]["single_name"];
-
-        JSON const& singles_json = xdb["modules"]["singles"];
-        auto const& hub_single_chains_json =
-            singles_json[hub_single_name]["chains"];
-
-        TRACE(hub_single_chains_json.size() != 1,
-              "Single modules are expected to have exactly 1 chain, but %s has %zu.",
-              hub_single_name.c_str(), hub_single_chains_json.size());
-        std::string const& hub_single_chain_name =
-            begin(hub_single_chains_json).key();
-
-        JSON const& hub_single_json = singles_json[hub_single_name];
-
-        size_t const hub_to_single_tx_id =
-            hub_single_json["chains"][hub_single_chain_name]
-            ["c"][mod_b.name][b_chain_name];
-
-        Transform const tx_hub = get_tx(xdb, hub_to_single_tx_id);
-
-        // Raise to hub component frame
-        // Double raise - NOT associative!!!
-        tx = tx.inversed() * tx_hub.inversed();
+        // Do nothing - Single-to-Single transform is taken care of by
+        // dbgen.py.
     }
     else {
-        PANIC("mod_a.type == ModuleType::HUB and "
-              "mod_b.type == ModuleType::HUB\n");
+        TRACE("Bad mod type combination",
+              "mod_a.type == %s and mod_b.type == %s\n",
+              ModuleTypeToCStr(mod_a.type),
+              ModuleTypeToCStr(mod_b.type));
     }
 
     // Create links and count.
