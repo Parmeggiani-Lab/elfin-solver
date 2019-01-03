@@ -36,6 +36,11 @@ void InputManager::setup_cutoffs() {
 }
 
 /* public */
+InputManager::Args const InputManager::test_args = {
+    "elfin",  // Binary file name.
+    "--config_file", "config/unit_test.json"
+};
+
 void InputManager::parse_options(int const argc, const char ** argv) {
     // Parse arguments into options struct.
     instance().options_ = ArgParser(argc, argv).get_options();

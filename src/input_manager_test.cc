@@ -11,16 +11,18 @@ void InputManager::load_test_config(
     size_t const n_workers) {
     JUtil.info("Loading test config\n");
 
-    auto const& n_workers_str = std::to_string(n_workers);
-    char const* argv[] = {
-        "elfin", /* binary name */
-        "--config_file", "config/unit_test.json",
-        "--spec_file", spec_file.c_str(),
-        "--n_workers", n_workers_str.c_str()
-    };
+    Args args = test_args;
+    args.push_back("--spec_file");
+    args.push_back(spec_file);
+    args.push_back("--n_workers");
+    args.push_back(std::to_string(n_workers));
 
-    size_t const argc = sizeof(argv) / sizeof(char const*);
-    InputManager::parse_options(argc, argv);
+    std::vector<char const*> argv;
+    for (auto const& arg : args) {
+        argv.push_back(arg.c_str());
+    }
+
+    InputManager::parse_options(argv.size(), argv.data());
     InputManager::setup();
 }
 
@@ -28,43 +30,45 @@ void InputManager::load_test_config(
 TestStat InputManager::test() {
     TestStat ts;
 
-    load_test_config();
-
     // Test spec parsing.
-    ts.tests++;
-    if (SPEC.work_areas().size() != 1) {
-        ts.errors++;
-        JUtil.error("Spec parsing should get 1 work area but got %zu\n",
-                    SPEC.work_areas().size());
-    }
-    else {
-        auto& [wa_name, wa] = *begin(SPEC.work_areas());  // unique_ptr
-
-        // Test parsed points.
-        TRACE_NOMSG(wa->path_map.size() != 2);
-        auto pm_itr = begin(wa->path_map);
-        auto const& [fwd_ui_key, fwd_test_points] = *pm_itr;
-        auto const& [bwd_ui_key, bwd_test_points] = *(++pm_itr);
-
-        auto const& expect_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
-
+    {
         ts.tests++;
-        if (fwd_test_points != expect_points and
-                bwd_test_points != expect_points ) {
+
+        load_test_config("examples/quarter_snake_free.json");
+        if (SPEC.work_areas().size() != 1) {
             ts.errors++;
-            JUtil.error("Work area point parsing test failed\n");
-            std::ostringstream oss;
-            oss << "Expected:\n";
-            for (auto& p : tests::QUARTER_SNAKE_FREE_COORDINATES) {
-                oss << p.to_string() << "\n";
-            }
+            JUtil.error("Spec parsing should get 1 work area but got %zu\n",
+                        SPEC.work_areas().size());
+        }
+        else {
+            auto& [wa_name, wa] = *begin(SPEC.work_areas());  // unique_ptr
 
-            JUtil.error("But got:\n");
-            for (auto& p : fwd_test_points) {
-                oss << p.to_string() << "\n";
-            }
+            // Test parsed points.
+            TRACE_NOMSG(wa->path_map.size() != 2);
+            auto pm_itr = begin(wa->path_map);
+            auto const& [fwd_ui_key, fwd_test_points] = *pm_itr;
+            auto const& [bwd_ui_key, bwd_test_points] = *(++pm_itr);
 
-            JUtil.error(oss.str().c_str());
+            auto const& expect_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
+
+            ts.tests++;
+            if (fwd_test_points != expect_points and
+                    bwd_test_points != expect_points ) {
+                ts.errors++;
+                JUtil.error("Work area point parsing test failed\n");
+                std::ostringstream oss;
+                oss << "Expected:\n";
+                for (auto& p : tests::QUARTER_SNAKE_FREE_COORDINATES) {
+                    oss << p.to_string() << "\n";
+                }
+
+                JUtil.error("But got:\n");
+                for (auto& p : fwd_test_points) {
+                    oss << p.to_string() << "\n";
+                }
+
+                JUtil.error(oss.str().c_str());
+            }
         }
     }
 

@@ -1,6 +1,8 @@
 #ifndef INPUT_MANAGER_H_
 #define INPUT_MANAGER_H_
 
+#include <vector>
+
 #include "options.h"
 #include "spec.h"
 #include "database.h"
@@ -24,6 +26,9 @@ struct GATimes {
 
 class InputManager {
 protected:
+    /* types */
+    typedef std::vector<std::string> Args;
+
     /* data */
     Options options_;
     Cutoffs cutoffs_;
@@ -38,6 +43,9 @@ protected:
     /* modifiers */
     static void setup_cutoffs();
 public:
+    /* data */
+    static Args const test_args;
+
     /* accessors */
     static InputManager& instance() {
         static InputManager im;
@@ -67,7 +75,7 @@ public:
 
     /* tests */
     static void load_test_config(
-        std::string const& spec_file = "examples/quarter_snake_free.json",
+        std::string const& spec_file,
         size_t const n_workers = 1);
     static TestStat test();
 };
