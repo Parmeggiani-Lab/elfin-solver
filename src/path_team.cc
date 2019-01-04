@@ -461,7 +461,7 @@ struct PathTeam::PImpl {
 
                 insert_points.emplace_back(link1->src(), link1->dst());
                 auto const& ip = insert_points.back();
-                if (ip.bridges.size() == 0) {
+                if (ip.bridges.empty()) {
                     insert_points.pop_back();
                 }
             }
@@ -564,7 +564,7 @@ struct PathTeam::PImpl {
 
                 swap_points.emplace_back(link1->src(), curr_node, link2->dst());
                 auto const& sp = swap_points.back();
-                if (sp.bridges.size() == 0) {
+                if (sp.bridges.empty()) {
                     swap_points.pop_back();
                 }
             }
@@ -813,7 +813,7 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
     NodeKey first_node = nullptr;
     if (not recipe.empty()) {
         std::string const& first_mod_name = recipe[0].mod_name;
-        first_node = add_node(XDB.get_module(first_mod_name), shift_tx);
+        first_node = add_node(XDB.get_mod(first_mod_name), shift_tx);
 
         if (cb_on_first_node) {
             cb_on_first_node(first_node);
@@ -825,13 +825,13 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
             auto const& step = *itr;
 
             // Create next node.
-            auto src_mod = XDB.get_module(step.mod_name);
-            auto dst_mod = XDB.get_module((itr + 1)->mod_name);
+            auto src_mod = XDB.get_mod(step.mod_name);
+            auto dst_mod = XDB.get_mod((itr + 1)->mod_name);
             TRACE_NOMSG(not src_mod);
             TRACE_NOMSG(not dst_mod);
 
-            size_t const src_chain_id = src_mod->find_chain_id(step.src_chain);
-            size_t const dst_chain_id = dst_mod->find_chain_id(step.dst_chain);
+            size_t const src_chain_id = src_mod->get_chain_id(step.src_chain);
+            size_t const dst_chain_id = dst_mod->get_chain_id(step.dst_chain);
 
             // Find ProtoLink.
             auto pt_link = src_mod->find_link_to(

@@ -81,7 +81,14 @@ ProtoLink const* FreeTerm::find_link_to(FreeTerm const& dst) const
 
 /* printers */
 void FreeTerm::print_to(std::ostream& os) const {
-    os << "FreeTerm[node: " << node->prototype_->name;
+    os << "FreeTerm[node: ";
+    if (node) {
+        os << node->prototype_->name;
+    }
+    else {
+        os << "nil";
+    }
+    
     os << " (Ptr: " << (void*) node << "), ";
     os << "term: " << TermTypeToCStr(term) << ", ";
     os << "chain: " << chain_id << "]";

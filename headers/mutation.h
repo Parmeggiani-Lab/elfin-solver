@@ -23,8 +23,7 @@ namespace mutation {
     MACRO(SWAP) \
     MACRO(CROSS) \
     MACRO(REGENERATE) \
-    MACRO(_ENUM_SIZE) \
-
+    MACRO(_ENUM_SIZE)
 GEN_ENUM_AND_STRING(Mode, ModeNames, FOREACH_MODES);
 
 typedef std::unordered_map<Mode, size_t> Counter;

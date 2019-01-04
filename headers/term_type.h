@@ -2,6 +2,7 @@
 #define TERM_TYPE_H_
 
 #include <string>
+#include <unordered_set>
 
 #include "random_utils.h"
 #include "debug_utils.h"
@@ -13,28 +14,16 @@ namespace elfin {
     MACRO(C) \
     MACRO(ANY) \
     MACRO(NONE) \
-    MACRO(_ENUM_COUNT) \
-
+    MACRO(_ENUM_COUNT)
 GEN_ENUM_AND_STRING(TermType, TermTypeNames, FOREACH_TERMTYPE);
 
-inline void bad_term(TermType term) {
-    TRACE(term == term,
-          "Bad TermType: %s\n",
-          TermTypeToCStr(term));
-}
+extern std::unordered_set<std::string> const VALID_TERM_NAMES;
 
-inline TermType opposite_term(TermType const term) {
-    if (term == TermType::N) {
-        return TermType::C;
-    }
-    else if (term == TermType::C) {
-        return TermType::N;
-    }
-    else {
-        bad_term(term);
-        return TermType::NONE;
-    }
-}
+void bad_term(TermType const term);
+
+TermType opposite_term(TermType const term);
+
+TermType parse_term(std::string const& str);
 
 }  /* elfin */
 

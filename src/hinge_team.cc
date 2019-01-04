@@ -27,7 +27,7 @@ struct HingeTeam::PImpl {
 
         // Place hinge node.
         auto const& ui_mod = _.hinge_ui_joint_->occupant.ui_module;
-        auto proto_mod = XDB.get_module(ui_mod->module_name);
+        auto proto_mod = XDB.get_mod(ui_mod->module_name);
 
         // Here, if elfin-ui provides info about which specific chain of
         // the hinge module interfaces with the next unknown module

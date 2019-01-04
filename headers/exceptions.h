@@ -15,13 +15,22 @@ struct ExitException : public runtime_error {
         code(_code) {}
 };
 
-struct InvalidHingeException : public runtime_error {
-    using runtime_error::runtime_error;
+#define DECL_EXCEPTION(NAME) \
+struct NAME : public runtime_error {\
+    using runtime_error::runtime_error;\
+    NAME() : runtime_error("Unknwon") {}\
 };
 
-struct ValueNotFoundException : public runtime_error {
-    using runtime_error::runtime_error;
-};
+
+DECL_EXCEPTION(BadArgument);
+DECL_EXCEPTION(BadTerminus);
+DECL_EXCEPTION(BadWorkType);
+DECL_EXCEPTION(InvalidHinge);
+DECL_EXCEPTION(ValueNotFound);
+DECL_EXCEPTION(ShouldNotReach);
+DECL_EXCEPTION(CouldNotParse);
+
+#undef DECL_EXCEPTION
 
 }  /* elfin */
 

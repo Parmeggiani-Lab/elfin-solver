@@ -8,8 +8,7 @@
 namespace elfin {
 
 /* public */
-ProtoTerm const& ProtoChain::get_term(
-    TermType const term) const {
+ProtoTerm const& ProtoChain::get_term(TermType const term) const {
     if (term == TermType::N) {
         return n_term_;
     }
@@ -18,7 +17,7 @@ ProtoTerm const& ProtoChain::get_term(
     }
     else {
         bad_term(term);
-        throw ExitException(1, "Bad term.");  // Suppress warning.
+        throw ShouldNotReach();
     }
 }
 

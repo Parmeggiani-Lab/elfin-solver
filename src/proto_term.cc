@@ -22,7 +22,7 @@ ProtoLink const& ProtoTerm::pick_random_link(
     }
     else {
         bad_term(term);
-        throw ExitException(1, "Bad Term.");  // Suppress no return warning.
+        throw ShouldNotReach();
     }
 }
 
@@ -37,9 +37,8 @@ ProtoLink const& ProtoTerm::pick_random_link(
 //
 // In c++20 we could search without creating a new instance, by
 // implementing specialized comparators with custom key type.
-PtLinkKey ProtoTerm::find_link_to(
-    PtModKey const dst_module,
-    size_t const dst_chain_id) const {
+PtLinkKey ProtoTerm::find_link_to(PtModKey const dst_module,
+                                  size_t const dst_chain_id) const {
     ProtoLink const key_link(Transform(), dst_module, dst_chain_id);
     auto link_itr = link_set_.find(&key_link);
 
@@ -50,6 +49,53 @@ PtLinkKey ProtoTerm::find_link_to(
     return *link_itr;
 }
 
+using PtModVisitMap = std::unordered_map<PtModKey, bool>;
+
+// bool has_path_to(PtModKey const target_mod,
+//                  PtModKey const prev_mod,
+//                  PtModVisitMap& visited)
+// {
+//     DEBUG_NOMSG(not target_mod);
+//     DEBUG_NOMSG(not prev_mod);
+
+//     // DFS search for target_mod.
+//     visited[prev_mod] = true;
+
+//     auto check_ptterm = [&](ProtoTerm const & ptterm) {
+//         return any_of(begin(ptterm.links()), end(ptterm.links()),
+//         [&](auto const & ptlink) {
+//             auto const dst = ptlink->module_;
+//             return dst == target_mod or
+//                    (not visited[dst] and has_path_to(target_mod, dst, visited));
+//         });
+//     };
+
+//     for (auto const& ptchain : prev_mod->chains()) {
+//         if (check_ptterm(ptchain.n_term()) or
+//                 check_ptterm(ptchain.c_term())) {
+//             return true;
+//         }
+//     }
+
+//     return false;
+// }
+
+std::vector<ProtoPath> ProtoTerm::find_paths(
+    PtModKey const dst_module,
+    PtTermKeys const& dst_ptt_keys) const
+{
+    std::vector<ProtoPath> res;
+
+    // No need to do DFS if no dst terms are free.
+    if (not dst_ptt_keys.empty()) {
+        PtModVisitMap visited;
+        for (auto const& mod : XDB.all_mods()) {
+            visited.emplace(mod.get(), false);
+        }
+    }
+
+    return res;
+}
 
 /* modifiers */
 void ProtoTerm::finalize() {

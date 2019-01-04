@@ -9,6 +9,9 @@ namespace elfin {
 
 /* Fwd Decl */
 class ProtoModule;
+class ProtoTerm;
+typedef ProtoTerm const* PtTermKey;
+typedef std::vector<PtTermKey> PtTermKeys;
 
 /* types */
 
@@ -47,6 +50,8 @@ public:
     PtLinkKeySet const& link_set() const { return link_set_; }
     PtLinkKey find_link_to(PtModKey const dst_module,
                            size_t const dst_chain_id) const;
+    std::vector<ProtoPath> find_paths(PtModKey const dst_module,
+                                      PtTermKeys const& dst_ptt_keys) const;
 
     /* modifiers */
     void finalize();

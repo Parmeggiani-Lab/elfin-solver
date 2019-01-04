@@ -3,17 +3,24 @@
 
 #include "ui_object.h"
 #include "map_utils.h"
+#include "term_type.h"
 
 namespace elfin {
 
 struct UIModule : public UIObject {
+    /* type */
+    struct UILink {
+        TermType const term;
+        std::string const src_chain_name;
+        std::string const dst_chain_name;
+        std::string const target_ui_name;
+    };
+    typedef std::vector<UILink> Linkage;
+
     /* data */
     std::string const module_name;
-
-    // Other fields:
-    // module_type
-    // c_linkage
-    // n_linkage
+    std::string const module_type;
+    Linkage const linkage;
 
     /* ctors */
     UIModule(std::string const& name,
@@ -27,7 +34,7 @@ struct UIModule : public UIObject {
 };
 
 typedef SPMap<UIModule> UIModuleMap;
-typedef UIModule const* UIModuleKey;
+typedef UIModule const* UIModKey;
 
 }  /* elfin */
 

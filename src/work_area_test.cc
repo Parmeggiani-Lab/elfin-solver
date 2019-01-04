@@ -19,11 +19,11 @@ TestStat WorkArea::test() {
                 "examples/H_2h_invalid_hinge.json"
             });
 
-            // Should throw InvalidHingeException by now
+            // Should throw InvalidHinge by now
             JUtil.error("Invalid hinge failed to trigger exception.\n");
             ts.errors++;
         }
-        catch (InvalidHingeException const& e) {
+        catch (InvalidHinge const& e) {
             // All good!
         }
     }
@@ -38,8 +38,8 @@ TestStat WorkArea::test() {
                 "examples/H_2h.json"
             });
         }
-        catch (InvalidHingeException const& e) {
-            // Should NOT throw InvalidHingeException by now
+        catch (InvalidHinge const& e) {
+            // Should NOT throw InvalidHinge by now
             JUtil.error("Valid hinge triggered exception. Details: %s\n",
                 e.what());
             ts.errors++;

@@ -125,17 +125,16 @@ void Database::print_db() {
 
 /* public */
 /* accessors */
-ProtoModule const* Database::get_module(
-    std::string const& name) const {
-    auto itr = mod_idx_map_.find(name);
+PtModKey Database::get_mod(std::string const& name) const {
+    PtModKey res = nullptr;
 
-    ProtoModule const* mod = nullptr;
+    auto const itr = mod_idx_map_.find(name);
 
     if (itr != end(mod_idx_map_)) {
-        mod = all_mods_.at(itr->second).get();
+        res = all_mods_.at(itr->second).get();
     }
 
-    return mod;
+    return res;
 }
 
 /* modifiers */

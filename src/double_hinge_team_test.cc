@@ -32,7 +32,7 @@ TestStat DoubleHingeTeam::test() {
         auto const& [hinge_name, hinge_ui_joint_key] = *om_itr;
         
         // Do not use UIJointKey's tx because it doesn't have the correct
-        // rotation. Must use UIModuleKey
+        // rotation. Must use UIModKey
         auto hinge_ui_module_key = hinge_ui_joint_key->occupant.ui_module;
         auto const& hinge_tx = hinge_ui_module_key->tx;
 

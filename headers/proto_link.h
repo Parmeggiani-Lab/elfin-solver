@@ -6,10 +6,14 @@
 
 #include "geometry.h"
 #include "string_utils.h"
+#include "proto_path.h"
+#include "term_type.h"
 
 namespace elfin {
 
+/* Fwd Decl */
 class ProtoModule;
+typedef ProtoModule const* PtModKey;
 
 class ProtoLink : public Printable {
 private:
@@ -18,12 +22,12 @@ private:
 public:
     /* data */
     Transform const tx_;
-    ProtoModule const* const module_;
+    PtModKey const module_;
     size_t const chain_id_;
 
     /* ctors */
     ProtoLink(Transform const& tx,
-              ProtoModule const* module,
+              PtModKey const module,
               size_t const chain_id);
 
     /* accessors */

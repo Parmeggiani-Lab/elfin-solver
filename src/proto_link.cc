@@ -5,12 +5,11 @@
 namespace elfin {
 
 ProtoLink::ProtoLink(Transform const& tx,
-                     ProtoModule const* module,
+                     PtModKey const module,
                      size_t const chain_id) :
     tx_(tx),
     module_(module),
-    chain_id_(chain_id)
-{}
+    chain_id_(chain_id) {}
 
 /* modifiers */
 // static

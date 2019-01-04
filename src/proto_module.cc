@@ -62,7 +62,7 @@ ProtoModule::ProtoModule(std::string const& _name,
 }
 
 /* accessors */
-size_t ProtoModule::find_chain_id(std::string const& chain_name) const
+size_t ProtoModule::get_chain_id(std::string const& chain_name) const
 {
     auto chain_itr = std::find_if(begin(chains_),
                                   end(chains_),
@@ -139,12 +139,12 @@ void ProtoModule::create_proto_link_pair(
 {
     // Find A chains.
     ProtoChainList& a_chains = mod_a.chains_;
-    size_t const a_chain_id = mod_a.find_chain_id(a_chain_name);
+    size_t const a_chain_id = mod_a.get_chain_id(a_chain_name);
     ProtoChain& a_chain = a_chains.at(a_chain_id);
 
     // Find B chains.
     ProtoChainList& b_chains = mod_b.chains_;
-    size_t const b_chain_id = mod_b.find_chain_id(b_chain_name);
+    size_t const b_chain_id = mod_b.get_chain_id(b_chain_name);
     ProtoChain& b_chain = b_chains.at(b_chain_id);
 
     // Resolve transformation matrix: C-term extrusion style.

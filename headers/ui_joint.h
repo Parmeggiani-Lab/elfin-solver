@@ -15,7 +15,7 @@ struct UIJoint : public UIObject {
     struct Occupant : public Printable {
         /* data */
         std::string parent_name = "";
-        UIModuleKey ui_module = nullptr;
+        UIModKey ui_module = nullptr;
 
         /* dtors */
         virtual ~Occupant() {}

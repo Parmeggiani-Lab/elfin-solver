@@ -10,15 +10,18 @@
 
 namespace elfin {
 
+/* Fwd Decl */
+struct FreeTerm;
+
+/* types */
 #define FOREACH_MODULETYPE(MACRO) \
     MACRO(SINGLE) \
     MACRO(ASYM_HUB) \
     MACRO(SYM_HUB) \
-    MACRO(UNKNOWN) \
-
+    MACRO(UNKNOWN)
 GEN_ENUM_AND_STRING(ModuleType, ModuleTypeNames, FOREACH_MODULETYPE);
 
-struct FreeTerm;
+/* free function */
 bool is_hub(ModuleType const type);
 
 class ProtoModule : public Printable {
@@ -58,7 +61,7 @@ public:
     ProtoChainList const& chains() const { return chains_; }
     FreeTerms const& free_terms() const { return free_terms_; }
     Counts const& counts() const { return counts_; }
-    size_t find_chain_id(std::string const& chain_name) const;
+    size_t get_chain_id(std::string const& chain_name) const;
     ProtoLink const* find_link_to(size_t const src_chain_id,
                                   TermType const src_term,
                                   ProtoModule const* dst_module,
@@ -79,6 +82,7 @@ public:
     virtual void print_to(std::ostream& os) const;
 };
 
+typedef ProtoModule const* PtModKey;
 typedef std::unique_ptr<ProtoModule> ProtoModuleSP;
 
 }  /* elfin */

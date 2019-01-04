@@ -45,7 +45,7 @@ public:
     ModPtrRoulette const& hubs() const { return hubs_; }
     ModPtrRoulette const& basic_mods() const { return basic_mods_; }
     ModPtrRoulette const& complex_mods() const { return complex_mods_; }
-    ProtoModule const* get_module(std::string const& name) const;
+    PtModKey get_mod(std::string const& name) const;
 
     /* modifiers */
     void parse(Options const& options);
