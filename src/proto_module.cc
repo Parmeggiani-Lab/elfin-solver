@@ -13,6 +13,10 @@
 namespace elfin {
 
 /* free */
+bool is_hub(ModuleType const type) {
+    return type == ModuleType::ASYM_HUB or type == ModuleType::SYM_HUB;
+}
+
 Transform get_tx(JSON const& xdb,
                  size_t const tx_id) {
     TRACE(tx_id >= xdb["n_to_c_tx"].size(),
@@ -67,13 +71,13 @@ size_t ProtoModule::find_chain_id(std::string const& chain_name) const
     if (chain_itr == end(chains_)) {
         // Verbose diagnostics.
         JUtil.error("Could not find chain named %s in ProtoModule %s\n",
-                    chain_name, chain_name.c_str());
+                    chain_name.c_str(), name.c_str());
         JUtil.error("The following chains are present:\n");
         for (auto& chain : chains_) {
             JUtil.error("%s", chain.name.c_str());
         }
 
-        TRACE_NOMSG("Chain Not Found\n");
+        TRACE_NOMSG("Chain Not Found");
         throw ExitException(1, "Chain Not Found");  // Suppress warning.
     }
     else {
@@ -121,12 +125,10 @@ void ProtoModule::finalize() {
     }
 }
 
-/*
- * Creates links for appropriate chains in both mod_a and mod_b.
- *
- * Important: mod_a's C-terminus connects to mod_b's N-terminus
- * (static)
- */
+// Creates links for appropriate chains in both mod_a and mod_b.
+//
+// Important: mod_a's C-terminus connects to mod_b's N-terminus
+// (static)
 void ProtoModule::create_proto_link_pair(
     JSON const& xdb,
     size_t const tx_id,
@@ -135,7 +137,6 @@ void ProtoModule::create_proto_link_pair(
     ProtoModule& mod_b,
     std::string const& b_chain_name)
 {
-
     // Find A chains.
     ProtoChainList& a_chains = mod_a.chains_;
     size_t const a_chain_id = mod_a.find_chain_id(a_chain_name);
@@ -155,12 +156,12 @@ void ProtoModule::create_proto_link_pair(
         // dbgen.py.
     }
     else if (mod_a.type == ModuleType::SINGLE and
-             mod_b.type == ModuleType::HUB) {
+             mod_b.is_hub()) {
         // Invert tx because dbgen.py only outputs n_to_c_tx for
         // Hub-to-Single.
         tx = tx.inversed();
     }
-    else if (mod_a.type == ModuleType::HUB and
+    else if (mod_a.is_hub() and
              mod_b.type == ModuleType::SINGLE) {
         // Do nothing - Single-to-Single transform is taken care of by
         // dbgen.py.

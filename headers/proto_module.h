@@ -12,13 +12,14 @@ namespace elfin {
 
 #define FOREACH_MODULETYPE(MACRO) \
     MACRO(SINGLE) \
-    MACRO(HUB) \
+    MACRO(ASYM_HUB) \
+    MACRO(SYM_HUB) \
     MACRO(UNKNOWN) \
 
 GEN_ENUM_AND_STRING(ModuleType, ModuleTypeNames, FOREACH_MODULETYPE);
 
 struct FreeTerm;
-
+bool is_hub(ModuleType const type);
 
 class ProtoModule : public Printable {
 public:
@@ -62,6 +63,7 @@ public:
                                   TermType const src_term,
                                   ProtoModule const* dst_module,
                                   size_t const dst_chain_id) const;
+    bool is_hub() const { return elfin::is_hub(type); }
 
     /* modifiers */
     void finalize();

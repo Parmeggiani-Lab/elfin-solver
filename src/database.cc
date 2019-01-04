@@ -45,8 +45,14 @@ void Database::reset() {
 void Database::categorize() {
     for (auto& mod : all_mods_) {
         size_t const n_itf = mod->counts().all_interfaces();
-        ProtoModule* mod_raw_ptr = mod.get();
+        auto mod_raw_ptr = mod.get();
+
         if (n_itf < 2) {
+            if (mod->type == ModuleType::SYM_HUB) {
+                JUtil.warn("Disabled %s has no interfaces\n", mod->name.c_str());
+                continue;
+            }
+
             PANIC("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
                   mod->name.c_str(), n_itf);
         } else if (n_itf == 2) {
@@ -57,7 +63,7 @@ void Database::categorize() {
 
         if (mod->type == ModuleType::SINGLE) {
             singles_.push_back(mod->counts().all_links(), mod_raw_ptr);
-        } else if (mod->type == ModuleType::HUB) {
+        } else if (mod->is_hub()) {
             hubs_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
             PANIC("mod[%s] has unknown ModuleType: %s\n",
@@ -154,7 +160,8 @@ void Database::parse(Options const& options) {
     JSON const& hubs = xdb["modules"]["hubs"];
     auto for_each_hub_json = [&](JSONParser const & lambda) {
         for (auto& [key, json] : hubs.items()) {
-            lambda(key, json, ModuleType::HUB);
+            lambda(key, json, json["symmetric"] == true ?
+                   ModuleType::SYM_HUB : ModuleType::ASYM_HUB);
         }
     };
 
@@ -201,6 +208,13 @@ void Database::parse(Options const& options) {
                     all_mods_.at(/*mod_b_id=*/mod_idx_map_[c_term_name]);
 
                 for (auto& [b_chain_name, b_chain_json] : c_term_json.items()) {
+                    if (mod_a->type == ModuleType::SYM_HUB or
+                            mod_b->type == ModuleType::SYM_HUB) {
+                        JUtil.warn("parse_link: symmetric hubs are currently disabled (%s to %s)\n",
+                                   mod_a->name.c_str(), mod_b->name.c_str());
+                        continue;
+                    }
+
                     // In create_proto_link(), an inversed version for c-n
                     // transform is created.
                     ProtoModule::create_proto_link_pair(

@@ -79,7 +79,8 @@ void ProtoTerm::finalize() {
 
         size_t n_cpd = 0, c_cpd = 0;
 
-        ProtoModule const* target_prot = link->module_;
+        auto const target_prot = link->module_;
+
         size_t const ncount = target_prot->counts().n_links;
         size_t const ccount = target_prot->counts().c_links;
 
