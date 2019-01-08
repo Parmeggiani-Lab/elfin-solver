@@ -39,17 +39,17 @@ FreeTerm::BridgeList FreeTerm::find_bridges(FreeTerm const& dst) const
 
     // For each middle ProtoModule that ptterm_src connects to...
     for (auto& ptlink1 : ptterm_src.links()) {
-        ProtoModule const* middle_mod = ptlink1->module_;
+        auto const mid_mod_ptr = ptlink1->module;
 
         // Skip non basic modules
-        if (middle_mod->counts().all_interfaces() > 2) {
+        if (mid_mod_ptr->counts().all_interfaces() > 2) {
             continue;
         }
 
-        size_t const chain_in = ptlink1->chain_id_;
+        size_t const chain_in = ptlink1->chain_id;
 
         // Look for ptlink2 to dst_mod
-        for (ProtoChain const& middle_chain : middle_mod->chains()) {
+        for (ProtoChain const& middle_chain : mid_mod_ptr->chains()) {
             // Skip incoming chain.
             if (middle_chain.id == chain_id) continue;
 
@@ -88,7 +88,7 @@ void FreeTerm::print_to(std::ostream& os) const {
     else {
         os << "nil";
     }
-    
+
     os << " (Ptr: " << (void*) node << "), ";
     os << "term: " << TermTypeToCStr(term) << ", ";
     os << "chain: " << chain_id << "]";

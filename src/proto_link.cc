@@ -4,44 +4,35 @@
 
 namespace elfin {
 
-ProtoLink::ProtoLink(Transform const& tx,
-                     PtModKey const module,
-                     size_t const chain_id) :
-    tx_(tx),
-    module_(module),
-    chain_id_(chain_id) {}
-
-/* modifiers */
-// static
-void ProtoLink::pair_links(
-    ProtoLink* lhs, ProtoLink* rhs) {
-    TRACE(not lhs->tx_.is_approx(rhs->tx_.inversed()),
-          "lhs->tx=%s\nrhs->tx.inversed()=%s\n",
-          lhs->tx_.to_string().c_str(),
-          rhs->tx_.inversed().to_string().c_str());
-    lhs->reverse_ = rhs;
-    rhs->reverse_ = lhs;
-}
+/* ctors */
+ProtoLink::ProtoLink(Transform const& _tx,
+                     PtModKey const _module,
+                     size_t const _chain_id,
+                     PtLinkKey const _reverse) :
+    tx(_tx),
+    module(_module),
+    chain_id(_chain_id),
+    reverse(_reverse) {}
 
 /* printers */
 void ProtoLink::print_to(std::ostream& os) const {
-    os << "ProtoLink (" << module_->name << ") [\n";
-    os << "  Chain ID: " << chain_id_ << "\n";
-    os << tx_ << "\n";
+    os << "ProtoLink (" << module->name << ") [\n";
+    os << "  Chain ID: " << chain_id << "\n";
+    os << tx << "\n";
     os << "]";
 }
 
-size_t HashPtLinkWithoutTx::operator()(
-    PtLinkKey const& link) const {
-    return std::hash<void *>()((void *) link->module_) ^
-           std::hash<size_t>()(link->chain_id_);
+size_t HashPtLinkSimple::operator()(PtLinkKey const& link) const {
+    return std::hash<void *>()((void *) link->module) ^
+           std::hash<size_t>()(link->chain_id);
 }
 
-bool EqualPtLinkWithoutTx::operator()(
+bool EqualPtLinkSimple::operator()(
     PtLinkKey const& lh_link,
-    PtLinkKey const& rh_link) const {
-    return lh_link->module_ == rh_link->module_ and
-           lh_link->chain_id_ == rh_link->chain_id_;
+    PtLinkKey const& rh_link) const
+{
+    return lh_link->module == rh_link->module and
+           lh_link->chain_id == rh_link->chain_id;
 }
 
 

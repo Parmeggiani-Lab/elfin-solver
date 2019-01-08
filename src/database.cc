@@ -110,14 +110,14 @@ void Database::print_db() {
             for (size_t k = 0; k < n_links.size(); ++k)
             {
                 JUtil.warn("\t\tn_links[%zu] -> xdb_[%s]\n",
-                           k, n_links[k]->module_->name.c_str());
+                           k, n_links[k]->module->name.c_str());
             }
 
             auto& c_links = proto_chain.c_term().links();
             for (size_t k = 0; k < c_links.size(); ++k)
             {
                 JUtil.warn("\t\tc_links[%zu] -> xdb_[%s]\n",
-                           k, c_links[k]->module_->name.c_str());
+                           k, c_links[k]->module->name.c_str());
             }
         }
     }

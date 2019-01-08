@@ -17,14 +17,15 @@ bool is_hub(ModuleType const type) {
     return type == ModuleType::ASYM_HUB or type == ModuleType::SYM_HUB;
 }
 
-Transform get_tx(JSON const& xdb,
-                 size_t const tx_id) {
-    TRACE(tx_id >= xdb["n_to_c_tx"].size(),
-          ("tx_id > xdb[\"n_to_c_tx\"].size()\n"
+Transform get_tx(JSON const& xdb_json,
+                 size_t const tx_id)
+{
+    TRACE(tx_id >= xdb_json["n_to_c_tx"].size(),
+          ("tx_id > xdb_json[\"n_to_c_tx\"].size()\n"
            "  Either xdb.json is corrupted or "
            "there is an error in dbgen.py.\n"));
 
-    return Transform(xdb["n_to_c_tx"][tx_id]);
+    return Transform(xdb_json["n_to_c_tx"][tx_id]);
 }
 
 /* public */
@@ -87,12 +88,84 @@ size_t ProtoModule::get_chain_id(std::string const& chain_name) const
 
 ProtoLink const* ProtoModule::find_link_to(size_t const src_chain_id,
         TermType const src_term,
-        ProtoModule const* dst_module,
+        PtModKey const dst_mod,
         size_t const dst_chain_id) const
 {
     ProtoTerm const& proto_term =
         chains_.at(src_chain_id).get_term(src_term);
-    return proto_term.find_link_to(dst_module, dst_chain_id);
+    return proto_term.find_link_to(dst_mod, dst_chain_id);
+}
+
+// bool has_path_to(PtModKey const target_mod,
+//                  PtModKey const prev_mod,
+//                  PtModVisitMap& visited)
+// {
+//     DEBUG_NOMSG(not target_mod);
+//     DEBUG_NOMSG(not prev_mod);
+
+//     // DFS search for target_mod.
+//     visited[prev_mod] = true;
+
+//     auto check_ptterm = [&](ProtoTerm const & ptterm) {
+//         return any_of(begin(ptterm.links()), end(ptterm.links()),
+//         [&](auto const & ptlink) {
+//             auto const dst = ptlink->module_;
+//             return dst == target_mod or
+//                    (not visited[dst] and has_path_to(target_mod, dst, visited));
+//         });
+//     };
+
+//     for (auto const& ptchain : prev_mod->chains()) {
+//         if (check_ptterm(ptchain.n_term()) or
+//                 check_ptterm(ptchain.c_term())) {
+//             return true;
+//         }
+//     }
+
+//     return false;
+// }
+
+using PtTermSet = std::unordered_set<PtTermKey>;
+
+void proto_path_dfs(PtModKey const curr_mod,
+                    ProtoTerm const& curr_ptterm,
+                    ProtoPath&& curr_path,
+                    PtModKey const dst_mod,
+                    FreeTerms const& dst_fterms,
+                    PtPaths& res,
+                    PtTermSet& visited)
+{
+    if (curr_path.links.size() >= 2 and curr_mod == dst_mod) {
+        // Terminating condition met.
+        res.push_back(curr_path);
+    }
+    else {
+        for (auto const& ptlink : curr_ptterm.links()) {
+
+        }
+    }
+}
+
+PtPaths ProtoModule::find_paths(FreeTerm const& src_fterm,
+                                PtModKey const dst_mod,
+                                FreeTerms const& dst_fterms) const
+{
+    PtPaths res;
+
+    // No need to do DFS if no dst terms are free.
+    if (not dst_fterms.empty()) {
+        auto const& src_ptterm = chains_.at(src_fterm.chain_id).get_term(src_fterm.term);
+        PtTermSet visited = { &src_ptterm };
+        proto_path_dfs(this,
+                       src_ptterm,
+                       ProtoPath(this),
+                       dst_mod,
+                       dst_fterms,
+                       res,
+                       visited);
+    }
+
+    return res;
 }
 
 /* modifiers */
@@ -129,26 +202,25 @@ void ProtoModule::finalize() {
 //
 // Important: mod_a's C-terminus connects to mod_b's N-terminus
 // (static)
-void ProtoModule::create_proto_link_pair(
-    JSON const& xdb,
-    size_t const tx_id,
-    ProtoModule& mod_a,
-    std::string const& a_chain_name,
-    ProtoModule& mod_b,
-    std::string const& b_chain_name)
+void ProtoModule::create_proto_link_pair(JSON const& xdb_json,
+        size_t const tx_id,
+        ProtoModule& mod_a,
+        std::string const& a_chain_name,
+        ProtoModule& mod_b,
+        std::string const& b_chain_name)
 {
     // Find A chains.
-    ProtoChainList& a_chains = mod_a.chains_;
+    PtChains& a_chains = mod_a.chains_;
     size_t const a_chain_id = mod_a.get_chain_id(a_chain_name);
     ProtoChain& a_chain = a_chains.at(a_chain_id);
 
     // Find B chains.
-    ProtoChainList& b_chains = mod_b.chains_;
+    PtChains& b_chains = mod_b.chains_;
     size_t const b_chain_id = mod_b.get_chain_id(b_chain_name);
     ProtoChain& b_chain = b_chains.at(b_chain_id);
 
     // Resolve transformation matrix: C-term extrusion style.
-    Transform tx = get_tx(xdb, tx_id);
+    Transform tx = get_tx(xdb_json, tx_id);
 
     if (mod_a.type == ModuleType::SINGLE and
             mod_b.type == ModuleType::SINGLE) {
@@ -173,18 +245,23 @@ void ProtoModule::create_proto_link_pair(
               ModuleTypeToCStr(mod_b.type));
     }
 
-    // Create links and count.
-    auto a_ptlink = std::make_unique<ProtoLink>(tx, &mod_b, b_chain_id);
-    auto b_ptlink = std::make_unique<ProtoLink>(tx.inversed(), &mod_a, a_chain_id);
-    ProtoLink::pair_links(a_ptlink.get(), b_ptlink.get());
+    {
+        // Allocate raw memory.
+        auto a_link_addr = (ProtoLink*) malloc(sizeof(ProtoLink));
+        auto b_link_addr = (ProtoLink*) malloc(sizeof(ProtoLink));
 
-    a_chain.c_term_.links_.push_back(std::move(a_ptlink));
+        // Create unique_ptr at specific location.
+        a_chain.c_term_.links_.emplace_back(
+            new(a_link_addr) ProtoLink(tx, &mod_b, b_chain_id, b_link_addr));
+        b_chain.n_term_.links_.emplace_back(
+            new(b_link_addr) ProtoLink(tx.inversed(), &mod_a, a_chain_id, a_link_addr));
+    }
+
     mod_a.counts_.c_links++;
     if (a_chain.c_term_.links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_a.counts_.c_interfaces++;
     }
 
-    b_chain.n_term_.links_.push_back(std::move(b_ptlink));
     mod_b.counts_.n_links++;
     if (b_chain.n_term_.links_.size() == 1) { // 0 -> 1 indicates a new interface
         mod_b.counts_.n_interfaces++;

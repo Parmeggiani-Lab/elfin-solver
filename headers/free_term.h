@@ -31,8 +31,8 @@ struct FreeTerm : public Printable {
 
     /* ctors */
     FreeTerm(NodeKey const _node,
-              TermType const _term,
-              size_t const _chain_id);
+             TermType const _term,
+             size_t const _chain_id);
     FreeTerm() : FreeTerm(nullptr, TermType::NONE, 0) {}
 
     /* dtors */
@@ -49,6 +49,8 @@ struct FreeTerm : public Printable {
     virtual void print_to(std::ostream& os) const;
 };
 
+typedef std::vector<FreeTerm> FreeTerms;
+
 }  /* elfin */
 
 namespace std {
@@ -62,9 +64,5 @@ template <> struct hash<elfin::FreeTerm> {
 };
 
 } /* std */
-
-namespace elfin {
-
-}  /* elfin */
 
 #endif  /* end of include guard: FREE_TERM_H */

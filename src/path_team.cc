@@ -49,17 +49,17 @@ struct PathTeam::PImpl {
         TermType const term_a = free_term_a.term;
         TermType const term_b = opposite_term(term_a);
 
-        FreeTerm free_term_b = FreeTerm(nullptr, term_b, pt_link->chain_id_);
+        FreeTerm free_term_b = FreeTerm(nullptr, term_b, pt_link->chain_id);
 
-        auto node_b = _.add_node(pt_link->module_,
-                                 node_a->tx_ * pt_link->tx_,
+        auto node_b = _.add_node(pt_link->module,
+                                 node_a->tx_ * pt_link->tx,
                                  innert,
                                  /*exclude_ft=*/&free_term_b);
 
         free_term_b.node = node_b;
 
         get_node(node_a)->add_link(free_term_a, pt_link, free_term_b);
-        get_node(node_b)->add_link(free_term_b, pt_link->reverse(), free_term_a);
+        get_node(node_b)->add_link(free_term_b, pt_link->reverse, free_term_a);
 
         _.free_terms_.remove(free_term_a);
 
@@ -104,7 +104,7 @@ struct PathTeam::PImpl {
             auto curr_node = limb_gen.curr_node();
             auto next_node = limb_gen.next();
 
-            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx_;
+            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx;
         }
     }
 
@@ -125,8 +125,8 @@ struct PathTeam::PImpl {
         node2->remove_link(port2);
 
         // Create a new node in the middle.
-        auto new_node_key = _.add_node(bridge->pt_link1->module_,
-                                       node1->tx_ * bridge->pt_link1->tx_,
+        auto new_node_key = _.add_node(bridge->pt_link1->module,
+                                       node1->tx_ * bridge->pt_link1->tx,
                                        /*innert=*/true);
         auto new_node = get_node(new_node_key);
 
@@ -143,14 +143,14 @@ struct PathTeam::PImpl {
         // Prototype ---pt_link1--->              ---pt_link2--->
         //
         FreeTerm nn_src1(
-            new_node_key, port2.term, bridge->pt_link1->chain_id_);
+            new_node_key, port2.term, bridge->pt_link1->chain_id);
         Link const new_link1_rev(port1, bridge->pt_link1, nn_src1);
 
         node1->add_link(new_link1_rev);
         new_node->add_link(new_link1_rev.reversed());
 
         FreeTerm nn_src2(
-            new_node_key, port1.term, bridge->pt_link2->reverse()->chain_id_);
+            new_node_key, port1.term, bridge->pt_link2->reverse->chain_id);
         Link const new_link2(nn_src2, bridge->pt_link2, port2);
 
         new_node->add_link(new_link2);

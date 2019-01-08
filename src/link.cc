@@ -16,10 +16,10 @@ Link::Link(FreeTerm const& src,
 {
     // Check that prototype_ (ProtoLink) destination ProtoModule is the same
     // as dst ProtoModule.
-    DEBUG(dst_.node->prototype_ != prototype_->module_,
-          "\ndst_.node->prototype_=%s\nprototype_->module_=%s\n",
+    DEBUG(dst_.node->prototype_ != prototype_->module,
+          "\ndst_.node->prototype_=%s\nprototype_->module=%s\n",
           dst_.node->prototype_->to_string().c_str(),
-          prototype_->module_->to_string().c_str());
+          prototype_->module->to_string().c_str());
 }
 
 /* accessors */

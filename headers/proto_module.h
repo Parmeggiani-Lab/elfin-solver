@@ -12,6 +12,8 @@ namespace elfin {
 
 /* Fwd Decl */
 struct FreeTerm;
+class ProtoModule;
+typedef ProtoModule const* PtModKey;
 
 /* types */
 #define FOREACH_MODULETYPE(MACRO) \
@@ -33,15 +35,15 @@ public:
         size_t all_links() const { return n_links + c_links; }
         size_t all_interfaces() const { return n_interfaces + c_interfaces; }
     };
+    typedef std::vector<ProtoPath> PtPaths;
 
 private:
     /* types */
-    typedef std::vector<ProtoChain> ProtoChainList;
-    typedef std::vector<FreeTerm> FreeTerms;
+    typedef std::vector<ProtoChain> PtChains;
 
     /* data */
     bool already_finalized_ = false;
-    ProtoChainList chains_;
+    PtChains chains_;
     FreeTerms free_terms_;
     Counts counts_ = {};
 
@@ -58,31 +60,32 @@ public:
                 StrList const& chain_names);
 
     /* accessors */
-    ProtoChainList const& chains() const { return chains_; }
+    PtChains const& chains() const { return chains_; }
     FreeTerms const& free_terms() const { return free_terms_; }
     Counts const& counts() const { return counts_; }
     size_t get_chain_id(std::string const& chain_name) const;
     ProtoLink const* find_link_to(size_t const src_chain_id,
                                   TermType const src_term,
-                                  ProtoModule const* dst_module,
+                                  PtModKey const dst_mod,
                                   size_t const dst_chain_id) const;
     bool is_hub() const { return elfin::is_hub(type); }
+    PtPaths find_paths(FreeTerm const& src_fterm,
+                       PtModKey const dst_mod,
+                       FreeTerms const& dst_fterms) const;
 
     /* modifiers */
     void finalize();
-    static void create_proto_link_pair(
-        JSON const& xdb,
-        size_t const tx_id,
-        ProtoModule& mod_a,
-        std::string const& a_chain_name,
-        ProtoModule& mod_b,
-        std::string const& b_chain_name);
+    static void create_proto_link_pair(JSON const& xdb_json,
+                                       size_t const tx_id,
+                                       ProtoModule& mod_a,
+                                       std::string const& a_chain_name,
+                                       ProtoModule& mod_b,
+                                       std::string const& b_chain_name);
 
     /* printers */
     virtual void print_to(std::ostream& os) const;
 };
 
-typedef ProtoModule const* PtModKey;
 typedef std::unique_ptr<ProtoModule> ProtoModuleSP;
 
 }  /* elfin */

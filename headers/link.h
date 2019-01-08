@@ -26,7 +26,7 @@ public:
          ProtoLink const* prot,
          FreeTerm const& dst);
     Link reversed() const {
-        return Link(dst_, prototype_->reverse(), src_);
+        return Link(dst_, prototype_->reverse, src_);
     }
 
     /* dtors */

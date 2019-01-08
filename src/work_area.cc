@@ -80,8 +80,8 @@ WorkType parse_type(WorkArea::OccupantMap const& occupants)
     return res;
 }
 
-PtTermKeys calc_free_ptterms(PtModKey const ptmod, UIModKey const uimod) {
-    std::vector<FreeTerm> free_terms = ptmod->free_terms();
+FreeTerms calc_free_ptterms(PtModKey const ptmod, UIModKey const uimod) {
+    FreeTerms res = ptmod->free_terms();
 
     if (ptmod->name != uimod->module_name) {
         throw BadArgument("ProtoModule name differs from UIModule module name.");
@@ -91,28 +91,23 @@ PtTermKeys calc_free_ptterms(PtModKey const ptmod, UIModKey const uimod) {
         size_t const src_chain_id =
             ptmod->get_chain_id(link.src_chain_name);
 
-        free_terms.erase(remove_if(begin(free_terms), end(free_terms),
+        res.erase(remove_if(begin(res), end(res),
         [&](auto const & ft) {
             return ft.term == link.term and
                    ft.chain_id == src_chain_id;
         }),
-        end(free_terms));
-    }
-
-    PtTermKeys res;
-    for (auto const& ft : free_terms) {
-        res.push_back(&ptmod->chains().at(ft.chain_id).get_term(ft.term));
+        end(res));
     }
 
     return res;
 }
 
-WorkArea::ProtoPaths parse_proto_paths(WorkArea::OccupantMap const& occupants) {
-    WorkArea::ProtoPaths res;
+PtPaths parse_proto_paths(WorkArea::OccupantMap const& occupants) {
+    PtPaths res;
 
     // Do for 2H case only.
     if (occupants.size() == 2) {
-        // Do DFS to collect all ProtoPaths from hinge1 to hinge2.
+        // Do DFS to collect all PtPaths from hinge1 to hinge2.
 
         // First, get UIModules and ProtoModules for the hinges.
         auto const ui_mod1 = begin(occupants)->second->occupant.ui_module;
@@ -122,29 +117,30 @@ WorkArea::ProtoPaths parse_proto_paths(WorkArea::OccupantMap const& occupants) {
         auto const mod2 = XDB.get_mod(ui_mod2->module_name);
 
         // Compute free ProtoTerms for src and dst ProtoModules.
-        auto const& ptt_keys1 = calc_free_ptterms(mod1, ui_mod1);
-        if (ptt_keys1.empty()) {
+        auto const& fterms1 = calc_free_ptterms(mod1, ui_mod1);
+        if (fterms1.empty()) {
             throw InvalidHinge("Hinge " + ui_mod1->name + "has no free terminus.");
         }
 
-        auto const& ptt_keys2 = calc_free_ptterms(mod2, ui_mod2);
-        if (ptt_keys2.empty()) {
+        auto const& fterms2 = calc_free_ptterms(mod2, ui_mod2);
+        if (fterms2.empty()) {
             throw InvalidHinge("Hinge " + ui_mod2->name + "has no free terminus.");
         }
 
         // Start path search from the one with fewer free ProtoTerms.
-        bool const src_is_1 = ptt_keys1.size() < ptt_keys2.size();
-        auto const& src_ptt_keys = src_is_1 ? ptt_keys1 : ptt_keys2;
-        auto const& dst_ptt_keys = src_is_1 ? ptt_keys2 : ptt_keys1;
+        bool const src_is_1 = fterms1.size() < fterms2.size();
+        auto const src_mod = src_is_1 ? mod1 : mod2;
         auto const dst_mod = src_is_1 ? mod2 : mod1;
+        auto const& src_fterms = src_is_1 ? fterms1 : fterms2;
+        auto const& dst_fterms = src_is_1 ? fterms2 : fterms1;
 
-        for (auto const& ptterm_key : src_ptt_keys) {
-            auto const& paths = ptterm_key->find_paths(dst_mod, dst_ptt_keys);
+        for (auto const& sft : src_fterms) {
+            auto const& paths = src_mod->find_paths(sft, dst_mod, dst_fterms);
             res.insert(end(res), begin(paths), end(paths));
         }
 
         if (res.empty()) {
-            throw InvalidHinge("No path exist between hinges " +
+            throw InvalidHinge("No paths exist between hinges " +
                                ui_mod1->name + " and " + ui_mod2->name + ".");
         }
     }

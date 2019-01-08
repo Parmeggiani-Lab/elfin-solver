@@ -14,42 +14,34 @@ namespace elfin {
 /* Fwd Decl */
 class ProtoModule;
 typedef ProtoModule const* PtModKey;
+struct ProtoLink;
+typedef ProtoLink const* PtLinkKey;
+typedef std::unique_ptr<ProtoLink> PtLinkSP;
 
-class ProtoLink : public Printable {
-private:
-    ProtoLink const* reverse_;
-
-public:
+struct ProtoLink : public Printable {
     /* data */
-    Transform const tx_;
-    PtModKey const module_;
-    size_t const chain_id_;
+    Transform const tx;
+    PtModKey const module;
+    size_t const chain_id;
+    PtLinkKey const reverse;
 
-    /* ctors */
-    ProtoLink(Transform const& tx,
-              PtModKey const module,
-              size_t const chain_id);
-
-    /* accessors */
-    ProtoLink const* reverse() const { return reverse_; }
-
-    /* modifiers */
-    static void pair_links(ProtoLink* lhs, ProtoLink* rhs);
+    ProtoLink(Transform const& _tx,
+              PtModKey const _module,
+              size_t const _chain_id,
+              PtLinkKey const _reverse);
 
     /* printers */
     virtual void print_to(std::ostream& os) const;
 };
 
 /* types */
-typedef ProtoLink const* PtLinkKey;
-typedef std::unique_ptr<ProtoLink> PtLinkSP;
-typedef std::vector<PtLinkSP> PtLinkSPList;
+typedef std::vector<PtLinkSP> PtLinks;
 
-struct HashPtLinkWithoutTx {
+struct HashPtLinkSimple {
     size_t operator()(PtLinkKey const& link) const;
 };
 
-struct EqualPtLinkWithoutTx {
+struct EqualPtLinkSimple {
     bool operator()(PtLinkKey const& lh_link,
                     PtLinkKey const& rh_link) const;
 };

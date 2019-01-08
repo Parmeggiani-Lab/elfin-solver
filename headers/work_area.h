@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <string>
 #include <memory>
-// #include <string>
 
 #include "ui_joint.h"
 #include "geometry.h"
@@ -32,7 +31,6 @@ struct WorkArea {
     /* types */
     typedef std::unordered_map<UIJointKey, V3fList> PathMap;
     typedef std::unordered_map<std::string, UIJointKey> OccupantMap;
-    typedef std::vector<ProtoPath> ProtoPaths;
 
     /* data */
     std::string const   name;
@@ -40,7 +38,7 @@ struct WorkArea {
     UIJointKeys const   leaf_joints;   // Leaf joints are tips of the path.
     OccupantMap const   occupant_map;  // Occupied joints are a subset of leaf joints.
     WorkType const      type;
-    ProtoPaths const    proto_paths;   // Only non empty in 2H case.
+    PtPaths const       proto_paths;   // Only non empty in 2H case.
     PathMap const       path_map;
     size_t const        path_len;
     size_t const        target_size;

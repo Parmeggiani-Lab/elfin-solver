@@ -39,7 +39,8 @@ ProtoLink const& ProtoTerm::pick_random_link(
 // implementing specialized comparators with custom key type.
 PtLinkKey ProtoTerm::find_link_to(PtModKey const dst_module,
                                   size_t const dst_chain_id) const {
-    ProtoLink const key_link(Transform(), dst_module, dst_chain_id);
+    ProtoLink const key_link(Transform(), dst_module, dst_chain_id, nullptr);
+
     auto link_itr = link_set_.find(&key_link);
 
     if (link_itr == end(link_set_)) {
@@ -47,54 +48,6 @@ PtLinkKey ProtoTerm::find_link_to(PtModKey const dst_module,
     }
 
     return *link_itr;
-}
-
-using PtModVisitMap = std::unordered_map<PtModKey, bool>;
-
-// bool has_path_to(PtModKey const target_mod,
-//                  PtModKey const prev_mod,
-//                  PtModVisitMap& visited)
-// {
-//     DEBUG_NOMSG(not target_mod);
-//     DEBUG_NOMSG(not prev_mod);
-
-//     // DFS search for target_mod.
-//     visited[prev_mod] = true;
-
-//     auto check_ptterm = [&](ProtoTerm const & ptterm) {
-//         return any_of(begin(ptterm.links()), end(ptterm.links()),
-//         [&](auto const & ptlink) {
-//             auto const dst = ptlink->module_;
-//             return dst == target_mod or
-//                    (not visited[dst] and has_path_to(target_mod, dst, visited));
-//         });
-//     };
-
-//     for (auto const& ptchain : prev_mod->chains()) {
-//         if (check_ptterm(ptchain.n_term()) or
-//                 check_ptterm(ptchain.c_term())) {
-//             return true;
-//         }
-//     }
-
-//     return false;
-// }
-
-std::vector<ProtoPath> ProtoTerm::find_paths(
-    PtModKey const dst_module,
-    PtTermKeys const& dst_ptt_keys) const
-{
-    std::vector<ProtoPath> res;
-
-    // No need to do DFS if no dst terms are free.
-    if (not dst_ptt_keys.empty()) {
-        PtModVisitMap visited;
-        for (auto const& mod : XDB.all_mods()) {
-            visited.emplace(mod.get(), false);
-        }
-    }
-
-    return res;
 }
 
 /* modifiers */
@@ -113,19 +66,19 @@ void ProtoTerm::finalize() {
     std::sort(begin(links_),
               end(links_),
     [](auto const & lhs, auto const & rhs) {
-        return lhs->module_->counts().all_interfaces() <
-               rhs->module_->counts().all_interfaces();
+        return lhs->module->counts().all_interfaces() <
+               rhs->module->counts().all_interfaces();
     });
 
     for (auto& link : links_) {
-        DEBUG_NOMSG(nullptr == link->module_);
+        DEBUG_NOMSG(nullptr == link->module);
 
-        ProtoLink const* row_link_ptr = link.get();
-        link_set_.insert(row_link_ptr);
+        auto const link_ptr = link.get();
+        link_set_.insert(link_ptr);
 
         size_t n_cpd = 0, c_cpd = 0;
 
-        auto const target_prot = link->module_;
+        auto const target_prot = link->module;
 
         size_t const ncount = target_prot->counts().n_links;
         size_t const ccount = target_prot->counts().c_links;
@@ -147,14 +100,14 @@ void ProtoTerm::finalize() {
             c_cpd = ccount;
         }
 
-        n_roulette_.push_back(n_cpd, row_link_ptr);
-        c_roulette_.push_back(c_cpd, row_link_ptr);
+        n_roulette_.push_back(n_cpd, link_ptr);
+        c_roulette_.push_back(c_cpd, link_ptr);
 
 #ifdef PRINT_FINALIZE
         JUtil.warn("ProtoLink to %s into chain %zu with %zu interfaces\n",
-                   link_ptr->module_->name.c_str(),
-                   link_ptr->chain_id_,
-                   link_ptr->module_->counts().all_interfaces());
+                   link_ptr->module->name.c_str(),
+                   link_ptr->chain_id,
+                   link_ptr->module->counts().all_interfaces());
 #endif  /* ifdef PRINT_FINALIZE */
     }
 }

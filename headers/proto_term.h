@@ -27,12 +27,12 @@ private:
     // method. We'll be able to search the pointer set without creating a new
     // ProtoLink instance (by comparing ProtoLink* with FreeTerm *).
     typedef std::unordered_set <PtLinkKey,
-            HashPtLinkWithoutTx,
-            EqualPtLinkWithoutTx > PtLinkKeySet;
+            HashPtLinkSimple,
+            EqualPtLinkSimple > PtLinkKeySet;
 
     /* data */
     bool already_finalized_ = false;
-    PtLinkSPList links_;
+    PtLinks links_;
     PtLinkRoulette n_roulette_, c_roulette_;
     PtLinkKeySet link_set_;
 
@@ -45,13 +45,11 @@ public:
     ProtoTerm& operator=(ProtoTerm&& other) = delete;
 
     /* accessors */
-    PtLinkSPList const& links() const { return links_; }
+    PtLinks const& links() const { return links_; }
     ProtoLink const& pick_random_link(TermType const term) const;
     PtLinkKeySet const& link_set() const { return link_set_; }
     PtLinkKey find_link_to(PtModKey const dst_module,
                            size_t const dst_chain_id) const;
-    std::vector<ProtoPath> find_paths(PtModKey const dst_module,
-                                      PtTermKeys const& dst_ptt_keys) const;
 
     /* modifiers */
     void finalize();

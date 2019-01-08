@@ -14,7 +14,10 @@ typedef ProtoLink const* PtLinkKey;
 struct ProtoPath {
     PtModKey start;
     std::vector<PtLinkKey> links;
+    ProtoPath(PtModKey const _start) : start(_start) {}
 };
+
+typedef std::vector<ProtoPath> PtPaths;
 
 }  /* elfin */
 
