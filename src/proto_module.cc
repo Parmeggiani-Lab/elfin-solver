@@ -245,16 +245,17 @@ void ProtoModule::create_proto_link_pair(JSON const& xdb_json,
               ModuleTypeToCStr(mod_b.type));
     }
 
+    // Connect the link duo's reverse pointers.
     {
-        // Allocate raw memory.
-        auto a_link_addr = (ProtoLink*) malloc(sizeof(ProtoLink));
-        auto b_link_addr = (ProtoLink*) malloc(sizeof(ProtoLink));
+        auto a_link_sp = std::make_unique<ProtoLink>(tx, &mod_b, b_chain_id);
+        auto b_link_sp = std::make_unique<ProtoLink>(tx.inversed(), &mod_a, a_chain_id);
+
+        a_link_sp->reverse = b_link_sp.get();
+        b_link_sp->reverse = a_link_sp.get();
 
         // Create unique_ptr at specific location.
-        a_chain.c_term_.links_.emplace_back(
-            new(a_link_addr) ProtoLink(tx, &mod_b, b_chain_id, b_link_addr));
-        b_chain.n_term_.links_.emplace_back(
-            new(b_link_addr) ProtoLink(tx.inversed(), &mod_a, a_chain_id, a_link_addr));
+        a_chain.c_term_.links_.push_back(std::move(a_link_sp));
+        b_chain.n_term_.links_.push_back(std::move(b_link_sp));
     }
 
     mod_a.counts_.c_links++;

@@ -7,12 +7,10 @@ namespace elfin {
 /* ctors */
 ProtoLink::ProtoLink(Transform const& _tx,
                      PtModKey const _module,
-                     size_t const _chain_id,
-                     PtLinkKey const _reverse) :
+                     size_t const _chain_id) :
     tx(_tx),
     module(_module),
-    chain_id(_chain_id),
-    reverse(_reverse) {}
+    chain_id(_chain_id) {}
 
 /* printers */
 void ProtoLink::print_to(std::ostream& os) const {

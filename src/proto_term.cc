@@ -39,7 +39,7 @@ ProtoLink const& ProtoTerm::pick_random_link(
 // implementing specialized comparators with custom key type.
 PtLinkKey ProtoTerm::find_link_to(PtModKey const dst_module,
                                   size_t const dst_chain_id) const {
-    ProtoLink const key_link(Transform(), dst_module, dst_chain_id, nullptr);
+    ProtoLink const key_link(Transform(), dst_module, dst_chain_id);
 
     auto link_itr = link_set_.find(&key_link);
 

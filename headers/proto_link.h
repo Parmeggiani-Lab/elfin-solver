@@ -20,15 +20,14 @@ typedef std::unique_ptr<ProtoLink> PtLinkSP;
 
 struct ProtoLink : public Printable {
     /* data */
-    Transform const tx;
-    PtModKey const module;
-    size_t const chain_id;
-    PtLinkKey const reverse;
+    Transform tx;
+    PtModKey module;
+    size_t chain_id;
+    PtLinkKey reverse = nullptr;
 
     ProtoLink(Transform const& _tx,
               PtModKey const _module,
-              size_t const _chain_id,
-              PtLinkKey const _reverse);
+              size_t const _chain_id);
 
     /* printers */
     virtual void print_to(std::ostream& os) const;
