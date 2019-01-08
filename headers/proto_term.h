@@ -1,6 +1,9 @@
 #ifndef PROTO_TERM_H_
 #define PROTO_TERM_H_
 
+#include <vector>
+#include <unordered_set>
+
 #include "proto_link.h"
 #include "term_type.h"
 #include "roulette.h"
@@ -12,6 +15,7 @@ class ProtoModule;
 class ProtoTerm;
 typedef ProtoTerm const* PtTermKey;
 typedef std::vector<PtTermKey> PtTermKeys;
+typedef std::unordered_set<PtTermKey> PtTermKeySet;
 
 /* types */
 
@@ -49,7 +53,8 @@ public:
     ProtoLink const& pick_random_link(TermType const term) const;
     PtLinkKeySet const& link_set() const { return link_set_; }
     PtLinkKey find_link_to(PtModKey const dst_module,
-                           size_t const dst_chain_id) const;
+                           size_t const dst_chain_id,
+                           TermType const term) const;
 
     /* modifiers */
     void finalize();

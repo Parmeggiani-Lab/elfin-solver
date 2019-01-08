@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "string_utils.h"
+
 namespace elfin {
 
 /* Fwd Decl */
@@ -11,10 +13,16 @@ typedef ProtoModule const* PtModKey;
 class ProtoLink;
 typedef ProtoLink const* PtLinkKey;
 
-struct ProtoPath {
+struct ProtoPath : public Printable {
+    /* data */
     PtModKey start;
     std::vector<PtLinkKey> links;
+    
+    /* ctors */
     ProtoPath(PtModKey const _start) : start(_start) {}
+
+    /* printers */
+    virtual void print_to(std::ostream& os) const;
 };
 
 typedef std::vector<ProtoPath> PtPaths;

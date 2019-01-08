@@ -69,9 +69,9 @@ public:
                                   PtModKey const dst_mod,
                                   size_t const dst_chain_id) const;
     bool is_hub() const { return elfin::is_hub(type); }
-    PtPaths find_paths(FreeTerm const& src_fterm,
+    PtPaths find_paths(PtTermKeys const src_ptterms,
                        PtModKey const dst_mod,
-                       FreeTerms const& dst_fterms) const;
+                       PtTermKeys const& dst_ptterms) const;
 
     /* modifiers */
     void finalize();

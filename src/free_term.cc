@@ -56,7 +56,7 @@ FreeTerm::BridgeList FreeTerm::find_bridges(FreeTerm const& dst) const
             // dst.term is incoming term, the opposite of which is term.
             ProtoTerm const& ptterm_out =
                 middle_chain.get_term(term);
-            auto pt_link = ptterm_out.find_link_to(dst_mod, dst_chain_id);
+            auto pt_link = ptterm_out.find_link_to(dst_mod, dst_chain_id, opposite_term(term));
 
             if (pt_link) {
                 res.emplace_back(ptlink1.get(), pt_link);

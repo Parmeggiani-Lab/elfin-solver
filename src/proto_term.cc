@@ -38,8 +38,9 @@ ProtoLink const& ProtoTerm::pick_random_link(
 // In c++20 we could search without creating a new instance, by
 // implementing specialized comparators with custom key type.
 PtLinkKey ProtoTerm::find_link_to(PtModKey const dst_module,
-                                  size_t const dst_chain_id) const {
-    ProtoLink const key_link(Transform(), dst_module, dst_chain_id);
+                                  size_t const dst_chain_id,
+                                  TermType const term) const {
+    ProtoLink const key_link(Transform(), dst_module, dst_chain_id, term);
 
     auto link_itr = link_set_.find(&key_link);
 

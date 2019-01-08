@@ -2,10 +2,13 @@
 
 #include <sstream>
 #include <memory>
+#include <deque>
+#include <functional>
 
 #include "debug_utils.h"
 #include "node.h"
 #include "exceptions.h"
+#include "input_manager.h"
 
 // #define PRINT_INIT
 // #define PRINT_FINALIZE
@@ -93,76 +96,73 @@ ProtoLink const* ProtoModule::find_link_to(size_t const src_chain_id,
 {
     ProtoTerm const& proto_term =
         chains_.at(src_chain_id).get_term(src_term);
-    return proto_term.find_link_to(dst_mod, dst_chain_id);
+    return proto_term.find_link_to(dst_mod, dst_chain_id, opposite_term(src_term));
 }
 
-// bool has_path_to(PtModKey const target_mod,
-//                  PtModKey const prev_mod,
-//                  PtModVisitMap& visited)
-// {
-//     DEBUG_NOMSG(not target_mod);
-//     DEBUG_NOMSG(not prev_mod);
-
-//     // DFS search for target_mod.
-//     visited[prev_mod] = true;
-
-//     auto check_ptterm = [&](ProtoTerm const & ptterm) {
-//         return any_of(begin(ptterm.links()), end(ptterm.links()),
-//         [&](auto const & ptlink) {
-//             auto const dst = ptlink->module_;
-//             return dst == target_mod or
-//                    (not visited[dst] and has_path_to(target_mod, dst, visited));
-//         });
-//     };
-
-//     for (auto const& ptchain : prev_mod->chains()) {
-//         if (check_ptterm(ptchain.n_term()) or
-//                 check_ptterm(ptchain.c_term())) {
-//             return true;
-//         }
-//     }
-
-//     return false;
-// }
-
-using PtTermSet = std::unordered_set<PtTermKey>;
-
-void proto_path_dfs(PtModKey const curr_mod,
-                    ProtoTerm const& curr_ptterm,
-                    ProtoPath&& curr_path,
-                    PtModKey const dst_mod,
-                    FreeTerms const& dst_fterms,
-                    PtPaths& res,
-                    PtTermSet& visited)
-{
-    if (curr_path.links.size() >= 2 and curr_mod == dst_mod) {
-        // Terminating condition met.
-        res.push_back(curr_path);
-    }
-    else {
-        for (auto const& ptlink : curr_ptterm.links()) {
-
-        }
-    }
-}
-
-PtPaths ProtoModule::find_paths(FreeTerm const& src_fterm,
+PtPaths ProtoModule::find_paths(PtTermKeys const src_ptterms,
                                 PtModKey const dst_mod,
-                                FreeTerms const& dst_fterms) const
+                                PtTermKeys const& dst_ptterms) const
 {
     PtPaths res;
 
-    // No need to do DFS if no dst terms are free.
-    if (not dst_fterms.empty()) {
-        auto const& src_ptterm = chains_.at(src_fterm.chain_id).get_term(src_fterm.term);
-        PtTermSet visited = { &src_ptterm };
-        proto_path_dfs(this,
-                       src_ptterm,
-                       ProtoPath(this),
-                       dst_mod,
-                       dst_fterms,
-                       res,
-                       visited);
+    // No need to do DFS if no src or dst terms are free.
+    if (src_ptterms.empty() or dst_ptterms.empty()) return res;
+
+    PtTermKeySet const src_ptterm_set(begin(src_ptterms), end(src_ptterms));
+    PtTermKeySet const dst_ptterm_set(begin(dst_ptterms), end(dst_ptterms));
+    PtTermKeySet visited;
+    ProtoPath path(this);
+
+    // [prev_mod]:out_key >>......<links>......>> in_key:[curr_mod]:next_out_key
+#define DFS_PARAM PtTermKey const out_key
+    std::function<void(DFS_PARAM)> find_paths_dfs;
+    find_paths_dfs = [&](DFS_PARAM) {
+        visited.insert(out_key);
+
+        for (auto const& link : out_key->links()) {
+            auto const in_key = &link->get_term();
+
+            // Skip visited ptterms.
+            if (visited.find(in_key) != end(visited)) continue;
+
+            visited.insert(in_key);
+            path.links.push_back(link.get());
+
+            auto const curr_mod = link->module;
+            if (curr_mod == dst_mod) {
+                // Add path only if in_key is permitted dst set.
+                if (dst_ptterm_set.find(in_key) != end(dst_ptterm_set)) {
+                    res.push_back(path);
+                }
+            }
+
+            if (curr_mod != this or
+                    src_ptterm_set.find(in_key) != end(src_ptterm_set)) {
+                // If curr_mod is src mod, then in_key must be in the
+                // permitted src set.
+
+                for (auto const& chain : curr_mod->chains()) {
+                    auto visit = [&](PtTermKey const next_out_key) {
+                        if (visited.find(next_out_key) != end(visited)) return;
+                        find_paths_dfs(next_out_key);
+                    };
+
+                    visit(&chain.n_term());
+                    visit(&chain.c_term());
+                }
+            }
+
+            path.links.pop_back();
+            visited.erase(in_key);
+        }
+
+        visited.erase(out_key);
+    };
+#undef DFS_PARAM
+
+    for (auto const ptterm : src_ptterms) {
+        visited.clear();
+        find_paths_dfs(ptterm);
     }
 
     return res;
@@ -171,7 +171,7 @@ PtPaths ProtoModule::find_paths(FreeTerm const& src_fterm,
 /* modifiers */
 void ProtoModule::finalize() {
     // ProtoChain finalize() relies on Terminus finalize(), which assumes that
-    // all ProtoModule counts are calculated
+    // all ProtoModule counts are calculated.
     TRACE_NOMSG(already_finalized_);
     already_finalized_ = true;
 
@@ -247,8 +247,8 @@ void ProtoModule::create_proto_link_pair(JSON const& xdb_json,
 
     // Connect the link duo's reverse pointers.
     {
-        auto a_link_sp = std::make_unique<ProtoLink>(tx, &mod_b, b_chain_id);
-        auto b_link_sp = std::make_unique<ProtoLink>(tx.inversed(), &mod_a, a_chain_id);
+        auto a_link_sp = std::make_unique<ProtoLink>(tx, &mod_b, b_chain_id, TermType::N);
+        auto b_link_sp = std::make_unique<ProtoLink>(tx.inversed(), &mod_a, a_chain_id, TermType::C);
 
         a_link_sp->reverse = b_link_sp.get();
         b_link_sp->reverse = a_link_sp.get();

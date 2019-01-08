@@ -4,6 +4,8 @@
 #include "test_data.h"
 
 // Include test subject modules.
+#include "work_area.h"
+#include "proto_tests.h"
 #include "scoring.h"
 #include "random_utils.h"
 #include "input_manager.h"
@@ -28,6 +30,9 @@ TestStat test_units() {
     total += InputManager::test();
 
     // Stop doing more tests if there are failures.
+
+    if (total.errors == 0)
+        total += proto::test();
     
     if (total.errors == 0)
         total += WorkArea::test();

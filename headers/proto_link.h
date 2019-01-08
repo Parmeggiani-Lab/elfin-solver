@@ -17,17 +17,28 @@ typedef ProtoModule const* PtModKey;
 struct ProtoLink;
 typedef ProtoLink const* PtLinkKey;
 typedef std::unique_ptr<ProtoLink> PtLinkSP;
+class ProtoTerm;
 
 struct ProtoLink : public Printable {
     /* data */
     Transform tx;
-    PtModKey module;
-    size_t chain_id;
+    PtModKey module;  // Dst module.
+    size_t chain_id;  // For dst module.
+    TermType term;    // For dst module.
     PtLinkKey reverse = nullptr;
 
+    /* ctors */
     ProtoLink(Transform const& _tx,
               PtModKey const _module,
-              size_t const _chain_id);
+              size_t const _chain_id,
+              TermType const _term) :
+        tx(_tx),
+        module(_module),
+        chain_id(_chain_id),
+        term(_term) {}
+
+    /* accessors */
+    ProtoTerm const& get_term() const;
 
     /* printers */
     virtual void print_to(std::ostream& os) const;
