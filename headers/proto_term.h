@@ -56,7 +56,7 @@ public:
     bool is_active() const { return active_; }
 
     /* modifiers */
-    void finalize();
+    void configure();
     void activate() { active_ = true; }
     void deactivate() { active_ = false; }
 };

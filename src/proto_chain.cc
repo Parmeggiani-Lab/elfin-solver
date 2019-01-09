@@ -3,8 +3,6 @@
 #include "debug_utils.h"
 #include "exceptions.h"
 
-// #define PRINT_FINALIZE
-
 namespace elfin {
 
 /* public */
@@ -21,18 +19,9 @@ ProtoTerm const& ProtoChain::get_term(TermType const term) const {
     }
 }
 
-void ProtoChain::finalize() {
-#ifdef PRINT_FINALIZE
-    JUtil.warn("Finalizing proto_chain %s N term\n", name.c_str());
-#endif  /* ifdef PRINT_FINALIZE */
-
-    n_term_.finalize();
-
-#ifdef PRINT_FINALIZE
-    JUtil.warn("Finalizing proto_chain %s C term\n", name.c_str());
-#endif  /* ifdef PRINT_FINALIZE */
-
-    c_term_.finalize();
+void ProtoChain::configure() {
+    n_term_.configure();
+    c_term_.configure();
 }
 
 }  /* elfin */

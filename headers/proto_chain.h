@@ -40,7 +40,7 @@ public:
     ProtoTerm const& c_term() const { return c_term_; }
 
     /* modifiers */
-    void finalize();
+    void configure();
 };
 
 }  /* elfin */

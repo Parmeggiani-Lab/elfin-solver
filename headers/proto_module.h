@@ -77,7 +77,7 @@ public:
     PtTermFinderSet get_reachable_ptterms(FreeTerms const& src_terms) const;
 
     /* modifiers */
-    void finalize();
+    void configure();
     static void create_proto_link_pair(JSON const& xdb_json,
                                        size_t const tx_id,
                                        ProtoModule& mod_a,

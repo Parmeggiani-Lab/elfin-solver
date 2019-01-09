@@ -11,7 +11,6 @@
 #include "input_manager.h"
 
 // #define PRINT_INIT
-// #define PRINT_FINALIZE
 
 namespace elfin {
 
@@ -170,18 +169,13 @@ PtTermFinderSet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) c
 }
 
 /* modifiers */
-void ProtoModule::finalize() {
-    // ProtoChain finalize() calls Terminus finalize(), which assumes that all
+void ProtoModule::configure() {
+    // ProtoChain configure() calls Terminus configure(), which assumes that all
     // ProtoModule counts have been calculated.
-
-#ifdef PRINT_FINALIZE
-    JUtil.warn("Finalizing module %s\n", name.c_str());
-#endif  /* ifdef PRINT_FINALIZE */
-
     free_terms_.clear();
 
     for (ProtoChain& proto_chain : chains_) {
-        proto_chain.finalize();
+        proto_chain.configure();
 
         if (not proto_chain.n_term().links().empty() and
                 proto_chain.n_term().is_active()) {

@@ -6,8 +6,6 @@
 #include "debug_utils.h"
 #include "exceptions.h"
 
-// #define PRINT_FINALIZE
-
 namespace elfin {
 
 /* public */
@@ -51,11 +49,7 @@ PtLinkKey ProtoTerm::find_link_to(PtModKey const dst_module,
 }
 
 /* modifiers */
-void ProtoTerm::finalize() {
-#ifdef PRINT_FINALIZE
-    JUtil.warn("Finalizing ProtoTerm with %zu links\n", links_.size());
-#endif  /* ifdef PRINT_FINALIZE */
-
+void ProtoTerm::configure() {
     n_roulette_.clear();
     c_roulette_.clear();
     link_set_.clear();
@@ -107,13 +101,6 @@ void ProtoTerm::finalize() {
 
         n_roulette_.push_back(n_cpd, link_ptr);
         c_roulette_.push_back(c_cpd, link_ptr);
-
-#ifdef PRINT_FINALIZE
-        JUtil.warn("ProtoLink to %s into chain %zu with %zu interfaces\n",
-                   link_ptr->module->name.c_str(),
-                   link_ptr->chain_id,
-                   link_ptr->module->counts().all_interfaces());
-#endif  /* ifdef PRINT_FINALIZE */
     }
 }
 

@@ -228,7 +228,7 @@ void Database::parse(Options const& options) {
 
     // Finalize modules and add to all_mods_
     for (auto& mod : all_mods_) {
-        mod->finalize();
+        mod->configure();
         for (auto& chain : mod->chains_) {
             size_t const chain_id = mod->get_chain_id(chain.name);
             if (not chain.n_term_.links().empty())
@@ -259,11 +259,9 @@ void Database::activate_ptterm_profile(PtTermFinderSet const& reachable) {
             ptterm_ptr->activate();
         }
     }
-}
 
-void Database::deactivate_ptterm_profile() {
-    for (auto const finder : ptterm_finders_) {
-        finder.ptterm_ptr->activate();
+    for (auto& mod : all_mods_) {
+        mod->configure();
     }
 }
 

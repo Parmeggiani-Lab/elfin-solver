@@ -53,7 +53,6 @@ public:
     /* modifiers */
     void parse(Options const& options);
     void activate_ptterm_profile(PtTermFinderSet const& reachable);
-    void deactivate_ptterm_profile();
 };
 
 }  /* elfin */
