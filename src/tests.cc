@@ -27,48 +27,40 @@ TestStat test_units() {
     InputManager::parse({ "elfin", "--xdb_file", "xdb.json" });
     InputManager::setup_xdb();
 
-    total += InputManager::test();
+    auto const test_fragment = [&total](TestStat (*test_func)(void)) {
+        // Stop doing more tests if there are failures.
+        if (total.errors == 0)
+            total += test_func();
+    };
 
-    // Stop doing more tests if there are failures.
+    test_fragment(InputManager::test);
 
-    if (total.errors == 0)
-        total += proto::test();
-    
-    if (total.errors == 0)
-        total += WorkArea::test();
+    test_fragment(proto::test);
+    test_fragment(WorkArea::test);
+    test_fragment(random::test);
+    test_fragment(Transform::test);
+    test_fragment(Vector3f::test);
+    test_fragment(scoring::test);
 
-    if (total.errors == 0)
-        total += random::test();
-
-    if (total.errors == 0)
-        total += Transform::test();
-
-    if (total.errors == 0)
-        total += Vector3f::test();
-
-    if (total.errors == 0)
-        total += scoring::test();
-
-
-    if (total.errors == 0)
-        total += PathTeam::test();
-
-    if (total.errors == 0)
-        total += PathGenerator::test();
-
-    if (total.errors == 0)
-        total += HingeTeam::test();
-
-    if (total.errors == 0)
-        total += DoubleHingeTeam::test();
-
+    test_fragment(PathTeam::test);
+    test_fragment(PathGenerator::test);
+    test_fragment(HingeTeam::test);
+    test_fragment(DoubleHingeTeam::test);
     return total;
 }
 
 TestStat test_integration() {
     JUtil.info("Running integration tests...\n");
-    TestStat total = EvolutionSolver::test();
+    TestStat total;
 
+    auto const test_fragment = [&total](TestStat (*test_func)(void)) {
+        // Stop doing more tests if there are failures.
+        if (total.errors == 0)
+            total += test_func();
+    };
+
+    test_fragment(EvolutionSolver::test);
+    
     return total;
 }
 
