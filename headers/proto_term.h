@@ -64,6 +64,7 @@ public:
 
 }  /* elfin */
 
+
 namespace std {
 template <>
 struct hash<elfin::ProtoTerm*>
@@ -73,5 +74,31 @@ struct hash<elfin::ProtoTerm*>
     }
 };
 }
+
+namespace elfin {
+
+/* more types */
+struct PtTermFinder {
+    /* types */
+    struct hasher {
+        size_t operator()(PtTermFinder const& f) const {
+            return std::hash<ProtoTerm*>()(f.ptterm_ptr);
+        }
+    };
+    struct comparer {
+        size_t operator()(PtTermFinder const& lhs, PtTermFinder const& rhs) const {
+            return lhs.ptterm_ptr == rhs.ptterm_ptr;
+        }
+    };
+
+    /* data */
+    PtModKey mod;
+    size_t chain_id;
+    TermType term;
+    ProtoTerm* ptterm_ptr;
+};
+typedef std::unordered_set <PtTermFinder, PtTermFinder::hasher, PtTermFinder::comparer> PtTermFinderSet;
+
+}  /* elfin */
 
 #endif  /* end of include guard: PROTO_TERM_H_ */

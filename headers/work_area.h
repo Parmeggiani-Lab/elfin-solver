@@ -38,7 +38,7 @@ struct WorkArea {
     UIJointKeys const       leaf_joints;     // Leaf joints are tips of the path.
     OccupantMap const       occupants;       // Occupied joints are a subset of leaf joints.
     WorkType const          type;
-    PtTermKeySet const      ptterm_profile;  // ProtoTerms reachable from src hinge.
+    PtTermFinderSet const   ptterm_profile;  // ProtoTerms reachable from src hinge.
     PathMap const           path_map;
     size_t const            path_len;
     size_t const            target_size;

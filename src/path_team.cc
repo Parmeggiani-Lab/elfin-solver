@@ -735,18 +735,27 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
         size_t n_ft_to_add = exclude_ft ? 1 : 2;
 
         while (n_ft_to_add) {
-            DEBUG_NOMSG(prot_free_terms.empty());
+            DEBUG(prot_free_terms.empty(),
+                  "%s has insufficient active ProtoTerms!\n",
+                  prot->name.c_str());
 
             auto const& ft = random::pop(prot_free_terms);
 
             if (not (exclude_ft and
-                     exclude_ft->term == ft.term and
-                     exclude_ft->chain_id == ft.chain_id))
+                     exclude_ft->chain_id == ft.chain_id and
+                     exclude_ft->term == ft.term))
             {
                 free_terms_.emplace_back(new_node_key,
                                          ft.chain_id,
                                          ft.term);
-                n_ft_to_add--;
+
+                if (not free_terms_.back().get_ptterm().is_active()) {
+                    free_terms_.pop_back();
+                    // throw BadArgument("Hohoho!!!");
+                }
+                else {
+                    n_ft_to_add--;
+                }
             }
         }
     }
@@ -854,7 +863,20 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
 /* ctors */
 PathTeam::PathTeam(WorkArea const* wa) :
     NodeTeam(wa),
-    pimpl_(make_pimpl()) {}
+    pimpl_(make_pimpl()) {
+    if (wa->type == WorkType::HINGED) {
+        for (auto const& finder : XDB.ptterm_finders()) {
+            if (not finder.ptterm_ptr->is_active()) {
+                JUtil.error("Not active: %s.%s.%s\n",
+                            finder.mod->name.c_str(),
+                            finder.mod->get_chain(finder.chain_id).name.c_str(),
+                            TermTypeToCStr(finder.term));
+            }
+        }
+        JUtil.error("wa->ptterm_profile.size()=%zu, XDB.ptterm_finders().size()=%zu\n",
+                    wa->ptterm_profile.size(), XDB.ptterm_finders().size());
+    }
+}
 
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_)

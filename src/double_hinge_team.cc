@@ -56,17 +56,6 @@ DoubleHingeTeam::DoubleHingeTeam(WorkArea const* wa) :
     pimpl_(make_pimpl())
 {
     DEBUG_NOMSG(wa->ptterm_profile.empty());
-    // for (auto const& finder : XDB.ptterm_finders()) {
-    //     if (not finder.ptterm_ptr->is_active()) {
-    //         JUtil.error("Not active: %s.%s.%s\n",
-    //                     finder.mod->name.c_str(),
-    //                     finder.mod->get_chain(finder.chain_id).name.c_str(),
-    //                     TermTypeToCStr(finder.term));
-    //     }
-    // }
-    // JUtil.error("wa->ptterm_profile.size()=%zu, XDB.ptterm_finders().size()=%zu\n",
-    //             wa->ptterm_profile.size(), XDB.ptterm_finders().size());
-    // PANIC("Yo.");
 }
 
 DoubleHingeTeam::DoubleHingeTeam(DoubleHingeTeam const& other) :

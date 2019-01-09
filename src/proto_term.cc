@@ -112,4 +112,5 @@ void ProtoTerm::finalize() {
 #endif  /* ifdef PRINT_FINALIZE */
     }
 }
+
 }  /* elfin */

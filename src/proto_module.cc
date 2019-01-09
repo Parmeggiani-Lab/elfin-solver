@@ -118,9 +118,10 @@ ProtoTerm const& ProtoModule::get_term(FreeTerm const& ft) const {
     return chains_.at(ft.chain_id).get_term(ft.term);
 }
 
-PtTermKeySet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) const
+PtTermFinderSet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) const
 {
-    PtTermKeySet res, visited_out_keys;
+    PtTermFinderSet res;
+    PtTermKeySet visited_out_keys;
 
     // Keys in frontier are always outward ProtoTerms.
     std::deque<PtTermKey> frontier;
@@ -148,7 +149,9 @@ PtTermKeySet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) cons
         // Put all unvisited outward ProtoTerm on the next wave into frontier.
         for (auto const& link : curr_key->links()) {
             auto const in_key = &link->get_term();
-            res.insert(in_key);  // Only add inward ProtoTerm to result.
+
+            // const_cast is due to laziness. It should be safe.
+            res.insert({link->module, link->chain_id, link->term, const_cast<ProtoTerm*>(in_key)});  // Only add inward ProtoTerm to result.
             for (auto const& chain : link->module->chains()) {
                 add_to_frontier(&chain.n_term(), in_key);
                 add_to_frontier(&chain.c_term(), in_key);

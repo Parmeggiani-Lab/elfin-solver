@@ -79,6 +79,14 @@ ProtoLink const* FreeTerm::find_link_to(FreeTerm const& dst) const
                                           dst.chain_id);
 }
 
+ProtoTerm const& FreeTerm::get_ptterm() const {
+    if (not node->prototype_) {
+        throw BadArgument(std::string("Tried to call ") + __PRETTY_FUNCTION__ + " when node is nullptr.\n");
+    }
+
+    return node->prototype_->get_term(*this);
+}
+
 /* printers */
 void FreeTerm::print_to(std::ostream& os) const {
     os << "FreeTerm[node: ";

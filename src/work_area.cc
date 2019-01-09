@@ -101,13 +101,24 @@ FreeTerms calc_free_ptterms(PtModKey const ptmod, UIModKey const uimod) {
     return res;
 }
 
-PtTermKeySet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
-    PtTermKeySet res;
+PtTermFinderSet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
+    PtTermFinderSet res = XDB.ptterm_finders();
 
     // Do for 2H case only.
-    if (occupants.size() == 2) {
-        // Prepare data to call DFS path search function.
+    if (occupants.size() == 1) {
+        // First, get UIModules and ProtoModules for the hinges.
+        auto const ui_mod1 = begin(occupants)->second->occupant.ui_module;
+        auto const src_mod = XDB.get_mod(ui_mod1->module_name);
 
+        // Compute free ProtoTerms for src and dst ProtoModules.
+        auto const& src_terms = calc_free_ptterms(src_mod, ui_mod1);
+        if (src_terms.empty()) {
+            throw InvalidHinge("Hinge " + ui_mod1->name + "has no free terminus.");
+        }
+
+        res = src_mod->get_reachable_ptterms(src_terms);
+    }
+    else if (occupants.size() == 2) {
         // First, get UIModules and ProtoModules for the hinges.
         auto const ui_mod1 = begin(occupants)->second->occupant.ui_module;
         auto const ui_mod2 = (++begin(occupants))->second->occupant.ui_module;
@@ -137,7 +148,13 @@ PtTermKeySet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
 
         bool const reachable = any_of(begin(dst_terms), end(dst_terms),
         [&res, dst_mod](auto const & dst_ft) {
-            auto const itr = res.find(&dst_mod->get_term(dst_ft));
+            auto const itr = res.find(
+            PtTermFinder{
+                nullptr,
+                0,
+                TermType::NONE,
+                const_cast<ProtoTerm*>(&dst_mod->get_term(dst_ft))
+            });
             return itr != end(res);
         });
 

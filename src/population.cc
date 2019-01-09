@@ -41,9 +41,6 @@ Population::Population(WorkArea const* work_area) {
         size_t const pop_size = OPTIONS.ga_pop_size;
         JUtil.info("Initializing population of %u...\n", pop_size);
 
-        // Activate ProtoTerm profile if there is one.
-        InputManager::mutable_xdb().activate_ptterm_profile(work_area->ptterm_profile);
-
         NodeTeams* new_front_buffer = &teams[0];
         NodeTeams* new_back_buffer = &teams[1];
 
@@ -65,10 +62,7 @@ Population::Population(WorkArea const* work_area) {
 }
 
 /* dtors */
-Population::~Population() {
-    // Deactivate ProtoTerm profile if there was one active.
-    InputManager::mutable_xdb().deactivate_ptterm_profile();
-}
+Population::~Population() {}
 
 /* modifiers */
 void Population::evolve() {

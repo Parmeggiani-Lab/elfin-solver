@@ -44,6 +44,7 @@ struct FreeTerm : public Printable {
     ProtoLink const& random_proto_link() const;
     BridgeList find_bridges(FreeTerm const& dst) const;
     ProtoLink const* find_link_to(FreeTerm const& dst) const;
+    ProtoTerm const& get_ptterm() const;
 
     /* printers */
     virtual void print_to(std::ostream& os) const;

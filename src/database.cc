@@ -249,10 +249,10 @@ void Database::parse(Options const& options) {
 #endif  /* ifdef PRINT_ROULETTES */
 }
 
-void Database::activate_ptterm_profile(PtTermKeySet const& reachable) {
+void Database::activate_ptterm_profile(PtTermFinderSet const& reachable) {
     for (auto const& finder : ptterm_finders_) {
         auto ptterm_ptr = finder.ptterm_ptr;
-        if (reachable.find(ptterm_ptr) == end(reachable)) {
+        if (reachable.find({nullptr, 0, TermType::NONE, ptterm_ptr}) == end(reachable)) {
             ptterm_ptr->deactivate();
         }
         else {
