@@ -80,7 +80,7 @@ ProtoLink const* FreeTerm::find_link_to(FreeTerm const& dst) const
 }
 
 ProtoTerm const& FreeTerm::get_ptterm() const {
-    if (not node->prototype_) {
+    if (not node) {
         throw BadArgument(std::string("Tried to call ") + __PRETTY_FUNCTION__ + " when node is nullptr.\n");
     }
 
