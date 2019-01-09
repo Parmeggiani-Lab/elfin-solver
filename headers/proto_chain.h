@@ -39,8 +39,6 @@ public:
     ProtoTerm const& get_term(TermType const term) const;
     ProtoTerm const& n_term() const { return n_term_; }
     ProtoTerm const& c_term() const { return c_term_; }
-    ProtoLink const& pick_random_link(
-        TermType const term) const;
 
     /* modifiers */
     void finalize();

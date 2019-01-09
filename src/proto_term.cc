@@ -12,8 +12,7 @@ namespace elfin {
 
 /* public */
 /* accessors */
-ProtoLink const& ProtoTerm::pick_random_link(
-    TermType const term) const {
+ProtoLink const& ProtoTerm::pick_random_link(TermType const term) const {
     if (term == TermType::N) {
         return *n_roulette_.draw();
     }

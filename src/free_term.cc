@@ -22,10 +22,7 @@ bool FreeTerm::operator==(FreeTerm const& other) const {
 }
 
 ProtoLink const& FreeTerm::random_proto_link() const {
-    ProtoChain const& proto_chain =
-        node->prototype_->chains().at(chain_id);
-
-    return proto_chain.pick_random_link(term);
+    return get_ptterm().pick_random_link(term);
 }
 
 FreeTerm::BridgeList FreeTerm::find_bridges(FreeTerm const& dst) const
