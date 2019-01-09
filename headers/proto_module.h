@@ -69,7 +69,7 @@ public:
                                   size_t const dst_chain_id) const;
     bool is_hub() const { return elfin::is_hub(type); }
     ProtoTerm const& get_term(FreeTerm const& ft) const;
-    PtTermKeyProfile calc_ptterm_profile(FreeTerms const src_terms) const;
+    PtTermKeySet get_reachable_ptterms(FreeTerms const& src_terms) const;
 
     /* modifiers */
     void finalize();

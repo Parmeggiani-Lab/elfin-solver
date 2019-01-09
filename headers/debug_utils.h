@@ -68,12 +68,11 @@ namespace elfin {
         throw JSON_EX;\
     } while(0)
 
-void _debug(
-    std::string const& cond_expr,
-    char const* filename,
-    int const line,
-    char const* function,
-    std::string const& msg);
+void _debug(std::string const& cond_expr,
+            char const* filename,
+            int const line,
+            char const* function,
+            std::string const& msg);
 
 }  /* elfin */
 
