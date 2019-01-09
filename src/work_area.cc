@@ -105,20 +105,7 @@ PtTermFinderSet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
     PtTermFinderSet res = XDB.ptterm_finders();
 
     // Do for 2H case only.
-    if (occupants.size() == 1) {
-        // First, get UIModules and ProtoModules for the hinges.
-        auto const ui_mod1 = begin(occupants)->second->occupant.ui_module;
-        auto const src_mod = XDB.get_mod(ui_mod1->module_name);
-
-        // Compute free ProtoTerms for src and dst ProtoModules.
-        auto const& src_terms = calc_free_ptterms(src_mod, ui_mod1);
-        if (src_terms.empty()) {
-            throw InvalidHinge("Hinge " + ui_mod1->name + "has no free terminus.");
-        }
-
-        res = src_mod->get_reachable_ptterms(src_terms);
-    }
-    else if (occupants.size() == 2) {
+    if (occupants.size() == 2) {
         // First, get UIModules and ProtoModules for the hinges.
         auto const ui_mod1 = begin(occupants)->second->occupant.ui_module;
         auto const ui_mod2 = (++begin(occupants))->second->occupant.ui_module;
@@ -144,16 +131,25 @@ PtTermFinderSet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
         auto const& src_terms = src_is_1 ? free_terms1 : free_terms2;
         auto const& dst_terms = src_is_1 ? free_terms2 : free_terms1;
 
-        res = src_mod->get_reachable_ptterms(src_terms);
+        res = dst_mod->get_reachable_ptterms(dst_terms);
 
-        bool const reachable = any_of(begin(dst_terms), end(dst_terms),
-        [&res, dst_mod](auto const & dst_ft) {
+        // Remove any busy src terms from res.
+        auto const src_uimod = src_is_1 ? ui_mod1 : ui_mod2;
+        for (auto const& link : src_uimod->linkage) {
+            auto const src_ptterm_ptr =
+                &src_mod->get_chain(link.src_chain_name).get_term(link.term);
+
+            res.erase(PtTermFinder{nullptr, 0, TermType::NONE, const_cast<ProtoTerm*>(src_ptterm_ptr)});
+        }
+
+        bool const reachable = any_of(begin(src_terms), end(src_terms),
+        [&res, src_mod](auto const & ft) {
             auto const itr = res.find(
             PtTermFinder{
                 nullptr,
                 0,
                 TermType::NONE,
-                const_cast<ProtoTerm*>(&dst_mod->get_term(dst_ft))
+                const_cast<ProtoTerm*>(&src_mod->get_term(ft))
             });
             return itr != end(res);
         });

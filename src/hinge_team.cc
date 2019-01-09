@@ -27,7 +27,7 @@ struct HingeTeam::PImpl {
 
         // Place hinge node.
         auto const& ui_mod = _.hinge_ui_joint_->occupant.ui_module;
-        auto proto_mod = XDB.get_mod(ui_mod->module_name);
+        auto mod_key = XDB.get_mod(ui_mod->module_name);
 
         // Here, if elfin-ui provides info about which specific chain of
         // the hinge module interfaces with the next unknown module
@@ -37,7 +37,7 @@ struct HingeTeam::PImpl {
 
         // Do not add any free term. Let get_mutable_chain() handle the case
         // where the team consists of only hinge_.
-        _.hinge_ = _.add_node(proto_mod, ui_mod->tx, /*innert=*/true);
+        _.hinge_ = _.add_node(mod_key, ui_mod->tx, /*innert=*/true);
     }
 
     UIJointKey find_ui_joint(tests::RecipeStep const& first_step) {
@@ -65,7 +65,15 @@ FreeTerm HingeTeam::get_mutable_chain() const
 {
     // If the only node is the hinge, then return random free term from hinge.
     if (size() == 1) {
-        auto const& rand_hinge_ft = random::pick(hinge_->prototype_->free_terms());
+        // It's guranteed that there are active free terminus from src hinge,
+        // because WorkArea throws exception when there isn't.
+        FreeTerms active_fts;
+        for (auto ft : hinge_->prototype_->free_terms()) {
+            if (hinge_->prototype_->get_term(ft).is_active()) {
+                active_fts.push_back(ft);
+            }
+        }
+        auto const& rand_hinge_ft = random::pick(active_fts);
 
         FreeTerm ft(hinge_, rand_hinge_ft.chain_id, rand_hinge_ft.term);
         ft.should_restore = false;
@@ -104,11 +112,12 @@ void HingeTeam::mutation_invariance_check() const {
                 JUtil.error("ft %s\n", ft.to_string().c_str());
             }
         }
-        DEBUG_NOMSG(n_free_terms != 0);
+
+        DEBUG(n_free_terms != 0, "n_free_terms=%zu", n_free_terms);
     }
     else {
         // There are always exactly one free term for size() > 1.
-        DEBUG_NOMSG(n_free_terms != 1);
+        DEBUG(n_free_terms != 1, "n_free_terms=%zu", n_free_terms);
     }
 }
 

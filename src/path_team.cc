@@ -485,13 +485,15 @@ struct PathTeam::PImpl {
                 });
 
                 if (ft_itr == end(_.free_terms_)) {
-                    JUtil.error("FreeTerm not found for %s\n",
-                                insert_point.src.node->to_string().c_str());
-                    JUtil.error("Available FreeTerm(s):\n");
+                    std::ostringstream oss;
+                    oss << "FreeTerm not found for ";
+                    oss << *insert_point.src.node << "\n";
+
+                    oss << "Available FreeTerm(s):\n";
                     for (auto const& ft : _.free_terms_) {
-                        JUtil.error("%s\n", ft.to_string().c_str());
+                        oss << ft << "\n";
                     }
-                    TRACE_NOMSG("FreeTerm not found");
+                    throw ValueNotFound(oss.str());
                 }
                 else {
                     grow_tip(*ft_itr);
@@ -739,23 +741,33 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
                   "%s has insufficient active ProtoTerms!\n",
                   prot->name.c_str());
 
-            auto const& ft = random::pop(prot_free_terms);
+            auto ft = random::pop(prot_free_terms);
 
             if (not (exclude_ft and
                      exclude_ft->chain_id == ft.chain_id and
                      exclude_ft->term == ft.term))
             {
+                // if (not new_node_key->prototype_->get_term(ft).is_active()) {
+                //     std::ostringstream oss;
+                //     for (auto const& finder : XDB.ptterm_finders()) {
+                //         if (not finder.ptterm_ptr->is_active()) {
+                //             oss << "Not active: " <<
+                //                 finder.mod->name << "." <<
+                //                 finder.mod->get_chain(finder.chain_id).name << "." <<
+                //                 TermTypeToCStr(finder.term) << "\n";
+                //         }
+                //     }
+                //     oss << "work_area_->ptterm_profile.size()=" << work_area_->ptterm_profile.size() <<
+                //         ", XDB.ptterm_finders().size()=" << XDB.ptterm_finders().size() << "\n";
+
+                //     throw BadArgument("WTF??? mod: " + new_node_key->prototype_->name +
+                //                       ", ft: " + ft.to_string() + "\n" + oss.str());
+                // }
+
                 free_terms_.emplace_back(new_node_key,
                                          ft.chain_id,
                                          ft.term);
-
-                if (not free_terms_.back().get_ptterm().is_active()) {
-                    free_terms_.pop_back();
-                    // throw BadArgument("Hohoho!!!");
-                }
-                else {
-                    n_ft_to_add--;
-                }
+                n_ft_to_add--;
             }
         }
     }
@@ -863,20 +875,7 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
 /* ctors */
 PathTeam::PathTeam(WorkArea const* wa) :
     NodeTeam(wa),
-    pimpl_(make_pimpl()) {
-    if (wa->type == WorkType::HINGED) {
-        for (auto const& finder : XDB.ptterm_finders()) {
-            if (not finder.ptterm_ptr->is_active()) {
-                JUtil.error("Not active: %s.%s.%s\n",
-                            finder.mod->name.c_str(),
-                            finder.mod->get_chain(finder.chain_id).name.c_str(),
-                            TermTypeToCStr(finder.term));
-            }
-        }
-        JUtil.error("wa->ptterm_profile.size()=%zu, XDB.ptterm_finders().size()=%zu\n",
-                    wa->ptterm_profile.size(), XDB.ptterm_finders().size());
-    }
-}
+    pimpl_(make_pimpl()) {}
 
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_)

@@ -32,16 +32,16 @@ TestStat test() {
         FreeTerms const dst_terms = {FreeTerm(nullptr, dst_chain_id, dst_term) };
 
 
-        auto const& profile = src_mod->get_reachable_ptterms(src_terms);
+        auto const& profile = dst_mod->get_reachable_ptterms(dst_terms);
 
-        bool const reachable = any_of(begin(dst_terms), end(dst_terms),
-        [&profile, dst_mod](auto const & dst_ft) {
+        bool const reachable = any_of(begin(src_terms), end(src_terms),
+        [&profile, src_mod](auto const & ft) {
             auto const itr = profile.find(
             PtTermFinder{
                 nullptr,
                 0,
                 TermType::NONE,
-                const_cast<ProtoTerm*>(&dst_mod->get_term(dst_ft))
+                const_cast<ProtoTerm*>(&src_mod->get_term(ft))
             });
             return itr != end(profile);
         });
