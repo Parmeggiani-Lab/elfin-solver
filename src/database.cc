@@ -126,15 +126,13 @@ void Database::print_db() {
 /* public */
 /* accessors */
 PtModKey Database::get_mod(std::string const& name) const {
-    PtModKey res = nullptr;
-
     auto const itr = mod_idx_map_.find(name);
 
-    if (itr != end(mod_idx_map_)) {
-        res = all_mods_.at(itr->second).get();
+    if (itr == end(mod_idx_map_)) {
+        throw ValueNotFound("Could not find " + name + " in XDB modules.");
     }
 
-    return res;
+    return all_mods_.at(itr->second).get();
 }
 
 /* modifiers */

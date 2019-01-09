@@ -12,14 +12,13 @@ namespace elfin {
 
 /* Fwd Decl */
 class ProtoModule;
+typedef ProtoModule const* PtModKey;
+
 class ProtoTerm;
 typedef ProtoTerm const* PtTermKey;
 typedef std::vector<PtTermKey> PtTermKeys;
 typedef std::unordered_set<PtTermKey> PtTermKeySet;
-
-/* types */
-
-typedef ProtoModule const* PtModKey;
+typedef std::unordered_map<PtTermKey, bool> PtTermKeyProfile;
 
 class ProtoTerm {
     friend ProtoModule;

@@ -5,7 +5,6 @@
 
 #include "debug_utils.h"
 #include "input_manager.h"
-#include "fixed_area.h"
 #include "ui_joint_path_generator.h"
 
 namespace elfin {
@@ -40,7 +39,7 @@ UIJointKeys parse_leaf_joints(UIJointMap const& joints)
 }
 
 // Occupied joints are supposed to be a subset of leaves.
-WorkArea::OccupantMap parse_occupant_map(UIJointKeys const& leaves)
+WorkArea::OccupantMap parse_occupants(UIJointKeys const& leaves)
 {
     WorkArea::OccupantMap res;
     for (auto& leaf_joint : leaves) {
@@ -102,8 +101,8 @@ FreeTerms calc_free_ptterms(PtModKey const ptmod, UIModKey const uimod) {
     return res;
 }
 
-PtPaths parse_proto_paths(WorkArea::OccupantMap const& occupants) {
-    PtPaths res;
+PtTermKeyProfile parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
+    PtTermKeyProfile res;
 
     // Do for 2H case only.
     if (occupants.size() == 2) {
@@ -134,11 +133,24 @@ PtPaths parse_proto_paths(WorkArea::OccupantMap const& occupants) {
         auto const& src_terms = src_is_1 ? free_terms1 : free_terms2;
         auto const& dst_terms = src_is_1 ? free_terms2 : free_terms1;
 
-        res = src_mod->find_paths(src_terms, dst_mod, dst_terms);
+        res = src_mod->calc_ptterm_profile(src_terms);
 
-        if (res.empty()) {
+        bool const reachable = any_of(begin(dst_terms), end(dst_terms),
+        [&res, dst_mod](auto const & dst_ft) {
+            auto const itr = res.find(&dst_mod->get_term(dst_ft));
+            if(itr == end(res)){
+                throw ValueNotFound("Could not find " +
+                    dst_mod->name + "." +
+                    dst_mod->chains().at(dst_ft.chain_id).name + "." +
+                    TermTypeToCStr(dst_ft.term) +
+                    " in ProtoTerm profile - this is probably a bug.");
+            }
+            return itr->second /* bool == true */;
+        });
+
+        if (not reachable) {
             std::ostringstream oss;
-            auto print_free_terms = [&](PtModKey const mod, FreeTerms const & fts) {
+            auto const print_free_terms = [&oss](PtModKey const mod, FreeTerms const & fts) {
                 oss << mod->name << " free terms:\n";
                 for (auto const ft : fts) {
                     oss << "  " << mod->chains().at(ft.chain_id).name;
@@ -218,9 +230,9 @@ WorkArea::WorkArea(
     name(_name),
     joints(parse_joints(json, fam)),
     leaf_joints(parse_leaf_joints(joints)),
-    occupant_map(parse_occupant_map(leaf_joints)),
-    type(parse_type(occupant_map)),
-    proto_paths(parse_proto_paths(occupant_map)),
+    occupants(parse_occupants(leaf_joints)),
+    type(parse_type(occupants)),
+    ptterm_profile(parse_ptterm_profile(occupants)),
     path_map(parse_path_map(joints, leaf_joints)),
     path_len(parse_path_len(path_map)),
     target_size(parse_target_size(path_map))

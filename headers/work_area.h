@@ -5,10 +5,10 @@
 #include <string>
 #include <memory>
 
-#include "ui_joint.h"
 #include "geometry.h"
 #include "fixed_area.h"
-#include "proto_path.h"
+#include "proto_term.h"
+#include "ui_joint.h"
 
 namespace elfin {
 
@@ -33,15 +33,15 @@ struct WorkArea {
     typedef std::unordered_map<std::string, UIJointKey> OccupantMap;
 
     /* data */
-    std::string const   name;
-    UIJointMap const    joints;
-    UIJointKeys const   leaf_joints;   // Leaf joints are tips of the path.
-    OccupantMap const   occupant_map;  // Occupied joints are a subset of leaf joints.
-    WorkType const      type;
-    PtPaths const       proto_paths;   // Only non empty in 2H case.
-    PathMap const       path_map;
-    size_t const        path_len;
-    size_t const        target_size;
+    std::string const       name;
+    UIJointMap const        joints;
+    UIJointKeys const       leaf_joints;   // Leaf joints are tips of the path.
+    OccupantMap const       occupants;     // Occupied joints are a subset of leaf joints.
+    WorkType const          type;
+    PtTermKeyProfile const  ptterm_profile;
+    PathMap const           path_map;
+    size_t const            path_len;
+    size_t const            target_size;
 
     /* ctors */
     WorkArea(std::string const& _name,

@@ -6,7 +6,6 @@
 
 #include "geometry.h"
 #include "string_utils.h"
-#include "proto_path.h"
 #include "term_type.h"
 
 namespace elfin {

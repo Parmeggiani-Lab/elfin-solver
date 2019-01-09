@@ -99,92 +99,105 @@ ProtoLink const* ProtoModule::find_link_to(size_t const src_chain_id,
     return proto_term.find_link_to(dst_mod, dst_chain_id, opposite_term(src_term));
 }
 
-PtPaths ProtoModule::find_paths(FreeTerms const src_terms,
-                                PtModKey const dst_mod,
-                                FreeTerms const& dst_terms) const
+ProtoTerm const& ProtoModule::get_term(FreeTerm const& ft) const {
+    DEBUG_NOMSG(ft.chain_id >= chains_.size());
+
+    return chains_.at(ft.chain_id).get_term(ft.term);
+}
+
+// PtPaths ProtoModule::find_paths(FreeTerms const src_terms,
+//                                 PtModKey const dst_mod,
+//                                 FreeTerms const& dst_terms) const
+// {
+//     PtPaths res;
+
+//     // No need to do DFS if no src or dst terms are free.
+//     if (src_terms.empty() or dst_terms.empty()) return res;
+
+//     PtTermKeySet src_ptterm_set;
+//     for (auto const& ft : src_terms) {
+//         src_ptterm_set.insert(&chains_.at(ft.chain_id).get_term(ft.term));
+//     }
+
+//     PtTermKeySet dst_ptterm_set;
+//     for (auto const& ft : dst_terms) {
+//         dst_ptterm_set.insert(&dst_mod->chains_.at(ft.chain_id).get_term(ft.term));
+//     }
+
+//     PtTermKeySet visited_ptterms;
+//     std::unordered_set<PtModKey> visited_mods;
+//     ProtoPath path(this);
+
+//     // [prev_mod]:out_key >>......<links>......>> in_key:[curr_mod]:next_out_key
+// #define DFS_PARAM PtTermKey const out_key
+//     std::function<void(DFS_PARAM)> find_paths_dfs;
+//     find_paths_dfs = [&](DFS_PARAM) {
+//         visited_ptterms.insert(out_key);
+
+//         for (auto const& link : out_key->links()) {
+//             auto const curr_mod = link->module;
+//             auto const in_key = &link->get_term();
+
+//             // Skip visited_ptterms ptterms.
+//             if (visited_ptterms.find(in_key) != end(visited_ptterms)) continue;
+//             visited_ptterms.insert(in_key);
+
+//             if (visited_mods.find(curr_mod) != end(visited_mods)) continue;
+//             visited_mods.insert(curr_mod);
+
+//             path.links.push_back(link.get());
+
+//             if (curr_mod == dst_mod) {
+//                 // Add path only if in_key is permitted dst set.
+//                 if (dst_ptterm_set.find(in_key) != end(dst_ptterm_set)) {
+//                     res.push_back(path);
+//                 }
+//             }
+
+//             if (curr_mod != this or
+//                     src_ptterm_set.find(in_key) != end(src_ptterm_set)) {
+//                 // If curr_mod is src mod, then in_key must be in the
+//                 // permitted src set.
+
+//                 for (auto const& chain : curr_mod->chains()) {
+//                     auto visit = [&](PtTermKey const next_out_key) {
+//                         if (visited_ptterms.find(next_out_key) != end(visited_ptterms)) return;
+//                         find_paths_dfs(next_out_key);
+//                     };
+
+//                     visit(&chain.n_term());
+//                     visit(&chain.c_term());
+//                 }
+//             }
+
+//             path.links.pop_back();
+//             visited_ptterms.erase(in_key);
+//             visited_mods.erase(curr_mod);
+//         }
+
+//         visited_ptterms.erase(out_key);
+//     };
+// #undef DFS_PARAM
+
+//     for (auto const ptterm : src_ptterm_set) {
+//         visited_ptterms.clear();
+//         visited_mods.clear();
+//         find_paths_dfs(ptterm);
+//     }
+
+//     return res;
+// }
+
+PtTermKeyProfile ProtoModule::calc_ptterm_profile(FreeTerms const src_terms) const
 {
-    PtPaths res;
-
-    // No need to do DFS if no src or dst terms are free.
-    if (src_terms.empty() or dst_terms.empty()) return res;
-
-    PtTermKeySet src_ptterm_set;
-    for (auto const& ft : src_terms) {
-        src_ptterm_set.insert(&chains_.at(ft.chain_id).get_term(ft.term));
-    }
-
-    PtTermKeySet dst_ptterm_set;
-    for (auto const& ft : dst_terms) {
-        dst_ptterm_set.insert(&dst_mod->chains_.at(ft.chain_id).get_term(ft.term));
-    }
-
-    PtTermKeySet visited_ptterms;
-    std::unordered_set<PtModKey> visited_mods;
-    ProtoPath path(this);
-
-    // [prev_mod]:out_key >>......<links>......>> in_key:[curr_mod]:next_out_key
-#define DFS_PARAM PtTermKey const out_key
-    std::function<void(DFS_PARAM)> find_paths_dfs;
-    find_paths_dfs = [&](DFS_PARAM) {
-        visited_ptterms.insert(out_key);
-
-        for (auto const& link : out_key->links()) {
-            auto const curr_mod = link->module;
-            auto const in_key = &link->get_term();
-
-            // Skip visited_ptterms ptterms.
-            if (visited_ptterms.find(in_key) != end(visited_ptterms)) continue;
-            visited_ptterms.insert(in_key);
-
-            if (visited_mods.find(curr_mod) != end(visited_mods)) continue;
-            visited_mods.insert(curr_mod);
-
-            path.links.push_back(link.get());
-
-            if (curr_mod == dst_mod) {
-                // Add path only if in_key is permitted dst set.
-                if (dst_ptterm_set.find(in_key) != end(dst_ptterm_set)) {
-                    res.push_back(path);
-                }
-            }
-
-            if (curr_mod != this or
-                    src_ptterm_set.find(in_key) != end(src_ptterm_set)) {
-                // If curr_mod is src mod, then in_key must be in the
-                // permitted src set.
-
-                for (auto const& chain : curr_mod->chains()) {
-                    auto visit = [&](PtTermKey const next_out_key) {
-                        if (visited_ptterms.find(next_out_key) != end(visited_ptterms)) return;
-                        find_paths_dfs(next_out_key);
-                    };
-
-                    visit(&chain.n_term());
-                    visit(&chain.c_term());
-                }
-            }
-
-            path.links.pop_back();
-            visited_ptterms.erase(in_key);
-            visited_mods.erase(curr_mod);
-        }
-
-        visited_ptterms.erase(out_key);
-    };
-#undef DFS_PARAM
-
-    for (auto const ptterm : src_ptterm_set) {
-        visited_ptterms.clear();
-        visited_mods.clear();
-        find_paths_dfs(ptterm);
-    }
+    PtTermKeyProfile res;
 
     return res;
 }
 
 /* modifiers */
 void ProtoModule::finalize() {
-    // ProtoChain finalize() relies on Terminus finalize(), which assumes that
+    // ProtoChain finalize() calls Terminus finalize(), which assumes that
     // all ProtoModule counts are calculated.
     TRACE_NOMSG(already_finalized_);
     already_finalized_ = true;

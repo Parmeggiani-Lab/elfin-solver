@@ -24,7 +24,7 @@ TestStat DoubleHingeTeam::test() {
         DoubleHingeTeam team(wa.get());
 
         auto const& recipe = tests::H_2H_RECIPE;
-        auto const& omap = wa->occupant_map;
+        auto const& omap = wa->occupants;
 
         auto om_itr = omap.find(recipe[0].ui_name);
         TRACE_NOMSG(om_itr == end(omap));

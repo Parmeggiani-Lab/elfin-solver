@@ -35,7 +35,6 @@ public:
         size_t all_links() const { return n_links + c_links; }
         size_t all_interfaces() const { return n_interfaces + c_interfaces; }
     };
-    typedef std::vector<ProtoPath> PtPaths;
 
 private:
     /* types */
@@ -69,9 +68,8 @@ public:
                                   PtModKey const dst_mod,
                                   size_t const dst_chain_id) const;
     bool is_hub() const { return elfin::is_hub(type); }
-    PtPaths find_paths(FreeTerms const src_terms,
-                       PtModKey const dst_mod,
-                       FreeTerms const& dst_terms) const;
+    ProtoTerm const& get_term(FreeTerm const& ft) const;
+    PtTermKeyProfile calc_ptterm_profile(FreeTerms const src_terms) const;
 
     /* modifiers */
     void finalize();
