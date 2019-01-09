@@ -37,12 +37,12 @@ TestStat test() {
         bool const reachable = any_of(begin(src_terms), end(src_terms),
         [&profile, src_mod](auto const & ft) {
             auto const itr = profile.find(
-            PtTermFinder{
-                nullptr,
-                0,
-                TermType::NONE,
-                const_cast<ProtoTerm*>(&src_mod->get_term(ft))
-            });
+                                 PtTermFinder(
+                                     nullptr,
+                                     0,
+                                     TermType::NONE,
+                                     &src_mod->get_term(ft)
+                                 ));
             return itr != end(profile);
         });
 

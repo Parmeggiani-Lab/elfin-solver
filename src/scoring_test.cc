@@ -49,7 +49,6 @@ Vector3f const points10ab_tran {
 
 /* tests */
 TestStat test_basics() {
-    JUtil.info("Testing kabsch basics\n");
     TestStat ts;
 
     // kabsch() return variables
@@ -99,7 +98,6 @@ TestStat test_basics() {
 }
 
 TestStat test_resample() {
-    JUtil.info("Testing kabsch resample\n");
     TestStat ts;
 
     // Test upsampling a_fewer to B.size()
@@ -125,7 +123,6 @@ TestStat test_resample() {
 }
 
 TestStat test_score() {
-    JUtil.info("Testing kabsch score\n");
     TestStat ts;
 
     // Test unrelated point Kabsch score > 0;
@@ -273,7 +270,6 @@ TestStat test_score() {
 }
 
 TestStat test() {
-    JUtil.info("Testing kabsch\n");
     TestStat ts;
 
     ts += test_basics();

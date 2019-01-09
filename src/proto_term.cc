@@ -52,12 +52,15 @@ PtLinkKey ProtoTerm::find_link_to(PtModKey const dst_module,
 
 /* modifiers */
 void ProtoTerm::finalize() {
-    TRACE_NOMSG(already_finalized_);
-    already_finalized_ = true;
-
 #ifdef PRINT_FINALIZE
     JUtil.warn("Finalizing ProtoTerm with %zu links\n", links_.size());
 #endif  /* ifdef PRINT_FINALIZE */
+
+    n_roulette_.clear();
+    c_roulette_.clear();
+    link_set_.clear();
+
+    if (not active_) return;
 
     //
     // Sort links by interface count in ascending order to facilitate fast
@@ -78,26 +81,28 @@ void ProtoTerm::finalize() {
 
         size_t n_cpd = 0, c_cpd = 0;
 
-        auto const target_prot = link->module;
+        // Let inactive termini have 0 probability of getting picked.
+        if (link->get_term().is_active()) {
+            auto const target_prot = link->module;
+            size_t const ncount = target_prot->counts().n_links;
+            size_t const ccount = target_prot->counts().c_links;
 
-        size_t const ncount = target_prot->counts().n_links;
-        size_t const ccount = target_prot->counts().c_links;
-
-        if (ncount == 0)
-        {
-            // zero N-count means all interfaces are C type
-            n_cpd = ccount;
-            c_cpd = ccount;
-        }
-        else if (ccount == 0)
-        {
-            // zero C-count means all interfaces are N type
-            n_cpd = ncount;
-            c_cpd = ncount;
-        }
-        else {
-            n_cpd = ncount;
-            c_cpd = ccount;
+            if (ncount == 0)
+            {
+                // zero N-count means all interfaces are C type
+                n_cpd = ccount;
+                c_cpd = ccount;
+            }
+            else if (ccount == 0)
+            {
+                // zero C-count means all interfaces are N type
+                n_cpd = ncount;
+                c_cpd = ncount;
+            }
+            else {
+                n_cpd = ncount;
+                c_cpd = ccount;
+            }
         }
 
         n_roulette_.push_back(n_cpd, link_ptr);

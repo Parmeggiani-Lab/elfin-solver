@@ -691,7 +691,8 @@ void PathTeam::mutation_invariance_check() const {
             JUtil.warn("ft: %s\n", ft.to_string().c_str());
         }
     }
-    DEBUG_NOMSG(free_terms_.size() != 2);
+    DEBUG(free_terms_.size() != 2,
+          "free_terms_.size()=%zu\n", free_terms_.size());
     DEBUG_NOMSG(size() == 0);
 }
 
@@ -732,7 +733,9 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
     if (not innert) {
         // Only add 2 free terms to maintain the path property.
         auto prot_free_terms = prot->free_terms();
-        DEBUG_NOMSG(prot_free_terms.size() < 2);  // What module is this??
+        DEBUG(prot_free_terms.size() < 2,
+              "prot_free_terms.size()=%zu, prot is %s\n",
+              prot_free_terms.size(), prot->name.c_str());  // What module is this??
 
         size_t n_ft_to_add = exclude_ft ? 1 : 2;
 
@@ -747,22 +750,22 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
                      exclude_ft->chain_id == ft.chain_id and
                      exclude_ft->term == ft.term))
             {
-                // if (not new_node_key->prototype_->get_term(ft).is_active()) {
-                //     std::ostringstream oss;
-                //     for (auto const& finder : XDB.ptterm_finders()) {
-                //         if (not finder.ptterm_ptr->is_active()) {
-                //             oss << "Not active: " <<
-                //                 finder.mod->name << "." <<
-                //                 finder.mod->get_chain(finder.chain_id).name << "." <<
-                //                 TermTypeToCStr(finder.term) << "\n";
-                //         }
-                //     }
-                //     oss << "work_area_->ptterm_profile.size()=" << work_area_->ptterm_profile.size() <<
-                //         ", XDB.ptterm_finders().size()=" << XDB.ptterm_finders().size() << "\n";
+                if (not new_node_key->prototype_->get_term(ft).is_active()) {
+                    std::ostringstream oss;
+                    for (auto const& finder : XDB.ptterm_finders()) {
+                        if (not finder.ptterm_ptr->is_active()) {
+                            oss << "Not active: " <<
+                                finder.mod->name << "." <<
+                                finder.mod->get_chain(finder.chain_id).name << "." <<
+                                TermTypeToCStr(finder.term) << "\n";
+                        }
+                    }
+                    oss << "work_area_->ptterm_profile.size()=" << work_area_->ptterm_profile.size() <<
+                        ", XDB.ptterm_finders().size()=" << XDB.ptterm_finders().size() << "\n";
 
-                //     throw BadArgument("WTF??? mod: " + new_node_key->prototype_->name +
-                //                       ", ft: " + ft.to_string() + "\n" + oss.str());
-                // }
+                    throw BadArgument("WTF??? mod: " + new_node_key->prototype_->name +
+                                      ", ft: " + ft.to_string() + "\n" + oss.str());
+                }
 
                 free_terms_.emplace_back(new_node_key,
                                          ft.chain_id,
@@ -875,7 +878,12 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
 /* ctors */
 PathTeam::PathTeam(WorkArea const* wa) :
     NodeTeam(wa),
-    pimpl_(make_pimpl()) {}
+    pimpl_(make_pimpl()) {
+    // if (wa->type == WorkType::DOUBLE_HINGED) {
+    //     JUtil.error("Wow! %zu active out of %zu\n",
+    //                wa->ptterm_profile.size(), XDB.ptterm_finders().size());
+    // }
+}
 
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_)

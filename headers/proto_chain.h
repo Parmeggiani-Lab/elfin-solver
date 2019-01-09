@@ -17,7 +17,6 @@ class ProtoChain {
     friend Database;
 private:
     /* data members */
-    bool already_finalized_ = false;
     ProtoTerm n_term_;
     ProtoTerm c_term_;
 

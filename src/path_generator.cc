@@ -13,7 +13,9 @@ PathGenerator::PathGenerator(NodeKey start_node) :
 {
     // Check node is a tip node.
     DEBUG_NOMSG(not start_node);
-    DEBUG_NOMSG(start_node->links().size() > 1);
+    DEBUG(start_node->links().size() > 1,
+          "start_node->links().size()=%zu\n",
+          start_node->links().size());
 }
 
 PathGenerator::PathGenerator(LinkCPtr const arrow) :

@@ -33,7 +33,6 @@ private:
             ProtoLink::PtLinkSimpleComparer > PtLinkKeySet;
 
     /* data */
-    bool already_finalized_ = false;
     PtLinks links_;
     PtLinkRoulette n_roulette_, c_roulette_;
     PtLinkKeySet link_set_;
@@ -96,6 +95,15 @@ struct PtTermFinder {
     size_t chain_id;
     TermType term;
     ProtoTerm* ptterm_ptr;
+
+    PtTermFinder(PtModKey const _mod,
+                 size_t const _chain_id,
+                 TermType const _term,
+                 ProtoTerm const* const _ptterm_ptr) :
+        mod(_mod),
+        chain_id(_chain_id),
+        term(_term),
+        ptterm_ptr(const_cast<ProtoTerm*>(_ptterm_ptr)) {}
 };
 typedef std::unordered_set <PtTermFinder, PtTermFinder::hasher, PtTermFinder::comparer> PtTermFinderSet;
 

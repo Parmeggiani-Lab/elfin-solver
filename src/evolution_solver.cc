@@ -214,13 +214,15 @@ struct EvolutionSolver::PImpl {
 
             // Activate ProtoTerm profile if there is one.
             InputManager::mutable_xdb().activate_ptterm_profile(wa->ptterm_profile);
+            for (auto& mod : XDB.all_mods()) {
+                mod->finalize();
+            }
 
             size_t itr_id = 0;
             size_t restart_id = 0;
             while (OPTIONS.ga_max_restarts == 0 or
                     restart_id < OPTIONS.ga_max_restarts) {
                 should_restart_ga = false;
-
 
                 // Initialize population and solution list.
                 Population population = Population(wa.get());

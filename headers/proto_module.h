@@ -43,7 +43,6 @@ private:
     typedef std::vector<ProtoChain> PtChains;
 
     /* data */
-    bool already_finalized_ = false;
     PtChains chains_;
     FreeTerms free_terms_;
     Counts counts_ = {};

@@ -22,9 +22,6 @@ ProtoTerm const& ProtoChain::get_term(TermType const term) const {
 }
 
 void ProtoChain::finalize() {
-    TRACE_NOMSG(already_finalized_);
-    already_finalized_ = true;
-
 #ifdef PRINT_FINALIZE
     JUtil.warn("Finalizing proto_chain %s N term\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */

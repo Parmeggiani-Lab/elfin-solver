@@ -116,12 +116,12 @@ PtTermFinderSet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
         // Compute free ProtoTerms for src and dst ProtoModules.
         auto const& free_terms1 = calc_free_ptterms(mod1, ui_mod1);
         if (free_terms1.empty()) {
-            throw InvalidHinge("Hinge " + ui_mod1->name + "has no free terminus.");
+            throw InvalidHinge("Hinge " + ui_mod1->name + " has no free terminus.");
         }
 
         auto const& free_terms2 = calc_free_ptterms(mod2, ui_mod2);
         if (free_terms2.empty()) {
-            throw InvalidHinge("Hinge " + ui_mod2->name + "has no free terminus.");
+            throw InvalidHinge("Hinge " + ui_mod2->name + " has no free terminus.");
         }
 
         // Start path search from the one with fewer free ProtoTerms.
@@ -132,26 +132,46 @@ PtTermFinderSet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
         auto const& dst_terms = src_is_1 ? free_terms2 : free_terms1;
 
         res = dst_mod->get_reachable_ptterms(dst_terms);
+        
+        // Suppress dead ends i.e. ProtoModule with only one active terminus.
+        auto const in_res = [&res](PtTermKey const key) {
+            auto const itr = res.find(PtTermFinder(nullptr, 0, TermType::NONE, key));
+            return itr != end(res);
+        };
 
-        // Remove any busy src terms from res.
-        auto const src_uimod = src_is_1 ? ui_mod1 : ui_mod2;
-        for (auto const& link : src_uimod->linkage) {
-            auto const src_ptterm_ptr =
-                &src_mod->get_chain(link.src_chain_name).get_term(link.term);
+        for (auto const& mod : XDB.all_mods()) {
+            // Dst mod and src mod can dead end; it's ok.
+            if (mod.get() == dst_mod or
+                    mod.get() == src_mod) continue;
 
-            res.erase(PtTermFinder{nullptr, 0, TermType::NONE, const_cast<ProtoTerm*>(src_ptterm_ptr)});
+            size_t active_terms = 0;
+
+            PtTermFinderSet mod_finders;
+            for (auto const& chain : mod->chains()) {
+                size_t const chain_id = mod->get_chain_id(chain.name);
+
+                mod_finders.emplace(mod.get(), chain_id, TermType::N, &chain.n_term());
+                if (in_res(&chain.n_term()))
+                    active_terms++;
+
+                mod_finders.emplace(mod.get(), chain_id, TermType::C, &chain.c_term());
+                if (in_res(&chain.c_term()))
+                    active_terms++;
+            }
+
+            // Any ProtoModule with fewer than 2 active termini is a dead end.
+            // It's only posible to enter but not exit
+            if (active_terms < 2) {
+                for (auto const& finder : mod_finders) {
+                    res.erase(finder);
+                }
+                active_terms = 0;
+            }
         }
 
         bool const reachable = any_of(begin(src_terms), end(src_terms),
-        [&res, src_mod](auto const & ft) {
-            auto const itr = res.find(
-            PtTermFinder{
-                nullptr,
-                0,
-                TermType::NONE,
-                const_cast<ProtoTerm*>(&src_mod->get_term(ft))
-            });
-            return itr != end(res);
+        [&in_res, src_mod](auto const & ft) {
+            return in_res(&src_mod->get_term(ft));
         });
 
         if (not reachable) {

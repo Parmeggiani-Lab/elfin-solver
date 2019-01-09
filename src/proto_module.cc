@@ -151,7 +151,7 @@ PtTermFinderSet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) c
             auto const in_key = &link->get_term();
 
             // const_cast is due to laziness. It should be safe.
-            res.insert({link->module, link->chain_id, link->term, const_cast<ProtoTerm*>(in_key)});  // Only add inward ProtoTerm to result.
+            res.insert({link->module, link->chain_id, link->term, in_key});  // Only add inward ProtoTerm to result.
             for (auto const& chain : link->module->chains()) {
                 add_to_frontier(&chain.n_term(), in_key);
                 add_to_frontier(&chain.c_term(), in_key);
@@ -171,26 +171,28 @@ PtTermFinderSet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) c
 
 /* modifiers */
 void ProtoModule::finalize() {
-    // ProtoChain finalize() calls Terminus finalize(), which assumes that
-    // all ProtoModule counts are calculated.
-    TRACE_NOMSG(already_finalized_);
-    already_finalized_ = true;
+    // ProtoChain finalize() calls Terminus finalize(), which assumes that all
+    // ProtoModule counts have been calculated.
 
 #ifdef PRINT_FINALIZE
     JUtil.warn("Finalizing module %s\n", name.c_str());
 #endif  /* ifdef PRINT_FINALIZE */
 
+    free_terms_.clear();
+
     for (ProtoChain& proto_chain : chains_) {
         proto_chain.finalize();
 
-        if (not proto_chain.n_term().links().empty()) {
+        if (not proto_chain.n_term().links().empty() and
+                proto_chain.n_term().is_active()) {
             free_terms_.emplace_back(
                 nullptr,
                 proto_chain.id,
                 TermType::N);
         }
 
-        if (not proto_chain.c_term().links().empty()) {
+        if (not proto_chain.c_term().links().empty() and
+                proto_chain.c_term().is_active()) {
             free_terms_.emplace_back(
                 nullptr,
                 proto_chain.id,
