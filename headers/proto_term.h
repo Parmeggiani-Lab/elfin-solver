@@ -37,6 +37,7 @@ private:
     PtLinks links_;
     PtLinkRoulette n_roulette_, c_roulette_;
     PtLinkKeySet link_set_;
+    bool active_ = true;
 
 public:
     /* ctors */
@@ -53,9 +54,12 @@ public:
     PtLinkKey find_link_to(PtModKey const dst_module,
                            size_t const dst_chain_id,
                            TermType const term) const;
+    bool is_active() const { return active_; }
 
     /* modifiers */
     void finalize();
+    void activate() { active_ = true; }
+    void deactivate() { active_ = false; }
 };
 
 }  /* elfin */

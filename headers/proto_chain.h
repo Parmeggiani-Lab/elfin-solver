@@ -9,8 +9,12 @@
 
 namespace elfin {
 
+/* Fwd Decl */
+class Database;
+
 class ProtoChain {
     friend ProtoModule;
+    friend Database;
 private:
     /* data members */
     bool already_finalized_ = false;

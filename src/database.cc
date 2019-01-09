@@ -26,6 +26,7 @@ void Database::ModPtrRoulette::print_to(std::ostream& os) const {
 
 void Database::reset() {
     all_mods_.clear();
+    all_ptterm_ptrs_.clear();
     mod_idx_map_.clear();
     singles_.clear();
     hubs_.clear();
@@ -33,7 +34,6 @@ void Database::reset() {
     complex_mods_.clear();
 }
 
-//
 // Divides modules in the following categories:
 //   basic (2 termini)
 //   complex (>2 termini)
@@ -41,7 +41,6 @@ void Database::reset() {
 //   hubs
 //
 // Note: categorize() MUST be called after parsing links.
-//
 void Database::categorize() {
     for (auto& mod : all_mods_) {
         size_t const n_itf = mod->counts().all_interfaces();
@@ -190,6 +189,12 @@ void Database::parse(Options const& options) {
                 mod_type,
                 radius,
                 chain_names));
+
+        auto& mod = all_mods_.back();
+        for (auto& chain : mod->chains_) {
+            all_ptterm_ptrs_.insert(&chain.n_term_);
+            all_ptterm_ptrs_.insert(&chain.c_term_);
+        }
     };
     for_each_module_json(init_module);
 
@@ -242,5 +247,23 @@ void Database::parse(Options const& options) {
     print_roulettes();
 #endif  /* ifdef PRINT_ROULETTES */
 }
+
+void Database::activate_ptterm_profile(PtTermKeySet const& reachable) {
+    for (auto const ptterm_key : all_ptterm_ptrs_) {
+        if (reachable.find(ptterm_key) == end(reachable)) {
+            ptterm_key->deactivate();
+        }
+        else {
+            ptterm_key->activate();
+        }
+    }
+}
+
+void Database::deactivate_ptterm_profile() {
+    for (auto const ptterm_key : all_ptterm_ptrs_) {
+        ptterm_key->activate();
+    }
+}
+
 
 }  /* elfin */

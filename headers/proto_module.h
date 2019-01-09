@@ -14,6 +14,7 @@ namespace elfin {
 struct FreeTerm;
 class ProtoModule;
 typedef ProtoModule const* PtModKey;
+class Database;
 
 /* types */
 #define FOREACH_MODULETYPE(MACRO) \
@@ -27,6 +28,7 @@ GEN_ENUM_AND_STRING(ModuleType, ModuleTypeNames, FOREACH_MODULETYPE);
 bool is_hub(ModuleType const type);
 
 class ProtoModule : public Printable {
+    friend Database;
 public:
     /* types */
     struct Counts {
@@ -60,6 +62,10 @@ public:
 
     /* accessors */
     PtChains const& chains() const { return chains_; }
+    ProtoChain const& get_chain(size_t const id) const;
+    ProtoChain const& get_chain(std::string const name) const {
+        return chains_.at(get_chain_id(name));
+    }
     FreeTerms const& free_terms() const { return free_terms_; }
     Counts const& counts() const { return counts_; }
     size_t get_chain_id(std::string const& chain_name) const;

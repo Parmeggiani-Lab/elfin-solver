@@ -23,6 +23,9 @@ public:
     /* ctors */
     Population(WorkArea const* work_area);
 
+    /* dtors */
+    virtual ~Population();
+
     /* accessors */
     NodeTeams const* front_buffer() const { return front_buffer_; }
     NodeTeams const* back_buffer() const { return back_buffer_; }

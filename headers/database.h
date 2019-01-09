@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #include "json.h"
 #include "proto_module.h"
@@ -27,6 +28,7 @@ protected:
 
     /* data */
     std::vector<ProtoModuleSP> all_mods_;
+    std::unordered_set<ProtoTerm*> all_ptterm_ptrs_;
     StrIndexMap mod_idx_map_;
     ModPtrRoulette singles_, hubs_, basic_mods_, complex_mods_;
 
@@ -49,6 +51,8 @@ public:
 
     /* modifiers */
     void parse(Options const& options);
+    void activate_ptterm_profile(PtTermKeySet const& reachable);
+    void deactivate_ptterm_profile();
 };
 
 }  /* elfin */

@@ -10,7 +10,7 @@ Options const& OPTIONS =
 Cutoffs const& CUTOFFS =
     InputManager::cutoffs();
 Database const& XDB =
-    InputManager::xdb();
+    InputManager::mutable_xdb();
 Spec const& SPEC =
     InputManager::spec();
 

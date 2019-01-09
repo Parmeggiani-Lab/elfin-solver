@@ -56,7 +56,7 @@ public:
     static Cutoffs const& cutoffs() {
         return instance().cutoffs_;
     }
-    static Database const& xdb() {
+    static Database& mutable_xdb() {
         return instance().xdb_;
     }
     static Spec const& spec() {

@@ -26,6 +26,7 @@ DECL_EXCEPTION(BadArgument);
 DECL_EXCEPTION(BadTerminus);
 DECL_EXCEPTION(BadWorkType);
 DECL_EXCEPTION(InvalidHinge);
+DECL_EXCEPTION(OutOfRange);
 DECL_EXCEPTION(ValueNotFound);
 DECL_EXCEPTION(ShouldNotReach);
 DECL_EXCEPTION(CouldNotParse);

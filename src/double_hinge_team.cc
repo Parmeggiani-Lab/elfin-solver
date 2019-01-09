@@ -55,7 +55,7 @@ DoubleHingeTeam::DoubleHingeTeam(WorkArea const* wa) :
     HingeTeam(wa),
     pimpl_(make_pimpl())
 {
-    mutation_invariance_check();
+    DEBUG_NOMSG(wa->ptterm_profile.empty());
 }
 
 DoubleHingeTeam::DoubleHingeTeam(DoubleHingeTeam const& other) :

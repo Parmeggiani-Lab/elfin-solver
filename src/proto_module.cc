@@ -66,6 +66,16 @@ ProtoModule::ProtoModule(std::string const& _name,
 }
 
 /* accessors */
+ProtoChain const& ProtoModule::get_chain(size_t const id) const {
+    if (id >= chains_.size()) {
+        throw OutOfRange("No chain id " + std::to_string(id) +
+                         " in " + name);
+    }
+    else {
+        return chains_.at(id);
+    }
+}
+
 size_t ProtoModule::get_chain_id(std::string const& chain_name) const
 {
     auto chain_itr = std::find_if(begin(chains_),
@@ -74,17 +84,18 @@ size_t ProtoModule::get_chain_id(std::string const& chain_name) const
 
     if (chain_itr == end(chains_)) {
         // Verbose diagnostics.
-        JUtil.error("Could not find chain named %s in ProtoModule %s\n",
-                    chain_name.c_str(), name.c_str());
         std::ostringstream oss;
+        oss << "Could not find chain named ";
+        oss << chain_name;
+        oss << " in ProtoModule ";
+        oss << name << "\n";
+
         oss << "The following chains are present:\n";
         for (auto& chain : chains_) {
             oss << chain.name << "\n";
         }
-        JUtil.error(oss.str().c_str());
-        
-        TRACE_NOMSG("Chain Not Found");
-        throw ExitException(1, "Chain Not Found");  // Suppress warning.
+
+        throw ValueNotFound(oss.str());
     }
     else {
         return chain_itr->id;
