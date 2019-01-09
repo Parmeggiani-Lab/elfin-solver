@@ -120,13 +120,14 @@ ProtoTerm const& ProtoModule::get_term(FreeTerm const& ft) const {
 
 PtTermKeySet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) const
 {
-    PtTermKeySet res;
+    PtTermKeySet res, visited_out_keys;
 
     // Keys in frontier are always outward ProtoTerms.
     std::deque<PtTermKey> frontier;
-    auto const add_to_frontier = [&res, &frontier](
-    PtTermKey const out_key) {
-        if (res.find(out_key) == end(res)) {
+    auto const add_to_frontier = [&visited_out_keys, &frontier](
+    PtTermKey const out_key, PtTermKey const in_key) {
+        if (out_key != in_key and
+                visited_out_keys.find(out_key) == end(visited_out_keys)) {
             frontier.push_back(out_key);
         }
     };
@@ -135,8 +136,9 @@ PtTermKeySet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) cons
         frontier.push_back(&get_term(ft));
     }
 
-    // Don't let src_terms go into result because result is for strictly
-    // ProtoTerm on another module, not src mod.
+    // Don't let src_terms go into visited_out_keys because that is for
+    // strictly outward ProtoTerm on another module or another instance of src
+    // mod, not the origin src mod.
     size_t skip = src_terms.size();
     while (not frontier.empty()) {
         // Consume front of queue.
@@ -145,10 +147,11 @@ PtTermKeySet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) cons
 
         // Put all unvisited outward ProtoTerm on the next wave into frontier.
         for (auto const& link : curr_key->links()) {
-            res.insert(&link->get_term());
+            auto const in_key = &link->get_term();
+            res.insert(in_key);  // Only add inward ProtoTerm to result.
             for (auto const& chain : link->module->chains()) {
-                add_to_frontier(&chain.n_term());
-                add_to_frontier(&chain.c_term());
+                add_to_frontier(&chain.n_term(), in_key);
+                add_to_frontier(&chain.c_term(), in_key);
             }
         }
 
@@ -156,7 +159,7 @@ PtTermKeySet ProtoModule::get_reachable_ptterms(FreeTerms const& src_terms) cons
             skip--;
         }
         else {
-            res.insert(curr_key);
+            visited_out_keys.insert(curr_key);
         }
     }
 
