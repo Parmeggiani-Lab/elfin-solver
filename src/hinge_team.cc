@@ -67,7 +67,7 @@ FreeTerm HingeTeam::get_mutable_chain() const
     if (size() == 1) {
         auto const& rand_hinge_ft = random::pick(hinge_->prototype_->free_terms());
 
-        FreeTerm ft(hinge_, rand_hinge_ft.term, rand_hinge_ft.chain_id);
+        FreeTerm ft(hinge_, rand_hinge_ft.chain_id, rand_hinge_ft.term);
         ft.should_restore = false;
         return ft;
     }

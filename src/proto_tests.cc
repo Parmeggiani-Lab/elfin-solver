@@ -22,14 +22,14 @@ TestStat test() {
         auto const src_mod = XDB.get_mod(src_mod_name);
         size_t const src_chain_id = src_mod->get_chain_id(src_chain_name);
         auto const src_term = parse_term(src_term_name);
-        PtTermKeys const src_ptterms = { &src_mod->chains().at(src_chain_id).get_term(src_term) };
+        FreeTerms const src_terms = { FreeTerm(nullptr, src_chain_id, src_term) };
 
         auto const dst_mod = XDB.get_mod(dst_mod_name);
         size_t const dst_chain_id = dst_mod->get_chain_id(dst_chain_name);
         auto const dst_term = parse_term(dst_term_name);
-        PtTermKeys const dst_ptterms = { &dst_mod->chains().at(dst_chain_id).get_term(dst_term) };
+        FreeTerms const dst_terms = {FreeTerm(nullptr, dst_chain_id, dst_term) };
 
-        PtPaths const& paths = src_mod->find_paths(src_ptterms, dst_mod, dst_ptterms);
+        PtPaths const& paths = src_mod->find_paths(src_terms, dst_mod, dst_terms);
 
         if (paths.size() != exp_n_paths) {
             JUtil.error("Expected %zu paths between %s.%s.%s and %s.%s.%s but got %zu\n",
@@ -54,7 +54,6 @@ TestStat test() {
     test_find_path("D49", "A", "N", "D49", "A", "C", 5);
     test_find_path("D49", "A", "C", "D49_aC2_ext", "C", "C", 0);
     test_find_path("D49", "A", "C", "D49_aC2_ext", "D", "N", 1);
-    PANIC("OK!");
 
     return ts;
 }

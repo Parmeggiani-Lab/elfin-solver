@@ -49,7 +49,7 @@ struct PathTeam::PImpl {
         TermType const term_a = free_term_a.term;
         TermType const term_b = opposite_term(term_a);
 
-        FreeTerm free_term_b = FreeTerm(nullptr, term_b, pt_link->chain_id);
+        FreeTerm free_term_b = FreeTerm(nullptr, pt_link->chain_id, term_b);
 
         auto node_b = _.add_node(pt_link->module,
                                  node_a->tx_ * pt_link->tx,
@@ -143,14 +143,14 @@ struct PathTeam::PImpl {
         // Prototype ---pt_link1--->              ---pt_link2--->
         //
         FreeTerm nn_src1(
-            new_node_key, port2.term, bridge->pt_link1->chain_id);
+            new_node_key, bridge->pt_link1->chain_id, port2.term);
         Link const new_link1_rev(port1, bridge->pt_link1, nn_src1);
 
         node1->add_link(new_link1_rev);
         new_node->add_link(new_link1_rev.reversed());
 
         FreeTerm nn_src2(
-            new_node_key, port1.term, bridge->pt_link2->reverse->chain_id);
+            new_node_key, bridge->pt_link2->reverse->chain_id, port1.term);
         Link const new_link2(nn_src2, bridge->pt_link2, port2);
 
         new_node->add_link(new_link2);
@@ -442,7 +442,7 @@ struct PathTeam::PImpl {
                 //
 
                 insert_points.emplace_back(
-                    FreeTerm(curr_node, TermType::NONE, 0),
+                    FreeTerm(curr_node, 0, TermType::NONE),
                     FreeTerm());
             }
 
@@ -744,8 +744,8 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
                      exclude_ft->chain_id == ft.chain_id))
             {
                 free_terms_.emplace_back(new_node_key,
-                                         ft.term,
-                                         ft.chain_id);
+                                         ft.chain_id,
+                                         ft.term);
                 n_ft_to_add--;
             }
         }
@@ -840,7 +840,7 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
                                dst_mod,
                                dst_chain_id);
 
-            FreeTerm const src_ft(last_node, step.src_term, src_chain_id);
+            FreeTerm const src_ft(last_node, src_chain_id, step.src_term);
 
             last_node = pimpl_->grow_tip(src_ft, pt_link);
         }

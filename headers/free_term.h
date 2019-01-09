@@ -25,15 +25,15 @@ struct FreeTerm : public Printable {
 
     /* data */
     NodeKey node;
-    TermType term;
     size_t chain_id;
+    TermType term;
     bool should_restore = true;
 
     /* ctors */
     FreeTerm(NodeKey const _node,
-             TermType const _term,
-             size_t const _chain_id);
-    FreeTerm() : FreeTerm(nullptr, TermType::NONE, 0) {}
+             size_t const _chain_id,
+             TermType const _term);
+    FreeTerm() : FreeTerm(nullptr, 0, TermType::NONE) {}
 
     /* dtors */
     virtual ~FreeTerm() {}

@@ -6,11 +6,11 @@ namespace elfin {
 
 /* ctors */
 FreeTerm::FreeTerm(NodeKey const _node,
-                   TermType const _term,
-                   size_t const _chain_id) :
+                   size_t const _chain_id,
+                   TermType const _term) :
     node(_node),
-    term(_term),
-    chain_id(_chain_id) {
+    chain_id(_chain_id),
+    term(_term) {
 
 }
 

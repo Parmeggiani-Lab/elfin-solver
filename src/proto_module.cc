@@ -99,36 +99,48 @@ ProtoLink const* ProtoModule::find_link_to(size_t const src_chain_id,
     return proto_term.find_link_to(dst_mod, dst_chain_id, opposite_term(src_term));
 }
 
-PtPaths ProtoModule::find_paths(PtTermKeys const src_ptterms,
+PtPaths ProtoModule::find_paths(FreeTerms const src_terms,
                                 PtModKey const dst_mod,
-                                PtTermKeys const& dst_ptterms) const
+                                FreeTerms const& dst_terms) const
 {
     PtPaths res;
 
     // No need to do DFS if no src or dst terms are free.
-    if (src_ptterms.empty() or dst_ptterms.empty()) return res;
+    if (src_terms.empty() or dst_terms.empty()) return res;
 
-    PtTermKeySet const src_ptterm_set(begin(src_ptterms), end(src_ptterms));
-    PtTermKeySet const dst_ptterm_set(begin(dst_ptterms), end(dst_ptterms));
-    PtTermKeySet visited;
+    PtTermKeySet src_ptterm_set;
+    for (auto const& ft : src_terms) {
+        src_ptterm_set.insert(&chains_.at(ft.chain_id).get_term(ft.term));
+    }
+
+    PtTermKeySet dst_ptterm_set;
+    for (auto const& ft : dst_terms) {
+        dst_ptterm_set.insert(&dst_mod->chains_.at(ft.chain_id).get_term(ft.term));
+    }
+
+    PtTermKeySet visited_ptterms;
+    std::unordered_set<PtModKey> visited_mods;
     ProtoPath path(this);
 
     // [prev_mod]:out_key >>......<links>......>> in_key:[curr_mod]:next_out_key
 #define DFS_PARAM PtTermKey const out_key
     std::function<void(DFS_PARAM)> find_paths_dfs;
     find_paths_dfs = [&](DFS_PARAM) {
-        visited.insert(out_key);
+        visited_ptterms.insert(out_key);
 
         for (auto const& link : out_key->links()) {
+            auto const curr_mod = link->module;
             auto const in_key = &link->get_term();
 
-            // Skip visited ptterms.
-            if (visited.find(in_key) != end(visited)) continue;
+            // Skip visited_ptterms ptterms.
+            if (visited_ptterms.find(in_key) != end(visited_ptterms)) continue;
+            visited_ptterms.insert(in_key);
 
-            visited.insert(in_key);
+            if (visited_mods.find(curr_mod) != end(visited_mods)) continue;
+            visited_mods.insert(curr_mod);
+
             path.links.push_back(link.get());
 
-            auto const curr_mod = link->module;
             if (curr_mod == dst_mod) {
                 // Add path only if in_key is permitted dst set.
                 if (dst_ptterm_set.find(in_key) != end(dst_ptterm_set)) {
@@ -143,7 +155,7 @@ PtPaths ProtoModule::find_paths(PtTermKeys const src_ptterms,
 
                 for (auto const& chain : curr_mod->chains()) {
                     auto visit = [&](PtTermKey const next_out_key) {
-                        if (visited.find(next_out_key) != end(visited)) return;
+                        if (visited_ptterms.find(next_out_key) != end(visited_ptterms)) return;
                         find_paths_dfs(next_out_key);
                     };
 
@@ -153,15 +165,17 @@ PtPaths ProtoModule::find_paths(PtTermKeys const src_ptterms,
             }
 
             path.links.pop_back();
-            visited.erase(in_key);
+            visited_ptterms.erase(in_key);
+            visited_mods.erase(curr_mod);
         }
 
-        visited.erase(out_key);
+        visited_ptterms.erase(out_key);
     };
 #undef DFS_PARAM
 
-    for (auto const ptterm : src_ptterms) {
-        visited.clear();
+    for (auto const ptterm : src_ptterm_set) {
+        visited_ptterms.clear();
+        visited_mods.clear();
         find_paths_dfs(ptterm);
     }
 
@@ -185,15 +199,15 @@ void ProtoModule::finalize() {
         if (not proto_chain.n_term().links().empty()) {
             free_terms_.emplace_back(
                 nullptr,
-                TermType::N,
-                proto_chain.id);
+                proto_chain.id,
+                TermType::N);
         }
 
         if (not proto_chain.c_term().links().empty()) {
             free_terms_.emplace_back(
                 nullptr,
-                TermType::C,
-                proto_chain.id);
+                proto_chain.id,
+                TermType::C);
         }
     }
 }
