@@ -26,9 +26,30 @@ protected:
         virtual void print_to(std::ostream& os) const;
     };
 
+    struct PtTermFinder {
+        /* types */
+        struct hasher {
+            size_t operator()(PtTermFinder const& f) const {
+                return std::hash<ProtoTerm*>()(f.ptterm_ptr);
+            }
+        };
+        struct comparer {
+            size_t operator()(PtTermFinder const& lhs, PtTermFinder const& rhs) const {
+                return lhs.ptterm_ptr == rhs.ptterm_ptr;
+            }
+        };
+
+        /* data */
+        PtModKey mod;
+        size_t chain_id;
+        TermType term;
+        ProtoTerm* ptterm_ptr;
+    };
+    typedef std::unordered_set <PtTermFinder, PtTermFinder::hasher, PtTermFinder::comparer> PtTermFinders;
+
     /* data */
     std::vector<ProtoModuleSP> all_mods_;
-    std::unordered_set<ProtoTerm*> all_ptterm_ptrs_;
+    PtTermFinders ptterm_finders_;
     StrIndexMap mod_idx_map_;
     ModPtrRoulette singles_, hubs_, basic_mods_, complex_mods_;
 
@@ -42,6 +63,7 @@ protected:
 public:
     /* accessors */
     std::vector<ProtoModuleSP> const& all_mods() const { return all_mods_; }
+    PtTermFinders const& ptterm_finders() const { return ptterm_finders_; }
     StrIndexMap const& mod_idx_map() const { return mod_idx_map_; }
     ModPtrRoulette const& singles() const { return singles_; }
     ModPtrRoulette const& hubs() const { return hubs_; }

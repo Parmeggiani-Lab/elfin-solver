@@ -26,7 +26,7 @@ void Database::ModPtrRoulette::print_to(std::ostream& os) const {
 
 void Database::reset() {
     all_mods_.clear();
-    all_ptterm_ptrs_.clear();
+    ptterm_finders_.clear();
     mod_idx_map_.clear();
     singles_.clear();
     hubs_.clear();
@@ -189,12 +189,6 @@ void Database::parse(Options const& options) {
                 mod_type,
                 radius,
                 chain_names));
-
-        auto& mod = all_mods_.back();
-        for (auto& chain : mod->chains_) {
-            all_ptterm_ptrs_.insert(&chain.n_term_);
-            all_ptterm_ptrs_.insert(&chain.c_term_);
-        }
     };
     for_each_module_json(init_module);
 
@@ -235,6 +229,13 @@ void Database::parse(Options const& options) {
     // Finalize modules and add to all_mods_
     for (auto& mod : all_mods_) {
         mod->finalize();
+        for (auto& chain : mod->chains_) {
+            size_t const chain_id = mod->get_chain_id(chain.name);
+            if (not chain.n_term_.links().empty())
+                ptterm_finders_.insert({mod.get(), chain_id, TermType::N, &chain.n_term_});
+            if (not chain.c_term_.links().empty())
+                ptterm_finders_.insert({mod.get(), chain_id, TermType::C, &chain.c_term_});
+        }
     }
 
     categorize();
@@ -249,19 +250,20 @@ void Database::parse(Options const& options) {
 }
 
 void Database::activate_ptterm_profile(PtTermKeySet const& reachable) {
-    for (auto const ptterm_key : all_ptterm_ptrs_) {
-        if (reachable.find(ptterm_key) == end(reachable)) {
-            ptterm_key->deactivate();
+    for (auto const& finder : ptterm_finders_) {
+        auto ptterm_ptr = finder.ptterm_ptr;
+        if (reachable.find(ptterm_ptr) == end(reachable)) {
+            ptterm_ptr->deactivate();
         }
         else {
-            ptterm_key->activate();
+            ptterm_ptr->activate();
         }
     }
 }
 
 void Database::deactivate_ptterm_profile() {
-    for (auto const ptterm_key : all_ptterm_ptrs_) {
-        ptterm_key->activate();
+    for (auto const finder : ptterm_finders_) {
+        finder.ptterm_ptr->activate();
     }
 }
 

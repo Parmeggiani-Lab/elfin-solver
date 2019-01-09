@@ -39,21 +39,21 @@ struct ProtoLink : public Printable {
     /* accessors */
     ProtoTerm const& get_term() const;
 
+    struct PtLinkSimpleHasher {
+        size_t operator()(PtLinkKey const& link) const;
+    };
+
+    struct PtLinkSimpleComparer {
+        bool operator()(PtLinkKey const& lh_link,
+                        PtLinkKey const& rh_link) const;
+    };
+
     /* printers */
     virtual void print_to(std::ostream& os) const;
 };
 
 /* types */
 typedef std::vector<PtLinkSP> PtLinks;
-
-struct HashPtLinkSimple {
-    size_t operator()(PtLinkKey const& link) const;
-};
-
-struct EqualPtLinkSimple {
-    bool operator()(PtLinkKey const& lh_link,
-                    PtLinkKey const& rh_link) const;
-};
 
 }  /* elfin */
 

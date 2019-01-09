@@ -94,4 +94,14 @@ typedef std::unique_ptr<ProtoModule> ProtoModuleSP;
 
 }  /* elfin */
 
+namespace std {
+template <>
+struct hash<elfin::PtModKey>
+{
+    size_t operator()(elfin::PtModKey const& key) const {
+        return hash<void*>()((void*) key);
+    }
+};
+}
+
 #endif  /* end of include guard: PROTO_MODULE_H_ */

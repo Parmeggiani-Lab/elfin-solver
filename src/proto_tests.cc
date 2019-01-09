@@ -81,10 +81,20 @@ TestStat test() {
 
     test_ptterm_profile("D49", "A", "N", "D49", "A", "C", true);
     test_ptterm_profile("D49", "A", "C", "D49", "A", "C", true);
-    test_ptterm_profile("D49", "A", "N", "D81", "A", "C", true);
+    test_ptterm_profile("D49", "A", "N", "D81", "A", "C", false);  // No way to reach D81.A.C as an inward ProtoTerm.
+    test_ptterm_profile("D49", "A", "N", "D49_aC2_24", "A", "C", true);
+    test_ptterm_profile("D49", "A", "N", "D49_aC2_24", "B", "C", true);
+    test_ptterm_profile("D49", "A", "N", "D49_aC2_24", "B", "N", false);  // Dst term non existent.
+    test_ptterm_profile("D49", "A", "C", "D49_aC2_24", "A", "C", true);
+    test_ptterm_profile("D49", "A", "C", "D49_aC2_24", "B", "C", true);
+    test_ptterm_profile("D49", "A", "C", "D49_aC2_24", "B", "N", false);  // Dst term non existent.
+    test_ptterm_profile("D53", "A", "N", "D64", "A", "C", false);  // No way to reach D64.A.C as an inward ProtoTerm.
 
     test_ptterm_profile("D49", "A", "C", "D49_aC2_ext", "C", "C", true);
     test_ptterm_profile("D49", "A", "C", "D49_aC2_ext", "D", "N", true);
+    test_ptterm_profile("D49", "A", "C", "D71", "A", "N", true);
+    test_ptterm_profile("D49", "A", "C", "D71", "A", "C", false);  // D49-...D71-D71
+
     test_ptterm_profile("D49_aC2_ext", "C", "N", "D49_aC2_ext", "D", "N", true);  // hub-D49-hub-D49-hub
     test_ptterm_profile("D49_aC2_ext", "C", "N", "D49_aC2_ext", "C", "N", true);  // hub-D49-hub
     test_ptterm_profile("D49_aC2_ext", "C", "N", "D79", "A", "N", true);

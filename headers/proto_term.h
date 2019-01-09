@@ -29,8 +29,8 @@ private:
     // method. We'll be able to search the pointer set without creating a new
     // ProtoLink instance (by comparing ProtoLink* with FreeTerm *).
     typedef std::unordered_set <PtLinkKey,
-            HashPtLinkSimple,
-            EqualPtLinkSimple > PtLinkKeySet;
+            ProtoLink::PtLinkSimpleHasher,
+            ProtoLink::PtLinkSimpleComparer > PtLinkKeySet;
 
     /* data */
     bool already_finalized_ = false;
@@ -63,5 +63,15 @@ public:
 };
 
 }  /* elfin */
+
+namespace std {
+template <>
+struct hash<elfin::ProtoTerm*>
+{
+    size_t operator()(elfin::ProtoTerm* const& key) const {
+        return hash<void*>()((void*) key);
+    }
+};
+}
 
 #endif  /* end of include guard: PROTO_TERM_H_ */
