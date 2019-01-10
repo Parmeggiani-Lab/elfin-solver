@@ -1,5 +1,8 @@
 #include "double_hinge_team.h"
 
+#include <unordered_map>
+#include <unordered_set>
+
 #include "input_manager.h"
 #include "path_generator.h"
 
@@ -26,6 +29,107 @@ struct DoubleHingeTeam::PImpl {
         DEBUG_NOMSG(itr == end(omap));
 
         _.hinge_ui_joint2_ = itr->second;
+    }
+
+    void complete_by_dijkstra() {
+        DEBUG_NOMSG(not _.hinge_ui_joint2_);
+
+        std::string const& hinge2_mod_name =
+            _.hinge_ui_joint2_->occupant.ui_module->module_name;
+
+        auto const mutable_tip = _.get_tip(/*mutable_hint=*/true);
+        std::string const& mutable_tip_mod_name =
+            mutable_tip->prototype_->name;
+
+        if (mutable_tip_mod_name == hinge2_mod_name) return;
+
+        auto const src_mod = XDB.get_mod(mutable_tip_mod_name);
+        auto const dst_mod = XDB.get_mod(hinge2_mod_name);
+
+        std::unordered_set<PtModKey> frontier = { src_mod };
+        std::unordered_map<PtModKey, size_t> dists = { {src_mod, 0} };
+        std::unordered_map<PtModKey, PtLinkKey> links = { {src_mod, nullptr} };
+
+        size_t dist = 1;
+        while (not frontier.empty())
+        {
+            std::unordered_set<PtModKey> tmp_frontier;
+            for (auto const mod : frontier) {
+                for (auto const& ft : mod->free_terms()) {
+                    for (auto const& link : mod->get_term(ft).links()) {
+                        auto const nb = link->module;
+
+                        // Set dist and link if nb has not been explored, or
+                        // dist is smaller.
+                        auto const dist_itr = dists.find(nb);
+                        bool const is_new = dist_itr == end(dists);
+
+                        if (is_new or dist < dist_itr->second) {
+                            dists[nb] = dist;
+                            links[nb] = link.get();
+                        }
+
+                        if (is_new) {
+                            tmp_frontier.insert(nb);
+                        }
+                    }
+                }
+            }
+
+            // Stop when we reached the dst mod.
+            if (tmp_frontier.find(dst_mod) != end(tmp_frontier)) {
+                // Build the shortest path to dst mod.
+
+                // Collect links (it's backwards!).
+                std::vector<PtLinkKey> rev_shortest_path;
+                size_t const path_size = dists.at(dst_mod);
+                rev_shortest_path.reserve(path_size);
+
+                auto curr_mod = dst_mod;
+                while (curr_mod != src_mod) {
+                    auto const link = links.at(curr_mod);
+                    rev_shortest_path.push_back(link);
+                    curr_mod = link->reverse->module;
+                }
+
+                // Check path sanity. Note the path is reversed.
+                DEBUG_NOMSG(path_size != rev_shortest_path.size());
+                DEBUG_NOMSG(rev_shortest_path.back()->reverse->module != src_mod);
+                DEBUG_NOMSG(rev_shortest_path.front()->module != dst_mod);
+
+                // Grow the links.
+                DEBUG_NOMSG(_.free_terms_.size() != 1);
+                auto free_term = _.get_mutable_term();
+
+                for (auto itr = rev_shortest_path.rbegin();
+                        itr != rev_shortest_path.rend(); ++itr) {
+                    _.grow_tip(free_term, *itr);
+                    DEBUG_NOMSG(_.free_terms_.size() != 1);
+                    free_term = _.get_mutable_term();
+                }
+
+                return;
+            }
+
+            frontier = tmp_frontier;
+            dist++;
+        }
+
+        {
+            std::ostringstream oss;
+            oss << "Second hinge not reached!\n";
+            oss << "Frontier: \n";
+            for (auto const mod : frontier) {
+                oss << "  " << mod->name << "\n";
+            }
+            oss << "Distances: \n";
+            for (auto const& [mod, val] : dists) {
+                oss << "  " << mod->name << ":" << val << "\n";
+            }
+
+            throw ShouldNotReach(oss.str());
+        }
+
     }
 };
 
@@ -69,15 +173,7 @@ void DoubleHingeTeam::virtual_copy(NodeTeam const& other) {
 void DoubleHingeTeam::evavluate() {
     // Run djistrak to complete the mutable end if team does not end in second
     // hinge.
-    auto const mutable_tip = get_tip(/*mutable_hint=*/true);
-    std::string const& mutable_tip_mod_name =
-        mutable_tip->prototype_->name;
-    std::string const& hinge2_mod_name =
-        hinge_ui_joint2_->occupant.ui_module->module_name;
-    if (mutable_tip_mod_name != hinge2_mod_name) {
-        // JUtil.warn(("Need fix!" + mutable_tip_mod_name +
-        //             " vs " + hinge2_mod_name + "\n").c_str());
-    }
+    pimpl_->complete_by_dijkstra();
 
     HingeTeam::evavluate();
 }

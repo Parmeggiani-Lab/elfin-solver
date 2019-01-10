@@ -639,7 +639,7 @@ struct PathTeam::PImpl {
         }
 
         while (_.size() < _.work_area_->target_size) {
-            _.grow_tip(_.get_mutable_chain());
+            _.grow_tip(_.get_mutable_term());
         }
 
         return true;
@@ -663,13 +663,13 @@ PathTeam* PathTeam::virtual_clone() const {
     return new PathTeam(*this);
 }
 
-FreeTerm PathTeam::get_mutable_chain() const
+FreeTerm PathTeam::get_mutable_term() const
 {
     return random::pick(free_terms_);
 }
 
 NodeKey PathTeam::get_tip(bool const mutable_hint) const {
-    return get_mutable_chain().node;
+    return get_mutable_term().node;
 }
 
 void PathTeam::mutation_invariance_check() const {

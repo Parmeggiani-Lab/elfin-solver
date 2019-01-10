@@ -36,7 +36,7 @@ protected:
 
     /* accessors */
     virtual PathTeam* virtual_clone() const;
-    virtual FreeTerm get_mutable_chain() const;
+    virtual FreeTerm get_mutable_term() const;
     virtual NodeKey get_tip(bool const mutable_hint) const;
     virtual void mutation_invariance_check() const;
     virtual bool is_mutable(NodeKey const nk) const;

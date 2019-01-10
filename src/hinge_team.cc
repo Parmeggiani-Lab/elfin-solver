@@ -35,7 +35,7 @@ struct HingeTeam::PImpl {
         // However, right now that functionality is not implemented by
         // elfin-ui so we'll leave the selection to GA.
 
-        // Do not add any free term. Let get_mutable_chain() handle the case
+        // Do not add any free term. Let get_mutable_term() handle the case
         // where the team consists of only hinge_.
         _.hinge_ = _.add_node(mod_key, ui_mod->tx, /*innert=*/true);
     }
@@ -61,7 +61,7 @@ HingeTeam* HingeTeam::virtual_clone() const {
     return new HingeTeam(*this);
 }
 
-FreeTerm HingeTeam::get_mutable_chain() const
+FreeTerm HingeTeam::get_mutable_term() const
 {
     // If the only node is the hinge, then return random free term from hinge.
     if (size() == 1) {
@@ -81,7 +81,7 @@ FreeTerm HingeTeam::get_mutable_chain() const
     }
     else {
         // Return a random free term from mutable tip.
-        return PathTeam::get_mutable_chain();
+        return PathTeam::get_mutable_term();
     }
 }
 
