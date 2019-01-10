@@ -132,7 +132,7 @@ PtTermFinderSet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
         auto const& dst_terms = src_is_1 ? free_terms2 : free_terms1;
 
         res = dst_mod->get_reachable_ptterms(dst_terms);
-        
+
         // Suppress dead ends i.e. ProtoModule with only one active terminus.
         auto const in_res = [&res](PtTermKey const key) {
             auto const itr = res.find(PtTermFinder(nullptr, 0, TermType::NONE, key));
@@ -169,6 +169,7 @@ PtTermFinderSet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
             }
         }
 
+        // Verify that src mod is reachable from dst mod.
         bool const reachable = any_of(begin(src_terms), end(src_terms),
         [&in_res, src_mod](auto const & ft) {
             return in_res(&src_mod->get_term(ft));
