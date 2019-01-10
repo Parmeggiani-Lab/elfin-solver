@@ -147,14 +147,14 @@ void Database::parse(Options const& options) {
 
     // Define lambas for code reuse
     JSON const& singles = xdb["modules"]["singles"];
-    auto for_each_double_json = [&](JSONParser const & lambda) {
+    auto const for_each_double_json = [&](JSONParser const & lambda) {
         for (auto& [key, json] : singles.items()) {
             lambda(key, json, ModuleType::SINGLE);
         }
     };
 
     JSON const& hubs = xdb["modules"]["hubs"];
-    auto for_each_hub_json = [&](JSONParser const & lambda) {
+    auto const for_each_hub_json = [&](JSONParser const & lambda) {
         for (auto& [key, json] : hubs.items()) {
             lambda(key, json, json["symmetric"] == true ?
                    ModuleType::SYM_HUB : ModuleType::ASYM_HUB);
@@ -166,9 +166,8 @@ void Database::parse(Options const& options) {
         for_each_hub_json(lambda);
     };
 
-    // Non-finalized module list
-    // Build mapping between name and id
-    auto init_module = [&](JSON_PARSER_PARAMS) {
+    // Build mapping between name and id. This is not thread safe!
+    auto const init_module = [&](JSON_PARSER_PARAMS) {
         size_t const mod_id = all_mods_.size();
         mod_idx_map_[key] = mod_id;
 
@@ -192,7 +191,7 @@ void Database::parse(Options const& options) {
     };
     for_each_module_json(init_module);
 
-    auto parse_link = [&](JSON_PARSER_PARAMS) {
+    auto const parse_link = [&](JSON_PARSER_PARAMS) {
         size_t const mod_a_id = mod_idx_map_[key];
         auto& mod_a = all_mods_.at(mod_a_id);
 
