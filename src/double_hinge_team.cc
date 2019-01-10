@@ -47,7 +47,6 @@ struct DoubleHingeTeam::PImpl {
         auto const dst_mod = XDB.get_mod(hinge2_mod_name);
 
         std::unordered_set<PtModKey> frontier = { src_mod };
-        std::unordered_map<PtModKey, size_t> dists = { {src_mod, 0} };
         std::unordered_map<PtModKey, PtLinkKey> links = { {src_mod, nullptr} };
 
         size_t dist = 1;
@@ -61,15 +60,10 @@ struct DoubleHingeTeam::PImpl {
 
                         // Set dist and link if nb has not been explored, or
                         // dist is smaller.
-                        auto const dist_itr = dists.find(nb);
-                        bool const is_new = dist_itr == end(dists);
-
-                        if (is_new or dist < dist_itr->second) {
-                            dists[nb] = dist;
-                            links[nb] = link.get();
-                        }
+                        bool const is_new = links.find(nb) == end(links);
 
                         if (is_new) {
+                            links[nb] = link.get();
                             tmp_frontier.insert(nb);
                         }
                     }
@@ -82,8 +76,6 @@ struct DoubleHingeTeam::PImpl {
 
                 // Collect links (it's backwards!).
                 std::vector<PtLinkKey> rev_shortest_path;
-                size_t const path_size = dists.at(dst_mod);
-                rev_shortest_path.reserve(path_size);
 
                 auto curr_mod = dst_mod;
                 while (curr_mod != src_mod) {
@@ -93,7 +85,6 @@ struct DoubleHingeTeam::PImpl {
                 }
 
                 // Check path sanity. Note the path is reversed.
-                DEBUG_NOMSG(path_size != rev_shortest_path.size());
                 DEBUG_NOMSG(rev_shortest_path.back()->reverse->module != src_mod);
                 DEBUG_NOMSG(rev_shortest_path.front()->module != dst_mod);
 
@@ -122,9 +113,9 @@ struct DoubleHingeTeam::PImpl {
             for (auto const mod : frontier) {
                 oss << "  " << mod->name << "\n";
             }
-            oss << "Distances: \n";
-            for (auto const& [mod, val] : dists) {
-                oss << "  " << mod->name << ":" << val << "\n";
+            oss << "Links: \n";
+            for (auto const& [mod, link] : links) {
+                oss << "  " << mod->name << ":" << link << "\n";
             }
 
             throw ShouldNotReach(oss.str());
