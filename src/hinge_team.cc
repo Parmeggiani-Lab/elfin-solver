@@ -43,8 +43,8 @@ struct HingeTeam::PImpl {
     UIJointKey find_ui_joint(tests::RecipeStep const& first_step) {
         auto const& omap = _.work_area_->occupants;
 
-        auto itr = omap.find(first_step.ui_name);
-        TRACE_NOMSG(itr == end(omap));
+        auto const itr = omap.find(first_step.ui_name);
+        DEBUG_NOMSG(itr == end(omap));
 
         return itr->second;
     }
@@ -196,16 +196,16 @@ void HingeTeam::virtual_implement_recipe(
 
     FirstLastNodeKeyCallback const& postprocessor =
     [&](NodeKey const first_node, NodeKey const last_node) {
-        if (_postprocessor) {
-            _postprocessor(first_node, last_node);
-        }
-
         hinge_ = first_node;
 
         // PathTeam::virtual_implement_recipe() adds free terms from both
         // tips, so the *one free term* belonging to hinge_ needs to be
         // removed.
         remove_free_terms(hinge_);
+
+        if (_postprocessor) {
+            _postprocessor(first_node, last_node);
+        }
     };
 
     PathTeam::virtual_implement_recipe(recipe, postprocessor, shift_tx);
