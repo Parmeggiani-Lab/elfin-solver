@@ -51,6 +51,9 @@ protected:
                      bool const innert = false,
                      size_t const n_ft_to_add = 2,
                      FreeTerm const* const exclude_ft = nullptr);
+    NodeKey grow_tip(FreeTerm const& free_term_a,
+                     ProtoLink const* pt_link = nullptr,
+                     bool const innert = false);
     virtual void evavluate();
     virtual void calc_checksum();
     virtual void calc_score();

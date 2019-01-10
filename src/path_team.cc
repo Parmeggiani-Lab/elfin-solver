@@ -59,50 +59,6 @@ struct PathTeam::PImpl {
         return _.nodes_.at(nk).get();
     }
 
-    NodeKey grow_tip(FreeTerm const& free_term_a,
-                     ProtoLink const* pt_link = nullptr,
-                     bool const innert = false)
-    {
-        if (not pt_link) {
-            pt_link = &free_term_a.random_proto_link();
-        }
-
-        auto node_a = free_term_a.node;
-
-        // Check that the provided free term is attached to a node that is a
-        // tip node.
-        {
-            size_t const n_links = node_a->links().size();
-            DEBUG(n_links > 1, "%zu\n", n_links);
-        }
-
-        TermType const term_a = free_term_a.term;
-        TermType const term_b = opposite_term(term_a);
-
-        FreeTerm free_term_b = FreeTerm(nullptr, pt_link->chain_id, term_b);
-
-        auto node_b = _.add_node(pt_link->module,
-                                 node_a->tx_ * pt_link->tx,
-                                 innert,
-                                 /*n_ft_to_add=*/ 1,
-                                 /*exclude_ft=*/ &free_term_b);
-
-        free_term_b.node = node_b;
-
-        get_node(node_a)->add_link(free_term_a, pt_link, free_term_b);
-        get_node(node_b)->add_link(free_term_b, pt_link->reverse, free_term_a);
-
-        _.free_terms_.remove(free_term_a);
-
-        // Check that newly grown node is a tip node.
-        {
-            size_t const n_links = node_b->links().size();
-            DEBUG(n_links > 1, "%zu\n", n_links);
-        }
-
-        return node_b;
-    }
-
     void nip_tip(NodeKey tip_node)
     {
         // Check node is a tip node.
@@ -224,9 +180,9 @@ struct PathTeam::PImpl {
         // ProtoLink to f_arrow.src()'s.
         path_gen.next();  // Advance past the non identical arrow.
 
-        auto tip_node = grow_tip(m_free_term,
-                                 cross_link,
-                                 /*innert=*/path_gen.peek());
+        auto tip_node = _.grow_tip(m_free_term,
+                                   cross_link,
+                                   /*innert=*/path_gen.peek());
 
         while (not path_gen.is_done()) {
             auto curr_link = path_gen.curr_link();
@@ -242,9 +198,9 @@ struct PathTeam::PImpl {
 
             path_gen.next();
 
-            tip_node = grow_tip(src,
-                                curr_link->prototype(),
-                                /*innert=*/path_gen.peek());
+            tip_node = _.grow_tip(src,
+                                  curr_link->prototype(),
+                                  /*innert=*/path_gen.peek());
 
             DEBUG(curr_link->dst().node->prototype_ != tip_node->prototype_,
                   "%s vs %s\n",
@@ -527,7 +483,7 @@ struct PathTeam::PImpl {
                     throw ValueNotFound(oss.str());
                 }
                 else {
-                    grow_tip(*ft_itr);
+                    _.grow_tip(*ft_itr);
                 }
             }
 
@@ -616,7 +572,7 @@ struct PathTeam::PImpl {
             else {
                 // This is a tip node.
                 nip_tip(swap_point.del_node);
-                grow_tip(swap_point.src);
+                _.grow_tip(swap_point.src);
             }
 
             mutate_success = true;
@@ -683,7 +639,7 @@ struct PathTeam::PImpl {
         }
 
         while (_.size() < _.work_area_->target_size) {
-            grow_tip(_.get_mutable_chain());
+            _.grow_tip(_.get_mutable_chain());
         }
 
         return true;
@@ -767,6 +723,50 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
     }
 
     return new_node_key;
+}
+
+NodeKey PathTeam::grow_tip(FreeTerm const& free_term_a,
+                           ProtoLink const* pt_link,
+                           bool const innert)
+{
+    if (not pt_link) {
+        pt_link = &free_term_a.random_proto_link();
+    }
+
+    auto node_a = free_term_a.node;
+
+    // Check that the provided free term is attached to a node that is a
+    // tip node.
+    {
+        size_t const n_links = node_a->links().size();
+        DEBUG(n_links > 1, "%zu\n", n_links);
+    }
+
+    TermType const term_a = free_term_a.term;
+    TermType const term_b = opposite_term(term_a);
+
+    FreeTerm free_term_b = FreeTerm(nullptr, pt_link->chain_id, term_b);
+
+    auto node_b = add_node(pt_link->module,
+                           node_a->tx_ * pt_link->tx,
+                           innert,
+                           /*n_ft_to_add=*/ 1,
+                           /*exclude_ft=*/ &free_term_b);
+
+    free_term_b.node = node_b;
+
+    pimpl_->get_node(node_a)->add_link(free_term_a, pt_link, free_term_b);
+    pimpl_->get_node(node_b)->add_link(free_term_b, pt_link->reverse, free_term_a);
+
+    free_terms_.remove(free_term_a);
+
+    // Check that newly grown node is a tip node.
+    {
+        size_t const n_links = node_b->links().size();
+        DEBUG(n_links > 1, "%zu\n", n_links);
+    }
+
+    return node_b;
 }
 
 void PathTeam::remove_free_terms(NodeKey const node) {
@@ -869,7 +869,7 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
 
             FreeTerm const src_ft(last_node, src_chain_id, step.src_term);
 
-            last_node = pimpl_->grow_tip(src_ft, pt_link, /*innert=*/ true);
+            last_node = grow_tip(src_ft, pt_link, /*innert=*/ true);
         }
 
         // Because we called grow_tip() with innert=true, now we need to add back
