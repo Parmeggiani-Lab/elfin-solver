@@ -26,7 +26,7 @@ private:
     std::unique_ptr<PImpl> make_pimpl();
 protected:
     /* types */
-    typedef std::function<void(NodeKey)> NodeKeyCallback;
+    typedef std::function<void(NodeKey const first_node, NodeKey const last_node)> FirstLastNodeKeyCallback;
 
     /* data */
     std::unordered_map<NodeKey, NodeSP> nodes_;
@@ -45,16 +45,18 @@ protected:
     /* modifiers */
     virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
+    void remove_free_terms(NodeKey const node);
     NodeKey add_node(ProtoModule const* const prot,
                      Transform const& tx = Transform(),
                      bool const innert = false,
+                     size_t const n_ft_to_add = 2,
                      FreeTerm const* const exclude_ft = nullptr);
     virtual void evavluate();
     virtual void calc_checksum();
     virtual void calc_score();
     // For testing: builds node team from recipe and returns the starting node.
     virtual void virtual_implement_recipe(tests::Recipe const& recipe,
-                                          NodeKeyCallback const& cb_on_first_node,
+                                          FirstLastNodeKeyCallback const& postprocessor,
                                           Transform const& shift_tx);
 public:
     /* ctors */
@@ -77,7 +79,8 @@ public:
                                   NodeTeam const& father);
     void implement_recipe(tests::Recipe const& recipe,
                           Transform const& shift_tx = Transform()) {
-        virtual_implement_recipe(recipe, NodeKeyCallback(), shift_tx);
+        virtual_implement_recipe(recipe, FirstLastNodeKeyCallback(), shift_tx);
+        evavluate();
     }
 
     /* printers */

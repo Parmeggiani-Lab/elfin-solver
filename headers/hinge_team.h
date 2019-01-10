@@ -36,7 +36,7 @@ protected:
     virtual void calc_checksum();
     virtual void calc_score();
     virtual void virtual_implement_recipe(tests::Recipe const& recipe,
-                                          NodeKeyCallback const& cb_on_first_node,
+                                          FirstLastNodeKeyCallback const& postprocessor,
                                           Transform const& shift_tx);
 
 public:

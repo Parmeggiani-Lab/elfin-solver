@@ -48,6 +48,16 @@ void DoubleHingeTeam::virtual_copy(NodeTeam const& other) {
         TRACE_NOMSG("Bad cast\n");
     }
 }
+void DoubleHingeTeam::evavluate() {
+    // Run djistrak to complete the mutable end if team does not end in second
+    // hinge.
+    auto const mutable_tip = get_tip(/*mutable_hint=*/true);
+    // if(mutable_tip != second_hinge_) {
+
+    // }
+
+    HingeTeam::evavluate();
+}
 
 /* public */
 /* ctors */

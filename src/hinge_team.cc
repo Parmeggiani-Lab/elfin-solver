@@ -29,11 +29,11 @@ struct HingeTeam::PImpl {
         auto const& ui_mod = _.hinge_ui_joint_->occupant.ui_module;
         auto mod_key = XDB.get_mod(ui_mod->module_name);
 
-        // Here, if elfin-ui provides info about which specific chain of
-        // the hinge module interfaces with the next unknown module
-        // (joint), then we could remove free terms that are outside of
-        // this work area. However right now that functionality is not
-        // implemented by elfin-ui so we'll leave the selection to GA.
+        // Here, if elfin-ui provides info about which specific chain of the
+        // hinge module interfaces with the next unknown module (joint), then
+        // we could remove free terms that are outside of this work area.
+        // However, right now that functionality is not implemented by
+        // elfin-ui so we'll leave the selection to GA.
 
         // Do not add any free term. Let get_mutable_chain() handle the case
         // where the team consists of only hinge_.
@@ -89,7 +89,19 @@ NodeKey HingeTeam::get_tip(bool const mutable_hint) const {
     if (mutable_hint) {
         DEBUG(size() == 1, "Cannot request mutable tip when team has only hinge.\n");
 
-        DEBUG_NOMSG(free_terms_.size() != 1);
+        size_t const n_free_terms = free_terms_.size();
+        if (n_free_terms != 1) {
+            for (auto& ft : free_terms_) {
+                JUtil.error("ft %s\n", ft.to_string().c_str());
+            }
+
+            std::string me = "Me: " + this->to_string() + "\n";
+            JUtil.error(me.c_str());
+
+            DEBUG(n_free_terms != 1,
+                  "n_free_terms=%zu\n",
+                  n_free_terms);
+        }
 
         // Return the only other node, which all (only one) free terms
         // currently belong to.
@@ -111,9 +123,9 @@ void HingeTeam::mutation_invariance_check() const {
             for (auto& ft : free_terms_) {
                 JUtil.error("ft %s\n", ft.to_string().c_str());
             }
-        }
 
-        DEBUG(n_free_terms != 0, "n_free_terms=%zu", n_free_terms);
+            DEBUG(n_free_terms != 0, "n_free_terms=%zu", n_free_terms);
+        }
     }
     else {
         // There are always exactly one free term for size() > 1.
@@ -174,7 +186,7 @@ void HingeTeam::calc_score() {
 
 void HingeTeam::virtual_implement_recipe(
     tests::Recipe const& recipe,
-    NodeKeyCallback const& cb_on_first_node,
+    FirstLastNodeKeyCallback const& _postprocessor,
     Transform const& shift_tx)
 {
     // Partial reset: do not place hinge.
@@ -182,20 +194,21 @@ void HingeTeam::virtual_implement_recipe(
     hinge_ui_joint_ = pimpl_->find_ui_joint(recipe.at(0));
     hinge_ = nullptr;
 
-    auto const& cb =
-    NodeKeyCallback([&](NodeKey nk) {
-        if (cb_on_first_node) {
-            cb_on_first_node(nk);
+    FirstLastNodeKeyCallback const& postprocessor =
+    [&](NodeKey const first_node, NodeKey const last_node) {
+        if (_postprocessor) {
+            _postprocessor(first_node, last_node);
         }
 
-        hinge_ = nk;
+        hinge_ = first_node;
 
-        // PathTeam::implement_recipe() uses add_free_node(), so free terms
-        // belonging to hinge_ need to be cleared.
-        free_terms_.clear();
-    });
+        // PathTeam::virtual_implement_recipe() adds free terms from both
+        // tips, so the *one free term* belonging to hinge_ needs to be
+        // removed.
+        remove_free_terms(hinge_);
+    };
 
-    PathTeam::virtual_implement_recipe(recipe, cb, shift_tx);
+    PathTeam::virtual_implement_recipe(recipe, postprocessor, shift_tx);
 }
 
 /* public */

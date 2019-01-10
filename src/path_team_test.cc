@@ -19,7 +19,9 @@ TestStat PathTeam::test() {
         PathTeam team(wa.get());
         team.implement_recipe(recipe);
 
-        TRACE_NOMSG(team.free_terms_.size() != 2);
+        size_t const n_free_terms = team.free_terms_.size();
+        TRACE(n_free_terms != 2,
+              "%zu\n", n_free_terms);
 
         ts.tests++;
         if (team.score() > 1e-6) {

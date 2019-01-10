@@ -17,16 +17,46 @@ struct PathTeam::PImpl {
     PImpl(PathTeam& interface) : _(interface) {}
 
     /*modifiers */
+    void add_free_terms(NodeKey const node_key,
+                        size_t const n_ft_to_add,
+                        FreeTerm const* const exclude_ft) {
+        auto const prot = node_key->prototype_;
+        auto prot_free_terms = prot->free_terms();
+
+        {
+            size_t const n_prot_free_terms = prot_free_terms.size();
+            DEBUG(n_prot_free_terms < 2,
+                  "Dead end (%zu free terms) ProtoModule detected: %s\n",
+                  n_prot_free_terms, prot->name.c_str());
+        }
+
+        size_t count_down = n_ft_to_add;
+        while (count_down) {
+            DEBUG(prot_free_terms.empty(),
+                  "%s has insufficient active ProtoTerms! "
+                  "Tried to add %zu, prot had %zu free terms. exclude_ft: %p\n",
+                  prot->name.c_str(),
+                  n_ft_to_add,
+                  prot->free_terms().size(),
+                  exclude_ft);
+
+            auto ft = random::pop(prot_free_terms);
+
+            if (not (exclude_ft and
+                     exclude_ft->chain_id == ft.chain_id and
+                     exclude_ft->term == ft.term))
+            {
+                _.free_terms_.emplace_back(node_key,
+                                           ft.chain_id,
+                                           ft.term);
+                count_down--;
+            }
+        }
+    }
+
     Node* get_node(NodeKey const nk) {
         DEBUG_NOMSG(_.nodes_.find(nk) == end(_.nodes_));
         return _.nodes_.at(nk).get();
-    }
-
-    void remove_free_terms(NodeKey const node) {
-        // Remove any FreeTerm originating from node
-        _.free_terms_.remove_if([&](auto const & ft) {
-            return ft.node == node;
-        });
     }
 
     NodeKey grow_tip(FreeTerm const& free_term_a,
@@ -54,7 +84,8 @@ struct PathTeam::PImpl {
         auto node_b = _.add_node(pt_link->module,
                                  node_a->tx_ * pt_link->tx,
                                  innert,
-                                 /*exclude_ft=*/&free_term_b);
+                                 /*n_ft_to_add=*/ 1,
+                                 /*exclude_ft=*/ &free_term_b);
 
         free_term_b.node = node_b;
 
@@ -92,7 +123,7 @@ struct PathTeam::PImpl {
 
         // Remove tip node. Don't do this before restoring the FreeTerm
         // unless new_free_term is a copy rather than a reference.
-        remove_free_terms(tip_node);
+        _.remove_free_terms(tip_node);
         _.nodes_.erase(tip_node);
     }
 
@@ -171,7 +202,7 @@ struct PathTeam::PImpl {
             _.nodes_.erase(next_key);
         }
 
-        remove_free_terms(pg.curr_node());
+        _.remove_free_terms(pg.curr_node());
 
         get_node(arrow.src().node)->remove_link(arrow.src());
 
@@ -230,7 +261,7 @@ struct PathTeam::PImpl {
         if (_.size() > 1) {
             // Pick random tip node if not specified.
             NodeKey tip_node = _.get_tip(/*mutable_hint=*/true);
-            remove_free_terms(tip_node);
+            _.remove_free_terms(tip_node);
 
             FreeTerm last_free_term;
             float p = 1.0f;  // p for Probability.
@@ -723,6 +754,7 @@ void PathTeam::virtual_copy(NodeTeam const& other) {
 NodeKey PathTeam::add_node(ProtoModule const* const prot,
                            Transform const& tx,
                            bool const innert,
+                           size_t const n_ft_to_add,
                            FreeTerm const* const exclude_ft)
 {
     auto new_node = std::make_unique<Node>(prot, tx);
@@ -731,51 +763,17 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
     nodes_.emplace(new_node_key, std::move(new_node));
 
     if (not innert) {
-        // Only add 2 free terms to maintain the path property.
-        auto prot_free_terms = prot->free_terms();
-        DEBUG(prot_free_terms.size() < 2,
-              "prot_free_terms.size()=%zu, prot is %s\n",
-              prot_free_terms.size(), prot->name.c_str());  // What module is this??
-
-        size_t n_ft_to_add = exclude_ft ? 1 : 2;
-
-        while (n_ft_to_add) {
-            DEBUG(prot_free_terms.empty(),
-                  "%s has insufficient active ProtoTerms!\n",
-                  prot->name.c_str());
-
-            auto ft = random::pop(prot_free_terms);
-
-            if (not (exclude_ft and
-                     exclude_ft->chain_id == ft.chain_id and
-                     exclude_ft->term == ft.term))
-            {
-                if (not new_node_key->prototype_->get_term(ft).is_active()) {
-                    std::ostringstream oss;
-                    for (auto const& finder : XDB.ptterm_finders()) {
-                        if (not finder.ptterm_ptr->is_active()) {
-                            oss << "Not active: " <<
-                                finder.mod->name << "." <<
-                                finder.mod->get_chain(finder.chain_id).name << "." <<
-                                TermTypeToCStr(finder.term) << "\n";
-                        }
-                    }
-                    oss << "work_area_->ptterm_profile.size()=" << work_area_->ptterm_profile.size() <<
-                        ", XDB.ptterm_finders().size()=" << XDB.ptterm_finders().size() << "\n";
-
-                    throw BadArgument("WTF??? mod: " + new_node_key->prototype_->name +
-                                      ", ft: " + ft.to_string() + "\n" + oss.str());
-                }
-
-                free_terms_.emplace_back(new_node_key,
-                                         ft.chain_id,
-                                         ft.term);
-                n_ft_to_add--;
-            }
-        }
+        pimpl_->add_free_terms(new_node_key, n_ft_to_add, exclude_ft);
     }
 
     return new_node_key;
+}
+
+void PathTeam::remove_free_terms(NodeKey const node) {
+    // Remove any FreeTerm originating from node
+    free_terms_.remove_if([&](auto const & ft) {
+        return ft.node == node;
+    });
 }
 
 void PathTeam::evavluate() {
@@ -830,7 +828,7 @@ void PathTeam::calc_score() {
 }
 
 void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
-                                        NodeKeyCallback const& cb_on_first_node,
+                                        FirstLastNodeKeyCallback const& postprocessor,
                                         Transform const& shift_tx)
 {
 
@@ -842,11 +840,11 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
     NodeKey first_node = nullptr;
     if (not recipe.empty()) {
         std::string const& first_mod_name = recipe[0].mod_name;
-        first_node = add_node(XDB.get_mod(first_mod_name), shift_tx);
 
-        if (cb_on_first_node) {
-            cb_on_first_node(first_node);
-        }
+        // Call grow_tip() with innert=true until last node, because we want
+        // to trust the recipe being correct. If hubs are involved, non-innert
+        // mode will choose only 2 random FreeTerms to add to free_terms_.
+        first_node = add_node(XDB.get_mod(first_mod_name), shift_tx, /*innert=*/ true);
 
         auto last_node = first_node;
 
@@ -871,23 +869,33 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
 
             FreeTerm const src_ft(last_node, src_chain_id, step.src_term);
 
-            last_node = pimpl_->grow_tip(src_ft, pt_link);
+            last_node = pimpl_->grow_tip(src_ft, pt_link, /*innert=*/ true);
+        }
+
+        // Because we called grow_tip() with innert=true, now we need to add back
+        // the free terms that would've been added with innert=false.
+        auto const compensate_free_terms = [&](NodeKey const tip_node) {
+            DEBUG_NOMSG(tip_node->links().size() != 1);
+            auto const& link = *begin(tip_node->links());
+            pimpl_->add_free_terms(tip_node,
+                                   /*n_ft_to_add=*/ 1,
+                                   /*exclude_ft=*/ &link.src());
+        };
+        compensate_free_terms(first_node);
+        if (first_node != last_node)
+            compensate_free_terms(last_node);
+
+        if (postprocessor) {
+            postprocessor(first_node, last_node);
         }
     }
-
-    evavluate();
 }
 
 /* public */
 /* ctors */
 PathTeam::PathTeam(WorkArea const* wa) :
     NodeTeam(wa),
-    pimpl_(make_pimpl()) {
-    // if (wa->type == WorkType::DOUBLE_HINGED) {
-    //     JUtil.error("Wow! %zu active out of %zu\n",
-    //                wa->ptterm_profile.size(), XDB.ptterm_finders().size());
-    // }
-}
+    pimpl_(make_pimpl()) {}
 
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_)
@@ -902,7 +910,6 @@ PathTeam::~PathTeam() {}
 
 /* accessors */
 PathGenerator PathTeam::gen_path() const {
-    // DEBUG(not scored_path_, "calc_score() not called\n"); // Why does this matter again?
     return PathGenerator(get_tip(/*mutable_hint=*/false));
 }
 
