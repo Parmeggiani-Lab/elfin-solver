@@ -49,6 +49,7 @@ protected:
                      Transform const& tx = Transform(),
                      bool const innert = false,
                      FreeTerm const* const exclude_ft = nullptr);
+    virtual void evavluate();
     virtual void calc_checksum();
     virtual void calc_score();
     // For testing: builds node team from recipe and returns the starting node.

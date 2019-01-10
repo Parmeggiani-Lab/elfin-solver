@@ -25,6 +25,7 @@ protected:
     /* modifiers */
     virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
+    virtual void evavluate();
 public:
     /* ctors */
     DoubleHingeTeam(WorkArea const* wa);

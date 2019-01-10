@@ -778,6 +778,11 @@ NodeKey PathTeam::add_node(ProtoModule const* const prot,
     return new_node_key;
 }
 
+void PathTeam::evavluate() {
+    calc_checksum();
+    calc_score();
+}
+
 void PathTeam::calc_checksum() {
     // We want the same checksum for two node teams that consist of the same
     // sequence of nodes even if they are in reverse order. This can be
@@ -870,8 +875,7 @@ void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
         }
     }
 
-    calc_checksum();
-    calc_score();
+    evavluate();
 }
 
 /* public */
@@ -952,8 +956,7 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
 
 void PathTeam::randomize() {
     pimpl_->randomize();
-    calc_checksum();
-    calc_score();
+    evavluate();
 }
 
 mutation::Mode PathTeam::evolve(NodeTeam const& mother,
@@ -1001,8 +1004,7 @@ mutation::Mode PathTeam::evolve(NodeTeam const& mother,
         mutate_success = true;
     }
 
-    calc_checksum();
-    calc_score();
+    evavluate();
 
     return mode;
 }
@@ -1010,19 +1012,21 @@ mutation::Mode PathTeam::evolve(NodeTeam const& mother,
 /* printers */
 void PathTeam::print_to(std::ostream& os) const {
     TRACE_NOMSG(free_terms_.empty());
-    auto start_node = begin(free_terms_)->node;
-    PathGenerator path_gen(start_node);
 
+    os << "PathTeam[\n";
+
+    auto start_node = get_tip(/*mutable_hint=*/false);
+    PathGenerator path_gen(start_node);
     while (not path_gen.is_done()) {
-        os << path_gen.next()->to_string();
+        os << *path_gen.next();
         Link const* link_ptr = path_gen.curr_link();
         if (link_ptr) {
-            TermType const src_term = link_ptr->src().term;
-            TermType const dst_term = link_ptr->dst().term;
-            os << "\n(" << TermTypeToCStr(src_term) << ", ";
-            os << TermTypeToCStr(dst_term) << ")\n";
+            os << "  src: " << link_ptr->src() << "\n";
+            os << "  dst: " << link_ptr->dst() << "\n";
         }
     }
+
+    os << "]PathTeam\n";
 }
 
 JSON PathTeam::to_json() const {
