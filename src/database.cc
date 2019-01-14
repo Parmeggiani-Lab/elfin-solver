@@ -52,8 +52,12 @@ void Database::categorize() {
                 continue;
             }
 
-            PANIC("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
-                  mod->name.c_str(), n_itf);
+            {
+                auto const& msg =
+                    string_format("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
+                                  mod->name.c_str(), n_itf);
+                PANIC(BadXDB(msg));
+            }
         } else if (n_itf == 2) {
             basic_mods_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
@@ -65,8 +69,10 @@ void Database::categorize() {
         } else if (mod->is_hub()) {
             hubs_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
-            PANIC("mod[%s] has unknown ModuleType: %s\n",
-                  mod->name.c_str(), ModuleTypeToCStr(mod->type));
+            auto const& msg =
+                string_format("mod[%s] has unknown ModuleType: %s\n",
+                              mod->name.c_str(), ModuleTypeToCStr(mod->type));
+            PANIC(BadXDB(msg));
         }
     }
 }

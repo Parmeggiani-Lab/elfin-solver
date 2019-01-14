@@ -13,10 +13,11 @@ void Spec::parse(Options const& options) {
     work_areas_.clear();
     fixed_areas_.clear();
 
-    PANIC_IF(options.spec_file.empty(), "No input spec file provided.\n");
+    PANIC_IF(options.spec_file.empty(),
+             BadArgument("No input spec file provided.\n"));
 
     PANIC_IF(not JUtil.file_exists(options.spec_file.c_str()),
-             "Input file does not exist.\n");
+             BadArgument("Input file \"" + options.spec_file + "\" does not exist.\n"));
 
     JSON const& spec_json = parse_json(options.spec_file);
     try {

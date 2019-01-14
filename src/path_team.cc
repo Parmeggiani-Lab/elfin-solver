@@ -626,7 +626,7 @@ struct PathTeam::PImpl {
             }
         }
         catch (std::bad_cast const& e) {
-            PANIC("Bad cast in %s\n", __PRETTY_FUNCTION__);
+            PANIC(e);
         }
 
         return mutate_success;

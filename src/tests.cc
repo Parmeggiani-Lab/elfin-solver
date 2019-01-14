@@ -60,7 +60,7 @@ TestStat test_integration() {
     };
 
     test_fragment(EvolutionSolver::test);
-    
+
     return total;
 }
 
@@ -68,15 +68,16 @@ void run_all() {
     auto const unit_ts = test_units();
 
     if (unit_ts.errors > 0) {
-        PANIC("%zu unit tests failed. Not continuing to integration tests.\n",
-              unit_ts.errors);
+        PANIC(ExitException(1,
+                            std::to_string(unit_ts.errors) + " unit tests failed. " +
+                            "Not continuing to integration tests.\n"));
     }
     else {
         auto const inte_ts = test_integration();
 
         PANIC_IF(inte_ts.errors > 0,
-                 "%zu integration tests failed.\n",
-                 inte_ts.errors);
+                 BadArgument(std::to_string(inte_ts.errors) +
+                             " integration tests failed.\n"));
 
         JUtil.info("%zu/%zu unit tests passed.\n",
                    unit_ts.tests, unit_ts.tests);

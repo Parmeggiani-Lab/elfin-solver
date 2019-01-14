@@ -39,24 +39,15 @@ namespace elfin {
             __FILE__,\
             __LINE__);\
     } while(0)
-#define PANIC(...) \
+#define PANIC(EXCEPTION) \
     do {\
-        _Pragma("omp single")\
-        {\
-            std::string const& reason = string_format(__VA_ARGS__);\
-            JUtil.error(reason.c_str());\
-            throw ExitException(1, reason);\
-        }\
+        JUtil.error("Panicking at %s:%zu\n", __FILE__, __LINE__);\
+        throw EXCEPTION;\
     } while(0)
-#define PANIC_IF(PREDICATE, ...) \
+#define PANIC_IF(PREDICATE, EXCEPTION) \
     do {\
         if(PREDICATE) {\
-            _Pragma("omp single")\
-            {\
-                std::string const& reason = string_format(__VA_ARGS__);\
-                JUtil.error(reason.c_str());\
-                throw ExitException(1, reason);\
-            }\
+            PANIC(EXCEPTION);\
         }\
     } while(0)
 #define JSON_LOG_EXIT(JSON_EX) \

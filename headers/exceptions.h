@@ -5,24 +5,28 @@
 
 namespace elfin {
 
-//
 using namespace std;
 
-struct ExitException : public runtime_error {
+struct ElfinException : public runtime_error {
+    using runtime_error::runtime_error;
+};
+
+struct ExitException : public ElfinException {
     int const code;
     ExitException(int const _code, string const& reason) :
-        runtime_error(reason),
+        ElfinException(reason),
         code(_code) {}
 };
 
 #define DECL_EXCEPTION(NAME) \
-struct NAME : public runtime_error {\
-    using runtime_error::runtime_error;\
-    NAME() : runtime_error("Unknwon") {}\
+struct NAME : public ElfinException {\
+    using ElfinException::ElfinException;\
+    NAME() : ElfinException("Unknwon") {}\
 };
 
 
 DECL_EXCEPTION(BadArgument);
+DECL_EXCEPTION(BadXDB);
 DECL_EXCEPTION(BadTerminus);
 DECL_EXCEPTION(BadWorkType);
 DECL_EXCEPTION(InvalidHinge);

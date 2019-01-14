@@ -56,7 +56,8 @@ void Elfin::interrupt_handler(int const signal) {
 
     if (interrupt_caught) {
         fprintf(stderr, "\n\n");
-        PANIC("Caught interrupt signal (second). Aborting NOW.\n");
+        fprintf(stderr, "Caught interrupt signal (second). Aborting NOW.\n");
+        throw ExitException(1, "Second Interupt Signal");
     }
     else {
         interrupt_caught = true;
@@ -88,9 +89,13 @@ int main(int const argc, const char ** argv) {
         }
         return e.code;
     }
-    catch (std::exception const& e)
+    catch (elfin::ElfinException const& e)
     {
         JUtil.error("Aborting. Reason: %s\n", e.what());
+    }
+    catch (std::exception const& e)
+    {
+        JUtil.error("Aborting due to general exception: %s\n", e.what());
     }
     catch (...)
     {

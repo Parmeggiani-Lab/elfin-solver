@@ -37,20 +37,20 @@ void Node::remove_link(FreeTerm const& src) {
     // Verbose diagnosis
     if (link_itr == end(links_)) {
         print_stacktrace();
-        
-        JUtil.error("Tried to remove link that does not exist. Links:\n");
+
+        std::ostringstream oss;
+        oss << "Attempted to remove a link that does not exist. Links:\n";
 
         size_t index = 0;
         for (auto& link : links_) {
-            JUtil.error("Link #%zu: %s\n",
-                        index++,
-                        link.to_string().c_str());
+            oss << "Link #" << index++ << ": ";
+            oss << link << "\n";
         }
 
-        PANIC("%s failed:\nsrc=%s\nNode: %s\n",
-              __PRETTY_FUNCTION__,
-              src.to_string().c_str(),
-              to_string().c_str());
+        PANIC(BadArgument(std::string(__PRETTY_FUNCTION__) + " failed:\n" +
+                          "src=" + src.to_string() + "\n" +
+                          "Node: " + this->to_string() + "\n" +
+                          oss.str()));
     }
     else {
         links_.erase(link_itr);

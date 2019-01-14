@@ -70,19 +70,21 @@ ArgBundle const* ArgParser::match_arg_bundle(char const* arg_in) const {
 void ArgParser::check_options() const {
     // Files.
     PANIC_IF(options_.xdb_file.empty(),
-             "No xdb path provided.\n");
+             BadArgument("No xdb path provided.\n"));
 
     PANIC_IF(not JUtil.file_exists(options_.xdb_file.c_str()),
-             "xdb file could not be found.\n");
+             BadArgument("xdb file \""  +
+                         options_.xdb_file +
+                         "\" could not be found.\n"));
 
-    if (options_.config_file != "") {
-        PANIC_IF(not JUtil.file_exists(options_.config_file.c_str()),
-                 "Settings file \"%s\" could not be found\n",
-                 options_.config_file.c_str());
-    }
+    PANIC_IF(options_.config_file != "" and
+             not JUtil.file_exists(options_.config_file.c_str()),
+             BadArgument("Settings file \"" +
+                         options_.config_file +
+                         "\" could not be found\n"));
 
     PANIC_IF(options_.output_dir.empty(),
-             "No output directory given.");
+             BadArgument("No output directory given."));
 
     if (not JUtil.file_exists(options_.output_dir.c_str())) {
         JUtil.warn("Output directory does not exist; creating...\n");
@@ -92,10 +94,10 @@ void ArgParser::check_options() const {
     // GA params.
     PANIC_IF(options_.ga_survive_rate <= 0.0 or
              options_.ga_survive_rate >= 1.0,
-             "GA survive rate must be between 0 and 1 exclusive.\n");
+             BadArgument("GA survive rate must be between 0 and 1 exclusive.\n"));
 
     PANIC_IF(options_.avg_pair_dist < 0,
-             "Average CoM distance must be > 0");
+             BadArgument("Average CoM distance must be > 0.\n"));
 }
 
 std::string ArgParser::radius_types_setting_string() const {
@@ -169,13 +171,14 @@ ARG_PARSER_CALLBACK_DEF(parse_config) {
     options_.config_file = arg_in;
 
     PANIC_IF(not JUtil.file_exists(options_.config_file.c_str()),
-             "Settings file does not exist: \"%s\"\n",
-             options_.config_file.c_str());
+             BadArgument("Settings file \"" +
+                         options_.config_file +
+                         "\" does not exist.\n"));
 
     JSON const json = parse_json(options_.config_file);
 
     for (auto& [opt_key, opt_json] : json.items()) {
-        if(opt_key == config_file_long_from) {
+        if (opt_key == config_file_long_from) {
             JUtil.warn("Ignoring %s in config JSON.\n", config_file_long_from);
             continue;
         }
