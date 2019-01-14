@@ -152,17 +152,17 @@ void Database::parse(Options const& options) {
     JSON const& xdb = parse_json(options.xdb_file);
 
     // Define lambas for code reuse
-    JSON const& singles = xdb["modules"]["singles"];
+    JSON const& singles = xdb.at("modules").at("singles");
     auto const for_each_double_json = [&](JSONParser const & lambda) {
         for (auto& [key, json] : singles.items()) {
             lambda(key, json, ModuleType::SINGLE);
         }
     };
 
-    JSON const& hubs = xdb["modules"]["hubs"];
+    JSON const& hubs = xdb.at("modules").at("hubs");
     auto const for_each_hub_json = [&](JSONParser const & lambda) {
         for (auto& [key, json] : hubs.items()) {
-            lambda(key, json, json["symmetric"] == true ?
+            lambda(key, json, json.at("symmetric") == true ?
                    ModuleType::SYM_HUB : ModuleType::ASYM_HUB);
         }
     };
@@ -182,11 +182,11 @@ void Database::parse(Options const& options) {
 #endif  /* ifndef PRINT_MOD_IDX_MAP_ */
 
         StrList chain_names;
-        for (auto& [chain_name, json] : json["chains"].items()) {
+        for (auto& [chain_name, json] : json.at("chains").items()) {
             chain_names.push_back(chain_name);
         }
 
-        float const radius = json["radii"][options.radius_type];
+        float const radius = json.at("radii")[options.radius_type];
 
         all_mods_.push_back(
             std::make_unique<ProtoModule>(
@@ -201,10 +201,10 @@ void Database::parse(Options const& options) {
         size_t const mod_a_id = mod_idx_map_[key];
         auto& mod_a = all_mods_.at(mod_a_id);
 
-        for (auto& [a_chain_name, a_chain_json] : json["chains"].items()) {
+        for (auto& [a_chain_name, a_chain_json] : json.at("chains").items()) {
             // No need to run through "n" because xdb contains only n-c
             // transforms, i.e. "C-term extrusion" transforms.
-            for (auto& [c_term_name, c_term_json] : a_chain_json["c"].items()) {
+            for (auto& [c_term_name, c_term_json] : a_chain_json.at("c").items()) {
                 auto const& mod_b =
                     all_mods_.at(/*mod_b_id=*/mod_idx_map_[c_term_name]);
 

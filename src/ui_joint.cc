@@ -22,7 +22,7 @@ StrList parse_neighbors(JSON const& json) {
     StrList res;
 
     try {
-        for (auto neighbor_name : json["neighbors"]) {
+        for (auto neighbor_name : json.at("neighbors")) {
             res.push_back(neighbor_name);
         }
     } catch (JSON::exception const& je) {
@@ -37,12 +37,12 @@ UIJoint::Occupant parse_occupant(JSON const& json,
     UIJoint::Occupant res;
 
     try {
-        if (json["occupant"] != "") {
-            std::string const& occ_network = json["occupant_parent"];
+        if (json.at("occupant") != "") {
+            std::string const& occ_network = json.at("occupant_parent");
             auto& fxn_modules = fam.at(occ_network)->modules;
 
             res.parent_name = occ_network;
-            res.ui_module = fxn_modules.at(json["occupant"]).get();
+            res.ui_module = fxn_modules.at(json.at("occupant")).get();
         }
     } catch (JSON::exception const& je) {
         JSON_LOG_EXIT(je);
@@ -55,7 +55,7 @@ std::string parse_hinge_name(JSON const& json) {
     std::string res;
 
     try {
-        res = json["hinge"];
+        res = json.at("hinge");
     } catch (JSON::exception const& je) {
         JSON_LOG_EXIT(je);
     }

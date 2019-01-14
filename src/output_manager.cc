@@ -62,8 +62,8 @@ void OutputManager::write_output(
                 solutions.pop();
                 if (team) {
                     JSON sol_json;
-                    sol_json["nodes"] = team->to_json();
-                    sol_json["score"] = team->score();
+                    sol_json.at("nodes") = team->to_json();
+                    sol_json.at("score") = team->score();
                     work_area_json[i++] = sol_json;
                 }
                 else {

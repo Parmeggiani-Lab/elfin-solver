@@ -40,7 +40,7 @@ void Spec::parse(Options const& options) {
                     end(json),
                     0,
             [](size_t sum, auto & joint_json) {
-                return sum + (joint_json["neighbors"].size() > 2);
+                return sum + (joint_json.at("neighbors").size() > 2);
             });
 
             if (num_branch_points > 0) {

@@ -22,12 +22,12 @@ bool is_hub(ModuleType const type) {
 Transform get_tx(JSON const& xdb_json,
                  size_t const tx_id)
 {
-    TRACE(tx_id >= xdb_json["n_to_c_tx"].size(),
+    TRACE(tx_id >= xdb_json.at("n_to_c_tx").size(),
           ("tx_id > xdb_json[\"n_to_c_tx\"].size()\n"
            "  Either xdb.json is corrupted or "
            "there is an error in dbgen.py.\n"));
 
-    return Transform(xdb_json["n_to_c_tx"][tx_id]);
+    return Transform(xdb_json.at("n_to_c_tx")[tx_id]);
 }
 
 /* public */

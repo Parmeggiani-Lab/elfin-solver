@@ -5,7 +5,7 @@ namespace elfin {
 std::string parse_module_name(JSON const& json) {
     std::string res;
     try {
-        res = json["module_name"];
+        res = json.at("module_name");
     } catch (JSON::exception const& je) {
         JSON_LOG_EXIT(je);
     }
@@ -17,8 +17,8 @@ UIModule::Linkage parse_linkage(JSON const& json) {
 
     try {
         auto parse = [&](std::string const & linkage_name) {
-            for (auto const& link : json[linkage_name]) {
-                std::string const& term_str = link["terminus"];
+            for (auto const& link_json : json[linkage_name]) {
+                std::string const& term_str = link_json.at("terminus");
 
                 if (VALID_TERM_NAMES.find(term_str) == end(VALID_TERM_NAMES)) {
                     throw CouldNotParse("Unknown terminus name: " + term_str + ".");
@@ -26,9 +26,9 @@ UIModule::Linkage parse_linkage(JSON const& json) {
 
                 res.push_back({
                     parse_term(term_str),
-                    link["source_chain_id"],
-                    link["target_chain_id"],
-                    link["target_mod"]
+                    link_json.at("source_chain_id"),
+                    link_json.at("target_chain_id"),
+                    link_json.at("target_mod")
                 });
             }
         };

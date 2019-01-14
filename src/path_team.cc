@@ -1059,34 +1059,34 @@ JSON PathTeam::to_json() const {
             auto node_key = pg.next();
 
             JSON node_output;
-            node_output["name"] = node_key->prototype_->name;
-            node_output["member_id"] = member_id;
+            node_output.at("name") = node_key->prototype_->name;
+            node_output.at("member_id") = member_id;
 
             auto link = pg.curr_link();
             if (link) {  //  Not reached end of nodes yet, so peek() != nullptr.
-                node_output["src_term"] =
+                node_output.at("src_term") =
                     TermTypeToCStr(link->src().term);
 
-                node_output["src_chain_name"] =
+                node_output.at("src_chain_name") =
                     node_key->prototype_->chains().at(
                         link->src().chain_id).name;
 
-                node_output["dst_chain_name"] =
+                node_output.at("dst_chain_name") =
                     pg.peek()->prototype_->chains().at(
                         link->dst().chain_id).name;
             }
             else
             {
-                node_output["src_term"] =
+                node_output.at("src_term") =
                     TermTypeToCStr(TermType::NONE);
-                node_output["src_chain_name"] = "NONE";
-                node_output["dst_chain_name"] = "NONE";
+                node_output.at("src_chain_name") = "NONE";
+                node_output.at("dst_chain_name") = "NONE";
             }
 
             Transform const tx = kabsch_alignment * node_key->tx_;
 
-            node_output["rot"] = tx.rot_json();
-            node_output["tran"] = tx.tran_json();
+            node_output.at("rot") = tx.rot_json();
+            node_output.at("tran") = tx.tran_json();
 
             member_id++;
             output.emplace_back(node_output);

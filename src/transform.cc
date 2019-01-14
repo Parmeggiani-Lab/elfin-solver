@@ -10,11 +10,11 @@ namespace elfin {
 
 /* ctors */
 Transform::Transform(JSON const& tx_json) {
-    JSON const& rot_json = tx_json["rot"];
+    JSON const& rot_json = tx_json.at("rot");
     TRACE_NOMSG(rot_json.size() != 3);
     TRACE_NOMSG(rot_json[0].size() != 3);
 
-    JSON const& tran_json = tx_json["tran"];
+    JSON const& tran_json = tx_json.at("tran");
     TRACE_NOMSG(tran_json.size() != 3);
 #ifdef USE_EIGEN
     (*this) << rot_json[0][0], rot_json[0][1], rot_json[0][2], tran_json[0],
