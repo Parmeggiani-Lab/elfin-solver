@@ -35,10 +35,7 @@ void Spec::parse(Options const& options) {
 
         for (auto& [name, json] : spec_json.at("pg_networks").items()) {
             size_t const num_branch_points =
-                std::accumulate(
-                    begin(json),
-                    end(json),
-                    0,
+                std::accumulate(begin(json), end(json), 0,
             [](size_t sum, auto & joint_json) {
                 return sum + (joint_json.at("neighbors").size() > 2);
             });
@@ -56,9 +53,9 @@ void Spec::parse(Options const& options) {
                 name,
                 std::make_unique<WorkArea>(name, json, fixed_areas_));
 
-            TRACE(work_areas_[name]->joints.empty(),
-                  "Work area \"%s\" has no joints associated.",
-                  name.c_str());
+            PANIC_IF(work_areas_[name]->joints.empty(),
+                     ShouldNotReach("Work area \"" + name +
+                                    "\" has no joints associated. Error in parsing, maybe?"));
         }
     } catch (JSON::exception const& je) {
         JSON_LOG_EXIT(je);
