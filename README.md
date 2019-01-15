@@ -1,9 +1,6 @@
 # elfin-solver [![Build Status](https://travis-ci.com/joy13975/elfin-solver.svg?branch=master)](https://travis-ci.com/joy13975/elfin-solver)
 
-The `master` branch is currently under development and is not currently functional. The old v1 version code and documentation can be found in branch `v1`.
-
-Since [elfin-ui](https://github.com/joy13975/elfin-ui) are still undergoing active development, the internal data representation and the problem scope are still evolving. That forced me to put a brake on 
-working on elfin-solver.
+The `master` branch is under development and is not fully functional. The old v1 version and documentation is preserved in branch `v1`.
 
 ### To Download
 ```Bash
@@ -21,4 +18,15 @@ git pull
 git submodule update
 ./fetch_db
 
+```
+
+### To Compile
+```Bash
+make -j4  # Or use the number of your processors
+```
+
+### To Run
+
+```Bash
+./bin/elfin -h
 ```
