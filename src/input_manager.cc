@@ -73,7 +73,7 @@ void InputManager::setup(bool const skip_xdb) {
     JUtil.info("Using spec file: %s\n", OPTIONS.spec_file.c_str());
     instance().spec_.parse(OPTIONS);
 
-    JUtil.info("Spec parsed %zu fixed areas and %zu work areas\n",
+    JUtil.info("Spec parsed %zu fixed areas and %zu work areas (include decimation)\n",
                SPEC.fixed_areas().size(), SPEC.work_areas().size());
 
     parallel::init();

@@ -123,7 +123,7 @@ void Spec::parse(Options const& options) {
 
     JSON const& spec_json = parse_json(options.spec_file);
     try {
-        JUtil.info("Input spec has %zu work areas and %zu fixed areas\n",
+        JUtil.info("Input spec has %zu pg_networks and %zu networks\n",
                    spec_json.at("pg_networks").size(),
                    spec_json.at("networks").size());
 

@@ -39,7 +39,10 @@ Population::Population(WorkArea const* work_area) {
     TIMING_START(init_start_time);
     {
         size_t const pop_size = OPTIONS.ga_pop_size;
-        JUtil.info("Initializing population of %u...\n", pop_size);
+        if (JUtil.check_log_lvl(LOGLVL_INFO)) {
+            fprintf(stdout, "\n");
+            JUtil.info("Initializing population of %u...\n", pop_size);
+        }
 
         NodeTeams* new_front_buffer = &teams[0];
         NodeTeams* new_back_buffer = &teams[1];
