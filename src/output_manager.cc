@@ -31,10 +31,9 @@ std::string get_filename(std::string const& path) {
 }
 
 
-void OutputManager::write_output(
-    EvolutionSolver const& solver,
-    std::string extra_dir,
-    size_t const indent_size) {
+void OutputManager::write_output(EvolutionSolver const& solver,
+                                 std::string extra_dir,
+                                 size_t const indent_size) {
     if (not solver.has_result()) {
         JUtil.warn("Solver %p has no result to be written out\n", &solver);
         return;
@@ -49,49 +48,53 @@ void OutputManager::write_output(
     std::string output_dir_str = output_dir_ss.str();
     JUtil.mkdir_ifn_exists(output_dir_str.c_str());
 
-    JSON output_json;
-    for (auto& [wa_name, wa] : SPEC.work_areas()) {
-        JSON work_area_json;
+    try {
+        JSON output_json;
+        for (auto& [wa_name, wa] : SPEC.work_areas()) {
+            JSON work_area_json;
 
-        try {
-            auto solutions = solver.best_sols(wa_name);  // TeamPtrMaxHeap
+            try {
+                auto solutions = solver.best_sols(wa_name);  // TeamPtrMaxHeap
 
-            size_t i = 0;
-            while (not solutions.empty()) {
-                auto team = solutions.top();
-                solutions.pop();
-                if (team) {
-                    JSON sol_json;
-                    sol_json.at("nodes") = team->to_json();
-                    sol_json.at("score") = team->score();
-                    work_area_json[i++] = sol_json;
+                size_t i = 0;
+                while (not solutions.empty()) {
+                    auto team = solutions.top();
+                    solutions.pop();
+                    if (team) {
+                        JSON sol_json;
+                        sol_json["nodes"] = team->to_json();
+                        sol_json["score"] = team->score();
+                        work_area_json[i++] = sol_json;
+                    }
+                    else {
+                        JUtil.error("team=%p in %s\n", team, wa_name);
+                    }
                 }
-                else {
-                    JUtil.error("team=%p in %s\n", team, wa_name);
-                }
+                output_json[wa_name] = work_area_json;
             }
-            output_json[wa_name] = work_area_json;
+            catch (std::out_of_range& e)
+            {
+                JUtil.error("WorkArea \"%s\" has no solutions\n", wa_name.c_str());
+            }
         }
-        catch (std::out_of_range& e)
-        {
-            JUtil.error("WorkArea \"%s\" has no solutions\n", wa_name.c_str());
-        }
+
+        // Generate JSON output path.
+        std::ostringstream json_output_path_ss;
+        json_output_path_ss << output_dir_str << "/"
+                            << get_filename(OPTIONS.spec_file)
+                            << ".json";
+
+        std::string json_out_path_str = json_output_path_ss.str();
+        char const* json_output_path = json_out_path_str.c_str();
+
+        // At last, write JSON to file.
+        std::string dump = output_json.dump(indent_size);
+        JUtil.write_binary(json_output_path,
+                           dump.c_str(),
+                           dump.size());
+    } catch (JSON::exception const& je) {
+        JSON_LOG_EXIT(je);
     }
-
-    // Generate JSON output path.
-    std::ostringstream json_output_path_ss;
-    json_output_path_ss << output_dir_str << "/"
-                        << get_filename(OPTIONS.spec_file)
-                        << ".json";
-
-    std::string json_out_path_str = json_output_path_ss.str();
-    char const* json_output_path = json_out_path_str.c_str();
-
-    // At last, write JSON to file.
-    std::string dump = output_json.dump(indent_size);
-    JUtil.write_binary(json_output_path,
-                       dump.c_str(),
-                       dump.size());
 }
 
 }  /* elfin */
