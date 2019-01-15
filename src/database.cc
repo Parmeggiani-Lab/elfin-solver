@@ -48,16 +48,15 @@ void Database::categorize() {
 
         if (n_itf < 2) {
             if (mod->type == ModuleType::SYM_HUB) {
-                JUtil.warn("Disabled %s has no interfaces\n", mod->name.c_str());
+                JUtil.warn("Disabled symmetric hub \"%s\" did not parse interfaces\n",
+                           mod->name.c_str());
                 continue;
             }
 
-            {
-                auto const& msg =
-                    string_format("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
-                                  mod->name.c_str(), n_itf);
-                PANIC(BadXDB(msg));
-            }
+            auto const& msg =
+                string_format("mod[%s] has fewer interfaces(%zu) than expected(2)\n",
+                              mod->name.c_str(), n_itf);
+            PANIC(BadXDB(msg));
         } else if (n_itf == 2) {
             basic_mods_.push_back(mod->counts().all_links(), mod_raw_ptr);
         } else {
