@@ -26,20 +26,31 @@ char const* const print_pop_fmt =
 /* private */
 struct EvolutionSolver::PImpl {
     /* data */
-    bool score_satisfied_ = false;
-    bool should_restart_ga = false;
-    bool has_result_ = false;
-    bool run_already_called = false;
+    bool score_satisfied_;
+    bool should_restart_ga_;
+    bool has_result_;
     SolutionMap best_sols_;
-    double start_time_in_us_ = 0;
+    double start_time_in_us_;
     size_t const debug_pop_print_n_;
-    Crc32 last_best_checksum_ = 0x0000;
+    Crc32 last_best_checksum_;
 
     /* ctors */
     PImpl(size_t const debug_pop_print_n) :
-        debug_pop_print_n_(debug_pop_print_n) {}
+        debug_pop_print_n_(debug_pop_print_n) {
+        soft_reset();
+    }
 
     /* modifiers */
+    void soft_reset() {
+        // Reset flags and cache variables without clearing best solutions
+        // found previously.
+        score_satisfied_ = false;
+        should_restart_ga_ = false;
+        has_result_ = false;
+        start_time_in_us_ = 0;
+        last_best_checksum_ = 0x0000;
+    }
+
     void summarize_generation(Population const& pop,
                               size_t const restart_id,
                               size_t const gen_id,
@@ -130,11 +141,13 @@ struct EvolutionSolver::PImpl {
                            OPTIONS.ga_restart_trigger);
             }
             else {
-                fprintf(stdout, "\n");
-                JUtil.warn(
-                    "Stagnancy reached restart trigger (%zu)\n",
-                    OPTIONS.ga_restart_trigger);
-                should_restart_ga = true;
+                if (JUtil.check_log_lvl(LOGLVL_WARNING)) {
+                    fprintf(stdout, "\n");
+                    JUtil.warn(
+                        "Stagnancy reached restart trigger (%zu)\n",
+                        OPTIONS.ga_restart_trigger);
+                }
+                should_restart_ga_ = true;
             }
         }
     }
@@ -205,11 +218,10 @@ struct EvolutionSolver::PImpl {
     }
 
     void run() {
-        TRACE_NOMSG(run_already_called);
-        run_already_called = true;
-
-        start_time_in_us_ = JUtil.get_timestamp_us();
         for (auto& [wa_name, wa] : SPEC.work_areas()) {
+            soft_reset();
+            start_time_in_us_ = JUtil.get_timestamp_us();
+
             best_sols_[wa_name] = TeamSPMinHeap();
 
             // Activate ProtoTerm profile if there is one.
@@ -219,7 +231,7 @@ struct EvolutionSolver::PImpl {
             size_t restart_id = 0;
             while (OPTIONS.ga_max_restarts == 0 or
                     restart_id < OPTIONS.ga_max_restarts) {
-                should_restart_ga = false;
+                should_restart_ga_ = false;
 
                 // Initialize population and solution list.
                 Population population = Population(wa.get());
@@ -252,7 +264,7 @@ struct EvolutionSolver::PImpl {
                                              stagnant_count,
                                              best_sols_[wa_name]);
 
-                        if (should_restart_ga or score_satisfied_) break;
+                        if (should_restart_ga_ or score_satisfied_) break;
 
                         population.swap_buffer();
 
@@ -269,7 +281,7 @@ struct EvolutionSolver::PImpl {
                 JUtil.warn("Reached max restarts (%zu)\n", OPTIONS.ga_max_restarts);
             }
 
-            JUtil.info("Total: %zu iterations\n", itr_id);
+            JUtil.info("Total: %zu iterations\n", itr_id + 1);
         }  // work area
 
         print_end_msg();
