@@ -41,9 +41,25 @@ TestStat WorkArea::test() {
         catch (InvalidHinge const& e) {
             // Should NOT throw InvalidHinge by now
             JUtil.error("Valid hinge triggered exception. Details: %s\n",
-                e.what());
+                        e.what());
             ts.errors++;
         }
+    }
+
+    // Test shared hinge decimation.
+    {
+        ts.tests++;
+
+        InputManager::setup_test({
+            "--spec_file",
+            "examples/half_snake_2x1h_shared_hinge.json"
+        });
+
+        if (SPEC.work_areas().size() != 2) {
+            ts.errors++;
+            JUtil.error("Failed to decimate Path Guide network. "
+                        "Got %zu work areas.\n", SPEC.work_areas().size());
+        };
     }
 
     return ts;

@@ -68,9 +68,10 @@ void run_all() {
     auto const unit_ts = test_units();
 
     if (unit_ts.errors > 0) {
-        PANIC(ExitException(1,
-                            std::to_string(unit_ts.errors) + " unit tests failed. " +
-                            "Not continuing to integration tests.\n"));
+        auto const& msg =
+            std::to_string(unit_ts.errors) + " unit tests failed. " +
+            "Not continuing to integration tests.\n";
+        throw ExitException(1, msg);
     }
     else {
         auto const inte_ts = test_integration();
