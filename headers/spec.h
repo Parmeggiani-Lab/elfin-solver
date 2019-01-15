@@ -13,6 +13,13 @@ struct Options;
 class Database;
 
 class Spec {
+private:
+    /* type */
+    struct PImpl;
+
+    /* data */
+    std::unique_ptr<PImpl> pimpl_;
+
 protected:
     /* data */
     WorkAreaMap work_areas_;
@@ -20,10 +27,10 @@ protected:
 
 public:
     /* ctors */
-    Spec() {}
+    Spec();
 
     /* dtors */
-    virtual ~Spec() {}
+    virtual ~Spec();
 
     /* accessors */
     WorkAreaMap const& work_areas() const {

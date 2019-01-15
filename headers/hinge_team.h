@@ -10,7 +10,7 @@ namespace elfin {
 class HingeTeam : public PathTeam {
 private:
     /* type */
-    class PImpl;
+    struct PImpl;
 
     /* data */
     std::unique_ptr<PImpl> pimpl_;

@@ -7,7 +7,54 @@
 
 namespace elfin {
 
+/* private */
+struct Spec::PImpl {
+    /* data */
+    Spec& _;
+
+    /* ctors */
+    PImpl(Spec& interface) : _(interface) { }
+
+    void digest_network(std::string const& name, JSON const& json) {
+        _.fixed_areas_.emplace(
+            name,
+            std::make_unique<FixedArea>(name, json));
+    }
+
+    void digest_pg_network(std::string const& name, JSON const& json) {
+        size_t const num_branch_points =
+            std::accumulate(begin(json), end(json), 0,
+        [](size_t sum, auto & joint_json) {
+            return sum + (joint_json.at("neighbors").size() > 2);
+        });
+
+        if (num_branch_points > 0) {
+            UNIMP();
+            // Break it down to multiple simple ones by first choosing hubs
+            // and their orientations.
+            /*
+            TODO: Break complex work area
+            */
+        }
+
+        _.work_areas_.emplace(
+            name,
+            std::make_unique<WorkArea>(name, json, _.fixed_areas_));
+
+        PANIC_IF(_.work_areas_[name]->joints.empty(),
+                 ShouldNotReach("Work area \"" + name +
+                                "\" has no joints associated. Error in parsing, maybe?"));
+    }
+};
+
 /* public */
+/* ctors */
+Spec::Spec() :
+    pimpl_(std::make_unique<PImpl>(*this)) {}
+
+/* dtors */
+Spec::~Spec() {}
+
 /* modifiers */
 void Spec::parse(Options const& options) {
     work_areas_.clear();
@@ -28,34 +75,11 @@ void Spec::parse(Options const& options) {
         // Initialize fixed areas first so work areas can refer to fixed
         // modules as occupants or hinges.
         for (auto& [name, json] : spec_json.at("networks").items()) {
-            fixed_areas_.emplace(
-                name,
-                std::make_unique<FixedArea>(name, json));
+            pimpl_->digest_network(name, json);
         }
 
         for (auto& [name, json] : spec_json.at("pg_networks").items()) {
-            size_t const num_branch_points =
-                std::accumulate(begin(json), end(json), 0,
-            [](size_t sum, auto & joint_json) {
-                return sum + (joint_json.at("neighbors").size() > 2);
-            });
-
-            if (num_branch_points > 0) {
-                UNIMP();
-                // Break it down to multiple simple ones by first choosing hubs
-                // and their orientations.
-                /*
-                TODO: Break complex work area
-                */
-            }
-
-            work_areas_.emplace(
-                name,
-                std::make_unique<WorkArea>(name, json, fixed_areas_));
-
-            PANIC_IF(work_areas_[name]->joints.empty(),
-                     ShouldNotReach("Work area \"" + name +
-                                    "\" has no joints associated. Error in parsing, maybe?"));
+            pimpl_->digest_pg_network(name, json);
         }
     } catch (JSON::exception const& je) {
         JSON_LOG_EXIT(je);

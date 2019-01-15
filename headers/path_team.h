@@ -17,7 +17,7 @@ struct TestStat;
 class PathTeam : public NodeTeam {
 private:
     /* type */
-    class PImpl;
+    struct PImpl;
 
     /* data */
     std::unique_ptr<PImpl> pimpl_;
