@@ -24,13 +24,15 @@ struct TestStat;
 
 #ifdef V3F_USE_EIGEN
 using EigenV3f = Eigen::Vector3f;
-#define V3F_INHERIT : public EigenV3f, public Printable
+#define EIGEN_INHERIT , public EigenV3f
 #else
-#define V3F_INHERIT : public Printable
+#define EIGEN_INHERIT
 #endif  /* ifdef V3F_USE_EIGEN */
 
 
-class Vector3f V3F_INHERIT {
+class Vector3f : public Printable EIGEN_INHERIT {
+#undef EIGENF_INHERIT
+
 private:
 
 #ifndef V3F_USE_EIGEN
@@ -44,8 +46,8 @@ private:
         RandomAccessIterator begin,
         RandomAccessIterator end) {
         TRACE((end - begin) < 3,
-                       "Invalid Argument Size: %zu, should be < 3\n",
-                       end - begin);
+              "Invalid Argument Size: %zu, should be < 3\n",
+              end - begin);
         auto itr = begin;
 
 #ifdef V3F_USE_EIGEN
@@ -103,21 +105,18 @@ public:
         return tmp.squared_norm();
     }
 
-    /*
-     * We use 0.0001 as tolerance here because that's the highest precision
-     * PDBs support.
-     */
-    inline bool is_approx(
-        Vector3f const& other,
-        float const tolerance = 1e-4) const {
+    // We use 0.0001 as epsilon here because that's the highest precision
+    // PDBs support.
+    inline bool is_approx(Vector3f const& other,
+                          float const epsilon = 1e-4) const {
 #ifdef V3F_USE_EIGEN
-        return isApprox(other, tolerance);
+        return isApprox(other, epsilon);
 #else
         for (size_t i = 0; i < 3; ++i) {
             if (not JUtil.float_approximates(
                         data_[i],
                         other.data_[i],
-                        tolerance)) {
+                        epsilon)) {
                 return false;
             }
         }
@@ -198,5 +197,19 @@ static inline Vector3f operator*(
 }
 
 }  /* elfin */
+
+namespace std {
+
+template<>
+struct hash<elfin::Vector3f> {
+    size_t operator()(elfin::Vector3f const& v) const {
+        size_t res = hash<float>()(v[0]);
+        res = (res << 1) ^ hash<float>()(v[1]);
+        res = (res << 1) ^ hash<float>()(v[2]);
+        return res;
+    }
+};
+
+}  /* std */
 
 #endif  /* end of include guard: VECTOR3F_H_ */
