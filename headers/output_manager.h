@@ -2,20 +2,33 @@
 #define OUTPUT_MANAGER_H_
 
 #include <string>
+#include <memory>
 
-#include "evolution_solver.h"
-#include "input_manager.h"
+#include "move_heap.h"
+#include "options.h"
 
 namespace elfin {
 
-class OutputManager
-{
-public:
+/* Fwd Decl */
+class Spec;
 
-    static void write_output(
-        EvolutionSolver const& solver,
-        std::string extra_dir = "",
-        size_t const indent_size = 4);
+class OutputManager {
+private:
+    /* types */
+    struct PImpl;
+
+    /* data */
+    std::unique_ptr<PImpl> pimpl_;
+public:
+    /* ctors */
+    OutputManager(Spec const& spec);
+
+    /* dtors */
+    virtual ~OutputManager();
+
+    /* accessors */
+    void write_to_file(Options const& options,
+                       size_t const indent_size = 4) const;
 };
 
 }  /* elfin */

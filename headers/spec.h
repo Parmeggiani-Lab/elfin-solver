@@ -42,6 +42,7 @@ public:
 
     /* modifiers */
     void parse(Options const& options);
+    void solve_all();
 };
 
 }  /* elfin */

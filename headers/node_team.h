@@ -4,7 +4,6 @@
 #include <memory>
 #include <unordered_set>
 
-#include "work_area.h"
 #include "checksum.h"
 #include "mutation.h"
 
@@ -14,6 +13,7 @@ namespace elfin {
 /* Fwd Decl */
 class NodeTeam;
 typedef std::unique_ptr<NodeTeam> NodeTeamSP;
+class WorkArea;
 
 
 class NodeTeam : public Printable {

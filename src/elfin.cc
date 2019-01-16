@@ -6,19 +6,14 @@
 
 #include "input_manager.h"
 #include "output_manager.h"
-#include "parallel_utils.h"
 #include "tests.h"
 #include "exceptions.h"
 
 namespace elfin {
 
-Elfin::InstanceMap Elfin::instances_;
-
 /* public */
 /* ctors */
 Elfin::Elfin(int const argc, char const** argv) {
-    instances_.insert(this);
-
     // Display all info + warnings by default.
     JUtil.set_log_lvl(LOGLVL_INFO);
 
@@ -27,9 +22,7 @@ Elfin::Elfin(int const argc, char const** argv) {
 }
 
 /* dtors */
-Elfin::~Elfin() {
-    instances_.erase(this);
-}
+Elfin::~Elfin() {}
 
 /* modifiers */
 void Elfin::run() {
@@ -38,16 +31,14 @@ void Elfin::run() {
     }
     else {
         InputManager::setup();
-        solver_.run();
-        OutputManager::write_output(solver_);
-    }
-}
 
-/* private */
-/* accessors */
-void Elfin::crash_dump() const {
-    JUtil.warn("Crash-dumping results...\n");
-    OutputManager::write_output(solver_, "crash_dump");
+        auto const& opt = InputManager::options();
+
+        auto& spec = InputManager::spec();
+        spec.solve_all();
+
+        OutputManager(spec).write_to_file(opt);
+    }
 }
 
 /* handlers */
@@ -62,18 +53,9 @@ void Elfin::interrupt_handler(int const signal) {
     else {
         interrupt_caught = true;
 
-        fprintf(stderr, "\n\n");
-        JUtil.warn("Caught interrupt signal (first); trying to save data...\n");
-
-        // Save latest results
-        for (auto inst : instances_) {
-            inst->crash_dump();
-        }
-
-        exit(1);
+        throw ExitException(1, "First Interupt Signal");
     }
 }
-
 
 }  // namespace elfin
 

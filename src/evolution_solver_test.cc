@@ -20,16 +20,16 @@ TestStat EvolutionSolver::test() {
         ts.tests++;
 
         InputManager::setup_test({"--spec_file", spec_file});
+        auto& spec = InputManager::spec();
 
-        JUtilLogLvl original_ll = JUtil.get_log_lvl();
+        JUtilLogLvl const original_ll = JUtil.get_log_lvl();
 
         JUtil.set_log_lvl(LOGLVL_WARNING);
-        EvolutionSolver solver;
-        solver.run();
+        spec.solve_all();
         JUtil.set_log_lvl(original_ll);
 
         for (auto const& [work_area_name, work_area] : SPEC.work_areas()) {
-            auto const& solutions = solver.best_sols(work_area_name);  // TeamPtrMaxHeap
+            auto const& solutions = work_area->get_solutions();  // Best on top of heap.
 
             try { // Catch bad_cast
                 auto best_pt =

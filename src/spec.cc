@@ -141,4 +141,11 @@ void Spec::parse(Options const& options) {
     }
 }
 
+void Spec::solve_all() {
+    // Solve each work package.
+    for (auto& [wa_name, wa_sp] : work_areas_) {
+        wa_sp->solve();
+    }
+}
+
 }  /* elfin */

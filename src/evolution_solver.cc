@@ -11,54 +11,42 @@
 
 namespace elfin {
 
-char const* const get_score_msg_format =
-    "GA Restart #%zu Generation #%zu Total Iterations #%zu\n"
-    "  -  [best %.2f (cksm:%x, %.2f/module), worst %.2f, %.0fms]\n";
-
-char const* const timing_msg_format =
-    "Avg Times: "
-    "[Evolve=%.0f, Score=%.0f, Rank=%.0f, "
-    "Select=%.0f, Gen=%.0f]\n";
-
-char const* const print_pop_fmt =
-    "%s #%zu [cksm:%x] [len:%zu] [score:%.2f]\n";
-
 /* private */
 struct EvolutionSolver::PImpl {
     /* data */
     bool score_satisfied_;
     bool should_restart_ga_;
-    bool has_result_;
-    SolutionMap best_sols_;
     double start_time_in_us_;
     size_t const debug_pop_print_n_;
     Crc32 last_best_checksum_;
+    size_t itr_id;
+    size_t restart_id;
+    size_t gen_id;
+    double tot_gen_time;
+    size_t stagnant_count;
 
     /* ctors */
     PImpl(size_t const debug_pop_print_n) :
         debug_pop_print_n_(debug_pop_print_n) {
-        soft_reset();
+        reset();
     }
 
     /* modifiers */
-    void soft_reset() {
-        // Reset flags and cache variables without clearing best solutions
-        // found previously.
+    void reset() {
         score_satisfied_ = false;
         should_restart_ga_ = false;
-        has_result_ = false;
         start_time_in_us_ = 0;
         last_best_checksum_ = 0x0000;
+        itr_id = 0;
+        restart_id = 0;
+        gen_id = 0;
+        tot_gen_time = 0.0f;
+        stagnant_count = 0;
     }
 
     void summarize_generation(Population const& pop,
-                              size_t const restart_id,
-                              size_t const gen_id,
-                              size_t const itr_id,
                               double const gen_start_time,
-                              double& tot_gen_time,
-                              size_t& stagnant_count,
-                              TeamSPMinHeap& best_sols)
+                              SolutionMaxHeap& output)
     {
         // Stat collection
         auto const& best_team = pop.front_buffer()->front();
@@ -72,7 +60,8 @@ struct EvolutionSolver::PImpl {
         tot_gen_time += gen_time;
 
         // Print score stats.
-        JUtil.info(get_score_msg_format,
+        JUtil.info("GA Restart #%zu Generation #%zu Total Iterations #%zu\n"
+                   "  -  [best %.2f (cksm:%x, %.2f/module), worst %.2f, %.0fms]\n",
                    restart_id,
                    gen_id,
                    itr_id,
@@ -94,7 +83,9 @@ struct EvolutionSolver::PImpl {
 
         // Print timing stats.
         size_t const n_gens = gen_id + 1;
-        JUtil.info(timing_msg_format,
+        JUtil.info("Avg Times: "
+                   "[Evolve=%.0f, Score=%.0f, Rank=%.0f, "
+                   "Select=%.0f, Gen=%.0f]\n",
                    (double) GA_TIMES.evolve_time / n_gens,
                    (double) GA_TIMES.score_time / n_gens,
                    (double) GA_TIMES.rank_time / n_gens,
@@ -105,18 +96,26 @@ struct EvolutionSolver::PImpl {
         size_t const max_keep = std::min(OPTIONS.keep_n, OPTIONS.ga_pop_size);
         for (size_t j = 0; j < max_keep; j++) {
             auto team = pop.front_buffer()->at(j)->clone();
-            if (best_sols.size() >= max_keep) {
-                if (team->score() >= best_sols.top()->score()) {
-                    // Due to increasing index, teams down the buffer are just
-                    // gonna get worse.
+            if (output.size() >= max_keep) {
+                // The output heap is full. Need to keep output size at
+                // max_keep, so determine whether to pop.
+
+                if (team->score() >= output.top()->score()) {
+                    // Current team score is worse than the worst solution in
+                    // the output heap (sorted with max score on top). 
+                    //
+                    // Since the teams in the buffer are sorted in ascending
+                    // score order, teams down the index only have greater
+                    // score and thus can be ignored.
                     break;
                 }
 
-                best_sols.pop();
+                // Current team is good enough to replace the worst solution
+                // in output heap.
+                output.pop();
             }
 
-            best_sols.push(std::move(team));
-            has_result_ |= true;
+            output.push(std::move(team));
         }
 
         // Check stop conditions.
@@ -175,6 +174,12 @@ struct EvolutionSolver::PImpl {
     }
 
     void print_end_msg() const {
+        if (restart_id != 0 and restart_id == OPTIONS.ga_max_restarts) {
+            JUtil.warn("Reached max restarts (%zu)\n", OPTIONS.ga_max_restarts);
+        }
+
+        JUtil.info("Total: %zu iterations\n", itr_id + 1);
+
         double const time_elapsed_in_us = JUtil.get_timestamp_us() - start_time_in_us_;
         size_t const minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);
         size_t const seconds = std::floor(fmod(time_elapsed_in_us / 1e6, 60.0f));
@@ -183,6 +188,9 @@ struct EvolutionSolver::PImpl {
                    minutes, seconds, milliseconds);
     }
 
+
+#define PRINT_POP_FMT \
+        "%s #%zu [cksm:%x] [len:%zu] [score:%.2f]\n"
     void print_pop(std::string const& title,
                    Population const& pop) const
     {
@@ -195,7 +203,7 @@ struct EvolutionSolver::PImpl {
 
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.front_buffer()->at(i);
-                oss << string_format(print_pop_fmt,
+                oss << string_format(PRINT_POP_FMT,
                                      "  front",
                                      i,
                                      c->checksum(),
@@ -205,7 +213,7 @@ struct EvolutionSolver::PImpl {
 
             for (size_t i = 0; i < max_n; ++i) {
                 auto& c = pop.back_buffer()->at(i);
-                oss << string_format(print_pop_fmt,
+                oss << string_format(PRINT_POP_FMT,
                                      "  back ",
                                      i,
                                      c->checksum(),
@@ -216,73 +224,57 @@ struct EvolutionSolver::PImpl {
             JUtil.debug(oss.str().c_str());
         }
     }
+#undef PRINT_POP_FMT
 
-    void run() {
-        for (auto& [wa_name, wa] : SPEC.work_areas()) {
-            soft_reset();
-            start_time_in_us_ = JUtil.get_timestamp_us();
+    void run(WorkArea const& work_area, SolutionMaxHeap& output) {
+        reset();
+        start_time_in_us_ = JUtil.get_timestamp_us();
 
-            best_sols_[wa_name] = TeamSPMinHeap();
+        // Activate ProtoTerm profile if there is one.
+        InputManager::mutable_xdb().activate_ptterm_profile(work_area.ptterm_profile);
 
-            // Activate ProtoTerm profile if there is one.
-            InputManager::mutable_xdb().activate_ptterm_profile(wa->ptterm_profile);
+        while (OPTIONS.ga_max_restarts == 0 or
+                restart_id < OPTIONS.ga_max_restarts) {
+            should_restart_ga_ = false;
 
-            size_t itr_id = 0;
-            size_t restart_id = 0;
-            while (OPTIONS.ga_max_restarts == 0 or
-                    restart_id < OPTIONS.ga_max_restarts) {
-                should_restart_ga_ = false;
+            // Initialize population and solution list.
+            Population population = Population(&work_area);
 
-                // Initialize population and solution list.
-                Population population = Population(wa.get());
+            print_start_msg(work_area);
 
-                print_start_msg(*wa);
+            tot_gen_time = 0.0f;
+            stagnant_count = 0;
 
-                double tot_gen_time = 0.0f;
-                size_t stagnant_count = 0;
+            if (!OPTIONS.dry_run) {
+                gen_id = 0;
+                while (OPTIONS.ga_max_iters == 0 or itr_id < OPTIONS.ga_max_iters) {
+                    double const gen_start_time = JUtil.get_timestamp_us();
 
-                if (!OPTIONS.dry_run) {
-                    size_t gen_id = 0;
-                    while (OPTIONS.ga_max_iters == 0 or itr_id < OPTIONS.ga_max_iters) {
-                        double const gen_start_time = JUtil.get_timestamp_us();
+                    population.evolve();
+                    print_pop("After evolve", population);
 
-                        population.evolve();
-                        print_pop("After evolve", population);
+                    population.rank();
+                    print_pop("Post rank", population);
 
-                        population.rank();
-                        print_pop("Post rank", population);
+                    population.select();
+                    print_pop("Post select", population);
 
-                        population.select();
-                        print_pop("Post select", population);
+                    summarize_generation(population,
+                                         gen_start_time,
+                                         output);
 
-                        summarize_generation(population,
-                                             restart_id,
-                                             gen_id,
-                                             itr_id,
-                                             gen_start_time,
-                                             tot_gen_time,
-                                             stagnant_count,
-                                             best_sols_[wa_name]);
+                    if (should_restart_ga_ or score_satisfied_) break;
 
-                        if (should_restart_ga_ or score_satisfied_) break;
+                    population.swap_buffer();
 
-                        population.swap_buffer();
+                    gen_id++;
+                    itr_id++;
+                }  // generation
+            }  // dry run
 
-                        gen_id++;
-                        itr_id++;
-                    }  // generation
-                }  // dry run
-
-                if (score_satisfied_) break;
-                restart_id++;
-            }  // restart
-
-            if (restart_id != 0 and restart_id == OPTIONS.ga_max_restarts) {
-                JUtil.warn("Reached max restarts (%zu)\n", OPTIONS.ga_max_restarts);
-            }
-
-            JUtil.info("Total: %zu iterations\n", itr_id + 1);
-        }  // work area
+            if (score_satisfied_) break;
+            restart_id++;
+        }  // restart
 
         print_end_msg();
     }
@@ -296,33 +288,9 @@ EvolutionSolver::EvolutionSolver(size_t const debug_pop_print_n) :
 /* dtors */
 EvolutionSolver::~EvolutionSolver() {}
 
-/* accessors */
-bool EvolutionSolver::has_result() const {
-    return pimpl_->has_result_;
-}
-
-TeamPtrMaxHeap EvolutionSolver::best_sols(std::string const& wa_name) const {
-    TeamPtrMaxHeap res;
-    TeamSPMinHeap tmp;
-    TeamSPMinHeap& heap = pimpl_->best_sols_.at(wa_name);
-
-    while (not heap.empty()) {
-        auto node_sp = heap.top_and_pop();
-        res.push(node_sp.get());
-        tmp.push(std::move(node_sp));
-    }
-
-    // Transfer back
-    while (not tmp.empty()) {
-        heap.push(tmp.top_and_pop());
-    }
-
-    return res;
-}
-
 /* modifiers */
-void EvolutionSolver::run() {
-    pimpl_->run();
+void EvolutionSolver::run(WorkArea const& work_area, SolutionMaxHeap& output) {
+    return pimpl_->run(work_area, output);
 }
 
 } // namespace elfin

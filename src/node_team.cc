@@ -2,6 +2,7 @@
 
 #include <sstream>
 
+#include "work_area.h"
 #include "path_team.h"
 #include "hinge_team.h"
 #include "double_hinge_team.h"
@@ -32,8 +33,7 @@ NodeTeamSP NodeTeam::create_team(WorkArea const* const work_area) {
         team_up = std::make_unique<DoubleHingeTeam>(work_area);
         break;
     default:
-        bad_work_type(work_area->type);
-        throw ShouldNotReach();
+        throw BadWorkType(WorkTypeToCStr(work_area->type));
     }
 
     return team_up;

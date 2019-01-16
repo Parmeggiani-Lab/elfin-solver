@@ -5,6 +5,10 @@
 
 namespace elfin {
 
+/* Fwd Decl */
+struct UIJoint;
+typedef UIJoint const* UIJointKey;
+
 // A HingeTeam has one module already fixed by the user (or from hub
 // assignment).
 class HingeTeam : public PathTeam {

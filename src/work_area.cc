@@ -6,13 +6,44 @@
 #include "debug_utils.h"
 #include "input_manager.h"
 #include "ui_joint_path_generator.h"
+#include "evolution_solver.h"
 
 namespace elfin {
 
-/* free */
-void bad_work_type(WorkType const type) {
-    throw BadWorkType(WorkTypeToCStr(type));
-}
+/* private */
+struct WorkArea::PImpl {
+    /* data */
+    WorkArea& _;
+    EvolutionSolver solver_;
+    SolutionMaxHeap solutions_;
+
+    /* ctors */
+    PImpl(WorkArea& interface) : _(interface) { }
+
+    /* accessors */
+    SolutionMinHeap solutions_to_max_heap() {
+        SolutionMinHeap res;
+        SolutionMaxHeap tmp;
+
+        while (not solutions_.empty()) {
+            auto node_sp = solutions_.top_and_pop();
+            res.push(node_sp.get());
+            tmp.push(std::move(node_sp));
+        }
+
+        // Transfer back.
+        while (not tmp.empty()) {
+            solutions_.push(tmp.top_and_pop());
+        }
+
+        return res;
+    }
+
+    /* modifiers */
+    void solve() {
+        solver_.run(/*work_area=*/_, solutions_);
+    }
+};
 
 /* data initializers */
 UIJointMap parse_joints(JSON const& json,
@@ -249,11 +280,11 @@ size_t parse_target_size(WorkArea::PathMap const& paths)
 
 /* public */
 /* ctors */
-WorkArea::WorkArea(
-    std::string const& _name,
-    JSON const& json,
-    FixedAreaMap const& fam):
+WorkArea::WorkArea(std::string const& _name,
+                   JSON const& json,
+                   FixedAreaMap const& fam):
     /* Be careful with member ordering! */
+    pimpl_(std::make_unique<PImpl>(*this)),
     name(_name),
     joints(parse_joints(json, fam)),
     leaf_joints(parse_leaf_joints(joints)),
@@ -267,5 +298,15 @@ WorkArea::WorkArea(
 
 /* dtors */
 WorkArea::~WorkArea() {}
+
+/* accessors */
+SolutionMinHeap WorkArea::get_solutions() const {
+    return pimpl_->solutions_to_max_heap();
+}
+
+/* modifiers */
+void WorkArea::solve() {
+    pimpl_->solve();
+}
 
 }  /* elfin */

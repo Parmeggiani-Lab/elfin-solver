@@ -2,6 +2,7 @@
 #define MOVE_HEAP_H_
 
 #include <queue>
+#include <vector>
 
 namespace elfin {
 

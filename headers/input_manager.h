@@ -41,15 +41,15 @@ protected:
     /* ctors */
     InputManager() {}
 
-    /* modifiers */
-    static void setup_cutoffs();
-public:
     /* accessors */
     static InputManager& instance() {
         static InputManager im;
         return im;
     }
 
+    /* modifiers */
+    static void setup_cutoffs();
+public:
     static Options const& options() {
         return instance().options_;
     }
@@ -59,7 +59,7 @@ public:
     static Database& mutable_xdb() {
         return instance().xdb_;
     }
-    static Spec const& spec() {
+    static Spec& spec() {
         return instance().spec_;
     }
 
@@ -72,7 +72,7 @@ public:
     static void parse(int const argc, char const** argv);
     static void setup_test(Args const& args);
     static void setup_xdb();  // Used for tests.cc only.
-    static void setup(bool const skip_xdb=false);
+    static void setup(bool const skip_xdb = false);
 
     /* tests */
     static void load_test_config(

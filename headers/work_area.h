@@ -9,6 +9,8 @@
 #include "fixed_area.h"
 #include "proto_term.h"
 #include "ui_joint.h"
+#include "move_heap.h"
+#include "node_team.h"
 
 namespace elfin {
 
@@ -25,9 +27,22 @@ struct TestStat;
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 // 2H is short for DOUBLE_HINGED
 
-void bad_work_type(WorkType const type);
+// A MAX score heap (worst solutions at the top).
+typedef MoveHeap<NodeTeamSP,
+        std::vector<NodeTeamSP>,
+        NodeTeam::SPLess> SolutionMaxHeap;
+typedef std::priority_queue<NodeTeam const*,
+        std::vector<NodeTeam const*>,
+        NodeTeam::PtrGreater> SolutionMinHeap;
 
-struct WorkArea {
+class WorkArea {
+private:
+    /* types */
+    struct PImpl;
+
+    /* data */
+    std::unique_ptr<PImpl> pimpl_;
+public:
     /* types */
     typedef std::unordered_map<UIJointKey, V3fList> PathMap;
     typedef std::unordered_map<std::string, UIJointKey> OccupantMap;
@@ -51,6 +66,13 @@ struct WorkArea {
     /* dtors */
     virtual ~WorkArea();
 
+    /* accessors */
+    SolutionMinHeap get_solutions() const;
+
+    /* modifiers */
+    void solve();
+
+    /* tests */
     static TestStat test();
 };
 

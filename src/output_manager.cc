@@ -2,59 +2,71 @@
 
 #include <sstream>
 
+#include "spec.h"
 #include "json.h"
 #include "jutil.h"
 
 namespace elfin {
 
-//
-// Resolves file name from path string.
-// https://stackoverflow.com/questions/8520560/get-a-file-name-from-a-path
-// (free)
-//
-std::string get_filename(std::string const& path) {
-    std::string filename = path;
-    // Remove directory if present.
+/* private */
+struct OutputManager::PImpl {
+    /* data */
+    OutputManager& _;
+    JSON output_json;
 
-    // Do this before extension removal in case directory has a period character.
-    size_t const last_slash_idx = filename.find_last_of("\\/");
-    if (std::string::npos != last_slash_idx) {
-        filename.erase(0, last_slash_idx + 1);
+    /* ctors */
+    PImpl(OutputManager& interface) : _(interface) { }
+
+    /* accessors */
+    // Resolves file name from path string.
+    // https://stackoverflow.com/questions/8520560/get-a-file-name-from-a-path
+    static std::string get_filename(std::string const& path) {
+        std::string filename = path;
+        // Remove directory if present.
+
+        // Do this before extension removal in case directory has a period character.
+        size_t const last_slash_idx = filename.find_last_of("\\/");
+        if (std::string::npos != last_slash_idx) {
+            filename.erase(0, last_slash_idx + 1);
+        }
+
+        // Remove extension if present.
+        size_t const period_idx = filename.rfind('.');
+        if (std::string::npos != period_idx) {
+            filename.erase(period_idx);
+        }
+        return filename;
     }
 
-    // Remove extension if present.
-    size_t const period_idx = filename.rfind('.');
-    if (std::string::npos != period_idx) {
-        filename.erase(period_idx);
+    void write_to_file(Options const& options,
+                       size_t const indent_size) const {
+        JUtil.info("Writing results...\n");
+
+        JUtil.mkdir_ifn_exists(options.output_dir.c_str());
+
+        // Build JSON output path.
+        std::string const& output_path =
+            options.output_dir + "/" + get_filename(options.spec_file) + ".json";
+
+        std::string const& dump = output_json.dump(indent_size);
+        JUtil.write_binary(output_path.c_str(),
+                           dump.c_str(),
+                           dump.size());
     }
-    return filename;
-}
 
+    /* modifiers */
+    void collect_output(Spec const & spec) {
+        for (auto const& [wa_name, wa_sp] : spec.work_areas()) {
+            auto solutions = wa_sp->get_solutions();
 
-void OutputManager::write_output(EvolutionSolver const& solver,
-                                 std::string extra_dir,
-                                 size_t const indent_size) {
-    if (not solver.has_result()) {
-        JUtil.warn("Solver %p has no result to be written out\n", &solver);
-        return;
-    }
+            if (solutions.empty()) {
+                JUtil.warn("Work Area %s has no solutions!\n", wa_name.c_str());
+                continue;
+            }
 
-    JUtil.info("Writing results\n");
-
-    // Compute final output dir string.
-    std::ostringstream output_dir_ss;
-    output_dir_ss << OPTIONS.output_dir << "/"
-                  << extra_dir;
-    std::string output_dir_str = output_dir_ss.str();
-    JUtil.mkdir_ifn_exists(output_dir_str.c_str());
-
-    try {
-        JSON output_json;
-        for (auto& [wa_name, wa] : SPEC.work_areas()) {
-            JSON work_area_json;
-
+            // Accumulate solutions to output json object.
             try {
-                auto solutions = solver.best_sols(wa_name);  // TeamPtrMaxHeap
+                JSON work_area_json;
 
                 size_t i = 0;
                 while (not solutions.empty()) {
@@ -67,34 +79,33 @@ void OutputManager::write_output(EvolutionSolver const& solver,
                         work_area_json[i++] = sol_json;
                     }
                     else {
-                        JUtil.error("team=%p in %s\n", team, wa_name);
+                        JUtil.error("if(team) is false!\nteam=%p in %s. Skipping...\n",
+                                    team, wa_name);
                     }
                 }
+
                 output_json[wa_name] = work_area_json;
-            }
-            catch (std::out_of_range& e)
-            {
-                JUtil.error("WorkArea \"%s\" has no solutions\n", wa_name.c_str());
+            } catch (JSON::exception const& je) {
+                JSON_LOG_EXIT(je);
             }
         }
-
-        // Generate JSON output path.
-        std::ostringstream json_output_path_ss;
-        json_output_path_ss << output_dir_str << "/"
-                            << get_filename(OPTIONS.spec_file)
-                            << ".json";
-
-        std::string json_out_path_str = json_output_path_ss.str();
-        char const* json_output_path = json_out_path_str.c_str();
-
-        // At last, write JSON to file.
-        std::string dump = output_json.dump(indent_size);
-        JUtil.write_binary(json_output_path,
-                           dump.c_str(),
-                           dump.size());
-    } catch (JSON::exception const& je) {
-        JSON_LOG_EXIT(je);
     }
+};
+
+/* public */
+/* ctors */
+OutputManager::OutputManager(Spec const& spec) :
+    pimpl_(std::make_unique<PImpl>(*this)) {
+    pimpl_->collect_output(spec);
+}
+
+/* dtors */
+OutputManager::~OutputManager() {}
+
+/* accessors */
+void OutputManager::write_to_file(Options const& options,
+                                  size_t const indent_size) const {
+    pimpl_->write_to_file(options, indent_size);
 }
 
 }  /* elfin */

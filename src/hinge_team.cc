@@ -3,6 +3,7 @@
 #include "input_manager.h"
 #include "path_generator.h"
 #include "scoring.h"
+#include "ui_joint.h"
 
 namespace elfin {
 
