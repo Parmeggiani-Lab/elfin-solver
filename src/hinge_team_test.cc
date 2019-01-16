@@ -4,6 +4,7 @@
 #include "test_stat.h"
 #include "input_manager.h"
 #include "path_generator.h"
+#include "scoring.h"
 
 namespace elfin {
 
@@ -31,11 +32,12 @@ TestStat HingeTeam::test() {
         team.implement_recipe(tests::H_1H_RECIPE, hinge_tx);
 
         ts.tests++;
-        if (team.score() > 1e-4) {
+        float const score = team.score();
+        if (score > scoring::SCORE_FLOOR) {
             ts.errors++;
             JUtil.error("HingeTeam construction test failed.\n"
                         "Expected score 0\nGot score: %f\n",
-                        team.score());
+                        score);
 
             std::ostringstream const_oss;
             const_oss << "Constructed nodes:\n";

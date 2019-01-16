@@ -3,8 +3,8 @@
     "xdb_file": "xdb.json",
     "output_dir": "./output/",
     "seed": "0xbeef1337",
-    "len_dev": 1,
-    "keep_n": 1,
+    "len_dev": 3,
+    "keep_n": 3,
     "ga_pop_size": 16384,
-    "ga_survive_rate": 0.02
+    "ga_survive_rate": 0.05
 }

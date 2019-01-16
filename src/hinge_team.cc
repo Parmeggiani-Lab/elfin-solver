@@ -173,14 +173,9 @@ void HingeTeam::calc_score() {
 
     // Collect points without hinge itself.
     auto const& my_points = PathGenerator(hinge_).collect_points();
-
-    // Should use simple_rms(), but there's some floating point rounding error
-    // that's causing unit tests to fail. If we used inner_product() in
-    // simple_rms(), that'd yield the satisfactory result but then an extra vector is
-    // required. Until transform_reduce() is supported, Kabsch RMS should be
-    // fine performance-wise?
     auto const& ref_path = work_area_->path_map.at(hinge_ui_joint_);
-    score_ = scoring::score(my_points, ref_path);
+    
+    score_ = scoring::score_unaligned(my_points, ref_path);
 
     scored_path_ = &ref_path;
 }

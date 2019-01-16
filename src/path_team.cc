@@ -812,10 +812,10 @@ void PathTeam::calc_score() {
     auto const& my_points = PathGenerator(tip).collect_points();
 
     auto const& [fwd_ui_key, fwd_path] = *begin(work_area_->path_map);
-    float const fwd_score = scoring::score(my_points, fwd_path);
+    float const fwd_score = scoring::score_aligned(my_points, fwd_path);
 
     auto const& [bwd_ui_key, bwd_path] = *(++begin(work_area_->path_map));
-    float const bwd_score = scoring::score(my_points, bwd_path);
+    float const bwd_score = scoring::score_aligned(my_points, bwd_path);
 
     if (fwd_score < bwd_score) {
         score_ = fwd_score;

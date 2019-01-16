@@ -11,9 +11,18 @@ struct TestStat;
 
 namespace scoring {
 
+static double const SCORE_FLOOR = 1e-3;
+static double const EPSILON = 1e-7;
+
+inline bool almost_eq(float const a, float const b) {
+    return abs(a - b) < EPSILON;
+}
+
 // Resamples two point lists of arbitrary sizes, then calls Rosetta's Kabsch in
 // RMS-only mode.
-float score(V3fList const& mobile, V3fList const& ref);
+float score_aligned(V3fList const& mobile, V3fList const& ref);
+float score_unaligned(V3fList const& mobile,
+                      V3fList const& ref);
 
 // Resamples two point lists of arbitrary sizes, then computes in-order RMS
 // without Kabsch.
@@ -48,9 +57,6 @@ void _rosetta_kabsch_align(V3fList const& mobile,
                            elfin::Mat3f& rot,
                            Vector3f& tran,
                            float& rms);
-
-float _rosetta_kabsch_rms(V3fList const& mobile,
-                          V3fList const& ref);
 
 }  /* scroing */
 

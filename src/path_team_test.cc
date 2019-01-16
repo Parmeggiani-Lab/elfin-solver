@@ -4,6 +4,7 @@
 #include "test_stat.h"
 #include "input_manager.h"
 #include "path_generator.h"
+#include "scoring.h"
 
 namespace elfin {
 
@@ -25,12 +26,13 @@ TestStat PathTeam::test() {
               "%zu\n", n_free_terms);
 
         ts.tests++;
-        if (team.score() > 1e-6) {
+        float const score = team.score();
+        if (not scoring::almost_eq(score, 0)) {
             ts.errors++;
             JUtil.error("PathTeam construction test of %s failed.\n"
                         "Expected score 0\nGot score: %f\n",
                         spec_file.c_str(),
-                        team.score());
+                        score);
 
             auto const& const_points =
                 team.gen_path().collect_points();

@@ -5,6 +5,7 @@
 #include "json.h"
 #include "debug_utils.h"
 #include "exceptions.h"
+#include "scoring.h"
 
 namespace elfin {
 
@@ -236,7 +237,9 @@ ARG_PARSER_CALLBACK_DEF(set_ga_survive_rate) {
 }
 
 ARG_PARSER_CALLBACK_DEF(set_ga_stop_score) {
-    options_.ga_stop_score = JUtil.parse_float(arg_in.c_str());
+    options_.ga_stop_score =
+        std::max((double) JUtil.parse_float(arg_in.c_str()),
+                 scoring::SCORE_FLOOR);
     return true;
 }
 

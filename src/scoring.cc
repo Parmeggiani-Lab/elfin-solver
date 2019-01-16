@@ -10,6 +10,138 @@ namespace elfin {
 
 namespace scoring {
 
+
+float aligned_rms(V3fList const& mobile,
+                  V3fList const& ref)
+{
+    size_t const n = mobile.size();
+    size_t const ref_n = ref.size();
+
+    // Check sample sizes.
+    DEBUG_NOMSG(n < 1);
+    DEBUG_NOMSG(ref_n < 1);
+    DEBUG_NOMSG(n != ref_n);
+
+    double e0 = 0.0f;
+    double h = 0.0f;
+    double g = 0.0f;
+    double cth = 0.0f;
+    double sth = 0.0f;
+    double sqrth = 0.0f;
+    double det = 0.0f;
+    double sigma = 0.0f;
+    double xc[3] = { 0 }, yc[3] = { 0 };
+    double r[3][3] = {0};
+    double e[3] = {0};
+    double rr[6] = {0};
+    double sqrt3 = 1.73205080756888;
+
+    // Compute centers for point vectors x, y.
+    for (size_t i = 0; i < n; ++i) {
+        xc[0] += mobile[i][0];
+        xc[1] += mobile[i][1];
+        xc[2] += mobile[i][2];
+
+        yc[0] += ref[i][0];
+        yc[1] += ref[i][1];
+        yc[2] += ref[i][2];
+    }
+
+    for (size_t i = 0; i < 3; ++i) {
+        xc[i] = xc[i] / n;
+        yc[i] = yc[i] / n;
+    }
+
+    // Compute e0 and matrix r.
+    for (size_t m = 0; m < n; m++) {
+        for (size_t i = 0; i < 3; ++i) {
+            double const d = ref[m][i] - yc[i];
+            e0 += (mobile[m][i] - xc[i]) * (mobile[m][i] - xc[i]) + \
+                  (d * d);
+            for (size_t j = 0; j < 3; j++) {
+                r[i][j] += d * (mobile[m][j] - xc[j]);
+            }
+        }
+    }
+
+    // Compute determinat of matrix r.
+    det = r[0][0] * ( r[1][1] * r[2][2] - r[1][2] * r[2][1] )
+          - r[0][1] * ( r[1][0] * r[2][2] - r[1][2] * r[2][0] )
+          + r[0][2] * ( r[1][0] * r[2][1] - r[1][1] * r[2][0] );
+    sigma = det;
+
+    // Compute tras(r)*r.
+    {
+        size_t m = 0;
+        for (size_t j = 0; j < 3; j++) {
+            for (size_t i = 0; i <= j; ++i) {
+                rr[m++] = r[0][i] * r[0][j] + r[1][i] * r[1][j] + r[2][i] * r[2][j];
+            }
+        }
+    }
+
+    double const spur = (rr[0] + rr[2] + rr[5]) / 3.0;
+    double const cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])
+                          - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
+    det = det * det;
+
+    for (size_t i = 0; i < 3; ++i) {
+        e[i] = spur;
+    }
+
+    if (spur > 0) {
+        h = (spur * spur) - cof;
+        g = (spur * cof - det) / 2.0 - spur * h;
+
+        if (h > 0) {
+            sqrth = sqrt(h);
+            double d = h * h * h - g * g;
+            if (d < 0.0 ) d = 0.0;
+            d = atan2( sqrt(d), -g ) / 3.0;
+            cth = sqrth * cos(d);
+            sth = sqrth * sqrt3 * sin(d);
+            e[0] = (spur + cth) + cth;
+            e[1] = (spur - cth) + sth;
+            e[2] = (spur - cth) - sth;
+        }  //h>0
+    }
+
+    // Compute rms.
+    for (size_t i = 0; i < 3; ++i) {
+        if (e[i] < 0 ) e[i] = 0;
+        e[i] = sqrt( e[i] );
+    }
+
+    double const d = (sigma < 0.0 ? -1 : 1) * e[2] + e[1] + e[0];
+    float const rms = e0 - d - d;
+
+    if (rms < 0.0 ) {
+        return 0.0;
+    }
+
+    return rms;
+}
+
+float unaligned_rms(V3fList const& mobile,
+                    V3fList const& ref)
+{
+    size_t const n = mobile.size();
+    size_t const ref_n = ref.size();
+
+    // Check sample sizes.
+    DEBUG_NOMSG(n < 1);
+    DEBUG_NOMSG(ref_n < 1);
+    DEBUG_NOMSG(n != ref_n);
+
+    // Compute e0 and matrix r.
+    double sq_err = 0.0f;
+    for (size_t m = 0; m < n; m++) {
+        sq_err += mobile.at(m).sq_dist_to(ref.at(m));
+    }
+
+    return sqrt(sq_err / static_cast<double>(n));
+}
+
 void calc_alignment(V3fList const& mobile,
                     V3fList const& ref,
                     elfin::Mat3f& rot,
@@ -23,7 +155,10 @@ void calc_alignment(V3fList const& mobile,
     _rosetta_kabsch_align(mobile_resampled, ref, rot, tran, rms);
 }
 
-float score(V3fList const& mobile, V3fList const& ref) {
+float _score(V3fList const& mobile,
+             V3fList const& ref,
+             float (*scoring_func)(V3fList const&, V3fList const&))
+{
     if (mobile.size() == 1 and ref.size() == 1) {
         // Single points be trivially superimposed.
         return 0;
@@ -37,34 +172,16 @@ float score(V3fList const& mobile, V3fList const& ref) {
         mobile.size() == ref.size() ?
         mobile : _resample(ref, mobile);
 
-    return _rosetta_kabsch_rms(mobile_resampled, ref);
+    return scoring_func(mobile_resampled, ref);
 }
 
-// float simple_rms(V3fList const& mobile, V3fList const& ref) {
-//     if (mobile.empty() or ref.empty()) {
-//         return INFINITY;
-//     }
+float score_aligned(V3fList const& mobile, V3fList const& ref) {
+    return _score(mobile, ref, aligned_rms);
+}
 
-//     V3fList const& mobile_resampled =
-//         mobile.size() == ref.size() ?
-//         mobile : _resample(ref, mobile);
-
-//     size_t const n = ref.size();
-//     // float sq_err = 0.0f;
-//     // for (size_t i = 0; i < n; ++i) {
-//     //     sq_err += ref.at(i).sq_dist_to(mobile_resampled.at(i));
-//     // }
-
-//     // return sqrt(sq_err / static_cast<double>(n));
-
-//     std::vector<float> sq_err(n);
-//     for (size_t i = 0; i < n; ++i) {
-//         sq_err[i] = ref.at(i).sq_dist_to(mobile_resampled.at(i));
-//     }
-
-//     return sqrt(std::inner_product(begin(sq_err), end(sq_err), begin(sq_err), 0) *
-//                 (double) 1 / n);
-// }
+float score_unaligned(V3fList const& mobile, V3fList const& ref) {
+    return _score(mobile, ref, unaligned_rms);
+}
 
 V3fList _resample(V3fList const& ref,
                   V3fList const& pts)
@@ -406,119 +523,6 @@ void _rosetta_kabsch_align(V3fList const& mobile,
         tran[i] = ((yc[i] - rot[i][0] * xc[0]) - rot[i][1] * xc[1]) -
                   rot[i][2] * xc[2];
     }
-}
-
-float _rosetta_kabsch_rms(V3fList const& mobile,
-                          V3fList const& ref)
-{
-    size_t const n = mobile.size();
-    size_t const ref_n = ref.size();
-
-    // Check sample sizes.
-    DEBUG_NOMSG(n < 1);
-    DEBUG_NOMSG(ref_n < 1);
-    DEBUG_NOMSG(n != ref_n);
-
-    double e0 = 0.0f;
-    double h = 0.0f;
-    double g = 0.0f;
-    double cth = 0.0f;
-    double sth = 0.0f;
-    double sqrth = 0.0f;
-    double det = 0.0f;
-    double sigma = 0.0f;
-    double xc[3] = { 0 }, yc[3] = { 0 };
-    double r[3][3] = {0};
-    double e[3] = {0};
-    double rr[6] = {0};
-    double sqrt3 = 1.73205080756888;
-
-    bool a_success = true, b_success = true;
-
-    // Compute centers for point vectors x, y.
-    for (size_t i = 0; i < n; ++i) {
-        xc[0] += mobile[i][0];
-        xc[1] += mobile[i][1];
-        xc[2] += mobile[i][2];
-
-        yc[0] += ref[i][0];
-        yc[1] += ref[i][1];
-        yc[2] += ref[i][2];
-    }
-
-    for (size_t i = 0; i < 3; ++i) {
-        xc[i] = xc[i] / n;
-        yc[i] = yc[i] / n;
-    }
-
-    // Compute e0 and matrix r.
-    for (size_t m = 0; m < n; m++) {
-        for (size_t i = 0; i < 3; ++i) {
-            e0 += (mobile[m][i] - xc[i]) * (mobile[m][i] - xc[i]) + \
-                  (ref[m][i] - yc[i]) * (ref[m][i] - yc[i]);
-            double d = ref[m][i] - yc[i];
-            for (size_t j = 0; j < 3; j++) {
-                r[i][j] += d * (mobile[m][j] - xc[j]);
-            }
-        }
-    }
-
-    // Compute determinat of matrix r.
-    det = r[0][0] * ( r[1][1] * r[2][2] - r[1][2] * r[2][1] )
-          - r[0][1] * ( r[1][0] * r[2][2] - r[1][2] * r[2][0] )
-          + r[0][2] * ( r[1][0] * r[2][1] - r[1][1] * r[2][0] );
-    sigma = det;
-
-    // Compute tras(r)*r.
-    {
-        size_t m = 0;
-        for (size_t j = 0; j < 3; j++) {
-            for (size_t i = 0; i <= j; ++i) {
-                rr[m++] = r[0][i] * r[0][j] + r[1][i] * r[1][j] + r[2][i] * r[2][j];
-            }
-        }
-    }
-
-    double const spur = (rr[0] + rr[2] + rr[5]) / 3.0;
-    double const cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])
-                          - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
-    det = det * det;
-
-    for (size_t i = 0; i < 3; ++i) {
-        e[i] = spur;
-    }
-
-    if (spur > 0) {
-        h = (spur * spur) - cof;
-        g = (spur * cof - det) / 2.0 - spur * h;
-
-        if (h > 0) {
-            sqrth = sqrt(h);
-            double d = h * h * h - g * g;
-            if (d < 0.0 ) d = 0.0;
-            d = atan2( sqrt(d), -g ) / 3.0;
-            cth = sqrth * cos(d);
-            sth = sqrth * sqrt3 * sin(d);
-            e[0] = (spur + cth) + cth;
-            e[1] = (spur - cth) + sth;
-            e[2] = (spur - cth) - sth;
-        }  //h>0
-    }
-
-    // Compute rms.
-    for (size_t i = 0; i < 3; ++i) {
-        if (e[i] < 0 ) e[i] = 0;
-        e[i] = sqrt( e[i] );
-    }
-
-    double const d = (sigma < 0.0 ? -1 : 1) * e[2] + e[1] + e[0];
-    float const rms = e0 - d - d;
-
-    if (rms < 0.0 ) {
-        return 0.0;
-    }
-
-    return rms;
 }
 
 }  /* kabsch */

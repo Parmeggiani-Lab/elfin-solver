@@ -127,13 +127,8 @@ TestStat test_score() {
 
     // Test unrelated point Kabsch score > 0;
     {
-        float const kscore = score(points10a, points10b);
         ts.tests++;
-        if (kscore < 1.0) {
-            ts.errors++;
-            JUtil.error("kabsch unrelated point score test failed.\n"
-                        "Expected >> 0\nGot %f\n", kscore);
-
+        auto const print_points = [&]() {
             std::ostringstream a_oss;
             a_oss << "points10a:\n";
             for (auto const& point : points10a) {
@@ -148,9 +143,34 @@ TestStat test_score() {
             }
 
             JUtil.error(b_oss.str().c_str());
+        };
+
+        {
+            ts.tests++;
+            float const score = score_aligned(points10a, points10b);
+            if (score < 1.0) {
+                ts.errors++;
+                JUtil.error("Kabsch aligned score failed to produce > 1.0 for"
+                            " unrelated points.\n"
+                            "Expected >> 0\nGot %f\n", score);
+                print_points();
+            }
+        }
+
+        {
+            ts.tests++;
+            float const score = score_unaligned(points10a, points10b);
+            if (score < 1.0) {
+                ts.errors++;
+                JUtil.error("Kabsch unaligned score failed to produce > 1.0 for"
+                            " unrelated points.\n"
+                            "Expected >> 0\nGot %f\n", score);
+                print_points();
+            }
         }
     }
 
+    // Set up test fragment for repeating similar tests.
     InputManager::setup_test({
         "--spec_file",
         "examples/quarter_snake_free.json"
@@ -163,20 +183,23 @@ TestStat test_score() {
     auto const& [bwd_ui_key, bwd_input_points] = *(++begin(wa->path_map));
 
     auto score_test_fragment =
-    [&](V3fList const & expected_points, std::string const & err_msg) {
+        [&](V3fList const & test_points,
+            std::string const & err_msg,
+    float (*scoring_func)(V3fList const&, V3fList const&) = score_aligned) {
         ts.tests++;
 
         float const kscore =
-            std::min(score(expected_points, fwd_input_points),
-                     score(expected_points, bwd_input_points));
-        if (kscore > 1e-6) {
+            std::min(scoring_func(test_points, fwd_input_points),
+                     scoring_func(test_points, bwd_input_points));
+
+        if (not scoring::almost_eq(kscore, 0)) {
             ts.errors++;
 
             JUtil.error((err_msg + "Expected 0\nGot %f\n").c_str(), kscore);
             {
                 std::ostringstream oss;
                 oss << "Expected points (hardcoded):\n";
-                for (auto const& point : expected_points) {
+                for (auto const& point : test_points) {
                     oss << point.to_string() << "\n";
                 }
                 JUtil.error(oss.str().c_str());
@@ -196,7 +219,10 @@ TestStat test_score() {
 
     // Identity (no transform) score 0.
     score_test_fragment(tests::QUARTER_SNAKE_FREE_COORDINATES,
-                        "kabsch identity score test failed.\n");
+                        "Kabsch identity aligned score test failed.\n");
+    score_test_fragment(tests::QUARTER_SNAKE_FREE_COORDINATES,
+                        "Kabsch identity unaligned score test failed.\n",
+                        /*scoring_func=*/score_unaligned);
 
     // Test translation score 0.
     {
@@ -210,13 +236,13 @@ TestStat test_score() {
             {"tran", { -7.7777, -30, 150.12918}}
         });
 
-        V3fList expect_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
-        for (auto& point : expect_points) {
+        V3fList test_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
+        for (auto& point : test_points) {
             point = trans_tx * point;
         }
 
-        score_test_fragment(expect_points,
-                            "kabsch translation score test failed.\n");
+        score_test_fragment(test_points,
+                            "Kabsch translation score test failed.\n");
     }
 
     // Test rotation score 0.
@@ -231,13 +257,13 @@ TestStat test_score() {
             {"tran", {0, 0, 0}}
         });
 
-        V3fList expect_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
-        for (auto& point : expect_points) {
+        V3fList test_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
+        for (auto& point : test_points) {
             point = rot_tx * point;
         }
 
-        score_test_fragment(expect_points,
-                            "kabsch rotation score test failed.\n");
+        score_test_fragment(test_points,
+                            "Kabsch rotation score test failed.\n");
     }
 
     // Test random transformation score 0.
@@ -254,18 +280,18 @@ TestStat test_score() {
             {"tran", {3.15165638923645, -5.339916229248047, 3.290015935897827}}
         });
 
-        V3fList expect_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
-        for (auto& point : expect_points) {
+        V3fList test_points = tests::QUARTER_SNAKE_FREE_COORDINATES;
+        for (auto& point : test_points) {
             point = random_tx * point;
         }
 
-        score_test_fragment(expect_points,
-                            "kabsch random transform score test failed.\n");
+        score_test_fragment(test_points,
+                            "Kabsch random transform score test failed.\n");
     }
 
     // Test Blender origin transform score 0.
     score_test_fragment(tests::QUARTER_SNAKE_FREE_COORDINATES_ORIGIN,
-                        "kabsch Blender origin transform score test failed.\n");
+                        "Kabsch Blender origin transform score test failed.\n");
 
     return ts;
 }
