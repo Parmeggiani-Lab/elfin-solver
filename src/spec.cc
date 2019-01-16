@@ -139,59 +139,12 @@ struct Spec::PImpl {
             std::make_unique<FixedArea>(name, network));
     }
 
-    void digest_pg_network(std::string const & name,
-                           JSON const & pg_network) {
-        JSON decimated_jsons;
-
-        for (auto const& [joint_name, joint_json] : pg_network.items()) {
-            if (joint_json.at("neighbors").size() > 2) {
-                // There are two cases for complex network:
-                //  - The simple "star" case - 1-hub network in which
-                //    except for the hub, all arms are 1h.
-                //
-                //  - The complex type, in which multiple hubs are present and
-                //    connect to each other.
-                AdjacentNames adj_bps, adj_leaves;
-                analyse_bp_network(joint_name,
-                                   pg_network,
-                                   adj_bps,
-                                   adj_leaves);
-
-                for (auto const& [bp_name, bp_nbs] : adj_bps) {
-                    std::ostringstream oss;
-                    oss << bp_name << " connects to bps:\n";
-                    for (auto const& nb_name : bp_nbs)
-                        oss << nb_name << "\n";
-                    JUtil.warn(oss.str().c_str());
-                }
-
-                for (auto const& [bp_name, leaf_nbs] : adj_leaves) {
-                    std::ostringstream oss;
-                    oss << bp_name << " connects to leaves:\n";
-                    for (auto const& leaf_name : leaf_nbs)
-                        oss << leaf_name << "\n";
-                    JUtil.warn(oss.str().c_str());
-                }
-
-                if (adj_bps.size() == 0) {
-                    throw ShouldNotReach("Good!");
-                }
-                else {
-                    UNIMP();
-                }
-
-                // There can only be one single hub network in a pg_network
-                // since all UIJoints are connected.
-                break;
-            }
-        }
-
-        NameSet accumulator;
-        size_t dec_id = 0;
-
-        auto const decimate = [&]() {
-            PANIC_IF(accumulator.empty(), ShouldNotReach("Nothing to decimate...?"));
-
+    void decimate(std::string const& pg_nw_name,
+                  JSON const& pg_network,
+                  NameSet& accumulator,
+                  JSON& decimated_jsons,
+                  size_t& dec_id) {
+        if (not accumulator.empty()) {
             JSON decimated_json;
             // Trim accumulator joints by removing neighbor names that aren't
             // in this set.
@@ -206,12 +159,28 @@ struct Spec::PImpl {
                 end(nbs));
             }
 
-            auto const& dec_name = name + ".dec-" + std::to_string(dec_id++);
+            auto const& dec_name = pg_nw_name + ".dec-" + std::to_string(dec_id++);
             decimated_jsons[dec_name] = decimated_json;
             accumulator.clear();
+        }
+    }
+
+    void simple_decimate(std::string const& pg_nw_name,
+                         JSON const& pg_network)
+    {
+        JSON decimated_jsons;
+        NameSet accumulator;
+        size_t dec_id = 0;
+
+        auto const call_decimate = [&]() {
+            decimate(pg_nw_name,
+                     pg_network,
+                     accumulator,
+                     decimated_jsons,
+                     dec_id);
         };
 
-        // Second, decimate the pg_network into a bunch of segments. A segment start
+        // Decimate the pg_network into a bunch of segments. A segment start
         // and end at either a leaf joint or a hinge (occupied) joint.
         for (auto const& [joint_name, joint_json] : pg_network.items()) {
             accumulator.insert(joint_name);
@@ -220,7 +189,7 @@ struct Spec::PImpl {
                     joint_json.at("neighbors").size() > 1) {
                 // This is a non-leaf joint that is occupied, therefore we
                 // need to break the pg_network.
-                decimate();
+                call_decimate();
 
                 // Re-insert current joint, which will be the beginning of the
                 // next decimated segment.
@@ -228,9 +197,9 @@ struct Spec::PImpl {
             }
         }
 
-        if (not accumulator.empty()) {
-            decimate();
-        }
+        // In case accumulator is not empty, do a last decimate to catch the
+        // dangling pg_network segment.
+        call_decimate();
 
         for (auto const& [dec_name, dec_json] : decimated_jsons.items()) {
             _.work_areas_.emplace(
@@ -238,10 +207,71 @@ struct Spec::PImpl {
                 std::make_unique<WorkArea>(dec_name, dec_json, _.fixed_areas_));
 
             PANIC_IF(_.work_areas_[dec_name]->joints.empty(),
-                     ShouldNotReach("Work area \"" + name +
+                     ShouldNotReach("PathGuide network \"" + pg_nw_name +
                                     "\" has no joints associated. "
                                     "Error in parsing, maybe?"));
         }
+    }
+
+    void star_decimate(std::string const& pg_nw_name,
+                       JSON const& pg_network,
+                       AdjacentNames const& adj_leaves) {
+        throw ShouldNotReach("Good!");
+    }
+
+    void allorders_decimate(std::string const& pg_nw_name,
+                            JSON const& pg_network,
+                            AdjacentNames const& adj_bps,
+                            AdjacentNames const& adj_leaves) {
+        throw ShouldNotReach("Bad!");
+    }
+
+    void digest_pg_network(std::string const & pg_nw_name,
+                           JSON const & pg_network) {
+        // Check whether we need to use advanced rules to break up the
+        // pg_network.
+        for (auto const& [joint_name, joint_json] : pg_network.items()) {
+            if (joint_json.at("neighbors").size() > 2) {
+                // Found a branchpoint. There are two cases for a complex
+                // pg_network:
+                //  - The simple "star" case - 1-hub network in which
+                //    except for the hub, all arms are 1h.
+                //
+                //  - The complex type, in which multiple hubs are present and
+                //    connect to each other.
+                AdjacentNames adj_bps, adj_leaves;
+                analyse_bp_network(joint_name, pg_network, adj_bps, adj_leaves);
+
+                for (auto const& [bp_name, bp_nbs] : adj_bps) {
+                    std::ostringstream oss;
+                    oss << bp_name << " connects to bps:\n";
+                    for (auto const& nb_name : bp_nbs)
+                        oss << nb_name << "\n";
+                    JUtil.warn(oss.str().c_str());
+                }
+
+                // for (auto const& [bp_name, leaf_nbs] : adj_leaves) {
+                //     std::ostringstream oss;
+                //     oss << bp_name << " connects to leaves:\n";
+                //     for (auto const& leaf_name : leaf_nbs)
+                //         oss << leaf_name << "\n";
+                //     JUtil.warn(oss.str().c_str());
+                // }
+
+                if (adj_bps.size() == 0) {
+                    star_decimate(pg_nw_name, pg_network, adj_leaves);
+                }
+                else {
+                    allorders_decimate(pg_nw_name, pg_network, adj_bps, adj_leaves);
+                }
+
+                // There can only be one single hub network in a pg_network
+                // since all UIJoints are connected.
+                return;
+            }
+        }
+
+        simple_decimate(pg_nw_name, pg_network);
     }
 };
 
