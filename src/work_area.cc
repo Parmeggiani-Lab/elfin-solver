@@ -70,9 +70,9 @@ UIJointKeys parse_leaf_joints(UIJointMap const& joints)
 }
 
 // Occupied joints are supposed to be a subset of leaves.
-WorkArea::OccupantMap parse_occupants(UIJointKeys const& leaves)
+WorkArea::NamedJoints parse_occupied_joints(UIJointKeys const& leaves)
 {
-    WorkArea::OccupantMap res;
+    WorkArea::NamedJoints res;
     for (auto& leaf_joint : leaves) {
         if (leaf_joint->occupant.ui_module) {
             res.emplace(leaf_joint->occupant.ui_module->name, leaf_joint);
@@ -82,11 +82,11 @@ WorkArea::OccupantMap parse_occupants(UIJointKeys const& leaves)
     return res;
 }
 
-WorkType parse_type(WorkArea::OccupantMap const& occupants)
+WorkType parse_type(WorkArea::NamedJoints const& occupied_joints)
 {
     WorkType res = WorkType::NONE;
 
-    size_t const n_occ_joints = occupants.size();
+    size_t const n_occ_joints = occupied_joints.size();
     TRACE(n_occ_joints > 2,
           "Parsing error: too many occupied joints (%zu) for WorkArea\n",
           n_occ_joints);
@@ -132,14 +132,16 @@ FreeTerms calc_free_ptterms(PtModKey const ptmod, UIModKey const uimod) {
     return res;
 }
 
-PtTermFinderSet parse_ptterm_profile(WorkArea::OccupantMap const& occupants) {
+PtTermFinderSet parse_ptterm_profile(WorkArea::NamedJoints const& occupied_joints) {
     PtTermFinderSet res = XDB.ptterm_finders();
 
     // Do for 2H case only.
-    if (occupants.size() == 2) {
+    if (occupied_joints.size() == 2) {
         // First, get UIModules and ProtoModules for the hinges.
-        auto const ui_mod1 = begin(occupants)->second->occupant.ui_module;
-        auto const ui_mod2 = (++begin(occupants))->second->occupant.ui_module;
+        auto const ui_mod1 =
+            begin(occupied_joints)->second->occupant.ui_module;
+        auto const ui_mod2 =
+            (++begin(occupied_joints))->second->occupant.ui_module;
 
         auto const mod1 = XDB.get_mod(ui_mod1->module_name);
         auto const mod2 = XDB.get_mod(ui_mod2->module_name);
@@ -288,9 +290,9 @@ WorkArea::WorkArea(std::string const& _name,
     name(_name),
     joints(parse_joints(json, fam)),
     leaf_joints(parse_leaf_joints(joints)),
-    occupants(parse_occupants(leaf_joints)),
-    type(parse_type(occupants)),
-    ptterm_profile(parse_ptterm_profile(occupants)),
+    occupied_joints(parse_occupied_joints(leaf_joints)),
+    type(parse_type(occupied_joints)),
+    ptterm_profile(parse_ptterm_profile(occupied_joints)),
     path_map(parse_path_map(joints, leaf_joints)),
     path_len(parse_path_len(path_map)),
     target_size(parse_target_size(path_map))

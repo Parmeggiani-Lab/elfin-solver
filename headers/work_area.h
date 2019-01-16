@@ -45,13 +45,13 @@ private:
 public:
     /* types */
     typedef std::unordered_map<UIJointKey, V3fList> PathMap;
-    typedef std::unordered_map<std::string, UIJointKey> OccupantMap;
+    typedef std::unordered_map<std::string, UIJointKey> NamedJoints;
 
     /* data */
     std::string const       name;
     UIJointMap const        joints;
     UIJointKeys const       leaf_joints;     // Leaf joints are tips of the path.
-    OccupantMap const       occupants;       // Occupied joints are a subset of leaf joints.
+    NamedJoints const       occupied_joints; // Occupied joints are a subset of leaf joints.
     WorkType const          type;
     PtTermFinderSet const   ptterm_profile;  // ProtoTerms reachable from src hinge.
     PathMap const           path_map;

@@ -20,7 +20,7 @@ struct DoubleHingeTeam::PImpl {
         DEBUG_NOMSG(not _.hinge_ui_joint_);
         DEBUG_NOMSG(not _.hinge_);
 
-        auto const& omap = _.work_area_->occupants;
+        auto const& omap = _.work_area_->occupied_joints;
 
         auto const itr = find_if(begin(omap), end(omap),
         [&](auto const & omap_pair) {

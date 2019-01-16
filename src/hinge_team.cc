@@ -19,7 +19,7 @@ struct HingeTeam::PImpl {
         _.hinge_ui_joint_ = nullptr;
         _.hinge_ = nullptr;
 
-        auto const& omap = _.work_area_->occupants;
+        auto const& omap = _.work_area_->occupied_joints;
 
         // There can be 1 or 2 occupied joints. Allow size of 2 for
         // DoubleHingeTeam.
@@ -42,7 +42,7 @@ struct HingeTeam::PImpl {
     }
 
     UIJointKey find_ui_joint(tests::RecipeStep const& first_step) {
-        auto const& omap = _.work_area_->occupants;
+        auto const& omap = _.work_area_->occupied_joints;
 
         auto const itr = omap.find(first_step.ui_name);
         DEBUG_NOMSG(itr == end(omap));
