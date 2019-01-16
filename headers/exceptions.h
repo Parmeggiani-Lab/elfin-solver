@@ -33,6 +33,7 @@ DECL_EXCEPTION(InvalidHinge);
 DECL_EXCEPTION(OutOfRange);
 DECL_EXCEPTION(ValueNotFound);
 DECL_EXCEPTION(ShouldNotReach);
+DECL_EXCEPTION(Unsupported);
 DECL_EXCEPTION(CouldNotParse);
 
 #undef DECL_EXCEPTION

@@ -9,8 +9,8 @@ namespace elfin {
 /* private */
 struct Spec::PImpl {
     /* types */
-    // Maps hub ProtoModule key -> vector of Transforms (orientations).
-    typedef std::unordered_map<PtModKey, std::vector<Transform>> HubOrientations;
+    typedef std::unordered_set<std::string> NameSet;
+    typedef std::unordered_map<std::string, NameSet> AdjacentNames;
 
     /* data */
     Spec& _;
@@ -18,8 +18,83 @@ struct Spec::PImpl {
     /* ctors */
     PImpl(Spec& interface) : _(interface) { }
 
+    /* accessors */
+    static void analyse_bp_network(std::string const& first_bp_name,
+                                   JSON const& pg_network,
+                                   AdjacentNames& adj_bps,
+                                   AdjacentNames& adj_leaves) {
+        // Parse the branchpoint network (collapse all non-branchpoint
+        // joints).
+        std::deque<std::string> bps_to_visit = {first_bp_name};
+        NameSet visited;
+
+        auto const sign_name = [](AdjacentNames & adjacency,
+                                  std::string const & owner,
+                                  std::string const & new_name)
+        {
+            if (adjacency.find(owner) == end(adjacency)) {
+                adjacency[owner] = NameSet();
+            }
+            adjacency[owner].insert(new_name);
+        };
+
+        while (not bps_to_visit.empty()) {
+            auto const& bp_name = bps_to_visit.front();
+            auto const& bp_nbs = pg_network[bp_name].at("neighbors");
+
+            DEBUG_NOMSG(bp_nbs.size() <= 2);
+
+            for (auto const& nb_name : bp_nbs) {
+                // Collapse i.e. keep advancing name "pointer" until either
+                // leaf or another branchpoint is encountered.
+
+                if (visited.find(nb_name) == end(visited)) {
+                    std::string joint_name = nb_name;
+                    std::string last_name = bp_name;
+
+                    JSON const* joint_nbs = &pg_network[joint_name].at("neighbors");
+                    while (joint_nbs->size() == 2) {
+                        // Not a branchpoint nor a leaf.
+                        visited.insert(joint_name);
+
+                        auto const nbs_itr = begin(*joint_nbs);
+
+                        if (*nbs_itr != last_name) {
+                            last_name = joint_name;
+                            joint_name = *nbs_itr;
+                        }
+                        else {
+                            last_name = joint_name;
+                            joint_name = *(1 + nbs_itr);
+                        }
+                        joint_nbs = &pg_network[joint_name].at("neighbors");
+                    }
+
+                    auto const n_nbs = joint_nbs->size();
+                    if (n_nbs == 1) {
+                        sign_name(adj_leaves, bp_name, joint_name);
+                    }
+                    else {  // Branchpoint joint.
+                        if (joint_name == bp_name) {
+                            throw Unsupported("Branchpoint with circular connection "
+                                              "is not yet supported. Violating branchpoint: " +
+                                              bp_name + "\n");
+                        }
+
+                        sign_name(adj_bps, bp_name, joint_name);
+                        sign_name(adj_bps, joint_name, bp_name);
+                        bps_to_visit.push_back(joint_name);
+                    }
+                }
+            }
+
+            visited.insert(bp_name);
+            bps_to_visit.pop_front();
+        }
+    }
+
     /* modifiers */
-    void parse(Options const& options) {
+    void parse(Options const & options) {
         _.work_areas_.clear();
         _.fixed_areas_.clear();
 
@@ -58,31 +133,60 @@ struct Spec::PImpl {
                    _.fixed_areas_.size(), _.work_areas_.size());
     }
 
-    void digest_network(std::string const& name, JSON const& json) {
+    void digest_network(std::string const & name, JSON const & network) {
         _.fixed_areas_.emplace(
             name,
-            std::make_unique<FixedArea>(name, json));
+            std::make_unique<FixedArea>(name, network));
     }
 
-    void digest_pg_network(std::string const& name, JSON const& json) {
+    void digest_pg_network(std::string const & name,
+                           JSON const & pg_network) {
         JSON decimated_jsons;
 
-        // First, compute hub allocation map for each branchpoint.
-        // Maps joint UI name -> hub orientations.
-        std::unordered_map<std::string, HubOrientations> hub_alloc_map;
-        for (auto const& [joint_name, joint_json] : json.items()) {
+        for (auto const& [joint_name, joint_json] : pg_network.items()) {
             if (joint_json.at("neighbors").size() > 2) {
-                //hub_alloc_list...
-                UNIMP();
-                // Break it down to multiple simple ones by first choosing hubs
-                // and their orientations.
-                /*
-                TODO: Break complex work area
-                */
+                // There are two cases for complex network:
+                //  - The simple "star" case - 1-hub network in which
+                //    except for the hub, all arms are 1h.
+                //
+                //  - The complex type, in which multiple hubs are present and
+                //    connect to each other.
+                AdjacentNames adj_bps, adj_leaves;
+                analyse_bp_network(joint_name,
+                                   pg_network,
+                                   adj_bps,
+                                   adj_leaves);
+
+                for (auto const& [bp_name, bp_nbs] : adj_bps) {
+                    std::ostringstream oss;
+                    oss << bp_name << " connects to bps:\n";
+                    for (auto const& nb_name : bp_nbs)
+                        oss << nb_name << "\n";
+                    JUtil.warn(oss.str().c_str());
+                }
+
+                for (auto const& [bp_name, leaf_nbs] : adj_leaves) {
+                    std::ostringstream oss;
+                    oss << bp_name << " connects to leaves:\n";
+                    for (auto const& leaf_name : leaf_nbs)
+                        oss << leaf_name << "\n";
+                    JUtil.warn(oss.str().c_str());
+                }
+
+                if (adj_bps.size() == 0) {
+                    throw ShouldNotReach("Good!");
+                }
+                else {
+                    UNIMP();
+                }
+
+                // There can only be one single hub network in a pg_network
+                // since all UIJoints are connected.
+                break;
             }
         }
 
-        std::unordered_set<std::string> accumulator;
+        NameSet accumulator;
         size_t dec_id = 0;
 
         auto const decimate = [&]() {
@@ -92,7 +196,7 @@ struct Spec::PImpl {
             // Trim accumulator joints by removing neighbor names that aren't
             // in this set.
             for (auto const& joint_name : accumulator) {
-                decimated_json[joint_name] = json[joint_name];  // Make mutable copy.
+                decimated_json[joint_name] = pg_network[joint_name];  // Make mutable copy.
 
                 auto& nbs = decimated_json[joint_name].at("neighbors");
                 nbs.erase(std::remove_if(begin(nbs), end(nbs),
@@ -109,7 +213,7 @@ struct Spec::PImpl {
 
         // Second, decimate the pg_network into a bunch of segments. A segment start
         // and end at either a leaf joint or a hinge (occupied) joint.
-        for (auto const& [joint_name, joint_json] : json.items()) {
+        for (auto const& [joint_name, joint_json] : pg_network.items()) {
             accumulator.insert(joint_name);
 
             if (joint_json.at("occupant") != "" and
