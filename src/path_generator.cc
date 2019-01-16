@@ -53,11 +53,17 @@ Crc32 PathGenerator::checksum() {
     DEBUG_NOMSG(curr_node_);  // At a proper start, curr_node_ is nullptr.
     Crc32 res = 0xffff;
     while (not is_done()) {
-        auto nk = next();
-        ProtoModule const* prot = nk->prototype_;
+        next();
 
-        // Calculate checksum from the pointer, not the value!
-        checksum_cascade(&res, &prot, sizeof(prot));
+        // The last curr_link_ is null.
+        if (curr_link_) {
+            auto const src_ptterm_ptr = &curr_link_->src().get_ptterm();
+            auto const dst_ptterm_ptr = &curr_link_->dst().get_ptterm();
+
+            // Calculate checksum from the pointer, not the value!
+            checksum_cascade(&res, &src_ptterm_ptr, sizeof(src_ptterm_ptr));
+            checksum_cascade(&res, &dst_ptterm_ptr, sizeof(dst_ptterm_ptr));
+        }
     }
     return res;
 }

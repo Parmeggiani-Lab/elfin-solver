@@ -19,6 +19,8 @@ extern Recipe const HALF_SNAKE_FREE_RECIPE;
 
 extern Recipe const H_1H_RECIPE;
 
+extern Recipe const H_1H_CHAIN_CHANGED_RECIPE;
+
 extern Recipe const HALF_SNAKE_1H_RECIPE;
 
 extern Recipe const H_2H_RECIPE;

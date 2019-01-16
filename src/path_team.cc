@@ -776,7 +776,7 @@ void PathTeam::remove_free_terms(NodeKey const node) {
     });
 }
 
-void PathTeam::evavluate() {
+void PathTeam::evaluate() {
     calc_checksum();
     calc_score();
 }
@@ -806,6 +806,8 @@ void PathTeam::calc_score() {
     // Score the path forward and backward, because the Kabsch
     // algorithm relies on point-wise correspondance. Different ordering
     // can yield different RMSD scores.
+    DEBUG_NOMSG(not work_area_);
+    
     score_ = INFINITY;
 
     auto tip = get_tip(/*mutable_hint=*/false);
@@ -827,9 +829,10 @@ void PathTeam::calc_score() {
     }
 }
 
-void PathTeam::virtual_implement_recipe(tests::Recipe const& recipe,
-                                        FirstLastNodeKeyCallback const& postprocessor,
-                                        Transform const& shift_tx)
+void PathTeam::virtual_implement_recipe(
+    tests::Recipe const& recipe,
+    FirstLastNodeKeyCallback const& postprocessor,
+    Transform const& shift_tx)
 {
 
     TRACE_NOMSG(recipe.empty());
@@ -963,7 +966,7 @@ PathTeam& PathTeam::operator=(PathTeam&& other) {
 
 void PathTeam::randomize() {
     pimpl_->randomize();
-    evavluate();
+    evaluate();
 }
 
 mutation::Mode PathTeam::evolve(NodeTeam const& mother,
@@ -1011,7 +1014,7 @@ mutation::Mode PathTeam::evolve(NodeTeam const& mother,
         mutate_success = true;
     }
 
-    evavluate();
+    evaluate();
 
     return mode;
 }

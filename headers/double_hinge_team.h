@@ -28,7 +28,7 @@ protected:
     /* modifiers */
     virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
-    virtual void evavluate();
+    virtual void evaluate();
     virtual void virtual_implement_recipe(tests::Recipe const& recipe,
                                           FirstLastNodeKeyCallback const& postprocessor,
                                           Transform const& shift_tx);

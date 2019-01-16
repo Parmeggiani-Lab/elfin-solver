@@ -54,7 +54,7 @@ protected:
     NodeKey grow_tip(FreeTerm const& free_term_a,
                      ProtoLink const* pt_link = nullptr,
                      bool const innert = false);
-    virtual void evavluate();
+    virtual void evaluate();
     virtual void calc_checksum();
     virtual void calc_score();
     // For testing: builds node team from recipe and returns the starting node.
@@ -83,7 +83,7 @@ public:
     void implement_recipe(tests::Recipe const& recipe,
                           Transform const& shift_tx = Transform()) {
         virtual_implement_recipe(recipe, FirstLastNodeKeyCallback(), shift_tx);
-        evavluate();
+        evaluate();
     }
 
     /* printers */

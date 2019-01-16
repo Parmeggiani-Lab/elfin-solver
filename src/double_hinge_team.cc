@@ -161,12 +161,12 @@ void DoubleHingeTeam::virtual_copy(NodeTeam const& other) {
         TRACE_NOMSG("Bad cast\n");
     }
 }
-void DoubleHingeTeam::evavluate() {
+void DoubleHingeTeam::evaluate() {
     // Run djistrak to complete the mutable end if team does not end in second
     // hinge.
     pimpl_->complete_by_dijkstra();
 
-    HingeTeam::evavluate();
+    HingeTeam::evaluate();
 }
 
 void DoubleHingeTeam::virtual_implement_recipe(

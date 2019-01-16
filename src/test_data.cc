@@ -57,6 +57,14 @@ Recipe const H_1H_RECIPE {
     {"D49", TermType::N, "?", "?", "D49.019"}
 };
 
+Recipe const H_1H_CHAIN_CHANGED_RECIPE {
+    {"D49_aC2_ext", TermType::N, "C", "A", "D49_aC2_ext.002"},
+    {"D49", TermType::N, "A", "A", "D49.012"},
+    {"D49", TermType::N, "A", "A", "D49.015"},
+    {"D49", TermType::N, "A", "A", "D49.016"},
+    {"D49", TermType::N, "?", "?", "D49.019"}
+};
+
 Recipe const HALF_SNAKE_1H_RECIPE {
     {"D79_j2_D14", TermType::C, "A", "A", "D79_j2_D14.003"},
     {"D54_j1_D79", TermType::C, "A", "A", "D54_j1_D79.003"},
