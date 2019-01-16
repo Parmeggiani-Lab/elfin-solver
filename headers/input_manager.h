@@ -33,7 +33,6 @@ protected:
     Options options_;
     Cutoffs cutoffs_;
     Database xdb_;
-    Spec spec_;
     static Args const test_args;
 
     GATimes ga_times_;
@@ -59,10 +58,6 @@ public:
     static Database& mutable_xdb() {
         return instance().xdb_;
     }
-    static Spec& spec() {
-        return instance().spec_;
-    }
-
     static GATimes& ga_times() {
         return instance().ga_times_;
     }
@@ -70,9 +65,9 @@ public:
     /* modifiers */
     static void parse(Args const& args);
     static void parse(int const argc, char const** argv);
-    static void setup_test(Args const& args);
+    static Spec setup_test(Args const& args);
     static void setup_xdb();  // Used for tests.cc only.
-    static void setup(bool const skip_xdb = false);
+    static Spec setup(bool const skip_xdb = false);
 
     /* tests */
     static void load_test_config(
@@ -84,7 +79,6 @@ public:
 extern Options const& OPTIONS;
 extern Cutoffs const& CUTOFFS;
 extern Database const& XDB;
-extern Spec const& SPEC;
 
 extern GATimes const& GA_TIMES;
 

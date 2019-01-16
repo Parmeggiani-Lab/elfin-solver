@@ -11,8 +11,6 @@ Cutoffs const& CUTOFFS =
     InputManager::cutoffs();
 Database const& XDB =
     InputManager::mutable_xdb();
-Spec const& SPEC =
-    InputManager::spec();
 
 GATimes const& GA_TIMES =
     InputManager::ga_times();
@@ -65,19 +63,17 @@ void InputManager::setup_xdb() {
     instance().xdb_.parse(OPTIONS);
 }
 
-void InputManager::setup(bool const skip_xdb) {
+Spec InputManager::setup(bool const skip_xdb) {
     if (not skip_xdb) {
         setup_xdb();
     }
 
-    JUtil.info("Using spec file: %s\n", OPTIONS.spec_file.c_str());
-    instance().spec_.parse(OPTIONS);
-
-    JUtil.info("Spec parsed %zu fixed areas and %zu work areas (include decimation)\n",
-               SPEC.fixed_areas().size(), SPEC.work_areas().size());
-
     parallel::init();
     random::init();
+
+    Spec spec(OPTIONS);
+
+    return spec;
 }
 
 }  /* elfin */

@@ -1,7 +1,6 @@
 #include "spec.h"
 
 #include "debug_utils.h"
-#include "database.h"
 #include "options.h"
 #include "json.h"
 
@@ -18,6 +17,46 @@ struct Spec::PImpl {
 
     /* ctors */
     PImpl(Spec& interface) : _(interface) { }
+
+    /* modifiers */
+    void parse(Options const& options) {
+        _.work_areas_.clear();
+        _.fixed_areas_.clear();
+
+        auto const& spec_file = options.spec_file;
+        JUtil.info("Parsing spec file: %s\n", spec_file.c_str());
+
+        PANIC_IF(spec_file.empty(),
+                 BadArgument("No input spec file provided.\n"));
+
+        PANIC_IF(not JUtil.file_exists(spec_file.c_str()),
+                 BadArgument("Input file \"" + spec_file + "\" does not exist.\n"));
+
+        try {
+            auto const& spec_json = parse_json(spec_file);
+            auto const& networks_json = spec_json.at("networks");
+            auto const& pg_networks_json = spec_json.at("pg_networks");
+
+            JUtil.info("Input spec has %zu networks and %zu pg_networks.\n",
+                       networks_json.size(),
+                       pg_networks_json.size());
+
+            // Initialize fixed areas first so work areas can refer to fixed
+            // modules as occupants or hinges.
+            for (auto& [name, json] : networks_json.items()) {
+                digest_network(name, json);
+            }
+
+            for (auto& [name, json] : pg_networks_json.items()) {
+                digest_pg_network(name, json);
+            }
+        } catch (JSON::exception const& je) {
+            JSON_LOG_EXIT(je);
+        }
+
+        JUtil.info("Parsed %zu fixed areas and %zu work areas\n",
+                   _.fixed_areas_.size(), _.work_areas_.size());
+    }
 
     void digest_network(std::string const& name, JSON const& json) {
         _.fixed_areas_.emplace(
@@ -63,7 +102,7 @@ struct Spec::PImpl {
                 end(nbs));
             }
 
-            auto const& dec_name = name + ".dec" + std::to_string(dec_id++);
+            auto const& dec_name = name + ".dec-" + std::to_string(dec_id++);
             decimated_jsons[dec_name] = decimated_json;
             accumulator.clear();
         };
@@ -104,41 +143,29 @@ struct Spec::PImpl {
 
 /* public */
 /* ctors */
-Spec::Spec() :
-    pimpl_(std::make_unique<PImpl>(*this)) {}
+Spec::Spec(Options const& options) :
+    pimpl_(std::make_unique<PImpl>(*this)) {
+    pimpl_->parse(options);
+}
+
+Spec::Spec(Spec&& other) {
+    this->operator=(std::move(other));
+}
 
 /* dtors */
 Spec::~Spec() {}
 
 /* modifiers */
-void Spec::parse(Options const& options) {
-    work_areas_.clear();
-    fixed_areas_.clear();
+Spec& Spec::operator=(Spec&& other) {
+    if (this != &other) {
+        work_areas_.clear();
+        fixed_areas_.clear();
 
-    PANIC_IF(options.spec_file.empty(),
-             BadArgument("No input spec file provided.\n"));
-
-    PANIC_IF(not JUtil.file_exists(options.spec_file.c_str()),
-             BadArgument("Input file \"" + options.spec_file + "\" does not exist.\n"));
-
-    JSON const& spec_json = parse_json(options.spec_file);
-    try {
-        JUtil.info("Input spec has %zu pg_networks and %zu networks\n",
-                   spec_json.at("pg_networks").size(),
-                   spec_json.at("networks").size());
-
-        // Initialize fixed areas first so work areas can refer to fixed
-        // modules as occupants or hinges.
-        for (auto& [name, json] : spec_json.at("networks").items()) {
-            pimpl_->digest_network(name, json);
-        }
-
-        for (auto& [name, json] : spec_json.at("pg_networks").items()) {
-            pimpl_->digest_pg_network(name, json);
-        }
-    } catch (JSON::exception const& je) {
-        JSON_LOG_EXIT(je);
+        std::swap(work_areas_, other.work_areas_);
+        std::swap(fixed_areas_, other.fixed_areas_);
     }
+
+    return *this;
 }
 
 void Spec::solve_all() {

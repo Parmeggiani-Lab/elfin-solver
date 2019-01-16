@@ -6,11 +6,11 @@
 
 namespace elfin {
 
-void InputManager::setup_test(Args const& more_args) {
+Spec InputManager::setup_test(Args const& more_args) {
     Args args = test_args;
     args.insert(end(args), begin(more_args), end(more_args));
     parse(args);
-    setup(/*skip_xdb=*/true);
+    return setup(/*skip_xdb=*/true);
 }
 
 /* tests */
@@ -21,15 +21,15 @@ TestStat InputManager::test() {
     {
         ts.tests++;
 
-        InputManager::setup_test({"--spec_file", "examples/quarter_snake_free.json"});
+        auto const& spec = InputManager::setup_test({"--spec_file", "examples/quarter_snake_free.json"});
 
-        if (SPEC.work_areas().size() != 1) {
+        if (spec.work_areas().size() != 1) {
             ts.errors++;
             JUtil.error("Spec parsing should get 1 work area but got %zu\n",
-                        SPEC.work_areas().size());
+                        spec.work_areas().size());
         }
         else {
-            auto& [wa_name, wa] = *begin(SPEC.work_areas());  // unique_ptr
+            auto& [wa_name, wa] = *begin(spec.work_areas());  // unique_ptr
 
             // Test parsed points.
             TRACE_NOMSG(wa->path_map.size() != 2);

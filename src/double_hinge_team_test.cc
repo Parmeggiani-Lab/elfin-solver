@@ -12,12 +12,12 @@ TestStat DoubleHingeTeam::test() {
 
     // Construction test.
     {
-        InputManager::setup_test({
+        auto const& spec = InputManager::setup_test({
             "--spec_file", "examples/H_2h.json"
         });
 
-        TRACE_NOMSG(SPEC.work_areas().size() != 1);
-        auto& [wa_name, wa] = *begin(SPEC.work_areas());
+        TRACE_NOMSG(spec.work_areas().size() != 1);
+        auto& [wa_name, wa] = *begin(spec.work_areas());
 
         // Initialize DoubleHingeTeam, copy hinge transform, build from recipe than
         // apply transform.

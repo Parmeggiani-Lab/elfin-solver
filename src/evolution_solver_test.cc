@@ -19,8 +19,7 @@ TestStat EvolutionSolver::test() {
     {
         ts.tests++;
 
-        InputManager::setup_test({"--spec_file", spec_file});
-        auto& spec = InputManager::spec();
+        auto spec = InputManager::setup_test({"--spec_file", spec_file});
 
         JUtilLogLvl const original_ll = JUtil.get_log_lvl();
 
@@ -28,7 +27,7 @@ TestStat EvolutionSolver::test() {
         spec.solve_all();
         JUtil.set_log_lvl(original_ll);
 
-        for (auto const& [work_area_name, work_area] : SPEC.work_areas()) {
+        for (auto const& [work_area_name, work_area] : spec.work_areas()) {
             auto const& solutions = work_area->get_solutions();  // Best on top of heap.
 
             try { // Catch bad_cast

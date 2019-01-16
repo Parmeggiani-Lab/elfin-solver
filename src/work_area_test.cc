@@ -50,15 +50,15 @@ TestStat WorkArea::test() {
     {
         ts.tests++;
 
-        InputManager::setup_test({
+        auto const& spec = InputManager::setup_test({
             "--spec_file",
             "examples/half_snake_2x1h_shared_hinge.json"
         });
 
-        if (SPEC.work_areas().size() != 2) {
+        if (spec.work_areas().size() != 2) {
             ts.errors++;
             JUtil.error("Failed to decimate Path Guide network. "
-                        "Got %zu work areas.\n", SPEC.work_areas().size());
+                        "Got %zu work areas.\n", spec.work_areas().size());
         };
     }
 

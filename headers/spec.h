@@ -27,7 +27,9 @@ protected:
 
 public:
     /* ctors */
-    Spec();
+    Spec(Options const& options);
+    Spec(Spec const& other) = delete;
+    Spec(Spec&& other);
 
     /* dtors */
     virtual ~Spec();
@@ -41,7 +43,8 @@ public:
     }
 
     /* modifiers */
-    void parse(Options const& options);
+    Spec& operator=(Spec const& other) = delete;
+    Spec& operator=(Spec&& other);
     void solve_all();
 };
 

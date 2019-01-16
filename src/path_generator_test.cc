@@ -10,7 +10,7 @@ namespace elfin {
 TestStat PathGenerator::test() {
     TestStat ts;
 
-    InputManager::setup_test({
+    auto const& spec = InputManager::setup_test({
         "--spec_file",
         "examples/quarter_snake_free.json"
     });
@@ -21,8 +21,8 @@ TestStat PathGenerator::test() {
 
         // Need to repeat part of construction test. Therefore make sure
         // PathTeam::test() is cleared before this test is called.
-        TRACE_NOMSG(SPEC.work_areas().size() != 1);
-        auto& [wa_name, wa] = *begin(SPEC.work_areas());
+        TRACE_NOMSG(spec.work_areas().size() != 1);
+        auto& [wa_name, wa] = *begin(spec.work_areas());
         PathTeam team(wa.get());
         team.implement_recipe(tests::QUARTER_SNAKE_FREE_RECIPE);
 

@@ -30,14 +30,11 @@ void Elfin::run() {
         tests::run_all();
     }
     else {
-        InputManager::setup();
+        auto spec = InputManager::setup();
 
-        auto const& opt = InputManager::options();
-
-        auto& spec = InputManager::spec();
         spec.solve_all();
 
-        OutputManager(spec).write_to_file(opt);
+        OutputManager(spec).write_to_file(InputManager::options());
     }
 }
 
