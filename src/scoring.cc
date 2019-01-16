@@ -147,8 +147,6 @@ void _rosetta_kabsch_align(V3fList const& mobile,
     DEBUG_NOMSG(ref_n < 1);
     DEBUG_NOMSG(n != ref_n);
 
-    size_t j = 0;
-    size_t m = 0;
     int l = 0;
     int k = 0;
     double e0 = 0.0f;
@@ -175,7 +173,7 @@ void _rosetta_kabsch_align(V3fList const& mobile,
     bool a_success = true, b_success = true;
     double epsilon = 0.00000001;
 
-    // Compute centers for vector sets x, y
+    // Compute centers for point vectors x, y.
     for (size_t i = 0; i < n; ++i) {
         xc[0] += mobile[i][0];
         xc[1] += mobile[i][1];
@@ -192,12 +190,12 @@ void _rosetta_kabsch_align(V3fList const& mobile,
     }
 
     // Compute e0 and matrix r.
-    for (m = 0; m < n; m++) {
+    for (size_t m = 0; m < n; m++) {
         for (size_t i = 0; i < 3; ++i) {
             e0 += (mobile[m][i] - xc[i]) * (mobile[m][i] - xc[i]) + \
                   (ref[m][i] - yc[i]) * (ref[m][i] - yc[i]);
             d = ref[m][i] - yc[i];
-            for (j = 0; j < 3; j++) {
+            for (size_t j = 0; j < 3; j++) {
                 r[i][j] += d * (mobile[m][j] - xc[j]);
             }
         }
@@ -210,11 +208,13 @@ void _rosetta_kabsch_align(V3fList const& mobile,
     sigma = det;
 
     // Compute tras(r)*r.
-    m = 0;
-    for (j = 0; j < 3; j++) {
-        for (size_t i = 0; i <= j; ++i) {
-            rr[m] = r[0][i] * r[0][j] + r[1][i] * r[1][j] + r[2][i] * r[2][j];
-            m++;
+    {
+        size_t m = 0;
+        for (size_t j = 0; j < 3; j++) {
+            for (size_t i = 0; i <= j; ++i) {
+                rr[m] = r[0][i] * r[0][j] + r[1][i] * r[1][j] + r[2][i] * r[2][j];
+                m++;
+            }
         }
     }
 
@@ -259,21 +259,22 @@ void _rosetta_kabsch_align(V3fList const& mobile,
                 if (fabs(ss[4]) <= epsilon ) ss[4] = 0.0;
                 if (fabs(ss[5]) <= epsilon ) ss[5] = 0.0;
 
+                size_t jj;
                 if (fabs(ss[0]) >= fabs(ss[2])) {
-                    j = 0;
+                    jj = 0;
                     if (fabs(ss[0]) < fabs(ss[5])) {
-                        j = 2;
+                        jj = 2;
                     }
                 } else if (fabs(ss[2]) >= fabs(ss[5])) {
-                    j = 1;
+                    jj = 1;
                 } else {
-                    j = 2;
+                    jj = 2;
                 }
 
                 d = 0.0;
-                j = 3 * j;
+                jj *= 3;
                 for (size_t i = 0; i < 3; ++i) {
-                    k = ip[i + j];
+                    k = ip[i + jj];
                     a[i][l] = ss[k];
                     d = d + ss[k] * ss[k];
                 }
@@ -300,18 +301,19 @@ void _rosetta_kabsch_align(V3fList const& mobile,
             }
             if (p <= tol) {
                 p = 1.0;
+                size_t jj = 0;
                 for (size_t i = 0; i < 3; ++i) {
                     if (p < fabs(a[i][m])) {
                         continue;
                     }
                     p = fabs( a[i][m] );
-                    j = i;
+                    jj = i;
                 }
-                k = ip2312[j];
-                l = ip2312[j + 1];
+                k = ip2312[jj];
+                l = ip2312[jj + 1];
                 p = sqrt( a[k][m] * a[k][m] + a[l][m] * a[l][m] );
                 if (p > tol) {
-                    a[j][m1] = 0.0;
+                    a[jj][m1] = 0.0;
                     a[k][m1] = -a[l][m] / p;
                     a[l][m1] =  a[k][m] / p;
                 } else {
@@ -358,18 +360,19 @@ void _rosetta_kabsch_align(V3fList const& mobile,
 
             if (p <= tol) {
                 p = 1.0;
+                size_t jj = 0;
                 for (size_t i = 0; i < 3; ++i) {
                     if (p < fabs(b[i][0])) {
                         continue;
                     }
                     p = fabs( b[i][0] );
-                    j = i;
+                    jj = i;
                 }
-                k = ip2312[j];
-                l = ip2312[j + 1];
+                k = ip2312[jj];
+                l = ip2312[jj + 1];
                 p = sqrt( b[k][0] * b[k][0] + b[l][0] * b[l][0] );
                 if (p > tol) {
-                    b[j][1] = 0.0;
+                    b[jj][1] = 0.0;
                     b[k][1] = -b[l][0] / p;
                     b[l][1] =  b[k][0] / p;
                 } else {
@@ -391,7 +394,7 @@ void _rosetta_kabsch_align(V3fList const& mobile,
 
     // Compute rot.
     for (size_t i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; j++) {
+        for (size_t j = 0; j < 3; j++) {
             rot[i][j] = b[i][0] * a[j][0] +
                         b[i][1] * a[j][1] +
                         b[i][2] * a[j][2];
@@ -416,12 +419,7 @@ float _rosetta_kabsch_rms(V3fList const& mobile,
     DEBUG_NOMSG(ref_n < 1);
     DEBUG_NOMSG(n != ref_n);
 
-    size_t j = 0;
-    size_t m = 0;
-    int l = 0;
-    int k = 0;
     double e0 = 0.0f;
-    double d = 0.0f;
     double h = 0.0f;
     double g = 0.0f;
     double cth = 0.0f;
@@ -437,7 +435,7 @@ float _rosetta_kabsch_rms(V3fList const& mobile,
 
     bool a_success = true, b_success = true;
 
-    // Compute centers for vector sets x, y
+    // Compute centers for point vectors x, y.
     for (size_t i = 0; i < n; ++i) {
         xc[0] += mobile[i][0];
         xc[1] += mobile[i][1];
@@ -454,12 +452,12 @@ float _rosetta_kabsch_rms(V3fList const& mobile,
     }
 
     // Compute e0 and matrix r.
-    for (m = 0; m < n; m++) {
+    for (size_t m = 0; m < n; m++) {
         for (size_t i = 0; i < 3; ++i) {
             e0 += (mobile[m][i] - xc[i]) * (mobile[m][i] - xc[i]) + \
                   (ref[m][i] - yc[i]) * (ref[m][i] - yc[i]);
-            d = ref[m][i] - yc[i];
-            for (j = 0; j < 3; j++) {
+            double d = ref[m][i] - yc[i];
+            for (size_t j = 0; j < 3; j++) {
                 r[i][j] += d * (mobile[m][j] - xc[j]);
             }
         }
@@ -472,17 +470,18 @@ float _rosetta_kabsch_rms(V3fList const& mobile,
     sigma = det;
 
     // Compute tras(r)*r.
-    m = 0;
-    for (j = 0; j < 3; j++) {
-        for (size_t i = 0; i <= j; ++i) {
-            rr[m] = r[0][i] * r[0][j] + r[1][i] * r[1][j] + r[2][i] * r[2][j];
-            m++;
+    {
+        size_t m = 0;
+        for (size_t j = 0; j < 3; j++) {
+            for (size_t i = 0; i <= j; ++i) {
+                rr[m++] = r[0][i] * r[0][j] + r[1][i] * r[1][j] + r[2][i] * r[2][j];
+            }
         }
     }
 
-    double spur = (rr[0] + rr[2] + rr[5]) / 3.0;
-    double cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])
-                    - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
+    double const spur = (rr[0] + rr[2] + rr[5]) / 3.0;
+    double const cof = (((((rr[2] * rr[5] - rr[4] * rr[4]) + rr[0] * rr[5])
+                          - rr[3] * rr[3]) + rr[0] * rr[2]) - rr[1] * rr[1]) / 3.0;
     det = det * det;
 
     for (size_t i = 0; i < 3; ++i) {
@@ -490,13 +489,12 @@ float _rosetta_kabsch_rms(V3fList const& mobile,
     }
 
     if (spur > 0) {
-        d = spur * spur;
-        h = d - cof;
+        h = (spur * spur) - cof;
         g = (spur * cof - det) / 2.0 - spur * h;
 
         if (h > 0) {
             sqrth = sqrt(h);
-            d = h * h * h - g * g;
+            double d = h * h * h - g * g;
             if (d < 0.0 ) d = 0.0;
             d = atan2( sqrt(d), -g ) / 3.0;
             cth = sqrth * cos(d);
@@ -513,17 +511,11 @@ float _rosetta_kabsch_rms(V3fList const& mobile,
         e[i] = sqrt( e[i] );
     }
 
-    d = e[2];
-
-    if (sigma < 0.0) {
-        d = - d;
-    }
-
-    d = (d + e[1]) + e[0];
-    float rms = (e0 - d) - d;
+    double const d = (sigma < 0.0 ? -1 : 1) * e[2] + e[1] + e[0];
+    float const rms = e0 - d - d;
 
     if (rms < 0.0 ) {
-        rms = 0.0;
+        return 0.0;
     }
 
     return rms;
