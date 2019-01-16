@@ -105,6 +105,13 @@ TestStat Vector3f::test() {
             ts.errors++;
             JUtil.error("Vector3f bad hash function: g=0x%x, h=0x%x\n", g, h);
         }
+
+        auto const i = std::hash<Vector3f>()(Vector3f(0, 2.599999, 0));
+        auto const j = std::hash<Vector3f>()(Vector3f(0, 0, 2.599999));
+        if (i == j) {
+            ts.errors++;
+            JUtil.error("Vector3f bad hash function: i=0x%x, j=0x%x\n", i, j);
+        }
     }
 
     return ts;
