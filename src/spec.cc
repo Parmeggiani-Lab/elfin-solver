@@ -216,6 +216,10 @@ struct Spec::PImpl {
     void star_decimate(std::string const& pg_nw_name,
                        JSON const& pg_network,
                        AdjacentNames const& adj_leaves) {
+        // - 1. Find compatible hubs.
+        // - 2. Define 1H work area for each star arm.
+        // - 3. Solve for each starting 1H work area to find best score, then
+        //   solve for remaining 1H arms.
         throw ShouldNotReach("Good!");
     }
 
@@ -223,6 +227,13 @@ struct Spec::PImpl {
                             JSON const& pg_network,
                             AdjacentNames const& adj_bps,
                             AdjacentNames const& adj_leaves) {
+        // - 1. Find compatible hubs per bp.
+        // - 2. Create (bp_name ^ team cksm), (bp_name ^ team cksm) cache map.
+        // - 3. Create initial segments.
+        //
+        //   ... Run later during solve_all() ...
+        // - 4. Traverse edges in all neighboring orders and solve segments
+        //   on-the-fly if not found in cache.
         throw ShouldNotReach("Bad!");
     }
 
