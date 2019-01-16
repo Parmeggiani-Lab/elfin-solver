@@ -133,13 +133,17 @@ float unaligned_rms(V3fList const& mobile,
     DEBUG_NOMSG(ref_n < 1);
     DEBUG_NOMSG(n != ref_n);
 
-    // Compute e0 and matrix r.
-    double sq_err = 0.0f;
-    for (size_t m = 0; m < n; m++) {
-        sq_err += mobile.at(m).sq_dist_to(ref.at(m));
-    }
+    float const rms = sqrt(std::inner_product(
+                               mobile.begin(),
+                               mobile.end(),
+                               ref.begin(),
+                               (double) 0.0,
+    std::plus<>(), [](auto a, auto b) {
+        auto const e = a.sq_dist_to(b);
+        return e * e;
+    }) / n);
 
-    return sqrt(sq_err / static_cast<double>(n));
+    return rms;
 }
 
 void calc_alignment(V3fList const& mobile,

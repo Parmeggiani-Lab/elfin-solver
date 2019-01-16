@@ -125,7 +125,32 @@ TestStat test_resample() {
 TestStat test_score() {
     TestStat ts;
 
-    // Test unrelated point Kabsch score > 0;
+    // Test identical points Kabsch score == 0
+    {
+        {
+            ts.tests++;
+            float const score = score_aligned(points10a, points10a);
+            if (not scoring::almost_eq(score, 0)) {
+                ts.errors++;
+                JUtil.error("Kabsch aligned score failed to produce 0 for"
+                            " identical points.\n"
+                            "Got %f\n", score);
+            }
+        }
+
+        {
+            ts.tests++;
+            float const score = score_unaligned(points10a, points10a);
+            if (not scoring::almost_eq(score, 0)) {
+                ts.errors++;
+                JUtil.error("Kabsch unaligned score failed to produce 0 for"
+                            " identical points.\n"
+                            "Got %f\n", score);
+            }
+        }
+    }
+
+    // Test unrelated point Kabsch score > 0
     {
         ts.tests++;
         auto const print_points = [&]() {
