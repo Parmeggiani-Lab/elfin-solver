@@ -56,7 +56,6 @@ void InputManager::parse(int const argc, char const** const argv, bool const ski
     JUtil.mkdir_ifn_exists(OPTIONS.output_dir.c_str());
 
     if (not skip_xdb) {
-        JUtil.error("Parse XDB\n");
         instance().xdb_.parse(OPTIONS);
     }
 
