@@ -30,10 +30,8 @@ void Elfin::run() {
         tests::run_all();
     }
     else {
-        auto spec = InputManager::setup();
-
+        Spec spec(OPTIONS);
         spec.solve_all();
-
         OutputManager(spec).write_to_file(InputManager::options());
     }
 }

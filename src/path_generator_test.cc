@@ -10,14 +10,15 @@ namespace elfin {
 TestStat PathGenerator::test() {
     TestStat ts;
 
-    auto const& spec = InputManager::setup_test({
-        "--spec_file",
-        "examples/quarter_snake_free.json"
-    });
-
     // Test points gathered are of the correct size.
     {
         ts.tests++;
+
+        InputManager::setup_test({
+            "--spec_file",
+            "examples/quarter_snake_free.json"
+        });
+        Spec const spec(OPTIONS);
 
         // Need to repeat part of construction test. Therefore make sure
         // PathTeam::test() is cleared before this test is called.

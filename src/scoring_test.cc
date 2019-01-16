@@ -151,11 +151,12 @@ TestStat test_score() {
         }
     }
 
-
-    auto const& spec = InputManager::setup_test({
+    InputManager::setup_test({
         "--spec_file",
         "examples/quarter_snake_free.json"
     });
+    Spec const spec(OPTIONS);
+
     auto& [wa_name, wa] = *begin(spec.work_areas());
 
     auto const& [fwd_ui_key, fwd_input_points] = *begin(wa->path_map);

@@ -13,10 +13,11 @@ TestStat HingeTeam::test() {
 
     // Construction test.
     {
-        auto const& spec = InputManager::setup_test({
+        InputManager::setup_test({
             "--spec_file",
             "examples/H_1h.json"
         });
+        Spec const spec(OPTIONS);
 
         TRACE_NOMSG(spec.work_areas().size() != 1);
         auto& [wa_name, wa] = *begin(spec.work_areas());

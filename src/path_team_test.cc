@@ -13,7 +13,8 @@ TestStat PathTeam::test() {
 
     auto construction_test =
     [&](std::string const & spec_file, tests::Recipe const & recipe) {
-        auto const& spec = InputManager::setup_test({"--spec_file", spec_file});
+        InputManager::setup_test({"--spec_file", spec_file});
+        Spec const spec(OPTIONS);
 
         auto& [wa_name, wa] = *begin(spec.work_areas());
         PathTeam team(wa.get());

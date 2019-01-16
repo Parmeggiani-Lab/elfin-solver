@@ -12,9 +12,10 @@ TestStat DoubleHingeTeam::test() {
 
     // Construction test.
     {
-        auto const& spec = InputManager::setup_test({
+        InputManager::setup_test({
             "--spec_file", "examples/H_2h.json"
         });
+        Spec const spec(OPTIONS);
 
         TRACE_NOMSG(spec.work_areas().size() != 1);
         auto& [wa_name, wa] = *begin(spec.work_areas());
@@ -30,7 +31,7 @@ TestStat DoubleHingeTeam::test() {
         TRACE_NOMSG(om_itr == end(omap));
 
         auto const& [hinge_name, hinge_ui_joint_key] = *om_itr;
-        
+
         // Do not use UIJointKey's tx because it doesn't have the correct
         // rotation. Must use UIModKey
         auto hinge_ui_module_key = hinge_ui_joint_key->occupant.ui_module;

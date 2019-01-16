@@ -19,7 +19,8 @@ TestStat EvolutionSolver::test() {
     {
         ts.tests++;
 
-        auto spec = InputManager::setup_test({"--spec_file", spec_file});
+        InputManager::setup_test({"--spec_file", spec_file});
+        Spec spec(OPTIONS);
 
         JUtilLogLvl const original_ll = JUtil.get_log_lvl();
 

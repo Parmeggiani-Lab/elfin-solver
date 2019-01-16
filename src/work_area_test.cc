@@ -12,12 +12,13 @@ TestStat WorkArea::test() {
     {
         ts.tests++;
 
-        try {
+        InputManager::setup_test({
+            "--spec_file",
+            "examples/H_2h_invalid_hinge.json"
+        });
 
-            InputManager::setup_test({
-                "--spec_file",
-                "examples/H_2h_invalid_hinge.json"
-            });
+        try {
+            Spec const spec(OPTIONS);
 
             // Should throw InvalidHinge by now
             JUtil.error("Invalid hinge failed to trigger exception.\n");
@@ -32,11 +33,13 @@ TestStat WorkArea::test() {
     {
         ts.tests++;
 
+        InputManager::setup_test({
+            "--spec_file",
+            "examples/H_2h.json"
+        });
+
         try {
-            InputManager::setup_test({
-                "--spec_file",
-                "examples/H_2h.json"
-            });
+            Spec const spec(OPTIONS);
         }
         catch (InvalidHinge const& e) {
             // Should NOT throw InvalidHinge by now
@@ -50,10 +53,11 @@ TestStat WorkArea::test() {
     {
         ts.tests++;
 
-        auto const& spec = InputManager::setup_test({
+        InputManager::setup_test({
             "--spec_file",
             "examples/half_snake_2x1h_shared_hinge.json"
         });
+        Spec const spec(OPTIONS);
 
         if (spec.work_areas().size() != 2) {
             ts.errors++;

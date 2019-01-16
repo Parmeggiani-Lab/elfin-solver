@@ -63,11 +63,9 @@ public:
     }
 
     /* modifiers */
-    static void parse(Args const& args);
-    static void parse(int const argc, char const** argv);
-    static Spec setup_test(Args const& args);
-    static void setup_xdb();  // Used for tests.cc only.
-    static Spec setup(bool const skip_xdb = false);
+    static void parse(Args const& args, bool const skip_xdb = false);
+    static void parse(int const argc, char const** argv, bool const skip_xdb = false);
+    static void setup_test(Args const& args);
 
     /* tests */
     static void load_test_config(

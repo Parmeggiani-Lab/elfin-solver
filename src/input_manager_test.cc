@@ -6,11 +6,10 @@
 
 namespace elfin {
 
-Spec InputManager::setup_test(Args const& more_args) {
+void InputManager::setup_test(Args const& more_args) {
     Args args = test_args;
     args.insert(end(args), begin(more_args), end(more_args));
-    parse(args);
-    return setup(/*skip_xdb=*/true);
+    parse(args, /*skip_xdb=*/true);
 }
 
 /* tests */
@@ -21,7 +20,8 @@ TestStat InputManager::test() {
     {
         ts.tests++;
 
-        auto const& spec = InputManager::setup_test({"--spec_file", "examples/quarter_snake_free.json"});
+        InputManager::setup_test({"--spec_file", "examples/quarter_snake_free.json"});
+        Spec const spec(OPTIONS);
 
         if (spec.work_areas().size() != 1) {
             ts.errors++;

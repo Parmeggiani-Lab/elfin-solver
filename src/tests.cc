@@ -25,7 +25,6 @@ TestStat test_units() {
 
     // Only setup XDB once.
     InputManager::parse({ "elfin", "--xdb_file", "xdb.json" });
-    InputManager::setup_xdb();
 
     auto const test_fragment = [&total](TestStat (*test_func)(void)) {
         // Stop doing more tests if there are failures.

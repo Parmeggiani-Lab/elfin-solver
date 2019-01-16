@@ -39,41 +39,32 @@ InputManager::Args const InputManager::test_args = {
     "--config_file", "config/test_config.json"
 };
 
-void InputManager::parse(Args const& args) {
+void InputManager::parse(Args const& args, bool const skip_xdb) {
     std::vector<char const*> argv;
     for (auto const& arg : args) {
         argv.push_back(arg.c_str());
     }
 
-    InputManager::parse(argv.size(), argv.data());
+    InputManager::parse(argv.size(), argv.data(), skip_xdb);
 }
 
-void InputManager::parse(int const argc, char const** const argv) {
+void InputManager::parse(int const argc, char const** const argv, bool const skip_xdb) {
     // Parse arguments into options struct.
     instance().options_ = ArgParser(argc, argv).get_options();
 
     // Create output dir if not exists.
     JUtil.mkdir_ifn_exists(OPTIONS.output_dir.c_str());
 
+    if (not skip_xdb) {
+        JUtil.error("Parse XDB\n");
+        instance().xdb_.parse(OPTIONS);
+    }
+
     // Setup data members.
     setup_cutoffs();
-}
-
-void InputManager::setup_xdb() {
-    instance().xdb_.parse(OPTIONS);
-}
-
-Spec InputManager::setup(bool const skip_xdb) {
-    if (not skip_xdb) {
-        setup_xdb();
-    }
 
     parallel::init();
     random::init();
-
-    Spec spec(OPTIONS);
-
-    return spec;
 }
 
 }  /* elfin */
