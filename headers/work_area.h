@@ -20,11 +20,12 @@ struct TestStat;
 #define FOREACH_WORKTYPE(MACRO) \
     MACRO(NONE) \
     MACRO(FREE) \
-    MACRO(HINGED) \
-    MACRO(DOUBLE_HINGED) \
+    MACRO(HINGE) \
+    MACRO(LOOSE_HINGE) \
+    MACRO(DOUBLE_HINGE) \
     MACRO(_ENUM_SIZE)
 GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
-// 2H is short for DOUBLE_HINGED
+// 2H is short for DOUBLE_HINGE
 
 // A MAX score heap (worst solutions at the top).
 typedef MoveHeap<NodeTeamSP,

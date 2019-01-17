@@ -15,14 +15,20 @@ static double const SCORE_FLOOR = 1e-3;
 static double const EPSILON = 1e-7;
 
 inline bool almost_eq(float const a, float const b) {
-    return abs(a - b) < EPSILON;
+  return abs(a - b) < EPSILON;
 }
 
 // Resamples two point lists of arbitrary sizes, then calls Rosetta's Kabsch in
 // RMS-only mode.
-float score_aligned(V3fList const& mobile, V3fList const& ref);
+float score_aligned(V3fList const& mobile,
+                    V3fList const& ref);
 float score_unaligned(V3fList const& mobile,
                       V3fList const& ref);
+
+typedef decltype(score_aligned) score_func_type;
+
+static_assert(std::is_same<score_func_type, decltype(score_unaligned)>::value,
+              "score_aligned and score_unaligned must have the same signature.");
 
 // Resamples two point lists of arbitrary sizes, then computes in-order RMS
 // without Kabsch.

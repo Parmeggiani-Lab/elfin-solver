@@ -2,7 +2,6 @@
 
 #include "input_manager.h"
 #include "path_generator.h"
-#include "scoring.h"
 #include "ui_joint.h"
 #include "priv_impl.h"
 
@@ -167,7 +166,7 @@ void HingeTeam::calc_score() {
     auto const& my_points = PathGenerator(hinge_).collect_points();
     auto const& ref_path = work_area_->path_map.at(hinge_ui_joint_);
 
-    score_ = scoring::score_unaligned(my_points, ref_path);
+    score_ = score_func_(my_points, ref_path);
 
     scored_path_ = &ref_path;
 }
@@ -201,9 +200,12 @@ void HingeTeam::virtual_implement_recipe(
 
 /* public */
 /* ctors */
-HingeTeam::HingeTeam(WorkArea const* wa) :
+HingeTeam::HingeTeam(WorkArea const* wa, bool const loose) :
     PathTeam(wa),
-    pimpl_(new_pimpl<PImpl>(*this))
+    pimpl_(new_pimpl<PImpl>(*this)),
+    score_func_(loose ?
+                scoring::score_aligned :
+                scoring::score_unaligned)
 {
     // Call place_hinge() after initializer list because hinge_ needs to be
     // initialiezd as nullptr.
@@ -227,6 +229,7 @@ HingeTeam& HingeTeam::operator=(HingeTeam const& other) {
     PathTeam::operator=(other);
     hinge_ui_joint_ = other.hinge_ui_joint_;
     hinge_ = other.hinge_ ? nk_map_.at(other.hinge_) : nullptr;
+    score_func_ = other.score_func_;
     return *this;
 }
 
@@ -234,6 +237,7 @@ HingeTeam& HingeTeam::operator=(HingeTeam && other) {
     PathTeam::operator=(std::move(other));
     std::swap(hinge_ui_joint_, other.hinge_ui_joint_);
     std::swap(hinge_, other.hinge_);
+    std::swap(score_func_, other.score_func_);
     return *this;
 }
 

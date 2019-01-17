@@ -26,10 +26,13 @@ NodeTeamSP NodeTeam::create_team(WorkArea const* const work_area) {
     case WorkType::FREE:
         team_up = std::make_unique<PathTeam>(work_area);
         break;
-    case WorkType::HINGED:
+    case WorkType::HINGE:
         team_up = std::make_unique<HingeTeam>(work_area);
         break;
-    case WorkType::DOUBLE_HINGED:
+    case WorkType::LOOSE_HINGE:
+        team_up = std::make_unique<HingeTeam>(work_area, /*loose=*/true);
+        break;
+    case WorkType::DOUBLE_HINGE:
         team_up = std::make_unique<DoubleHingeTeam>(work_area);
         break;
     default:

@@ -2,6 +2,7 @@
 #define HINGE_TEAM_H_
 
 #include "path_team.h"
+#include "scoring.h"
 
 namespace elfin {
 
@@ -22,6 +23,7 @@ protected:
     /* data */
     UIJointKey hinge_ui_joint_ = nullptr;
     NodeKey hinge_ = nullptr;
+    scoring::score_func_type* score_func_;
 
     /* accessors */
     virtual HingeTeam* virtual_clone() const;
@@ -42,7 +44,7 @@ protected:
 
 public:
     /* ctors */
-    HingeTeam(WorkArea const* wa);
+    HingeTeam(WorkArea const* wa, bool const loose = false);
     HingeTeam(HingeTeam const& other);
     HingeTeam(HingeTeam&& other);
 

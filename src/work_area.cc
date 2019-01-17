@@ -95,10 +95,10 @@ WorkType parse_type(WorkArea::NamedJoints const& occupied_joints)
         res = WorkType::FREE;
         break;
     case 1:
-        res = WorkType::HINGED;
+        res = WorkType::HINGE;
         break;
     case 2:
-        res = WorkType::DOUBLE_HINGED;
+        res = WorkType::DOUBLE_HINGE;
         break;
     default:
         TRACE("Too many occupied joints",
