@@ -31,7 +31,7 @@ TestStat InputManager::test() {
             return;
         }
 
-        auto const& wp = (*begin(wps));
+        auto const& wp = *begin(wps);
         if (wp->n_verses() != 1) {
             ts.errors++;
             JUtil.error("Spec parsing should get 1 Work Verse but got %zu\n",

@@ -28,7 +28,7 @@ TestStat PathGenerator::test() {
         TRACE_NOMSG(wp->n_verses() != 1);
         auto& wv = wp->first_verse();
 
-        TRACE_NOMSG(wp->n_verses() != 1);
+        TRACE_NOMSG(wv.size() != 1);
         auto& wa = wv.at(0);
 
         PathTeam team(wa.get());

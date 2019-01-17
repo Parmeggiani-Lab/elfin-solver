@@ -26,7 +26,7 @@ TestStat HingeTeam::test() {
         TRACE_NOMSG(wp->n_verses() != 1);
         auto& wv = wp->first_verse();
 
-        TRACE_NOMSG(wp->n_verses() != 1);
+        TRACE_NOMSG(wv.size() != 1);
         auto& wa = wv.at(0);
 
         // Initialize HingeTeam, copy hinge transform, build from recipe than

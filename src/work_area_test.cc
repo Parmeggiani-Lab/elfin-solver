@@ -60,8 +60,7 @@ TestStat WorkArea::test() {
         Spec const spec(OPTIONS);
 
         TRACE_NOMSG(spec.work_packages().size() != 1);
-        auto const& wps = spec.work_packages();
-        auto& wp = *begin(wps);
+        auto const& wp = *begin(spec.work_packages());
 
         TRACE_NOMSG(wp->n_verses() != 1);
         auto const& was = wp->first_verse();

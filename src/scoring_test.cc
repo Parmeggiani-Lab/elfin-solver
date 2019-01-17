@@ -208,7 +208,7 @@ TestStat test_score() {
     TRACE_NOMSG(wp->n_verses() != 1);
     auto& wv = wp->first_verse();
 
-    TRACE_NOMSG(wp->n_verses() != 1);
+    TRACE_NOMSG(wv.size() != 1);
     auto& wa = wv.at(0);
 
     auto const& [fwd_ui_key, fwd_input_points] = *begin(wa->path_map);
