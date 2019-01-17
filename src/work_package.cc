@@ -11,14 +11,13 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     /* types */
     typedef std::unordered_set<std::string> NameSet;
     typedef std::unordered_map<std::string, NameSet> AdjacentNames;
-    typedef std::vector<std::vector<WorkAreaSP>> WorkVerses;
+    typedef std::vector<WorkVerse> WorkVerses;
 
     /* data */
     FixedAreaMap const& fixed_areas_;
-    WorkAreas work_areas_;
+    WorkVerses work_verses_;
 
     UIModuleMap fake_occupants_;
-    WorkVerses work_verses_;
 
     /* ctors */
     PImpl(WorkPackage& owner,
@@ -33,10 +32,11 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     SolutionMap make_solution_map() const {
         SolutionMap res;
 
-        JUtil.error("Need fix: select best network variant.\n");
+        JUtil.error("FIXME: select best network variant.\n");
+        size_t const best_wv_id = 0;// get_best_work_verse_id()
 
-        // Simple case...
-        for (auto const& wa : work_areas_) {
+        auto const& wa = work_verses_.at(best_wv_id);
+        for (auto const& wa : wa) {
             res.emplace(wa->name, wa->make_solution_minheap());
         }
 
@@ -147,6 +147,9 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     void simple_decimate(JSON const& pg_network)
     {
         JSON decimated_jsons;
+        work_verses_.emplace_back();
+        auto& work_verse = work_verses_.back();
+
         NameSet accumulator;
         size_t dec_id = 0;
 
@@ -179,10 +182,10 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         call_decimate();
 
         for (auto const& [dec_name, dec_json] : decimated_jsons.items()) {
-            work_areas_.emplace_back(
+            work_verse.emplace_back(
                 std::make_unique<WorkArea>(dec_name, dec_json, fixed_areas_));
 
-            PANIC_IF(work_areas_.back()->joints.empty(),
+            PANIC_IF(work_verse.back()->joints.empty(),
                      ShouldNotReach("PathGuide network \"" + _.name +
                                     "\" has no joints associated. "
                                     "Error in parsing or input spec, maybe?"));
@@ -277,15 +280,10 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     }
 
     void solve() {
-        if (work_verses_.empty()) {
-            // Simple case.
-            for (auto& wa : work_areas_) {
+        for (auto& wv : work_verses_) {
+            for (auto& wa : wv) {
                 wa->solve();
             }
-        }
-        else {
-            throw ShouldNotReach("Need fix: solving complex networks.\n");
-
         }
     }
 };
@@ -303,8 +301,15 @@ WorkPackage::WorkPackage(std::string const& pg_nw_name,
 WorkPackage::~WorkPackage() {}
 
 /* accessors */
-WorkAreas const& WorkPackage::work_areas() const {
-    return pimpl_->work_areas_;
+size_t WorkPackage::n_verses() const {
+    return pimpl_->work_verses_.size();
+}
+
+WorkVerse const& WorkPackage::first_verse() const {
+    if(n_verses() < 1) {
+        throw OutOfRange("No work verse to return.\n");
+    }
+    return *begin(pimpl_->work_verses_);
 }
 
 /* accessors */

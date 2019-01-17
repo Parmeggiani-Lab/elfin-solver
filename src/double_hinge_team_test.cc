@@ -21,8 +21,11 @@ TestStat DoubleHingeTeam::test() {
         TRACE_NOMSG(spec.work_packages().size() != 1);
         auto& wp = *begin(spec.work_packages());
 
-        TRACE_NOMSG(wp->work_areas().size() != 1);
-        auto& wa = *begin(wp->work_areas());
+        TRACE_NOMSG(wp->n_verses() != 1);
+        auto& wv = wp->first_verse();
+
+        TRACE_NOMSG(wp->n_verses() != 1);
+        auto& wa = wv.at(0);
 
         // Initialize DoubleHingeTeam, copy hinge transform, build from recipe than
         // apply transform.
