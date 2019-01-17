@@ -68,24 +68,22 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     }
 
     JSON decimate(JSON const& pg_network,
-                  NameSet& accumulator)
+                  NameSet const& seg_names)
     {
         JSON decimated_json;
 
-        // Trim accumulator joints by removing neighbor names that aren't
+        // Trim seg_names joints by removing neighbor names that aren't
         // in this set.
-        for (auto const& joint_name : accumulator) {
-            decimated_json[joint_name] = pg_network[joint_name];  // Make mutable copy.
+        for (auto const& joint_name : seg_names) {
+            decimated_json[joint_name] = pg_network.at(joint_name);  // Make mutable copy.
 
             auto& nbs = decimated_json[joint_name].at("neighbors");
             nbs.erase(std::remove_if(begin(nbs), end(nbs),
-            [&accumulator](auto const & nb_name) {
-                return accumulator.find(nb_name) == end(accumulator);
+            [&seg_names](auto const & nb_name) {
+                return seg_names.find(nb_name) == end(seg_names);
             }),
             end(nbs));
         }
-
-        accumulator.clear();
 
         return decimated_json;
     }
@@ -97,16 +95,25 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         // Verify that it's a leaf.
         DEBUG_NOMSG(pg_network.at(leaf_name).at("neighbors").size() != 1);
 
-        NameSet accumulator;
         size_t dec_id = 0;
+        auto const create_det_wa = [&](NameSet const & seg_names) {
+            if (seg_names.empty()) return;
 
-        auto const create_det_wa = [&]() {
-            if (accumulator.empty()) return;
-
-            JSON const& dec_json = decimate(pg_network, accumulator);
             std::string const& dec_name = "dec." + std::to_string(dec_id++);
+            auto const& dec_json = decimate(pg_network, seg_names);
             det_verse_.emplace_back(
                 std::make_unique<WorkArea>(dec_name, dec_json, fixed_areas));
+        };
+
+        auto const is_bp = [&pg_network](std::string const & name) {
+            return pg_network.at(name).at("neighbors").size() > 2;
+        };
+        auto const not_occupied = [&pg_network](std::string const & name) {
+            return pg_network.at(name).at("occupant") == "";
+        };
+        auto const is_undet = [&is_bp, &not_occupied](std::string const & name) {
+            // Undetermined means a branchpoint without specified occupant.
+            return is_bp(name) and not_occupied(name);
         };
 
         AdjacentNames adj_bps, adj_leaves;
@@ -126,38 +133,38 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         while (not frontier.empty()) {
             auto const& start_name = frontier.front();
             visited.insert(start_name);
-            accumulator.insert(start_name);
 
-            auto const& bp_nbs = pg_network[start_name].at("neighbors");
+            auto const& start_nbs = pg_network.at(start_name).at("neighbors");
 
-            for (auto const& nb_name : bp_nbs) {
+            for (auto const& nb_name : start_nbs) {
+                if (visited.find(nb_name) != end(visited)) continue;
+
+                NameSet seg_names = {start_name};
                 // Collapse i.e. keep advancing name "pointer" until either
                 // leaf or another branchpoint is encountered.
 
-                if (visited.find(nb_name) == end(visited)) {
-                    std::string joint_name = nb_name;
-                    std::string last_name = start_name;
+                std::string joint_name = nb_name;
+                std::string last_name = start_name;
 
-                    JSON const* joint_nbs = &pg_network.at(joint_name).at("neighbors");
-                    while (joint_nbs->size() == 2) {
-                        // Not a branchpoint nor a leaf.
-                        visited.insert(joint_name);
-                        accumulator.insert(joint_name);
+                JSON const* joint_nbs = &pg_network.at(joint_name).at("neighbors");
+                while (joint_nbs->size() == 2) {
+                    // Not a branchpoint nor a leaf.
+                    visited.insert(joint_name);
+                    seg_names.insert(joint_name);
 
-                        {
-                            // Check for non-leaf, occupied joint, at which we
-                            // need to break the pg_network.
-                            JSON const& joint_json = pg_network.at(joint_name);
-                            if (joint_json.at("occupant") != "" and
-                                    joint_json.at("neighbors").size() > 1) {
-                                create_det_wa();
+                    // Break pg_network at occupied joint.
+                    if (pg_network.at(joint_name).at("occupant") != "") {
+                        create_det_wa(seg_names);
 
-                                // Re-insert current joint, which will be the beginning of the
-                                // next decimated segment.
-                                accumulator.insert(joint_name);
-                            }
-                        }
+                        // Clear segment and re-insert current joint, which
+                        // will be the beginning of the next decimated
+                        // segment.
+                        seg_names.clear();
+                        seg_names.insert(joint_name);
+                    }
 
+                    // Find next neighbor.
+                    {
                         auto const nbs_itr = begin(*joint_nbs);
 
                         if (*nbs_itr != last_name) {
@@ -168,37 +175,48 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
                             last_name = joint_name;
                             joint_name = *(1 + nbs_itr);
                         }
-                        joint_nbs = &pg_network[joint_name].at("neighbors");
+
+                        joint_nbs = &pg_network.at(joint_name).at("neighbors");
                     }
+                }
 
-                    // Upon exit of the while loop above it should be a leaf joint.
-                    DEBUG_NOMSG(joint_nbs->size() != 1);
-                    accumulator.insert(joint_name);
+                // Upon exit of the while loop above, joint_name must be
+                // either a leaf or a branchpoint, which we need to
+                // include at the end of the current segment.
+                seg_names.insert(joint_name);
 
-                    auto const n_nbs = joint_nbs->size();
-                    if (n_nbs == 1) {
+                auto const n_nbs = joint_nbs->size();
+                if (n_nbs == 1) {  // Leaf.
+                    if (is_undet(start_name)) {
                         sign_name(adj_leaves, start_name, joint_name);
                     }
-                    else {  // Branchpoint joint.
-                        if (joint_name == start_name) {
-                            throw Unsupported("Branchpoint with circular connection "
-                                              "is not yet supported. Violating branchpoint: " +
-                                              start_name + "\n");
-                        }
+                    else {
+                        create_det_wa(seg_names);
+                    }
+                }
+                else {  // Branchpoint.
+                    if (joint_name == start_name) {
+                        throw Unsupported("Branchpoint with circular connection "
+                                          "is not yet supported. Violating branchpoint: " +
+                                          start_name + "\n");
+                    }
 
-                        sign_name(adj_bps, start_name, joint_name);
-                        sign_name(adj_bps, joint_name, start_name);
-                        frontier.push_back(joint_name);
+                    frontier.push_back(joint_name);
+
+                    if (is_undet(start_name) or is_undet(joint_name)) {
+                        if (is_bp(start_name) and is_bp(joint_name)) {
+                            sign_name(adj_bps, start_name, joint_name);
+                            sign_name(adj_bps, joint_name, start_name);
+                        }
+                    }
+                    else {
+                        create_det_wa(seg_names);
                     }
                 }
             }
 
             frontier.pop_front();
         }
-
-        // In case accumulator is not empty, do a last decimate to catch the
-        // dangling pg_network segment.
-        create_det_wa();
 
         // Debug printing.
         for (auto const& [bp_name, bp_nbs] : adj_bps) {
