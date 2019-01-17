@@ -799,7 +799,7 @@ void PathTeam::calc_score() {
     // algorithm relies on point-wise correspondance. Different ordering
     // can yield different RMSD scores.
     DEBUG_NOMSG(not work_area_);
-    
+
     score_ = INFINITY;
 
     auto tip = get_tip(/*mutable_hint=*/false);
@@ -1039,14 +1039,21 @@ JSON PathTeam::to_json() const {
         elfin::Mat3f rot;
         Vector3f tran;
 
+        // Reverse points if scored_path_ was backwards.
         {
-            float rms = INFINITY;
-            V3fList const& points = gen_path().collect_points();
+            V3fList points = gen_path().collect_points();
+
+            auto const& [bwd_ui_key, bwd_path] = *(++begin(work_area_->path_map));
+            if (scored_path_ == &bwd_path) {
+                std::reverse(begin(points), end(points));
+            }
+
+            auto const& [fwd_ui_key, fwd_path] = *begin(work_area_->path_map);
             scoring::calc_alignment(
-                /*mobile=*/ points, /*ref=*/ *scored_path_, rot, tran, rms);
+                /*mobile=*/ points, /*ref=*/ fwd_path, rot, tran);
         }
 
-        Transform kabsch_alignment(rot, tran);
+        Transform const kabsch_alignment(rot, tran);
 
         size_t member_id = 0;  // UID for node in team.
         auto pg = gen_path();

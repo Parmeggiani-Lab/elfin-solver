@@ -38,6 +38,29 @@ struct WorkArea::PImpl : public PImplBase<WorkArea> {
         return res;
     }
 
+    /* accessors */
+    PathMap parse_path_map() const {
+        PathMap res;
+        V3fList fwd_path;
+        TRACE(_.leaf_joints.size() != 2,
+              "Expecting 2 leaves but got %zu in work_area %s.\n",
+              _.leaf_joints.size(), _.name.c_str());
+
+        auto& first_key = _.leaf_joints.at(0);
+
+        UIJointPathGenerator gen(&_.joints, first_key);
+        while (not gen.is_done()) {
+            fwd_path.emplace_back(gen.next()->tx.collapsed());
+        }
+
+        TRACE_NOMSG(fwd_path.empty());
+        res.emplace(first_key, fwd_path);
+        res.emplace(_.leaf_joints.at(1),
+                    V3fList(rbegin(fwd_path), rend(fwd_path)));
+
+        return res;
+    }
+
     /* modifiers */
     void solve() {
         solver_.run(/*work_area=*/_, solutions_);
@@ -228,32 +251,6 @@ PtTermFinderSet parse_ptterm_profile(WorkArea::NamedJoints const& occupied_joint
     return res;
 }
 
-WorkArea::PathMap parse_path_map(UIJointMap const& joints,
-                                 UIJointKeys const& leaves)
-{
-    WorkArea::PathMap res;
-    TRACE(leaves.size() != 2,
-          "Size of leaves not exactly 2 in work_area\n");
-
-    auto& first_key = leaves.at(0);
-
-    V3fList points;
-    UIJointPathGenerator gen(&joints, first_key);
-    while (not gen.is_done()) {
-        points.emplace_back(gen.next()->tx.collapsed());
-    }
-
-    TRACE_NOMSG(points.empty());
-    res.emplace(first_key, points);
-
-    // The second path is just the reversed path.
-    std::reverse(begin(points), end(points));
-    auto& second_key = leaves.at(1);
-    res.emplace(second_key, points);
-
-    return res;
-}
-
 size_t parse_path_len(WorkArea::PathMap const& paths) {
     auto const& [ui_key, path] = *begin(paths);
     return path.size();
@@ -292,7 +289,7 @@ WorkArea::WorkArea(std::string const& _name,
     occupied_joints(parse_occupied_joints(leaf_joints)),
     type(parse_type(occupied_joints)),
     ptterm_profile(parse_ptterm_profile(occupied_joints)),
-    path_map(parse_path_map(joints, leaf_joints)),
+    path_map(pimpl_->parse_path_map(/*relies on joints, leaf_joints*/)),
     path_len(parse_path_len(path_map)),
     target_size(parse_target_size(path_map))
 {
