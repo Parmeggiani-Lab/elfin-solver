@@ -22,13 +22,22 @@ TestStat InputManager::test() {
         InputManager::setup_test({"--spec_file", "examples/quarter_snake_free.json"});
         Spec const spec(OPTIONS);
 
-        if (spec.work_areas().size() != 1) {
+
+        auto const& wps = spec.work_packages();
+        if (wps.size() != 1) {
             ts.errors++;
-            JUtil.error("Spec parsing should get 1 work area but got %zu\n",
-                        spec.work_areas().size());
+            JUtil.error("Spec parsing should get 1 Work Package but got %zu\n",
+                        wps.size());
+        }
+
+        auto const &was = begin(wps)->second->work_areas();
+        if (was.size() != 1) {
+            ts.errors++;
+            JUtil.error("Spec parsing should get 1 Work Area but got %zu\n",
+                        was.size());
         }
         else {
-            auto& [wa_name, wa] = *begin(spec.work_areas());  // unique_ptr
+            auto const& [wa_name, wa] = *begin(was);
 
             // Test parsed points.
             TRACE_NOMSG(wa->path_map.size() != 2);

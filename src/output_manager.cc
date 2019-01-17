@@ -55,38 +55,43 @@ struct OutputManager::PImpl : public PImplBase<OutputManager> {
 
     /* modifiers */
     void collect_output(Spec const & spec) {
-        for (auto const& [wa_name, wa_sp] : spec.work_areas()) {
-            auto solutions = wa_sp->get_solutions();
+        try {
+            for (auto const& [wp_name, wp] : spec.work_packages()) {
+                auto const wp_name_c = wp_name.c_str();
 
-            if (solutions.empty()) {
-                JUtil.warn("Work Area %s has no solutions!\n", wa_name.c_str());
-                continue;
-            }
+                for (auto& [wp_dec_name, solutions] : wp->make_solution_map()) {
+                    auto const wp_dec_name_c = wp_dec_name.c_str();
 
-            // Accumulate solutions to output json object.
-            try {
-                JSON work_area_json;
+                    // Decimated work area solution json.
+                    JSON dec_wa_json;
 
-                size_t i = 0;
-                while (not solutions.empty()) {
-                    auto team = solutions.top();
-                    solutions.pop();
-                    if (team) {
-                        JSON sol_json;
-                        sol_json["nodes"] = team->to_json();
-                        sol_json["score"] = team->score();
-                        work_area_json[i++] = sol_json;
+                    if (solutions.empty()) {
+                        JUtil.warn("Work Package %s : Work Area %s has no solutions!\n",
+                                   wp_name_c, wp_dec_name_c);
+                        continue;
                     }
-                    else {
-                        JUtil.error("if(team) is false!\nteam=%p in %s. Skipping...\n",
-                                    team, wa_name);
+
+                    size_t i = 0;
+                    while (not solutions.empty()) {
+                        auto team = solutions.top();
+                        solutions.pop();
+                        if (team) {
+                            JSON sol_json;
+                            sol_json["nodes"] = team->to_json();
+                            sol_json["score"] = team->score();
+                            dec_wa_json[i++] = sol_json;
+                        }
+                        else {
+                            JUtil.error("if(team) is false!\nteam=%p in %s. Skipping...\n",
+                                        team, wp_dec_name_c);
+                        }
                     }
+
+                    output_json[wp_name][wp_dec_name] = dec_wa_json;
                 }
-
-                output_json[wa_name] = work_area_json;
-            } catch (JSON::exception const& je) {
-                JSON_LOG_EXIT(je);
             }
+        } catch (JSON::exception const& je) {
+            JSON_LOG_EXIT(je);
         }
     }
 };

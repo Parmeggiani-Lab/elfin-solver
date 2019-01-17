@@ -13,15 +13,15 @@ struct PImplBase {
     T& _;  // Owner back reference.
 
     /* ctors */
-    PImplBase(T& owner) : _(owner) { }
+    PImplBase(T& owner) : _(owner) {}
 
     /* dtors */
     virtual ~PImplBase() {}
 };
 
-template<typename pimpl_t, class T>
-inline std::unique_ptr<pimpl_t> new_pimpl(T& owner) {
-    return std::make_unique<pimpl_t>(owner);
+template<typename pimpl_t, typename ... Args>
+inline std::unique_ptr<pimpl_t> new_pimpl(Args&& ... args) {
+    return std::make_unique<pimpl_t>(std::forward<Args>(args)...);
 }
 
 }  /* elfin */

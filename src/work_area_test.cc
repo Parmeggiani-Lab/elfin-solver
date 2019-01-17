@@ -59,10 +59,15 @@ TestStat WorkArea::test() {
         });
         Spec const spec(OPTIONS);
 
-        if (spec.work_areas().size() != 2) {
+        TRACE_NOMSG(spec.work_packages().size() != 1);
+        auto const& wps = spec.work_packages();
+        auto& [wp_name, wp] = *begin(wps);
+
+        auto const& was = wp->work_areas();
+        if (was.size() != 2) {
             ts.errors++;
             JUtil.error("Failed to decimate Path Guide network. "
-                        "Got %zu work areas.\n", spec.work_areas().size());
+                        "Got %zu work areas.\n", was.size());
         };
     }
 

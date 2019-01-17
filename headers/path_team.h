@@ -7,6 +7,7 @@
 #include "node.h"
 #include "recipe.h"
 #include "path_generator.h"
+#include "work_area.h"
 
 namespace elfin {
 

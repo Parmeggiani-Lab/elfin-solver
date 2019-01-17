@@ -5,7 +5,6 @@
 #include <string>
 #include <memory>
 
-#include "geometry.h"
 #include "fixed_area.h"
 #include "proto_term.h"
 #include "ui_joint.h"
@@ -30,10 +29,11 @@ GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 // A MAX score heap (worst solutions at the top).
 typedef MoveHeap<NodeTeamSP,
         std::vector<NodeTeamSP>,
-        NodeTeam::SPLess> SolutionMaxHeap;
+        NodeTeam::SPLess> TeamSPMaxHeap;
 typedef std::priority_queue<NodeTeam const*,
         std::vector<NodeTeam const*>,
-        NodeTeam::PtrGreater> SolutionMinHeap;
+        NodeTeam::PtrGreater> TeamPtrMinHeap;
+typedef std::unordered_map<std::string, TeamPtrMinHeap> SolutionMap;
 
 class WorkArea {
 private:
@@ -67,7 +67,7 @@ public:
     virtual ~WorkArea();
 
     /* accessors */
-    SolutionMinHeap get_solutions() const;
+    TeamPtrMinHeap make_solution_minheap() const;
 
     /* modifiers */
     void solve();

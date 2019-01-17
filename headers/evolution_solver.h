@@ -25,7 +25,7 @@ public:
 	virtual ~EvolutionSolver();
 
 	/* modifiers */
-	void run(WorkArea const& work_area, SolutionMaxHeap& output);
+	void run(WorkArea const& work_area, TeamSPMaxHeap& output);
 
 	/* tests */
 	static TestStat test();

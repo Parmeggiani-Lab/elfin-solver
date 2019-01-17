@@ -8,8 +8,7 @@ namespace elfin {
 
 /* Fwd Decl */
 struct Options;
-class WorkArea;
-typedef SPMap<WorkArea> WorkAreaMap;
+typedef SPMap<WorkPackage> WorkPackages;
 
 class Spec {
 private:
@@ -29,7 +28,7 @@ public:
     virtual ~Spec();
 
     /* accessors */
-    WorkAreaMap const& work_areas() const;
+    WorkPackages const& work_packages() const;
 
     /* modifiers */
     Spec& operator=(Spec const& other) = delete;

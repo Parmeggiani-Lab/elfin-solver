@@ -46,7 +46,7 @@ struct EvolutionSolver::PImpl {
 
     void summarize_generation(Population const& pop,
                               double const gen_start_time,
-                              SolutionMaxHeap& output)
+                              TeamSPMaxHeap& output)
     {
         // Stat collection
         auto const& best_team = pop.front_buffer()->front();
@@ -226,7 +226,7 @@ struct EvolutionSolver::PImpl {
     }
 #undef PRINT_POP_FMT
 
-    void run(WorkArea const& work_area, SolutionMaxHeap& output) {
+    void run(WorkArea const& work_area, TeamSPMaxHeap& output) {
         reset();
         start_time_in_us_ = JUtil.get_timestamp_us();
 
@@ -289,7 +289,7 @@ EvolutionSolver::EvolutionSolver(size_t const debug_pop_print_n) :
 EvolutionSolver::~EvolutionSolver() {}
 
 /* modifiers */
-void EvolutionSolver::run(WorkArea const& work_area, SolutionMaxHeap& output) {
+void EvolutionSolver::run(WorkArea const& work_area, TeamSPMaxHeap& output) {
     return pimpl_->run(work_area, output);
 }
 

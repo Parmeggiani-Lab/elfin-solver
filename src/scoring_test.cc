@@ -202,7 +202,11 @@ TestStat test_score() {
     });
     Spec const spec(OPTIONS);
 
-    auto& [wa_name, wa] = *begin(spec.work_areas());
+    TRACE_NOMSG(spec.work_packages().size() != 1);
+    auto& [wp_name, wp] = *begin(spec.work_packages());
+
+    TRACE_NOMSG(wp->work_areas().size() != 1);
+    auto& [wa_name, wa] = *begin(wp->work_areas());
 
     auto const& [fwd_ui_key, fwd_input_points] = *begin(wa->path_map);
     auto const& [bwd_ui_key, bwd_input_points] = *(++begin(wa->path_map));

@@ -17,12 +17,12 @@ struct WorkArea::PImpl : public PImplBase<WorkArea> {
 
     /* data */
     EvolutionSolver solver_;
-    SolutionMaxHeap solutions_;
+    TeamSPMaxHeap solutions_;
 
     /* accessors */
-    SolutionMinHeap solutions_to_max_heap() {
-        SolutionMinHeap res;
-        SolutionMaxHeap tmp;
+    TeamPtrMinHeap solutions_to_minheap() {
+        TeamPtrMinHeap res;
+        TeamSPMaxHeap tmp;
 
         while (not solutions_.empty()) {
             auto node_sp = solutions_.top_and_pop();
@@ -301,8 +301,8 @@ WorkArea::WorkArea(std::string const& _name,
 WorkArea::~WorkArea() {}
 
 /* accessors */
-SolutionMinHeap WorkArea::get_solutions() const {
-    return pimpl_->solutions_to_max_heap();
+TeamPtrMinHeap WorkArea:: make_solution_minheap() const {
+    return pimpl_->solutions_to_minheap();
 }
 
 /* modifiers */

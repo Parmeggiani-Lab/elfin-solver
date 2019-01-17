@@ -28,56 +28,61 @@ TestStat EvolutionSolver::test() {
         spec.solve_all();
         JUtil.set_log_lvl(original_ll);
 
-        for (auto const& [work_area_name, work_area] : spec.work_areas()) {
-            auto const& solutions = work_area->get_solutions();  // Best on top of heap.
 
-            try { // Catch bad_cast
-                auto best_pt =
-                    static_cast<PathTeam const&>(*solutions.top());
-                auto path_gen = best_pt.gen_path();
+        for (auto const& [wp_name, wp] : spec.work_packages()) {
+            auto const wp_name_c = wp_name.c_str();
 
-                // Might need to reverse recipe because data exported from
-                // elfin-ui does not gurantee consistent starting tip.
-                bool const should_reverse = recipe[0].mod_name !=
-                                            path_gen.peek()->prototype_->name;
+            for (auto const& [wp_dec_name, solutions] : wp->make_solution_map()) {
+                auto const wp_dec_name_c = wp_dec_name.c_str();
 
-                auto recipe_fwd = should_reverse ?
-                                  tests::Recipe(rbegin(recipe), rend(recipe)) :
-                                  recipe;
-                auto step_itr = begin(recipe_fwd);
+                try { // Catch bad_cast
+                    auto best_pt =
+                        static_cast<PathTeam const&>(*solutions.top());
+                    auto path_gen = best_pt.gen_path();
 
-                while (not path_gen.is_done()) {
-                    auto node = path_gen.next();
-                    if (step_itr == end(recipe_fwd) or
-                            (!allow_partial and step_itr->mod_name != node->prototype_->name)) {
-                        ts.errors++;
-                        JUtil.error("Solver fails to arrive at ideal solution for %s.\n",
-                                    spec_file.c_str());
+                    // Might need to reverse recipe because data exported from
+                    // elfin-ui does not gurantee consistent starting tip.
+                    bool const should_reverse = recipe[0].mod_name !=
+                                                path_gen.peek()->prototype_->name;
 
-                        std::ostringstream sol_oss;
-                        sol_oss << "Solver solution:\n";
+                    auto recipe_fwd = should_reverse ?
+                                      tests::Recipe(rbegin(recipe), rend(recipe)) :
+                                      recipe;
+                    auto step_itr = begin(recipe_fwd);
 
-                        auto team_pg = best_pt.gen_path();
-                        while (not team_pg.is_done()) {
-                            sol_oss << team_pg.next()->prototype_->name << "\n";
+                    while (not path_gen.is_done()) {
+                        auto node = path_gen.next();
+                        if (step_itr == end(recipe_fwd) or
+                                (!allow_partial and step_itr->mod_name != node->prototype_->name)) {
+                            ts.errors++;
+                            JUtil.error("Solver fails to arrive at ideal solution for %s.\n",
+                                        spec_file.c_str());
+
+                            std::ostringstream sol_oss;
+                            sol_oss << "Solver solution:\n";
+
+                            auto team_pg = best_pt.gen_path();
+                            while (not team_pg.is_done()) {
+                                sol_oss << team_pg.next()->prototype_->name << "\n";
+                            }
+                            JUtil.error(sol_oss.str().c_str());
+
+                            std::ostringstream exp_oss;
+                            exp_oss << "Expected solution:\n";
+                            for (auto& step : recipe_fwd) {
+                                exp_oss << step.mod_name << "\n";
+                            }
+
+                            JUtil.error(exp_oss.str().c_str());
+                            break;
                         }
-                        JUtil.error(sol_oss.str().c_str());
-
-                        std::ostringstream exp_oss;
-                        exp_oss << "Expected solution:\n";
-                        for (auto& step : recipe_fwd) {
-                            exp_oss << step.mod_name << "\n";
-                        }
-
-                        JUtil.error(exp_oss.str().c_str());
-                        break;
+                        ++step_itr;
                     }
-                    ++step_itr;
                 }
-            }
-            catch (std::bad_cast const& exp) {
-                ts.errors++;
-                JUtil.error("Bad cast in %s\n", __PRETTY_FUNCTION__);
+                catch (std::bad_cast const& exp) {
+                    ts.errors++;
+                    JUtil.error("Bad cast in %s\n", __PRETTY_FUNCTION__);
+                }
             }
         }
     };
