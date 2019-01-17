@@ -206,7 +206,7 @@ TestStat test_score() {
     auto& [wp_name, wp] = *begin(spec.work_packages());
 
     TRACE_NOMSG(wp->work_areas().size() != 1);
-    auto& [wa_name, wa] = *begin(wp->work_areas());
+    auto& wa = *begin(wp->work_areas());
 
     auto const& [fwd_ui_key, fwd_input_points] = *begin(wa->path_map);
     auto const& [bwd_ui_key, bwd_input_points] = *(++begin(wa->path_map));

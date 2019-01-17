@@ -24,7 +24,7 @@ TestStat HingeTeam::test() {
         auto& [wp_name, wp] = *begin(spec.work_packages());
 
         TRACE_NOMSG(wp->work_areas().size() != 1);
-        auto& [wa_name, wa] = *begin(wp->work_areas());
+        auto& wa = *begin(wp->work_areas());
 
         // Initialize HingeTeam, copy hinge transform, build from recipe than
         // apply transform.

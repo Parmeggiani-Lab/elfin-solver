@@ -2,6 +2,7 @@
 #define WORK_PACKAGE_H_
 
 #include <memory>
+#include <vector>
 
 #include "json.h"
 #include "work_area.h"
@@ -11,7 +12,8 @@ namespace elfin {
 
 /* Fwd Decl */
 class WorkArea;
-typedef SPMap<WorkArea> WorkAreas;
+typedef std::unique_ptr<WorkArea> WorkAreaSP;
+typedef std::vector<WorkAreaSP> WorkAreas;
 class FixedArea;
 typedef SPMap<FixedArea> FixedAreaMap;
 class NodeTeam;

@@ -37,7 +37,7 @@ TestStat InputManager::test() {
                         was.size());
         }
         else {
-            auto const& [wa_name, wa] = *begin(was);
+            auto const& wa = *begin(was);
 
             // Test parsed points.
             TRACE_NOMSG(wa->path_map.size() != 2);

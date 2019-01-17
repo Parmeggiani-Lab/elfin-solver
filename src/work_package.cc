@@ -11,7 +11,6 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     /* types */
     typedef std::unordered_set<std::string> NameSet;
     typedef std::unordered_map<std::string, NameSet> AdjacentNames;
-    typedef std::unique_ptr<WorkArea> WorkAreaSP;
     typedef std::vector<std::vector<WorkAreaSP>> WorkVerses;
 
     /* data */
@@ -34,8 +33,8 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         JUtil.error("Need fix: select best network variant.\n");
 
         // Simple case...
-        for (auto const& [wa_name, wa] : work_areas_) {
-            res.emplace(wa_name, wa->make_solution_minheap());
+        for (auto const& wa : work_areas_) {
+            res.emplace(wa->name, wa->make_solution_minheap());
         }
 
         return res;
@@ -177,11 +176,10 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         call_decimate();
 
         for (auto const& [dec_name, dec_json] : decimated_jsons.items()) {
-            work_areas_.emplace(
-                dec_name,
+            work_areas_.emplace_back(
                 std::make_unique<WorkArea>(dec_name, dec_json, fixed_areas_));
 
-            PANIC_IF(work_areas_[dec_name]->joints.empty(),
+            PANIC_IF(work_areas_.back()->joints.empty(),
                      ShouldNotReach("PathGuide network \"" + _.name +
                                     "\" has no joints associated. "
                                     "Error in parsing or input spec, maybe?"));
@@ -278,7 +276,7 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     void solve() {
         if (work_verses_.empty()) {
             // Simple case.
-            for (auto& [wa_name, wa] : work_areas_) {
+            for (auto& wa : work_areas_) {
                 wa->solve();
             }
         }
