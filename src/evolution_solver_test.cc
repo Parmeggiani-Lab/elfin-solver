@@ -29,12 +29,8 @@ TestStat EvolutionSolver::test() {
         JUtil.set_log_lvl(original_ll);
 
 
-        for (auto const& [wp_name, wp] : spec.work_packages()) {
-            auto const wp_name_c = wp_name.c_str();
-
+        for (auto const& wp : spec.work_packages()) {
             for (auto const& [wp_dec_name, solutions] : wp->make_solution_map()) {
-                auto const wp_dec_name_c = wp_dec_name.c_str();
-
                 try { // Catch bad_cast
                     auto best_pt =
                         static_cast<PathTeam const&>(*solutions.top());

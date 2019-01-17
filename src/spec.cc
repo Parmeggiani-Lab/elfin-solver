@@ -55,8 +55,8 @@ struct Spec::PImpl : public PImplBase<Spec> {
             }
 
             for (auto& [name, json] : pg_networks_json.items()) {
-                work_packages_[name] =
-                    std::make_unique<WorkPackage>(name, json, fixed_areas_);
+                work_packages_.emplace_back(
+                    std::make_unique<WorkPackage>(name, fixed_areas_, json));
             }
         } catch (JSON::exception const& je) {
             JSON_LOG_EXIT(je);
@@ -101,8 +101,8 @@ Spec& Spec::operator=(Spec&& other) {
 
 void Spec::solve_all() {
     // Solve each work package.
-    for (auto& [wa_name, wa_sp] : pimpl_->work_packages_) {
-        wa_sp->solve();
+    for (auto& wp : pimpl_->work_packages_) {
+        wp->solve();
     }
 }
 

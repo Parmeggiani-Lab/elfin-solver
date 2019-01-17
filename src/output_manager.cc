@@ -56,7 +56,8 @@ struct OutputManager::PImpl : public PImplBase<OutputManager> {
     /* modifiers */
     void collect_output(Spec const & spec) {
         try {
-            for (auto const& [wp_name, wp] : spec.work_packages()) {
+            for (auto const& wp : spec.work_packages()) {
+                auto const& wp_name = wp->name;
                 auto const wp_name_c = wp_name.c_str();
 
                 for (auto& [wp_dec_name, solutions] : wp->make_solution_map()) {

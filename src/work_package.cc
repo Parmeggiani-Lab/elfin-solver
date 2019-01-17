@@ -22,9 +22,12 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 
     /* ctors */
     PImpl(WorkPackage& owner,
-          FixedAreaMap const& fixed_areas_) :
+          FixedAreaMap const& fixed_areas_,
+          JSON const& pg_network) :
         PImplBase(owner),
-        fixed_areas_(fixed_areas_) {}
+        fixed_areas_(fixed_areas_) {
+        parse(pg_network);
+    }
 
     /* accessors */
     SolutionMap make_solution_map() const {
@@ -225,7 +228,7 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         throw ShouldNotReach("Bad!");
     }
 
-    void parse(JSON const & pg_network)
+    void parse(JSON const& pg_network)
     {
         // Check whether we need to use advanced rules to break up the
         // pg_network.
@@ -290,13 +293,11 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 /* public */
 /* ctors */
 WorkPackage::WorkPackage(std::string const& pg_nw_name,
-                         JSON const& pg_network,
-                         FixedAreaMap const& fixed_areas_) :
-    pimpl_(new_pimpl<PImpl>(*this, fixed_areas_)),
+                         FixedAreaMap const& fixed_areas_,
+                         JSON const& pg_network) :
+    pimpl_(new_pimpl<PImpl>(*this, fixed_areas_, pg_network)),
     name(pg_nw_name)
-{
-    pimpl_->parse(pg_network);
-}
+{}
 
 /* dtors */
 WorkPackage::~WorkPackage() {}

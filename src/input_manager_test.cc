@@ -30,7 +30,7 @@ TestStat InputManager::test() {
                         wps.size());
         }
 
-        auto const &was = begin(wps)->second->work_areas();
+        auto const &was = (*begin(wps))->work_areas();
         if (was.size() != 1) {
             ts.errors++;
             JUtil.error("Spec parsing should get 1 Work Area but got %zu\n",

@@ -8,7 +8,8 @@ namespace elfin {
 
 /* Fwd Decl */
 struct Options;
-typedef SPMap<WorkPackage> WorkPackages;
+typedef std::unique_ptr<WorkPackage> WorkPackageSP;
+typedef std::vector<WorkPackageSP> WorkPackages;
 
 class Spec {
 private:

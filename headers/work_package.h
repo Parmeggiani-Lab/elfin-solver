@@ -33,8 +33,8 @@ public:
 
     /* ctors */
     WorkPackage(std::string const& pg_nw_name,
-                JSON const& pg_network,
-                FixedAreaMap const& fixed_areas_);
+                FixedAreaMap const& fixed_areas_,
+                JSON const& pg_network);
     WorkPackage(WorkPackage const& other) = delete;
     WorkPackage(WorkPackage&& other) = delete;
 
