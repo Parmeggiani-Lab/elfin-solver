@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "population.h"
-#include "work_area.h"
 
 namespace elfin {
 

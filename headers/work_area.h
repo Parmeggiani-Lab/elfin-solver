@@ -76,8 +76,6 @@ public:
     static TestStat test();
 };
 
-typedef SPMap<WorkArea> WorkAreaMap;
-
 }  /* elfin */
 
 #endif  /* end of include guard: WORK_AREA_H_ */

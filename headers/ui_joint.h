@@ -26,7 +26,7 @@ struct UIJoint : public UIObject {
 
     /* data */
     StrList const neighbors;
-    Occupant const occupant;
+    Occupant occupant;
     std::string const hinge_name;
 
     /* ctors */
@@ -41,7 +41,6 @@ struct UIJoint : public UIObject {
     virtual void print_to(std::ostream& os) const;
 };
 
-typedef std::unique_ptr<UIJoint> UIJointSP;
 typedef SPMap<UIJoint> UIJointMap;
 typedef UIJoint const* UIJointKey;
 typedef std::vector<UIJointKey> UIJointKeys;

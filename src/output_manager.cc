@@ -5,17 +5,16 @@
 #include "spec.h"
 #include "json.h"
 #include "jutil.h"
+#include "priv_impl.h"
 
 namespace elfin {
 
 /* private */
-struct OutputManager::PImpl {
-    /* data */
-    OutputManager& _;
-    JSON output_json;
+struct OutputManager::PImpl : public PImplBase<OutputManager> {
+    using PImplBase::PImplBase;
 
-    /* ctors */
-    PImpl(OutputManager& interface) : _(interface) { }
+    /* data */
+    JSON output_json;
 
     /* accessors */
     // Resolves file name from path string.
@@ -95,7 +94,7 @@ struct OutputManager::PImpl {
 /* public */
 /* ctors */
 OutputManager::OutputManager(Spec const& spec) :
-    pimpl_(std::make_unique<PImpl>(*this)) {
+    pimpl_(new_pimpl<PImpl>(*this)) {
     pimpl_->collect_output(spec);
 }
 

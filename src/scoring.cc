@@ -2,7 +2,6 @@
 
 #include <numeric>
 
-#include "work_area.h"
 #include "debug_utils.h"
 #include "test_data.h"
 

@@ -7,18 +7,17 @@
 #include "input_manager.h"
 #include "ui_joint_path_generator.h"
 #include "evolution_solver.h"
+#include "priv_impl.h"
 
 namespace elfin {
 
 /* private */
-struct WorkArea::PImpl {
+struct WorkArea::PImpl : public PImplBase<WorkArea> {
+    using PImplBase::PImplBase;
+
     /* data */
-    WorkArea& _;
     EvolutionSolver solver_;
     SolutionMaxHeap solutions_;
-
-    /* ctors */
-    PImpl(WorkArea& interface) : _(interface) { }
 
     /* accessors */
     SolutionMinHeap solutions_to_max_heap() {
@@ -286,7 +285,7 @@ WorkArea::WorkArea(std::string const& _name,
                    JSON const& json,
                    FixedAreaMap const& fam):
     /* Be careful with member ordering! */
-    pimpl_(std::make_unique<PImpl>(*this)),
+    pimpl_(new_pimpl<PImpl>(*this)),
     name(_name),
     joints(parse_joints(json, fam)),
     leaf_joints(parse_leaf_joints(joints)),

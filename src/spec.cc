@@ -1,22 +1,27 @@
 #include "spec.h"
 
+#include <unordered_map>
+#include <deque>
+
+#include "fixed_area.h"
 #include "debug_utils.h"
 #include "options.h"
 #include "json.h"
+#include "priv_impl.h"
 
 namespace elfin {
 
 /* private */
-struct Spec::PImpl {
+struct Spec::PImpl : public PImplBase<Spec> {
+    using PImplBase::PImplBase;
+
     /* types */
     typedef std::unordered_set<std::string> NameSet;
     typedef std::unordered_map<std::string, NameSet> AdjacentNames;
 
     /* data */
-    Spec& _;
-
-    /* ctors */
-    PImpl(Spec& interface) : _(interface) { }
+    WorkAreaMap work_areas_;
+    FixedAreaMap fixed_areas_;
 
     /* accessors */
     static void analyse_bp_network(std::string const& first_bp_name,
@@ -95,8 +100,8 @@ struct Spec::PImpl {
 
     /* modifiers */
     void parse(Options const & options) {
-        _.work_areas_.clear();
-        _.fixed_areas_.clear();
+        work_areas_.clear();
+        fixed_areas_.clear();
 
         auto const& spec_file = options.spec_file;
         JUtil.info("Parsing spec file: %s\n", spec_file.c_str());
@@ -130,11 +135,11 @@ struct Spec::PImpl {
         }
 
         JUtil.info("Parsed %zu fixed areas and %zu work areas\n",
-                   _.fixed_areas_.size(), _.work_areas_.size());
+                   fixed_areas_.size(), work_areas_.size());
     }
 
     void digest_network(std::string const & name, JSON const & network) {
-        _.fixed_areas_.emplace(
+        fixed_areas_.emplace(
             name,
             std::make_unique<FixedArea>(name, network));
     }
@@ -202,11 +207,11 @@ struct Spec::PImpl {
         call_decimate();
 
         for (auto const& [dec_name, dec_json] : decimated_jsons.items()) {
-            _.work_areas_.emplace(
+            work_areas_.emplace(
                 dec_name,
-                std::make_unique<WorkArea>(dec_name, dec_json, _.fixed_areas_));
+                std::make_unique<WorkArea>(dec_name, dec_json, fixed_areas_));
 
-            PANIC_IF(_.work_areas_[dec_name]->joints.empty(),
+            PANIC_IF(work_areas_[dec_name]->joints.empty(),
                      ShouldNotReach("PathGuide network \"" + pg_nw_name +
                                     "\" has no joints associated. "
                                     "Error in parsing, maybe?"));
@@ -289,7 +294,7 @@ struct Spec::PImpl {
 /* public */
 /* ctors */
 Spec::Spec(Options const& options) :
-    pimpl_(std::make_unique<PImpl>(*this)) {
+    pimpl_(new_pimpl<PImpl>(*this)) {
     pimpl_->parse(options);
 }
 
@@ -300,14 +305,19 @@ Spec::Spec(Spec&& other) {
 /* dtors */
 Spec::~Spec() {}
 
+/* accessors */
+WorkAreaMap const& Spec::work_areas() const {
+    return pimpl_->work_areas_;
+}
+
 /* modifiers */
 Spec& Spec::operator=(Spec&& other) {
     if (this != &other) {
-        work_areas_.clear();
-        fixed_areas_.clear();
+        pimpl_->work_areas_.clear();
+        pimpl_->fixed_areas_.clear();
 
-        std::swap(work_areas_, other.work_areas_);
-        std::swap(fixed_areas_, other.fixed_areas_);
+        std::swap(pimpl_->work_areas_, other.pimpl_->work_areas_);
+        std::swap(pimpl_->fixed_areas_, other.pimpl_->fixed_areas_);
     }
 
     return *this;
@@ -315,7 +325,7 @@ Spec& Spec::operator=(Spec&& other) {
 
 void Spec::solve_all() {
     // Solve each work package.
-    for (auto& [wa_name, wa_sp] : work_areas_) {
+    for (auto& [wa_name, wa_sp] : pimpl_->work_areas_) {
         wa_sp->solve();
     }
 }

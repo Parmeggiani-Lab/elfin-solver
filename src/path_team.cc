@@ -5,16 +5,13 @@
 #include "input_manager.h"
 #include "id_types.h"
 #include "mutation.h"
+#include "priv_impl.h"
 
 namespace elfin {
 
 /* private */
-struct PathTeam::PImpl {
-    /* data */
-    PathTeam& _;
-
-    /* ctors */
-    PImpl(PathTeam& interface) : _(interface) {}
+struct PathTeam::PImpl : public PImplBase<PathTeam> {
+    using PImplBase::PImplBase;
 
     /*modifiers */
     void add_free_terms(NodeKey const node_key,
@@ -652,11 +649,6 @@ struct PathTeam::PImpl {
     }
 };
 
-/* modifiers */
-std::unique_ptr<PathTeam::PImpl> PathTeam::make_pimpl() {
-    return std::make_unique<PImpl>(*this);
-}
-
 /* protected */
 /* accessors */
 PathTeam* PathTeam::virtual_clone() const {
@@ -898,7 +890,7 @@ void PathTeam::virtual_implement_recipe(
 /* ctors */
 PathTeam::PathTeam(WorkArea const* wa) :
     NodeTeam(wa),
-    pimpl_(make_pimpl()) {}
+    pimpl_(new_pimpl<PImpl>(*this)) {}
 
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_)

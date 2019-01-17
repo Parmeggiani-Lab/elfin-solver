@@ -3,7 +3,6 @@
 #include "test_stat.h"
 #include "test_data.h"
 
-
 namespace elfin {
 
 void InputManager::setup_test(Args const& more_args) {

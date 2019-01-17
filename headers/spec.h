@@ -1,16 +1,15 @@
 #ifndef SPEC_H_
 #define SPEC_H_
 
-#include <unordered_map>
-
-#include "work_area.h"
-#include "fixed_area.h"
+#include "map_utils.h"
+#include "work_package.h"
 
 namespace elfin {
 
 /* Fwd Decl */
 struct Options;
-class Database;
+class WorkArea;
+typedef SPMap<WorkArea> WorkAreaMap;
 
 class Spec {
 private:
@@ -19,11 +18,6 @@ private:
 
     /* data */
     std::unique_ptr<PImpl> pimpl_;
-
-protected:
-    /* data */
-    WorkAreaMap work_areas_;
-    FixedAreaMap fixed_areas_;
 
 public:
     /* ctors */
@@ -35,12 +29,7 @@ public:
     virtual ~Spec();
 
     /* accessors */
-    WorkAreaMap const& work_areas() const {
-        return work_areas_;
-    }
-    FixedAreaMap const& fixed_areas() const {
-        return fixed_areas_;
-    }
+    WorkAreaMap const& work_areas() const;
 
     /* modifiers */
     Spec& operator=(Spec const& other) = delete;

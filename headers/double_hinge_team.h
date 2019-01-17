@@ -1,8 +1,6 @@
 #ifndef DOUBLE_HINGE_TEAM_H_
 #define DOUBLE_HINGE_TEAM_H_
 
-#include <array>
-
 #include "hinge_team.h"
 
 namespace elfin {
@@ -14,9 +12,6 @@ private:
 
     /* data */
     std::unique_ptr<PImpl> pimpl_;
-
-    /*modifiers */
-    std::unique_ptr<PImpl> make_pimpl();
 protected:
     /* data */
     UIJointKey hinge_ui_joint2_ = nullptr;

@@ -5,16 +5,13 @@
 
 #include "input_manager.h"
 #include "path_generator.h"
+#include "priv_impl.h"
 
 namespace elfin {
 
 /* private */
-struct DoubleHingeTeam::PImpl {
-    /* data */
-    DoubleHingeTeam& _;
-
-    /* ctors */
-    PImpl(DoubleHingeTeam& interface) : _(interface) {}
+struct DoubleHingeTeam::PImpl : public PImplBase<DoubleHingeTeam> {
+    using PImplBase::PImplBase;
 
     void find_hinge2() {
         DEBUG_NOMSG(not _.hinge_ui_joint_);
@@ -124,11 +121,6 @@ struct DoubleHingeTeam::PImpl {
     }
 };
 
-/*modifiers */
-std::unique_ptr<DoubleHingeTeam::PImpl> DoubleHingeTeam::make_pimpl() {
-    return std::make_unique<PImpl>(*this);
-}
-
 /* protected */
 /* accessors */
 DoubleHingeTeam* DoubleHingeTeam::virtual_clone() const {
@@ -193,7 +185,7 @@ void DoubleHingeTeam::virtual_implement_recipe(
 /* ctors */
 DoubleHingeTeam::DoubleHingeTeam(WorkArea const* wa) :
     HingeTeam(wa),
-    pimpl_(make_pimpl())
+    pimpl_(new_pimpl<PImpl>(*this))
 {
     DEBUG_NOMSG(wa->ptterm_profile.empty());
     pimpl_->find_hinge2();

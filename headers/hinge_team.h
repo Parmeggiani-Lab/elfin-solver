@@ -18,9 +18,6 @@ private:
 
     /* data */
     std::unique_ptr<PImpl> pimpl_;
-
-    /*modifiers */
-    std::unique_ptr<PImpl> make_pimpl();
 protected:
     /* data */
     UIJointKey hinge_ui_joint_ = nullptr;

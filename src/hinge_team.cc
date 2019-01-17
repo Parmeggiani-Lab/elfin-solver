@@ -4,16 +4,13 @@
 #include "path_generator.h"
 #include "scoring.h"
 #include "ui_joint.h"
+#include "priv_impl.h"
 
 namespace elfin {
 
 /* private */
-struct HingeTeam::PImpl {
-    /* data */
-    HingeTeam& _;
-
-    /* ctors */
-    PImpl(HingeTeam& interface) : _(interface) { }
+struct HingeTeam::PImpl : public PImplBase<HingeTeam> {
+    using PImplBase::PImplBase;
 
     void place_hinge() {
         _.hinge_ui_joint_ = nullptr;
@@ -50,11 +47,6 @@ struct HingeTeam::PImpl {
         return itr->second;
     }
 };
-
-/* modifiers */
-std::unique_ptr<HingeTeam::PImpl> HingeTeam::make_pimpl() {
-    return std::make_unique<PImpl>(*this);
-}
 
 /* protected */
 /* accessors */
@@ -174,7 +166,7 @@ void HingeTeam::calc_score() {
     // Collect points without hinge itself.
     auto const& my_points = PathGenerator(hinge_).collect_points();
     auto const& ref_path = work_area_->path_map.at(hinge_ui_joint_);
-    
+
     score_ = scoring::score_unaligned(my_points, ref_path);
 
     scored_path_ = &ref_path;
@@ -211,7 +203,7 @@ void HingeTeam::virtual_implement_recipe(
 /* ctors */
 HingeTeam::HingeTeam(WorkArea const* wa) :
     PathTeam(wa),
-    pimpl_(make_pimpl())
+    pimpl_(new_pimpl<PImpl>(*this))
 {
     // Call place_hinge() after initializer list because hinge_ needs to be
     // initialiezd as nullptr.
