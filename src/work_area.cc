@@ -295,7 +295,11 @@ WorkArea::WorkArea(std::string const& _name,
     path_map(parse_path_map(joints, leaf_joints)),
     path_len(parse_path_len(path_map)),
     target_size(parse_target_size(path_map))
-{}
+{
+    PANIC_IF(joints.empty(),
+             ShouldNotReach("Work Area \"" + name + "\" has no joints. " +
+                            "Error in parsing or input spec, maybe?"));
+}
 
 /* dtors */
 WorkArea::~WorkArea() {}

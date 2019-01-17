@@ -22,7 +22,6 @@ TestStat InputManager::test() {
         InputManager::setup_test({"--spec_file", "examples/quarter_snake_free.json"});
         Spec const spec(OPTIONS);
 
-
         auto const& wps = spec.work_packages();
         if (wps.size() != 1) {
             ts.errors++;
@@ -32,14 +31,14 @@ TestStat InputManager::test() {
         }
 
         auto const& wp = *begin(wps);
-        if (wp->n_verses() != 1) {
+        if (wp->det_verse_size() != 1) {
             ts.errors++;
             JUtil.error("Spec parsing should get 1 Work Verse but got %zu\n",
-                        wp->n_verses());
+                        wp->det_verse_size());
             return;
         }
 
-        auto const& wv = wp->first_verse();
+        auto const& wv = wp->det_verse();
         if (wv.size() != 1) {
             ts.errors++;
             JUtil.error("Spec parsing should get 1 Work Areas but got %zu\n",
@@ -68,7 +67,7 @@ TestStat InputManager::test() {
                 oss << p.to_string() << "\n";
             }
 
-            JUtil.error("But got:\n");
+            oss << "But got:\n";
             for (auto& p : fwd_test_points) {
                 oss << p.to_string() << "\n";
             }

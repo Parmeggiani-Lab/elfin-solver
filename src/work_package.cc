@@ -8,49 +8,109 @@ namespace elfin {
 
 /* private */
 struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
+    using PImplBase::PImplBase;
+
     /* types */
     typedef std::unordered_set<std::string> NameSet;
     typedef std::unordered_map<std::string, NameSet> AdjacentNames;
     typedef std::vector<WorkVerse> WorkVerses;
 
     /* data */
-    FixedAreaMap const& fixed_areas_;
-    WorkVerses work_verses_;
+    WorkVerse det_verse_;
+    WorkVerses undet_verses_;
 
     UIModuleMap fake_occupants_;
 
-    /* ctors */
-    PImpl(WorkPackage& owner,
-          FixedAreaMap const& fixed_areas_,
-          JSON const& pg_network) :
-        PImplBase(owner),
-        fixed_areas_(fixed_areas_) {
-        parse(pg_network);
+    /* accessors */
+    WorkVerse const& get_best_undet_verse() const {
+        DEBUG_NOMSG(undet_verses_.empty());
+
+        JUtil.error("FIXME: select best network variant.\n");
+        return undet_verses_.at(0);
     }
 
-    /* accessors */
     SolutionMap make_solution_map() const {
         SolutionMap res;
 
-        JUtil.error("FIXME: select best network variant.\n");
-        size_t const best_wv_id = 0;// get_best_work_verse_id()
+        auto const add_heaps = [&](WorkVerse const & verse) {
+            for (auto const& wa : verse)
+                res.emplace(wa->name, wa->make_solution_minheap());
+        };
 
-        auto const& wa = work_verses_.at(best_wv_id);
-        for (auto const& wa : wa) {
-            res.emplace(wa->name, wa->make_solution_minheap());
+        add_heaps(det_verse_);
+
+        if (not undet_verses_.empty()) {
+            add_heaps(get_best_undet_verse());
         }
 
         return res;
     }
 
-    static void analyse_bp_network(std::string const& first_bp_name,
-                                   JSON const& pg_network,
-                                   AdjacentNames& adj_bps,
-                                   AdjacentNames& adj_leaves)
+    /* modifiers */
+    void parse(FixedAreaMap const& fixed_areas,
+               JSON const& pg_network)
     {
-        // Parse the branchpoint network (collapse all non-branchpoint
-        // joints).
-        std::deque<std::string> bps_to_visit = {first_bp_name};
+        // Find leaf node to begin traversal analysis with.
+        for (auto const& [joint_name, joint_json] : pg_network.items()) {
+            auto const n_nbs = joint_json.at("neighbors").size();
+
+            if (n_nbs == 1) {
+                analyse_pg_network(joint_name, pg_network, fixed_areas);
+                return;
+            }
+            else if (n_nbs == 0) {
+                throw BadSpec("Joint " + joint_name + " has no neighbours.");
+            }
+        }
+
+        throw BadSpec("PathGuide network " + _.name +
+                      " has no leaf joint to begin traversal with.");
+    }
+
+    JSON decimate(JSON const& pg_network,
+                  NameSet& accumulator)
+    {
+        JSON decimated_json;
+
+        // Trim accumulator joints by removing neighbor names that aren't
+        // in this set.
+        for (auto const& joint_name : accumulator) {
+            decimated_json[joint_name] = pg_network[joint_name];  // Make mutable copy.
+
+            auto& nbs = decimated_json[joint_name].at("neighbors");
+            nbs.erase(std::remove_if(begin(nbs), end(nbs),
+            [&accumulator](auto const & nb_name) {
+                return accumulator.find(nb_name) == end(accumulator);
+            }),
+            end(nbs));
+        }
+
+        accumulator.clear();
+
+        return decimated_json;
+    }
+
+    void analyse_pg_network(std::string const& leaf_name,
+                            JSON const& pg_network,
+                            FixedAreaMap const& fixed_areas)
+    {
+        // Verify that it's a leaf.
+        DEBUG_NOMSG(pg_network.at(leaf_name).at("neighbors").size() != 1);
+
+        NameSet accumulator;
+        size_t dec_id = 0;
+
+        auto const create_det_wa = [&]() {
+            if (accumulator.empty()) return;
+
+            JSON const& dec_json = decimate(pg_network, accumulator);
+            std::string const& dec_name = "dec." + std::to_string(dec_id++);
+            det_verse_.emplace_back(
+                std::make_unique<WorkArea>(dec_name, dec_json, fixed_areas));
+        };
+
+        AdjacentNames adj_bps, adj_leaves;
+        std::deque<std::string> frontier = {leaf_name};
         NameSet visited;
 
         auto const sign_name = [](AdjacentNames & adjacency,
@@ -63,10 +123,12 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
             adjacency[owner].insert(new_name);
         };
 
-        while (not bps_to_visit.empty()) {
-            auto const& bp_name = bps_to_visit.front();
-            auto const& bp_nbs = pg_network[bp_name].at("neighbors");
-            DEBUG_NOMSG(bp_nbs.size() <= 2);
+        while (not frontier.empty()) {
+            auto const& start_name = frontier.front();
+            visited.insert(start_name);
+            accumulator.insert(start_name);
+
+            auto const& bp_nbs = pg_network[start_name].at("neighbors");
 
             for (auto const& nb_name : bp_nbs) {
                 // Collapse i.e. keep advancing name "pointer" until either
@@ -74,12 +136,27 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 
                 if (visited.find(nb_name) == end(visited)) {
                     std::string joint_name = nb_name;
-                    std::string last_name = bp_name;
+                    std::string last_name = start_name;
 
-                    JSON const* joint_nbs = &pg_network[joint_name].at("neighbors");
+                    JSON const* joint_nbs = &pg_network.at(joint_name).at("neighbors");
                     while (joint_nbs->size() == 2) {
                         // Not a branchpoint nor a leaf.
                         visited.insert(joint_name);
+                        accumulator.insert(joint_name);
+
+                        {
+                            // Check for non-leaf, occupied joint, at which we
+                            // need to break the pg_network.
+                            JSON const& joint_json = pg_network.at(joint_name);
+                            if (joint_json.at("occupant") != "" and
+                                    joint_json.at("neighbors").size() > 1) {
+                                create_det_wa();
+
+                                // Re-insert current joint, which will be the beginning of the
+                                // next decimated segment.
+                                accumulator.insert(joint_name);
+                            }
+                        }
 
                         auto const nbs_itr = begin(*joint_nbs);
 
@@ -94,101 +171,42 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
                         joint_nbs = &pg_network[joint_name].at("neighbors");
                     }
 
+                    // Upon exit of the while loop above it should be a leaf joint.
+                    DEBUG_NOMSG(joint_nbs->size() != 1);
+                    accumulator.insert(joint_name);
+
                     auto const n_nbs = joint_nbs->size();
                     if (n_nbs == 1) {
-                        sign_name(adj_leaves, bp_name, joint_name);
+                        sign_name(adj_leaves, start_name, joint_name);
                     }
                     else {  // Branchpoint joint.
-                        if (joint_name == bp_name) {
+                        if (joint_name == start_name) {
                             throw Unsupported("Branchpoint with circular connection "
                                               "is not yet supported. Violating branchpoint: " +
-                                              bp_name + "\n");
+                                              start_name + "\n");
                         }
 
-                        sign_name(adj_bps, bp_name, joint_name);
-                        sign_name(adj_bps, joint_name, bp_name);
-                        bps_to_visit.push_back(joint_name);
+                        sign_name(adj_bps, start_name, joint_name);
+                        sign_name(adj_bps, joint_name, start_name);
+                        frontier.push_back(joint_name);
                     }
                 }
             }
 
-            visited.insert(bp_name);
-            bps_to_visit.pop_front();
-        }
-    }
-
-    /* modifiers */
-    void decimate(JSON const& pg_network,
-                  NameSet& accumulator,
-                  JSON& decimated_jsons,
-                  size_t& dec_id)
-    {
-        if (not accumulator.empty()) {
-            JSON decimated_json;
-            // Trim accumulator joints by removing neighbor names that aren't
-            // in this set.
-            for (auto const& joint_name : accumulator) {
-                decimated_json[joint_name] = pg_network[joint_name];  // Make mutable copy.
-
-                auto& nbs = decimated_json[joint_name].at("neighbors");
-                nbs.erase(std::remove_if(begin(nbs), end(nbs),
-                [&accumulator](auto const & nb_name) {
-                    return accumulator.find(nb_name) == end(accumulator);
-                }),
-                end(nbs));
-            }
-
-            auto const& dec_name = "dec." + std::to_string(dec_id++);
-            decimated_jsons[dec_name] = decimated_json;
-            accumulator.clear();
-        }
-    }
-
-    void simple_decimate(JSON const& pg_network)
-    {
-        JSON decimated_jsons;
-        work_verses_.emplace_back();
-        auto& work_verse = work_verses_.back();
-
-        NameSet accumulator;
-        size_t dec_id = 0;
-
-        auto const call_decimate = [&]() {
-            decimate(pg_network,
-                     accumulator,
-                     decimated_jsons,
-                     dec_id);
-        };
-
-        // Decimate the pg_network into a bunch of segments. A segment start
-        // and end at either a leaf joint or a hinge (occupied) joint.
-        for (auto const& [joint_name, joint_json] : pg_network.items()) {
-            accumulator.insert(joint_name);
-
-            if (joint_json.at("occupant") != "" and
-                    joint_json.at("neighbors").size() > 1) {
-                // This is a non-leaf joint that is occupied, therefore we
-                // need to break the pg_network.
-                call_decimate();
-
-                // Re-insert current joint, which will be the beginning of the
-                // next decimated segment.
-                accumulator.insert(joint_name);
-            }
+            frontier.pop_front();
         }
 
         // In case accumulator is not empty, do a last decimate to catch the
         // dangling pg_network segment.
-        call_decimate();
+        create_det_wa();
 
-        for (auto const& [dec_name, dec_json] : decimated_jsons.items()) {
-            work_verse.emplace_back(
-                std::make_unique<WorkArea>(dec_name, dec_json, fixed_areas_));
-
-            PANIC_IF(work_verse.back()->joints.empty(),
-                     ShouldNotReach("PathGuide network \"" + _.name +
-                                    "\" has no joints associated. "
-                                    "Error in parsing or input spec, maybe?"));
+        // Debug printing.
+        for (auto const& [bp_name, bp_nbs] : adj_bps) {
+            std::ostringstream oss;
+            oss << bp_name << " connects to bps:\n";
+            for (auto const& nb_name : bp_nbs)
+                oss << nb_name << "\n";
+            JUtil.warn(oss.str().c_str());
         }
     }
 
@@ -201,7 +219,7 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 
         auto const max_degree = XDB.max_bp_degree();
         PANIC_IF(leaves.size() > max_degree,
-                 BadSpoc("Branchpoint \"" + bp_name + "\" has a degree of " +
+                 BadSpec("Branchpoint \"" + bp_name + "\" has a degree of " +
                          to_string(leaves.size()) + ", but max degree supported " +
                          "by modules in XDB is " + to_string(max_degree)));
 
@@ -231,85 +249,40 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         throw ShouldNotReach("Bad!");
     }
 
-    void parse(JSON const& pg_network)
-    {
-        // Check whether we need to use advanced rules to break up the
-        // pg_network.
-        for (auto const& [joint_name, joint_json] : pg_network.items()) {
-            if (joint_json.at("neighbors").size() > 2) {
-                // Found a branchpoint. There are two cases for a complex
-                // pg_network:
-                //  - The simple "star" case - 1-hub network in which
-                //    except for the hub, all arms are 1h.
-                //
-                //  - The complex type, in which multiple hubs are present and
-                //    connect to each other.
-                AdjacentNames adj_bps, adj_leaves;
-                analyse_bp_network(joint_name, pg_network, adj_bps, adj_leaves);
-
-                for (auto const& [bp_name, bp_nbs] : adj_bps) {
-                    std::ostringstream oss;
-                    oss << bp_name << " connects to bps:\n";
-                    for (auto const& nb_name : bp_nbs)
-                        oss << nb_name << "\n";
-                    JUtil.warn(oss.str().c_str());
-                }
-
-                // for (auto const& [bp_name, leaf_nbs] : adj_leaves) {
-                //     std::ostringstream oss;
-                //     oss << bp_name << " connects to leaves:\n";
-                //     for (auto const& leaf_name : leaf_nbs)
-                //         oss << leaf_name << "\n";
-                //     JUtil.warn(oss.str().c_str());
-                // }
-
-                if (adj_bps.size() == 0) {
-                    star_decimate(pg_network, adj_leaves);
-                }
-                else {
-                    allorders_decimate(pg_network, adj_bps, adj_leaves);
-                }
-
-                // There can only be one single hub network in a pg_network
-                // since all UIJoints are connected.
-                return;
-            }
-        }
-
-        simple_decimate(pg_network);
-    }
-
     void solve() {
-        for (auto& wv : work_verses_) {
-            for (auto& wa : wv) {
+        auto const solve_verse = [](WorkVerse & verse) {
+            for (auto& wa : verse)
                 wa->solve();
-            }
-        }
+        };
+
+        for (auto& verse : undet_verses_)
+            solve_verse(verse);
+
+        solve_verse(det_verse_);
     }
 };
 
 /* public */
 /* ctors */
 WorkPackage::WorkPackage(std::string const& pg_nw_name,
-                         FixedAreaMap const& fixed_areas_,
-                         JSON const& pg_network) :
-    pimpl_(new_pimpl<PImpl>(*this, fixed_areas_, pg_network)),
+                         JSON const& pg_network,
+                         FixedAreaMap const& fixed_areas_) :
+    pimpl_(new_pimpl<PImpl>(*this)),
     name(pg_nw_name)
-{}
+{
+    pimpl_->parse(fixed_areas_, pg_network);
+}
 
 /* dtors */
 WorkPackage::~WorkPackage() {}
 
 /* accessors */
-size_t WorkPackage::n_verses() const {
-    return pimpl_->work_verses_.size();
+size_t WorkPackage::det_verse_size() const {
+    return pimpl_->det_verse_.size();
 }
 
-WorkVerse const& WorkPackage::first_verse() const {
-    if(n_verses() < 1) {
-        throw OutOfRange("No work verse to return.\n");
-    }
-    return *begin(pimpl_->work_verses_);
+WorkVerse const& WorkPackage::det_verse() const {
+    return pimpl_->det_verse_;
 }
 
 /* accessors */

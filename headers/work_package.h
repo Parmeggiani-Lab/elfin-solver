@@ -33,8 +33,8 @@ public:
 
     /* ctors */
     WorkPackage(std::string const& pg_nw_name,
-                FixedAreaMap const& fixed_areas_,
-                JSON const& pg_network);
+                JSON const& pg_network,
+                FixedAreaMap const& fixed_areas_);
     WorkPackage(WorkPackage const& other) = delete;
     WorkPackage(WorkPackage&& other) = delete;
 
@@ -42,8 +42,8 @@ public:
     virtual ~WorkPackage();
 
     /* accessors */
-    size_t n_verses() const;
-    WorkVerse const& first_verse() const;
+    size_t det_verse_size() const;
+    WorkVerse const& det_verse() const;
     SolutionMap make_solution_map() const;
 
     /* modifiers */

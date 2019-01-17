@@ -56,7 +56,7 @@ struct Spec::PImpl : public PImplBase<Spec> {
 
             for (auto& [name, json] : pg_networks_json.items()) {
                 work_packages_.emplace_back(
-                    std::make_unique<WorkPackage>(name, fixed_areas_, json));
+                    std::make_unique<WorkPackage>(name, json, fixed_areas_));
             }
         } catch (JSON::exception const& je) {
             JSON_LOG_EXIT(je);
