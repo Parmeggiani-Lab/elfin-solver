@@ -68,11 +68,11 @@ int main(int const argc, const char ** argv) {
     }
     catch (elfin::ElfinException const& e)
     {
-        JUtil.error("Aborting. Reason: %s\n", e.what());
+        JUtil.error("Aborting.\n\nReason: %s\n\n", e.what());
     }
     catch (std::exception const& e)
     {
-        JUtil.error("Aborting due to general exception: %s\n", e.what());
+        JUtil.error("Aborting due to general exception.\n\nReason: %s\n\n", e.what());
     }
     catch (...)
     {
