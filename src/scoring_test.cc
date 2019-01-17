@@ -54,12 +54,11 @@ TestStat test_basics() {
     // kabsch() return variables
     elfin::Mat3f rot;
     Vector3f tran;
-    float rms;
 
     // Test that kabsch computation doesn't fail TRACE assertions.
     {
         ts.tests++;
-        _rosetta_kabsch_align(points10a, points10b, rot, tran, rms);
+        _rosetta_kabsch_align(points10a, points10b, rot, tran);
     }
 
     // Test kabsch() rotation.

@@ -38,8 +38,7 @@ static_assert(std::is_same<score_func_type, decltype(score_unaligned)>::value,
 void calc_alignment(V3fList const& mobile,
                     V3fList const& ref,
                     elfin::Mat3f& rot,
-                    Vector3f& tran,
-                    float& rms);
+                    Vector3f& tran);
 
 /* tests */
 TestStat test();
@@ -61,8 +60,7 @@ V3fList _resample(V3fList const& ref, V3fList const& pts);
 void _rosetta_kabsch_align(V3fList const& mobile,
                            V3fList const& ref,
                            elfin::Mat3f& rot,
-                           Vector3f& tran,
-                           float& rms);
+                           Vector3f& tran);
 
 }  /* scroing */
 

@@ -148,14 +148,13 @@ float unaligned_rms(V3fList const& mobile,
 void calc_alignment(V3fList const& mobile,
                     V3fList const& ref,
                     elfin::Mat3f& rot,
-                    Vector3f& tran,
-                    float& rms)
+                    Vector3f& tran)
 {
     V3fList const& mobile_resampled =
         mobile.size() == ref.size() ?
         mobile : _resample(ref, mobile);
 
-    _rosetta_kabsch_align(mobile_resampled, ref, rot, tran, rms);
+    _rosetta_kabsch_align(mobile_resampled, ref, rot, tran);
 }
 
 float _score(V3fList const& mobile,
@@ -256,8 +255,7 @@ V3fList _resample(V3fList const& ref,
 void _rosetta_kabsch_align(V3fList const& mobile,
                            V3fList const& ref,
                            elfin::Mat3f& rot,
-                           Vector3f& tran,
-                           float& rms)
+                           Vector3f& tran)
 {
     size_t const n = mobile.size();
     size_t const ref_n = ref.size();
