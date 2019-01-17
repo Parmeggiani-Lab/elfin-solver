@@ -31,6 +31,7 @@ protected:
     PtTermFinderSet ptterm_finders_;
     StrIndexMap mod_idx_map_;
     ModPtrRoulette singles_, hubs_, basic_mods_, complex_mods_;
+    size_t max_bp_degree_ = 0;
 
     /* modifiers */
     void reset();
@@ -49,6 +50,7 @@ public:
     ModPtrRoulette const& basic_mods() const { return basic_mods_; }
     ModPtrRoulette const& complex_mods() const { return complex_mods_; }
     PtModKey get_mod(std::string const& name) const;
+    size_t max_bp_degree() const { return max_bp_degree_; }
 
     /* modifiers */
     void parse(Options const& options);

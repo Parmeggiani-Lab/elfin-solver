@@ -72,9 +72,9 @@ UIJointKeys parse_leaf_joints(UIJointMap const& joints)
 WorkArea::NamedJoints parse_occupied_joints(UIJointKeys const& leaves)
 {
     WorkArea::NamedJoints res;
-    for (auto& leaf_joint : leaves) {
-        if (leaf_joint->occupant.ui_module) {
-            res.emplace(leaf_joint->occupant.ui_module->name, leaf_joint);
+    for (auto leaf : leaves) {
+        if (leaf->occupant.ui_module) {
+            res.emplace(leaf->occupant.ui_module->name, leaf);
         }
     }
 

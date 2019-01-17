@@ -48,6 +48,12 @@ UIModule::UIModule(std::string const& name,
     module_name(parse_module_name(json)),
     linkage(parse_linkage(json)) {}
 
+UIModule::UIModule(std::string const& _name,
+                   std::string const& _module_name,
+                   Vector3f const& _pos) :
+    UIObject(_name, _pos),
+    module_name(_module_name) {}
+
 /* printers */
 void UIModule::print_to(std::ostream& os) const {
     os << "UIModule (" << name << ") [\n";

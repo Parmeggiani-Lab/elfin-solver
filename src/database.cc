@@ -32,6 +32,7 @@ void Database::reset() {
     hubs_.clear();
     basic_mods_.clear();
     complex_mods_.clear();
+    max_bp_degree_ = 0;
 }
 
 // Divides modules in the following categories:
@@ -45,6 +46,8 @@ void Database::categorize() {
     for (auto& mod : all_mods_) {
         size_t const n_itf = mod->counts().all_interfaces();
         auto mod_raw_ptr = mod.get();
+
+        max_bp_degree_ = max(max_bp_degree_, n_itf);
 
         if (n_itf < 2) {
             if (mod->type == ModuleType::SYM_HUB) {

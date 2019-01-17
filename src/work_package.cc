@@ -1,5 +1,6 @@
 #include "work_package.h"
 
+#include "input_manager.h"
 #include "fixed_area.h"
 #include "priv_impl.h"
 
@@ -10,10 +11,15 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     /* types */
     typedef std::unordered_set<std::string> NameSet;
     typedef std::unordered_map<std::string, NameSet> AdjacentNames;
+    typedef std::unique_ptr<WorkArea> WorkAreaSP;
+    typedef std::vector<std::vector<WorkAreaSP>> WorkVerses;
 
     /* data */
     FixedAreaMap const& fixed_areas_;
     WorkAreas work_areas_;
+
+    UIModuleMap fake_occupants_;
+    WorkVerses work_verses_;
 
     /* ctors */
     PImpl(WorkPackage& owner,
@@ -58,7 +64,6 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         while (not bps_to_visit.empty()) {
             auto const& bp_name = bps_to_visit.front();
             auto const& bp_nbs = pg_network[bp_name].at("neighbors");
-
             DEBUG_NOMSG(bp_nbs.size() <= 2);
 
             for (auto const& nb_name : bp_nbs) {
@@ -186,8 +191,23 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     void star_decimate(JSON const& pg_network,
                        AdjacentNames const& adj_leaves)
     {
-        // - 1. Find compatible hubs.
-        // - 2. Define 1H work area for each star arm.
+        // Find compatible hubs.
+        DEBUG_NOMSG(adj_leaves.size() != 1);
+        auto const& [bp_name, leaves] = *begin(adj_leaves);
+
+        auto const max_degree = XDB.max_bp_degree();
+        PANIC_IF(leaves.size() > max_degree,
+                 BadSpoc("Branchpoint \"" + bp_name + "\" has a degree of " +
+                         to_string(leaves.size()) + ", but max degree supported " +
+                         "by modules in XDB is " + to_string(max_degree)));
+
+        // Create fake hub UIModules for each compatible hub at the start
+        // center branchpoint.
+
+
+        // Create all evaluation verses. There's one verse variant per fake
+        // center hub.
+
         // - 3. Solve for each starting 1H work area to find best score, then
         //   solve for remaining 1H arms.
         throw ShouldNotReach("Good!");
@@ -254,6 +274,19 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 
         simple_decimate(pg_network);
     }
+
+    void solve() {
+        if (work_verses_.empty()) {
+            // Simple case.
+            for (auto& [wa_name, wa] : work_areas_) {
+                wa->solve();
+            }
+        }
+        else {
+            throw ShouldNotReach("Need fix: solving complex networks.\n");
+
+        }
+    }
 };
 
 /* public */
@@ -282,11 +315,7 @@ SolutionMap WorkPackage::make_solution_map() const {
 
 /* modifiers */
 void WorkPackage::solve() {
-    JUtil.error("Need fix: solving complex networks.\n");
-
-    for (auto& [wa_name, wa] : pimpl_->work_areas_) {
-        wa->solve();
-    }
+    pimpl_->solve();
 }
 
 }  /* elfin */

@@ -27,6 +27,7 @@ struct NAME : public ElfinException {\
 
 DECL_EXCEPTION(BadArgument);
 DECL_EXCEPTION(BadXDB);
+DECL_EXCEPTION(BadSpoc);
 DECL_EXCEPTION(BadTerminus);
 DECL_EXCEPTION(BadWorkType);
 DECL_EXCEPTION(InvalidHinge);

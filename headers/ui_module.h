@@ -25,6 +25,9 @@ struct UIModule : public UIObject {
     /* ctors */
     UIModule(std::string const& name,
              JSON const& json);
+    UIModule(std::string const& _name,
+             std::string const& _module_name,
+             Vector3f const& _pos);
 
     /* dtors */
     virtual ~UIModule() {}

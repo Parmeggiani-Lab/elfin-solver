@@ -55,7 +55,6 @@ public:
 #endif  /* ifdef USE_EIGEN */
 
     Transform(JSON const& tx_json);
-    // Convenience ctor for testing purposes.
     Transform(Vector3f const& vec);
     Transform(elfin::Mat3f const& rot, Vector3f const& vec);
 
