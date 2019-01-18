@@ -31,7 +31,7 @@ GEN_ENUM_AND_STRING(WorkType, WorkTypeNames, FOREACH_WORKTYPE);
 typedef MoveHeap<NodeTeamSP,
         std::vector<NodeTeamSP>,
         NodeTeam::SPLess> TeamSPMaxHeap;
-typedef std::priority_queue<NodeTeam const*,
+typedef MoveHeap<NodeTeam const*,
         std::vector<NodeTeam const*>,
         NodeTeam::PtrGreater> TeamPtrMinHeap;
 typedef std::unordered_map<std::string, TeamPtrMinHeap> SolutionMap;
@@ -50,7 +50,7 @@ public:
 
     /* data */
     std::string const       name;
-    UIJointMap const        joints;
+    UIJointMap              joints;
     UIJointKeys const       leaf_joints;     // Leaf joints are tips of the path.
     NamedJoints const       occupied_joints; // Occupied joints are a subset of leaf joints.
     WorkType const          type;

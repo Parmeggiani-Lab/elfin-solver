@@ -23,15 +23,15 @@ TestStat HingeTeam::test() {
         TRACE_NOMSG(spec.work_packages().size() != 1);
         auto& wp = *begin(spec.work_packages());
 
-        TRACE_NOMSG(wp->n_work_areas() != 1);
-        auto& wv = wp->work_areas();
+        TRACE_NOMSG(wp->n_work_area_keys() != 1);
+        auto& wv = wp->work_area_keys();
 
         TRACE_NOMSG(wv.size() != 1);
         auto& wa = wv.at(0);
 
         // Initialize HingeTeam, copy hinge transform, build from recipe than
         // apply transform.
-        HingeTeam team(wa.get(), OPTIONS.seed);
+        HingeTeam team(wa, OPTIONS.seed);
 
         // Make a copy of the tx because it's gonna get clear()'ed.
         auto hinge_tx = team.hinge_->tx_;

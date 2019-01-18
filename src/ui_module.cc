@@ -42,6 +42,7 @@ UIModule::Linkage parse_linkage(JSON const& json) {
     return res;
 }
 
+/* ctors */
 UIModule::UIModule(std::string const& name,
                    JSON const& json) :
     UIObject(name, json),
@@ -49,10 +50,8 @@ UIModule::UIModule(std::string const& name,
     linkage(parse_linkage(json)) {}
 
 UIModule::UIModule(std::string const& _name,
-                   std::string const& _module_name,
                    Vector3f const& _pos) :
-    UIObject(_name, _pos),
-    module_name(_module_name) {}
+    UIObject(_name, _pos) {}
 
 /* printers */
 void UIModule::print_to(std::ostream& os) const {

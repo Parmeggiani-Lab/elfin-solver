@@ -74,8 +74,7 @@ struct OutputManager::PImpl : public PImplBase<OutputManager> {
 
                     size_t i = 0;
                     while (not solutions.empty()) {
-                        auto team = solutions.top();
-                        solutions.pop();
+                        auto const& team = solutions.top_and_pop();
                         if (team) {
                             JSON sol_json;
                             sol_json["nodes"] = team->to_json();

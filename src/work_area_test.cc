@@ -62,7 +62,7 @@ TestStat WorkArea::test() {
         TRACE_NOMSG(spec.work_packages().size() != 1);
         auto const& wp = *begin(spec.work_packages());
 
-        auto const& was = wp->work_areas();
+        auto const& was = wp->work_area_keys();
         if (was.size() != 2) {
             ts.errors++;
             JUtil.error("Failed to decimate Path Guide network. "

@@ -21,15 +21,15 @@ TestStat DoubleHingeTeam::test() {
         TRACE_NOMSG(spec.work_packages().size() != 1);
         auto& wp = *begin(spec.work_packages());
 
-        TRACE_NOMSG(wp->n_work_areas() != 1);
-        auto& wv = wp->work_areas();
+        TRACE_NOMSG(wp->n_work_area_keys() != 1);
+        auto& wv = wp->work_area_keys();
 
         TRACE_NOMSG(wv.size() != 1);
         auto& wa = wv.at(0);
 
         // Initialize DoubleHingeTeam, copy hinge transform, build from recipe than
         // apply transform.
-        DoubleHingeTeam team(wa.get(), OPTIONS.seed);
+        DoubleHingeTeam team(wa, OPTIONS.seed);
 
         auto const& recipe = tests::H_2H_RECIPE;
         auto const& omap = wa->occupied_joints;

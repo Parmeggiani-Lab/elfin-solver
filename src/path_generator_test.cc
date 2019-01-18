@@ -25,13 +25,13 @@ TestStat PathGenerator::test() {
         TRACE_NOMSG(spec.work_packages().size() != 1);
         auto& wp = *begin(spec.work_packages());
 
-        TRACE_NOMSG(wp->n_work_areas() != 1);
-        auto& wv = wp->work_areas();
+        TRACE_NOMSG(wp->n_work_area_keys() != 1);
+        auto& wv = wp->work_area_keys();
 
         TRACE_NOMSG(wv.size() != 1);
         auto& wa = wv.at(0);
 
-        PathTeam team(wa.get(), OPTIONS.seed);
+        PathTeam team(wa, OPTIONS.seed);
         team.implement_recipe(tests::QUARTER_SNAKE_FREE_RECIPE);
 
         auto const& points = team.gen_path().collect_points();

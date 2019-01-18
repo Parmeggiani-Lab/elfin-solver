@@ -12,7 +12,7 @@ namespace elfin {
 struct UIObject : public Printable {
     /* data */
     std::string const name;
-    Transform const tx;
+    Transform tx;
 
     /* ctors */
     UIObject(std::string const& _name, Transform const& _tx);

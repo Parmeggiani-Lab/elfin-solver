@@ -7,6 +7,10 @@
 
 namespace elfin {
 
+/* Fwd Decl */
+class ProtoModule;
+typedef ProtoModule const* PtModKey;
+
 struct UIModule : public UIObject {
     /* type */
     struct UILink {
@@ -18,15 +22,17 @@ struct UIModule : public UIObject {
     typedef std::vector<UILink> Linkage;
 
     /* data */
-    std::string const module_name;
-    std::string const module_type;
+    std::string module_name;
+    std::string module_type;
     Linkage const linkage;
+    std::vector<PtModKey> provis_hubs;
 
     /* ctors */
     UIModule(std::string const& name,
              JSON const& json);
+
+    // Provisional UIModule
     UIModule(std::string const& _name,
-             std::string const& _module_name,
              Vector3f const& _pos);
 
     /* dtors */

@@ -13,7 +13,7 @@ namespace elfin {
 /* Fwd Decl */
 class WorkArea;
 typedef std::unique_ptr<WorkArea> WorkAreaSP;
-typedef std::vector<WorkAreaSP> WorkAreas;
+typedef std::vector<WorkArea*> WorkAreaKeys;
 class FixedArea;
 typedef SPMap<FixedArea> FixedAreaMap;
 class NodeTeam;
@@ -42,8 +42,8 @@ public:
     virtual ~WorkPackage();
 
     /* accessors */
-    size_t n_work_areas() const;
-    WorkAreas const& work_areas() const;
+    size_t n_work_area_keys() const;
+    WorkAreaKeys const& work_area_keys() const;
     SolutionMap make_solution_map() const;
 
     /* modifiers */

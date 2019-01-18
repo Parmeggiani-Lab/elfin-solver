@@ -31,14 +31,14 @@ TestStat InputManager::test() {
         }
 
         auto const& wp = *begin(wps);
-        if (wp->n_work_areas() != 1) {
+        if (wp->n_work_area_keys() != 1) {
             ts.errors++;
             JUtil.error("Spec parsing should get 1 Work Verse but got %zu\n",
-                        wp->n_work_areas());
+                        wp->n_work_area_keys());
             return;
         }
 
-        auto const& wv = wp->work_areas();
+        auto const& wv = wp->work_area_keys();
         if (wv.size() != 1) {
             ts.errors++;
             JUtil.error("Spec parsing should get 1 Work Areas but got %zu\n",
