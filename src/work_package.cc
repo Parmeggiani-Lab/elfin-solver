@@ -11,37 +11,26 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     using PImplBase::PImplBase;
 
     /* types */
+    typedef std::vector<std::string> Names;
     typedef std::unordered_set<std::string> NameSet;
     typedef std::unordered_map<std::string, NameSet> AdjacentNames;
-    typedef std::vector<WorkVerse> WorkVerses;
 
     /* data */
-    WorkVerse det_verse_;
-    WorkVerses ndet_verses_;
+    size_t dec_id_ = 0;
+    WorkAreas work_areas_;
 
     UIModuleMap fake_occupants_;
 
     /* accessors */
-    WorkVerse const& get_best_ndet_verse() const {
-        DEBUG_NOMSG(ndet_verses_.empty());
-
-        JUtil.error("FIXME: select best network variant.\n");
-        return ndet_verses_.at(0);
-    }
-
     SolutionMap make_solution_map() const {
         SolutionMap res;
 
-        auto const add_heaps = [&](WorkVerse const & verse) {
+        auto const add_heaps = [&](WorkAreas const & verse) {
             for (auto const& wa : verse)
                 res.emplace(wa->name, wa->make_solution_minheap());
         };
 
-        add_heaps(det_verse_);
-
-        if (not ndet_verses_.empty()) {
-            add_heaps(get_best_ndet_verse());
-        }
+        add_heaps(work_areas_);
 
         return res;
     }
@@ -67,10 +56,15 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
                       " has no leaf joint to begin traversal with.");
     }
 
-    JSON decimate(JSON const& pg_network,
-                  NameSet const& seg_names)
+    void decimate(Names const& seg_names,
+                  JSON const& pg_network,
+                  FixedAreaMap const& fixed_areas)
     {
+        if (seg_names.empty()) return;
+
         JSON decimated_json;
+
+        NameSet const seg_name_set(begin(seg_names), end(seg_names));
 
         // Trim seg_names joints by removing neighbor names that aren't
         // in this set.
@@ -78,14 +72,18 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
             decimated_json[joint_name] = pg_network.at(joint_name);  // Make mutable copy.
 
             auto& nbs = decimated_json[joint_name].at("neighbors");
+
             nbs.erase(std::remove_if(begin(nbs), end(nbs),
-            [&seg_names](auto const & nb_name) {
-                return seg_names.find(nb_name) == end(seg_names);
+            [&seg_name_set](auto const & nb_name) {
+                return seg_name_set.find(nb_name) == end(seg_name_set);
             }),
             end(nbs));
         }
 
-        return decimated_json;
+        std::string const& dec_name = "dec." + std::to_string(dec_id_++);
+
+        work_areas_.emplace_back(
+            std::make_unique<WorkArea>(dec_name, decimated_json, fixed_areas));
     }
 
     void analyse_pg_network(std::string const& leaf_name,
@@ -95,25 +93,11 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         // Verify that it's a leaf.
         DEBUG_NOMSG(pg_network.at(leaf_name).at("neighbors").size() != 1);
 
-        size_t dec_id = 0;
-        auto const create_det_wa = [&](NameSet const & seg_names) {
-            if (seg_names.empty()) return;
-
-            std::string const& dec_name = "dec." + std::to_string(dec_id++);
-            auto const& dec_json = decimate(pg_network, seg_names);
-            det_verse_.emplace_back(
-                std::make_unique<WorkArea>(dec_name, dec_json, fixed_areas));
-        };
-
         auto const is_bp = [&pg_network](std::string const & name) {
             return pg_network.at(name).at("neighbors").size() > 2;
         };
         auto const not_occupied = [&pg_network](std::string const & name) {
             return pg_network.at(name).at("occupant") == "";
-        };
-        auto const is_ndet = [&is_bp, &not_occupied](std::string const & name) {
-            // Non-deterministic means a branchpoint without specified occupant.
-            return is_bp(name) and not_occupied(name);
         };
 
         AdjacentNames adj_bps, adj_leaves;
@@ -139,7 +123,7 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
             for (auto const& nb_name : start_nbs) {
                 if (visited.find(nb_name) != end(visited)) continue;
 
-                NameSet seg_names = {start_name};
+                Names seg_names = {start_name};
                 // Collapse i.e. keep advancing name "pointer" until either
                 // leaf or another branchpoint is encountered.
 
@@ -150,17 +134,17 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
                 while (joint_nbs->size() == 2) {
                     // Not a branchpoint nor a leaf.
                     visited.insert(joint_name);
-                    seg_names.insert(joint_name);
+                    seg_names.push_back(joint_name);
 
                     // Break pg_network at occupied joint.
                     if (pg_network.at(joint_name).at("occupant") != "") {
-                        create_det_wa(seg_names);
+                        decimate(seg_names, pg_network, fixed_areas);
 
                         // Clear segment and re-insert current joint, which
                         // will be the beginning of the next decimated
                         // segment.
                         seg_names.clear();
-                        seg_names.insert(joint_name);
+                        seg_names.push_back(joint_name);
                     }
 
                     // Find next neighbor.
@@ -183,16 +167,11 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
                 // Upon exit of the while loop above, joint_name must be
                 // either a leaf or a branchpoint, which we need to
                 // include at the end of the current segment.
-                seg_names.insert(joint_name);
+                seg_names.push_back(joint_name);
 
                 auto const n_nbs = joint_nbs->size();
                 if (n_nbs == 1) {  // Leaf.
-                    if (is_ndet(start_name)) {
-                        sign_name(adj_leaves, start_name, joint_name);
-                    }
-                    else {
-                        create_det_wa(seg_names);
-                    }
+                    // sign_name(adj_leaves, start_name, joint_name);
                 }
                 else {  // Branchpoint.
                     if (joint_name == start_name) {
@@ -203,16 +182,11 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 
                     frontier.push_back(joint_name);
 
-                    if (is_ndet(start_name) or is_ndet(joint_name)) {
-                        if (is_bp(start_name) and is_bp(joint_name)) {
-                            sign_name(adj_bps, start_name, joint_name);
-                            sign_name(adj_bps, joint_name, start_name);
-                        }
-                    }
-                    else {
-                        create_det_wa(seg_names);
-                    }
+                    // sign_name(adj_bps, start_name, joint_name);
+                    // sign_name(adj_bps, joint_name, start_name);
                 }
+
+                decimate(seg_names, pg_network, fixed_areas);
             }
 
             frontier.pop_front();
@@ -268,15 +242,8 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
     }
 
     void solve() {
-        auto const solve_verse = [](WorkVerse & verse) {
-            for (auto& wa : verse)
-                wa->solve();
-        };
-
-        for (auto& verse : ndet_verses_)
-            solve_verse(verse);
-
-        solve_verse(det_verse_);
+        for (auto& wa : work_areas_)
+            wa->solve();
     }
 };
 
@@ -295,12 +262,12 @@ WorkPackage::WorkPackage(std::string const& pg_nw_name,
 WorkPackage::~WorkPackage() {}
 
 /* accessors */
-size_t WorkPackage::det_verse_size() const {
-    return pimpl_->det_verse_.size();
+size_t WorkPackage::n_work_areas() const {
+    return pimpl_->work_areas_.size();
 }
 
-WorkVerse const& WorkPackage::det_verse() const {
-    return pimpl_->det_verse_;
+WorkAreas const& WorkPackage::work_areas() const {
+    return pimpl_->work_areas_;
 }
 
 /* accessors */

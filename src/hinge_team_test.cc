@@ -23,8 +23,8 @@ TestStat HingeTeam::test() {
         TRACE_NOMSG(spec.work_packages().size() != 1);
         auto& wp = *begin(spec.work_packages());
 
-        TRACE_NOMSG(wp->det_verse_size() != 1);
-        auto& wv = wp->det_verse();
+        TRACE_NOMSG(wp->n_work_areas() != 1);
+        auto& wv = wp->work_areas();
 
         TRACE_NOMSG(wv.size() != 1);
         auto& wa = wv.at(0);
