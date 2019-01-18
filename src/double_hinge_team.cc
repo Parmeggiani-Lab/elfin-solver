@@ -183,8 +183,9 @@ void DoubleHingeTeam::virtual_implement_recipe(
 
 /* public */
 /* ctors */
-DoubleHingeTeam::DoubleHingeTeam(WorkArea const* wa) :
-    HingeTeam(wa),
+DoubleHingeTeam::DoubleHingeTeam(WorkArea const* const wa,
+                                 uint32_t const seed) :
+    HingeTeam(wa, seed),
     pimpl_(new_pimpl<PImpl>(*this))
 {
     DEBUG_NOMSG(wa->ptterm_profile.empty());
@@ -192,12 +193,12 @@ DoubleHingeTeam::DoubleHingeTeam(WorkArea const* wa) :
 }
 
 DoubleHingeTeam::DoubleHingeTeam(DoubleHingeTeam const& other) :
-    DoubleHingeTeam(other.work_area_) {
+    DoubleHingeTeam(other.work_area_, other.seed_) {
     HingeTeam::operator=(other);
 
 }
 DoubleHingeTeam::DoubleHingeTeam(DoubleHingeTeam&& other) :
-    DoubleHingeTeam(other.work_area_) {
+    DoubleHingeTeam(other.work_area_, other.seed_) {
     HingeTeam::operator=(std::move(other));
 }
 

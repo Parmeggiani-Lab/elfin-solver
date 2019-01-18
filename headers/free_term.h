@@ -41,7 +41,7 @@ struct FreeTerm : public Printable {
     /* accessors */
     bool operator==(FreeTerm const& other) const;
     bool operator!=(FreeTerm const& other) const { return not this->operator==(other); }
-    ProtoLink const& random_proto_link() const;
+    ProtoLink const& random_proto_link(uint32_t& seed) const;
     BridgeList find_bridges(FreeTerm const& dst) const;
     ProtoLink const* find_link_to(FreeTerm const& dst) const;
     ProtoTerm const& get_ptterm() const;

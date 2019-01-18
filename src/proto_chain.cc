@@ -14,8 +14,7 @@ ProtoTerm const& ProtoChain::get_term(TermType const term) const {
         return c_term_;
     }
     else {
-        bad_term(term);
-        throw ShouldNotReach();
+        throw BadTerminus(TermTypeToCStr(term));
     }
 }
 

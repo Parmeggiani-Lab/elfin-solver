@@ -46,11 +46,15 @@ public:
         }
     };
 
+    /* data */
+    uint32_t seed_;
+
     /* ctors */
-    NodeTeam(WorkArea const* const wa) : work_area_(wa) { reset(); }
-    NodeTeam(NodeTeam const& other) : work_area_(other.work_area_) { this->operator=(other); }
-    NodeTeam(NodeTeam&& other) : work_area_(other.work_area_) { this->operator=(std::move(other)); }
-    static NodeTeamSP create_team(WorkArea const* const work_area);
+    NodeTeam(WorkArea const* const wa, uint32_t const seed);
+    NodeTeam(NodeTeam const& other);
+    NodeTeam(NodeTeam&& other);
+    static NodeTeamSP create_team(WorkArea const* const work_area,
+                                  uint32_t const seed);
     void copy(NodeTeam const& other) { virtual_copy(other); }
     NodeTeamSP clone() const { return NodeTeamSP(virtual_clone()); }
 

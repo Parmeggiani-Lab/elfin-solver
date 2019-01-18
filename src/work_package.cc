@@ -17,16 +17,16 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 
     /* data */
     WorkVerse det_verse_;
-    WorkVerses undet_verses_;
+    WorkVerses ndet_verses_;
 
     UIModuleMap fake_occupants_;
 
     /* accessors */
-    WorkVerse const& get_best_undet_verse() const {
-        DEBUG_NOMSG(undet_verses_.empty());
+    WorkVerse const& get_best_ndet_verse() const {
+        DEBUG_NOMSG(ndet_verses_.empty());
 
         JUtil.error("FIXME: select best network variant.\n");
-        return undet_verses_.at(0);
+        return ndet_verses_.at(0);
     }
 
     SolutionMap make_solution_map() const {
@@ -39,8 +39,8 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 
         add_heaps(det_verse_);
 
-        if (not undet_verses_.empty()) {
-            add_heaps(get_best_undet_verse());
+        if (not ndet_verses_.empty()) {
+            add_heaps(get_best_ndet_verse());
         }
 
         return res;
@@ -111,8 +111,8 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
         auto const not_occupied = [&pg_network](std::string const & name) {
             return pg_network.at(name).at("occupant") == "";
         };
-        auto const is_undet = [&is_bp, &not_occupied](std::string const & name) {
-            // Undetermined means a branchpoint without specified occupant.
+        auto const is_ndet = [&is_bp, &not_occupied](std::string const & name) {
+            // Non-deterministic means a branchpoint without specified occupant.
             return is_bp(name) and not_occupied(name);
         };
 
@@ -187,7 +187,7 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 
                 auto const n_nbs = joint_nbs->size();
                 if (n_nbs == 1) {  // Leaf.
-                    if (is_undet(start_name)) {
+                    if (is_ndet(start_name)) {
                         sign_name(adj_leaves, start_name, joint_name);
                     }
                     else {
@@ -203,7 +203,7 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
 
                     frontier.push_back(joint_name);
 
-                    if (is_undet(start_name) or is_undet(joint_name)) {
+                    if (is_ndet(start_name) or is_ndet(joint_name)) {
                         if (is_bp(start_name) and is_bp(joint_name)) {
                             sign_name(adj_bps, start_name, joint_name);
                             sign_name(adj_bps, joint_name, start_name);
@@ -273,7 +273,7 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
                 wa->solve();
         };
 
-        for (auto& verse : undet_verses_)
+        for (auto& verse : ndet_verses_)
             solve_verse(verse);
 
         solve_verse(det_verse_);

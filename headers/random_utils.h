@@ -4,7 +4,6 @@
 #include <vector>
 #include <random>
 
-#include "parallel_utils.h"
 #include "debug_utils.h"
 
 namespace elfin {
@@ -13,22 +12,14 @@ struct TestStat;
 
 namespace random {
 
-namespace {
-
-extern std::vector<std::mt19937> TWISTERS;
-
-}  /* (anonymous) */
-
-// Create per-thread Mersenne Twisters with different seeds.
-void init();
-
-float get_dice_0to1();
-
-static inline size_t get_dice(size_t const ceiling) {
-    if (ceiling == 0) return 0;
-    return (size_t) std::round(get_dice_0to1() * (ceiling - 1));
+static inline float get_dice_0to1(uint32_t& seed) {
+    return (float) rand_r(&seed) / RAND_MAX;
 }
 
+static inline size_t get_dice(size_t const ceiling, uint32_t& seed) {
+    if (ceiling == 0) return 0;
+    return std::round(get_dice_0to1(seed) * (ceiling - 1));
+}
 
 
 /* Container SFINAE helpers */
@@ -54,10 +45,10 @@ template < class Container,
                             !std::is_const<Container>::value > * = nullptr >
 static inline
 typename Container::value_type
-pop(Container& v) {
+pop(Container& v, uint32_t& seed) {
     DEBUG_NOMSG(v.empty());
 
-    size_t const idx = get_dice(v.size());
+    size_t const idx = get_dice(v.size(), seed);
     typename Container::value_type ret = v.at(idx);
 
     // https://stackoverflow.com/questions/9218724/get-random-element-and-remove-it
@@ -73,9 +64,9 @@ template < typename Container,
                                      Container >::type* = nullptr >
 static inline
 typename Container::value_type &
-pick(Container & v) {
+pick(Container & v, uint32_t& seed) {
     DEBUG_NOMSG(v.empty());
-    return v.at(get_dice(v.size()));
+    return v.at(get_dice(v.size(), seed));
 }
 
 template < typename Container,
@@ -84,11 +75,11 @@ template < typename Container,
                                      Container >::type* = nullptr >
 static inline
 typename Container::value_type &
-pick(Container & v) {
+pick(Container & v, uint32_t& seed) {
     // O(n) complexity!
     DEBUG_NOMSG(v.empty());
     auto itr = begin(v);
-    advance(itr, get_dice(v.size()));
+    advance(itr, get_dice(v.size(), seed));
     return *itr;
 }
 
@@ -96,13 +87,13 @@ pick(Container & v) {
 template<class Container>
 static inline
 typename Container::value_type const &
-pick(Container const& v) {
-    return pick(const_cast<Container&>(v));
+pick(Container const& v, uint32_t& seed) {
+    return pick(const_cast<Container&>(v), seed);
 }
 
 TestStat test();
 
-}
+}  /* random */
 
 }  /* elfin */
 

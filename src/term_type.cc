@@ -11,10 +11,6 @@ std::unordered_set<std::string> const VALID_TERM_NAMES = {
     "C"
 };
 
-void bad_term(TermType const term) {
-    throw BadTerminus(TermTypeToCStr(term));
-}
-
 TermType opposite_term(TermType const term) {
     if (term == TermType::N) {
         return TermType::C;
@@ -23,8 +19,7 @@ TermType opposite_term(TermType const term) {
         return TermType::N;
     }
     else {
-        bad_term(term);
-        throw ShouldNotReach();
+        throw BadTerminus(TermTypeToCStr(term));
     }
 }
 

@@ -37,7 +37,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
                   prot->free_terms().size(),
                   exclude_ft);
 
-            auto ft = random::pop(prot_free_terms);
+            auto ft = random::pop(prot_free_terms, _.seed_);
 
             if (not (exclude_ft and
                      exclude_ft->chain_id == ft.chain_id and
@@ -96,7 +96,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
                       FreeTerm::Bridge const* bridge = nullptr)
     {
         if (not bridge) {
-            bridge = &random::pick(insert_point.bridges);
+            bridge = &random::pick(insert_point.bridges, _.seed_);
         }
 
         FreeTerm const& port1 = insert_point.src;
@@ -226,7 +226,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
                 // Calculate next iteration condition - linearly falling
                 // probability.
                 p = (_.size() - 1) / original_size;
-                next_loop = random::get_dice_0to1() <= p;
+                next_loop = random::get_dice_0to1(_.seed_) <= p;
 
                 // Check node is tip node.
                 size_t const num_links = tip_node->links().size();
@@ -337,7 +337,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
             // than hinge_).
             if (not delete_points.empty()) {
                 // Delete a node using a random deletable point.
-                auto const& delete_point = random::pick(delete_points);
+                auto const& delete_point = random::pick(delete_points, _.seed_);
                 if (delete_point.skipper) {
                     //
                     // This is NOT a tip node. Need to do some clean up
@@ -455,7 +455,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
         // than hinge_).
         if (not insert_points.empty()) {
             // Insert a node using a random insert point
-            auto const& insert_point = random::pick(insert_points);
+            auto const& insert_point = random::pick(insert_points, _.seed_);
             if (insert_point.dst.node) {
                 // This is a non-tip node.
                 build_bridge(insert_point);
@@ -560,7 +560,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
         // be swapped.
         if (not swap_points.empty()) {
             // Insert a node using a random insert point.
-            auto const& swap_point = random::pick(swap_points);
+            auto const& swap_point = random::pick(swap_points, _.seed_);
             if (swap_point.dst.node) {
                 // This is a non-tip node.
                 _.nodes_.erase(swap_point.del_node);
@@ -608,7 +608,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
             }
 
             if (not cross_points.empty()) {
-                auto const& cp = random::pick(cross_points);
+                auto const& cp = random::pick(cross_points, _.seed_);
 
                 // Make copies.
                 Link m_arrow = *cp.m_arrow;
@@ -632,7 +632,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
     bool regenerate() {
         if (_.nodes_.empty()) {
             // Pick random initial member.
-            _.add_node(XDB.basic_mods().draw());
+            _.add_node(XDB.basic_mods().draw(_.seed_));
         }
 
         while (_.size() < _.work_area_->target_size) {
@@ -657,10 +657,12 @@ PathTeam* PathTeam::virtual_clone() const {
 
 FreeTerm PathTeam::get_mutable_term() const
 {
-    return random::pick(free_terms_);
+    auto seed_copy = seed_;
+    return random::pick(free_terms_, seed_copy);
 }
 
-NodeKey PathTeam::get_tip(bool const mutable_hint) const {
+NodeKey PathTeam::get_tip(bool const mutable_hint) const
+{
     return get_mutable_term().node;
 }
 
@@ -722,7 +724,7 @@ NodeKey PathTeam::grow_tip(FreeTerm const& free_term_a,
                            bool const innert)
 {
     if (not pt_link) {
-        pt_link = &free_term_a.random_proto_link();
+        pt_link = &free_term_a.random_proto_link(seed_);
     }
 
     auto node_a = free_term_a.node;
@@ -888,16 +890,16 @@ void PathTeam::virtual_implement_recipe(
 
 /* public */
 /* ctors */
-PathTeam::PathTeam(WorkArea const* wa) :
-    NodeTeam(wa),
+PathTeam::PathTeam(WorkArea const* const wa, uint32_t const seed_) :
+    NodeTeam(wa, seed_),
     pimpl_(new_pimpl<PImpl>(*this)) {}
 
 PathTeam::PathTeam(PathTeam const& other) :
-    PathTeam(other.work_area_)
+    PathTeam(other.work_area_, other.seed_)
 { this->operator=(other); }
 
 PathTeam::PathTeam(PathTeam&& other) :
-    PathTeam(other.work_area_)
+    PathTeam(other.work_area_, other.seed_)
 { this->operator=(std::move(other)); }
 
 /* dtors */
@@ -905,6 +907,7 @@ PathTeam::~PathTeam() {}
 
 /* accessors */
 PathGenerator PathTeam::gen_path() const {
+    auto seed_copy = seed_;
     return PathGenerator(get_tip(/*mutable_hint=*/false));
 }
 
@@ -974,7 +977,7 @@ mutation::Mode PathTeam::evolve(NodeTeam const& mother,
     while (not mutate_success and not modes.empty()) {
         mutation_invariance_check();
 
-        mode = random::pop(modes);
+        mode = random::pop(modes, seed_);
         switch (mode) {
         case mutation::Mode::ERODE:
             mutate_success = pimpl_->erode_mutate();

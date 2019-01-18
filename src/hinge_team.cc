@@ -19,7 +19,7 @@ struct HingeTeam::PImpl : public PImplBase<HingeTeam> {
 
         // There can be 1 or 2 occupied joints. Allow size of 2 for
         // DoubleHingeTeam.
-        auto const& [oname, ojoint] = random::pick(omap);
+        auto const& [oname, ojoint] = random::pick(omap, _.seed_);
         _.hinge_ui_joint_ = ojoint;
 
         // Place hinge node.
@@ -56,6 +56,7 @@ HingeTeam* HingeTeam::virtual_clone() const {
 FreeTerm HingeTeam::get_mutable_term() const
 {
     // If the only node is the hinge, then return random free term from hinge.
+    auto seed_copy = seed_;
     if (size() == 1) {
         // It's guranteed that there are active free terminus from src hinge,
         // because WorkArea throws exception when there isn't.
@@ -65,7 +66,7 @@ FreeTerm HingeTeam::get_mutable_term() const
                 active_fts.push_back(ft);
             }
         }
-        auto const& rand_hinge_ft = random::pick(active_fts);
+        auto const& rand_hinge_ft = random::pick(active_fts, seed_copy);
 
         FreeTerm ft(hinge_, rand_hinge_ft.chain_id, rand_hinge_ft.term);
         ft.should_restore = false;
@@ -77,7 +78,8 @@ FreeTerm HingeTeam::get_mutable_term() const
     }
 }
 
-NodeKey HingeTeam::get_tip(bool const mutable_hint) const {
+NodeKey HingeTeam::get_tip(bool const mutable_hint) const
+{
     if (mutable_hint) {
         DEBUG(size() == 1, "Cannot request mutable tip when team has only hinge.\n");
 
@@ -200,8 +202,10 @@ void HingeTeam::virtual_implement_recipe(
 
 /* public */
 /* ctors */
-HingeTeam::HingeTeam(WorkArea const* wa, bool const loose) :
-    PathTeam(wa),
+HingeTeam::HingeTeam(WorkArea const* const wa,
+                     uint32_t const seed,
+                     bool const loose) :
+    PathTeam(wa, seed),
     pimpl_(new_pimpl<PImpl>(*this)),
     score_func_(loose ?
                 scoring::score_aligned :
@@ -214,11 +218,11 @@ HingeTeam::HingeTeam(WorkArea const* wa, bool const loose) :
 }
 
 HingeTeam::HingeTeam(HingeTeam const& other) :
-    HingeTeam(other.work_area_)
+    HingeTeam(other.work_area_, other.seed_)
 { HingeTeam::operator=(other); }
 
 HingeTeam::HingeTeam(HingeTeam&& other)  :
-    HingeTeam(other.work_area_)
+    HingeTeam(other.work_area_, other.seed_)
 { HingeTeam::operator=(std::move(other)); }
 
 /* dtors */

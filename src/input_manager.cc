@@ -1,7 +1,7 @@
 #include "input_manager.h"
 
 #include "arg_parser.h"
-#include "random_utils.h"
+#include "parallel_utils.h"
 
 namespace elfin {
 
@@ -63,7 +63,6 @@ void InputManager::parse(int const argc, char const** const argv, bool const ski
     setup_cutoffs();
 
     parallel::init();
-    random::init();
 }
 
 }  /* elfin */

@@ -31,7 +31,7 @@ TestStat HingeTeam::test() {
 
         // Initialize HingeTeam, copy hinge transform, build from recipe than
         // apply transform.
-        HingeTeam team(wa.get());
+        HingeTeam team(wa.get(), OPTIONS.seed);
 
         // Make a copy of the tx because it's gonna get clear()'ed.
         auto hinge_tx = team.hinge_->tx_;

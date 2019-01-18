@@ -233,12 +233,14 @@ struct EvolutionSolver::PImpl {
         // Activate ProtoTerm profile if there is one.
         InputManager::mutable_xdb().activate_ptterm_profile(work_area.ptterm_profile);
 
+        auto seed = OPTIONS.seed;  // Reentrant seed.
+        
         while (OPTIONS.ga_max_restarts == 0 or
                 restart_id < OPTIONS.ga_max_restarts) {
             should_restart_ga_ = false;
 
             // Initialize population and solution list.
-            Population population = Population(&work_area);
+            Population population = Population(&work_area, seed);
 
             print_start_msg(work_area);
 

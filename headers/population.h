@@ -21,7 +21,7 @@ protected:
 
 public:
     /* ctors */
-    Population(WorkArea const* work_area);
+    Population(WorkArea const* work_area, uint32_t& seed);
 
     /* dtors */
     virtual ~Population();

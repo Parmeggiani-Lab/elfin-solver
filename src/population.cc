@@ -35,7 +35,7 @@ void print_mutation_ratios(mutation::ModeList const& mode_tally) {
 
 /* public */
 /* ctors */
-Population::Population(WorkArea const* work_area) {
+Population::Population(WorkArea const* work_area, uint32_t& seed) {
     TIMING_START(init_start_time);
     {
         size_t const pop_size = OPTIONS.ga_pop_size;
@@ -47,15 +47,26 @@ Population::Population(WorkArea const* work_area) {
         NodeTeams* new_front_buffer = &teams[0];
         NodeTeams* new_back_buffer = &teams[1];
 
-        // Must pre allocate for parallel assignment
+        // Pre allocation required for parallel assignment.
         new_front_buffer->resize(pop_size);
         new_back_buffer->resize(pop_size);
 
+        // Create seeds. This needs to be done on a single thread for reproducibilitiy.
+        std::vector<uint32_t> seeds(pop_size, 0);
+        {
+            for (size_t i = 0; i < pop_size; i++) {
+                seeds[i] = rand_r(&seed);
+            }
+        }
+
         OMP_PAR_FOR
         for (size_t i = 0; i < pop_size; i++) {
-            new_back_buffer->at(i) = NodeTeam::create_team(work_area);
+            auto seed = seeds.at(i);
+            new_back_buffer->at(i) = NodeTeam::create_team(work_area, seed);
             new_back_buffer->at(i)->randomize();
-            new_front_buffer->at(i) = NodeTeam::create_team(work_area);
+
+            auto const next_seed = rand_r(&seed);
+            new_front_buffer->at(i) = NodeTeam::create_team(work_area, seed);
         }
 
         front_buffer_ = new_front_buffer;
@@ -89,10 +100,10 @@ void Population::evolve() {
             else {
                 // Choose parents.
                 size_t const mother_id =
-                    random::get_dice(CUTOFFS.survivors);
+                    random::get_dice(CUTOFFS.survivors, team->seed_);
                 auto& mother_team = back_buffer_->at(mother_id);
                 size_t const father_id =
-                    random::get_dice(CUTOFFS.survivors);
+                    random::get_dice(CUTOFFS.survivors, team->seed_);
                 auto& father_team = back_buffer_->at(father_id);
 
                 mode = team->evolve(*mother_team, *father_team);

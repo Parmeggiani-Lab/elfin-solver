@@ -48,7 +48,7 @@ public:
 
     /* accessors */
     PtLinks const& links() const { return links_; }
-    ProtoLink const& pick_random_link(TermType const term) const;
+    ProtoLink const& pick_random_link(TermType const term, uint32_t& seed) const;
     PtLinkKeySet const& link_set() const { return link_set_; }
     PtLinkKey find_link_to(PtModKey const dst_module,
                            size_t const dst_chain_id,

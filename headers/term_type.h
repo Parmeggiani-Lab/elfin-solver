@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_set>
 
-#include "random_utils.h"
+#include "jutil.h"
 #include "debug_utils.h"
 
 namespace elfin {
@@ -18,8 +18,6 @@ namespace elfin {
 GEN_ENUM_AND_STRING(TermType, TermTypeNames, FOREACH_TERMTYPE);
 
 extern std::unordered_set<std::string> const VALID_TERM_NAMES;
-
-void bad_term(TermType const term);
 
 TermType opposite_term(TermType const term);
 

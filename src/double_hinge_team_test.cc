@@ -29,7 +29,7 @@ TestStat DoubleHingeTeam::test() {
 
         // Initialize DoubleHingeTeam, copy hinge transform, build from recipe than
         // apply transform.
-        DoubleHingeTeam team(wa.get());
+        DoubleHingeTeam team(wa.get(), OPTIONS.seed);
 
         auto const& recipe = tests::H_2H_RECIPE;
         auto const& omap = wa->occupied_joints;

@@ -44,7 +44,9 @@ protected:
 
 public:
     /* ctors */
-    HingeTeam(WorkArea const* wa, bool const loose = false);
+    HingeTeam(WorkArea const* const wa,
+              uint32_t const seed,
+              bool const loose = false);
     HingeTeam(HingeTeam const& other);
     HingeTeam(HingeTeam&& other);
 

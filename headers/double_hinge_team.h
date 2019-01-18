@@ -29,7 +29,7 @@ protected:
                                           Transform const& shift_tx);
 public:
     /* ctors */
-    DoubleHingeTeam(WorkArea const* wa);
+    DoubleHingeTeam(WorkArea const* const wa, uint32_t const seed);
     DoubleHingeTeam(DoubleHingeTeam const& other);
     DoubleHingeTeam(DoubleHingeTeam&& other);
 

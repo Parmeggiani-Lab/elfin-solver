@@ -27,7 +27,7 @@ TestStat PathTeam::test() {
         TRACE_NOMSG(wv.size() != 1);
         auto& wa = wv.at(0);
 
-        PathTeam team(wa.get());
+        PathTeam team(wa.get(), OPTIONS.seed);
         team.implement_recipe(recipe);
 
         size_t const n_free_terms = team.free_terms_.size();
@@ -82,7 +82,7 @@ TestStat PathTeam::test() {
     {
         ts.tests++;
 
-        PathTeam team(nullptr);
+        PathTeam team(nullptr, OPTIONS.seed);
 
         // Don't call the public implement_recipe() because that in turn calls
         // calc_score(), which requires non nullptr work_area_.

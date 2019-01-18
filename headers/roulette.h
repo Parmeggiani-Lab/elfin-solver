@@ -50,7 +50,7 @@ public:
     ItemList const& items() const { return items_; }
     CummProbDist const& cpd() const { return cpd_; }
     size_t total() const { return total_; }
-    ItemType const& draw() const {
+    ItemType const& draw(uint32_t& seed) const {
         TRACE_NOMSG(cpd_.empty());
         DEBUG(cpd_.size() != items_.size(),
               "cml_sum size=%zu but container size=%zu\n",
@@ -59,7 +59,7 @@ public:
         auto itr = std::upper_bound(
                        begin(cpd_),
                        end(cpd_),
-                       random::get_dice(total_)
+                       random::get_dice(total_, seed)
                    );
         return items_.at(itr - begin(cpd_));
     }

@@ -10,16 +10,18 @@ namespace elfin {
 
 /* public */
 /* accessors */
-ProtoLink const& ProtoTerm::pick_random_link(TermType const term) const {
+ProtoLink const& ProtoTerm::pick_random_link(
+    TermType const term,
+    uint32_t& seed) const
+{
     if (term == TermType::N) {
-        return *n_roulette_.draw();
+        return *n_roulette_.draw(seed);
     }
     else if (term == TermType::C) {
-        return *c_roulette_.draw();
+        return *c_roulette_.draw(seed);
     }
     else {
-        bad_term(term);
-        throw ShouldNotReach();
+        throw BadTerminus(TermTypeToCStr(term));
     }
 }
 

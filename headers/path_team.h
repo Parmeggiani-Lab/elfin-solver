@@ -64,7 +64,7 @@ protected:
                                           Transform const& shift_tx);
 public:
     /* ctors */
-    PathTeam(WorkArea const* wa);
+    PathTeam(WorkArea const* const wa, uint32_t const seed);
     PathTeam(PathTeam const& other);
     PathTeam(PathTeam&& other);
 

@@ -31,7 +31,7 @@ TestStat PathGenerator::test() {
         TRACE_NOMSG(wv.size() != 1);
         auto& wa = wv.at(0);
 
-        PathTeam team(wa.get());
+        PathTeam team(wa.get(), OPTIONS.seed);
         team.implement_recipe(tests::QUARTER_SNAKE_FREE_RECIPE);
 
         auto const& points = team.gen_path().collect_points();
