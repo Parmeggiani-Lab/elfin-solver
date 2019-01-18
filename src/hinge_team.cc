@@ -41,7 +41,9 @@ struct HingeTeam::PImpl : public PImplBase<HingeTeam> {
         auto const& omap = _.work_area_->occupied_joints;
 
         auto const itr = omap.find(first_step.ui_name);
-        DEBUG_NOMSG(itr == end(omap));
+        DEBUG(itr == end(omap),
+              "Could not find UIJoint with name: %s\n",
+              first_step.ui_name.c_str());
 
         return itr->second;
     }
