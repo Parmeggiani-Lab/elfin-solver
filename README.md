@@ -7,16 +7,13 @@ The `master` branch is under development and is not fully functional. The old v1
 
 git clone --depth 1 git@github.com:joy13975/elfin-solver.git
 cd elfin-solver
-git submodule update --init --recursive
 
 ```
 
-### To Update
+### To Complete Setup (or to update)
 ```Bash
 
-git pull
-git submodule update
-./fetch_db
+./update
 
 ```
 
