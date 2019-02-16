@@ -2,6 +2,12 @@
 
 The `master` branch is under development and is not fully functional. The old v1 version and documentation is preserved in branch `v1`.
 
+### Compiler
+
+Any C++17 compliant compiler should work, but I have only tested using gcc-5 and gcc-8.
+
+Get gcc [here](https://gcc.gnu.org/).
+
 ### To Download
 ```Bash
 
