@@ -13,16 +13,13 @@ Get gcc [here](https://gcc.gnu.org/).
 
 git clone --depth 1 git@github.com:joy13975/elfin-solver.git
 cd elfin-solver
-git submodule update --init --recursive
 
 ```
 
-### To Update
+### To Complete Setup (or to update)
 ```Bash
 
-git pull
-git submodule update
-./fetch_db
+./update
 
 ```
 
