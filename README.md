@@ -1,12 +1,13 @@
 # elfin-solver [![Build Status](https://travis-ci.com/joy13975/elfin-solver.svg?branch=master)](https://travis-ci.com/joy13975/elfin-solver)
 
-The `master` branch is under development and is not fully functional. The old v1 version and documentation is preserved in branch `v1`.
+The `master` branch is under development but has main features working. The old v1 version and documentation is preserved in branch `v1`.
 
 ### Compiler
 
-Any C++17 compliant compiler should work, but I have only tested using gcc-5 and gcc-8.
+Any C++17 compliant compiler should work, but I have only tested using gcc-5 and gcc-8. 
+Important: If you are a Mac user, be sure to swap out Clang for gcc because you will get libiomp complaints.
 
-Get gcc [here](https://gcc.gnu.org/).
+Get gcc [somehow](https://gcc.gnu.org/). For Macs it's simplest to install through homebrew with `brew install gcc --without-multilib`.
 
 ### To Download
 ```Bash
