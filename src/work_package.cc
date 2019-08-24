@@ -296,7 +296,7 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
             tmp.push(wl);
             auto const wa_key = wl->key;
             auto const& leaves = wa_key->leaf_joints;
-            JUtil.error("%s to %s, dist: %.4f, wa: %p\n",
+            JUtil.info("WaLink info: %s to %s, dist: %.4f, wa: %p\n",
                         leaves.at(0)->name.c_str(), leaves.at(1)->name.c_str(), wl->sum_pg_dist, wa_key);
         }
         wl_heap_ = tmp;
