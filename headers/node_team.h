@@ -48,7 +48,7 @@ public:
 
     /* data */
     uint32_t seed_;
-    float collision_penalty_ = INFINITY;
+    float collision_penalty_ = 0.0f;
 
     /* ctors */
     NodeTeam(WorkArea const* const wa, uint32_t const seed);
