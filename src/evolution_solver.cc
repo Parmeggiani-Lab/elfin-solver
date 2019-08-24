@@ -60,7 +60,7 @@ struct EvolutionSolver::PImpl {
         tot_gen_time += gen_time;
 
         // Print score stats.
-        JUtil.info("GA Restart #%zu Generation #%zu Total Iterations #%zu\n"
+        JUtil.info("GA Restart #%zu Generation #%zu Total Iteration #%zu\n"
                    "  -  [best %.2f (cksm:%x, %.2f/module), worst %.2f, %.0fms]\n",
                    restart_id,
                    gen_id,
@@ -178,7 +178,7 @@ struct EvolutionSolver::PImpl {
             JUtil.warn("Reached max restarts (%zu)\n", OPTIONS.ga_max_restarts);
         }
 
-        JUtil.info("Total: %zu iterations\n", itr_id + 1);
+        JUtil.info("Total: %zu iterations\n", itr_id);
 
         double const time_elapsed_in_us = JUtil.get_timestamp_us() - start_time_in_us_;
         size_t const minutes = std::floor(time_elapsed_in_us / 1e6 / 60.0f);

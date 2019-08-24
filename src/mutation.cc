@@ -9,11 +9,11 @@ namespace elfin {
 namespace mutation {
 
 std::unordered_set<Mode> const disabled_modes = {
-    // Mode::ERODE,
+    // Mode::ERODE, //!
     // Mode::DELETE,
-    // Mode::INSERT,
+    // Mode::INSERT, //!
     // Mode::SWAP,
-    // Mode::CROSS,
+    // Mode::CROSS, // problem with combination
     // Mode::REGENERATE
 };
 

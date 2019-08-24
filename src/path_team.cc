@@ -773,6 +773,7 @@ void PathTeam::remove_free_terms(NodeKey const node) {
 void PathTeam::evaluate() {
     calc_checksum();
     calc_score();
+    penalize_collision();
 }
 
 void PathTeam::calc_checksum() {
@@ -804,8 +805,7 @@ void PathTeam::calc_score() {
 
     score_ = INFINITY;
 
-    auto tip = get_tip(/*mutable_hint=*/false);
-    auto const& my_points = PathGenerator(tip).collect_points();
+    auto const& my_points = gen_path().collect_points();
 
     auto const& [fwd_ui_key, fwd_path] = *begin(work_area_->path_map);
     float const fwd_score = scoring::score_aligned(my_points, fwd_path);
@@ -821,6 +821,10 @@ void PathTeam::calc_score() {
         score_ = bwd_score;
         scored_path_ = &bwd_path;
     }
+}
+
+void PathTeam::penalize_collision() {
+    // auto path = gen_path();
 }
 
 void PathTeam::virtual_implement_recipe(
@@ -907,7 +911,6 @@ PathTeam::~PathTeam() {}
 
 /* accessors */
 PathGenerator PathTeam::gen_path() const {
-    auto seed_copy = seed_;
     return PathGenerator(get_tip(/*mutable_hint=*/false));
 }
 

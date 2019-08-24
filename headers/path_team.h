@@ -58,6 +58,7 @@ protected:
     virtual void evaluate();
     virtual void calc_checksum();
     virtual void calc_score();
+    virtual void penalize_collision();
     // For testing: builds node team from recipe and returns the starting node.
     virtual void virtual_implement_recipe(tests::Recipe const& recipe,
                                           FirstLastNodeKeyCallback const& postprocessor,
