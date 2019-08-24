@@ -824,7 +824,36 @@ void PathTeam::calc_score() {
 }
 
 void PathTeam::penalize_collision() {
-    // auto path = gen_path();
+    // Check for collision based on module distance and radii
+    auto path = gen_path();
+    std::vector<Vector3f> points;
+    std::vector<float> sq_radii;
+    while (not path.is_done()) {
+        auto node = path.next();
+        points.emplace_back(node->tx_.collapsed());
+        auto const r =  node->prototype_->radius;
+        sq_radii.emplace_back(r * r);
+    }
+    auto const n = points.size();
+    bool colliding = false;
+    for (int i = 0; i < n; ++i) {
+        auto p1 = points.at(i);
+        auto r1 = sq_radii.at(i);
+        for (int j = 0; j < n; ++j) {
+            if (j == i) continue;
+            auto p2 = points.at(j);
+            auto max_sq_radii = max(r1, sq_radii.at(j));
+            if (p1.sq_dist_to(p2) < max_sq_radii) {
+                colliding = true;
+                break;
+            }
+        }
+    }
+
+    // Penalize score if there's collision
+    if (colliding) {
+        score_ += score_ * collision_penalty_;
+    }
 }
 
 void PathTeam::virtual_implement_recipe(

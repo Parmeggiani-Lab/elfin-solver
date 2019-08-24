@@ -214,6 +214,11 @@ ARG_PARSER_CALLBACK_DEF(set_avg_pair_dist) {
     return true;
 }
 
+ARG_PARSER_CALLBACK_DEF(set_collision_penalty) {
+    options_.collision_penalty = JUtil.parse_float(arg_in.c_str());
+    return true;
+}
+
 ARG_PARSER_CALLBACK_DEF(set_seed) {
     options_.seed = JUtil.parse_long(arg_in.c_str());
     return true;
@@ -287,6 +292,11 @@ ARG_PARSER_CALLBACK_DEF(set_keep_n) {
 
 ARG_PARSER_CALLBACK_DEF(set_dry_run) {
     options_.dry_run = true;
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_radius_factor) {
+    options_.radius_factor = JUtil.parse_float(arg_in.c_str());
     return true;
 }
 

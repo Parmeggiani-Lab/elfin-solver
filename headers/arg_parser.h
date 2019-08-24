@@ -93,6 +93,14 @@ private:
             true,
             &ArgParser::set_avg_pair_dist
         },
+        {   "cp",
+            "collision_penalty",
+            string_format("Set factor applied score when collision is detected (default=%.3f). "
+            "Value of 0 means no penalty.",
+            options_.collision_penalty),
+            true,
+            &ArgParser::set_collision_penalty
+        },
         {   "r",
             "radius",
             string_format("Set radius type (default=%s).\n"
@@ -101,6 +109,14 @@ private:
             radius_types_setting_string().c_str()),
             true,
             &ArgParser::set_radius_type
+        },
+        {   "rf",
+            "radius factor",
+            string_format("Set radius factor for more or less sensitive collision detection (default=%.3f). "
+            "Value of 0 is synonymous to no collision detection.",
+            options_.radius_factor),
+            true,
+            &ArgParser::set_radius_factor
         },
         {   "S",
             "seed",
@@ -234,6 +250,8 @@ private:
     ARG_CALLBACK_DECL(set_keep_n);
     ARG_CALLBACK_DECL(set_dry_run);
     ARG_CALLBACK_DECL(set_radius_type);
+    ARG_CALLBACK_DECL(set_radius_factor);
+    ARG_CALLBACK_DECL(set_collision_penalty);
 
     /* printers */
     ARG_CALLBACK_DECL(help_and_exit);

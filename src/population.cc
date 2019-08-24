@@ -62,11 +62,19 @@ Population::Population(WorkArea const* work_area, uint32_t& seed) {
         OMP_PAR_FOR
         for (size_t i = 0; i < pop_size; i++) {
             auto seed = seeds.at(i);
-            new_back_buffer->at(i) = NodeTeam::create_team(work_area, seed);
-            new_back_buffer->at(i)->randomize();
+            {
+                auto team = NodeTeam::create_team(work_area, seed);
+                team->collision_penalty_ = OPTIONS.collision_penalty;
+                new_back_buffer->at(i) = std::move(team);
+                new_back_buffer->at(i)->randomize();
+            }
 
-            auto const next_seed = rand_r(&seed);
-            new_front_buffer->at(i) = NodeTeam::create_team(work_area, seed);
+            {   
+                auto const next_seed = rand_r(&seed);
+                auto team = NodeTeam::create_team(work_area, seed);
+                team->collision_penalty_ = OPTIONS.collision_penalty;
+                new_front_buffer->at(i) = std::move(team);
+            }
         }
 
         front_buffer_ = new_front_buffer;

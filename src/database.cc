@@ -188,7 +188,7 @@ void Database::parse(Options const& options) {
             chain_names.push_back(chain_name);
         }
 
-        float const radius = json.at("radii")[options.radius_type];
+        float const radius = ((float) json.at("radii")[options.radius_type]) * options.radius_factor;
 
         all_mods_.push_back(
             std::make_unique<ProtoModule>(

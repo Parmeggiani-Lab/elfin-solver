@@ -18,6 +18,8 @@ struct Options {
 
     // Run elfinpy/stat_xdb.py to find this number with the latest xdb.json
     float avg_pair_dist = 39.016398521130355;
+    float radius_factor = 1.1f;
+    float collision_penalty = 0.5f;
 
     /* GA parameters */
     uint32_t seed = 0x1337cafe;
