@@ -2,6 +2,7 @@
 
 #include "debug_utils.h"
 #include "exceptions.h"
+#include "proto_module.h"
 
 namespace elfin {
 
@@ -18,9 +19,9 @@ ProtoTerm const& ProtoChain::get_term(TermType const term) const {
     }
 }
 
-void ProtoChain::configure() {
-    n_term_.configure();
-    c_term_.configure();
+void ProtoChain::configure(std::string const& mod_name) {
+    n_term_.configure(mod_name, name, TermType::N);
+    c_term_.configure(mod_name, name, TermType::C);
 }
 
 }  /* elfin */

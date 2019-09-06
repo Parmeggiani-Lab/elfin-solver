@@ -27,7 +27,8 @@ public:
 
     /* ctors */
     ProtoChain(std::string const& _name, size_t const _id) :
-        name(_name), id(_id) {}
+        name(_name), id(_id) {
+    }
     ProtoChain(ProtoChain const& other) :
         ProtoChain(other.name, other.id) {}
 
@@ -40,7 +41,7 @@ public:
     ProtoTerm const& c_term() const { return c_term_; }
 
     /* modifiers */
-    void configure();
+    void configure(std::string const& mod_name);
 };
 
 }  /* elfin */

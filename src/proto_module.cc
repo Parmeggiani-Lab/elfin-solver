@@ -175,7 +175,7 @@ void ProtoModule::configure() {
     free_terms_.clear();
 
     for (ProtoChain& proto_chain : chains_) {
-        proto_chain.configure();
+        proto_chain.configure(name);
 
         if (not proto_chain.n_term().links().empty() and
                 proto_chain.n_term().is_active()) {

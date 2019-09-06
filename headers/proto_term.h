@@ -7,6 +7,10 @@
 #include "proto_link.h"
 #include "term_type.h"
 #include "roulette.h"
+#include "checksum.h"
+
+// Forward declare
+class ProtoModule;
 
 namespace elfin {
 
@@ -37,6 +41,7 @@ private:
     PtLinkRoulette n_roulette_, c_roulette_;
     PtLinkKeySet link_set_;
     bool active_ = true;
+    Crc32 checksum_ = 0;
 
 public:
     /* ctors */
@@ -54,9 +59,13 @@ public:
                            size_t const dst_chain_id,
                            TermType const term) const;
     bool is_active() const { return active_; }
+    Crc32 checksum() const { return checksum_; }
 
     /* modifiers */
-    void configure();
+    void configure(
+        std::string const& mod_name,
+        std::string const& chain_name,
+        TermType const term);
     void activate() { active_ = true; }
     void deactivate() { active_ = false; }
 };

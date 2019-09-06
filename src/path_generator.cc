@@ -57,12 +57,12 @@ Crc32 PathGenerator::checksum() {
 
         // The last curr_link_ is null.
         if (curr_link_) {
-            auto const src_ptterm_ptr = &curr_link_->src().get_ptterm();
-            auto const dst_ptterm_ptr = &curr_link_->dst().get_ptterm();
+            auto const src_crc = curr_link_->src().get_ptterm().checksum();
+            auto const dst_crc = curr_link_->dst().get_ptterm().checksum();
 
             // Calculate checksum from the pointer, not the value!
-            checksum_cascade(&res, &src_ptterm_ptr, sizeof(src_ptterm_ptr));
-            checksum_cascade(&res, &dst_ptterm_ptr, sizeof(dst_ptterm_ptr));
+            checksum_cascade(&res, &src_crc, sizeof(src_crc));
+            checksum_cascade(&res, &dst_crc, sizeof(dst_crc));
         }
     }
     return res;

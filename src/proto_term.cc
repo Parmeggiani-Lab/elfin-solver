@@ -5,6 +5,7 @@
 #include "proto_module.h"
 #include "debug_utils.h"
 #include "exceptions.h"
+#include "proto_module.h"
 
 namespace elfin {
 
@@ -51,7 +52,10 @@ PtLinkKey ProtoTerm::find_link_to(PtModKey const dst_module,
 }
 
 /* modifiers */
-void ProtoTerm::configure() {
+void ProtoTerm::configure(
+    std::string const& mod_name,
+    std::string const& chain_name,
+    TermType const term) {
     n_roulette_.clear();
     c_roulette_.clear();
     link_set_.clear();
@@ -104,6 +108,14 @@ void ProtoTerm::configure() {
         n_roulette_.push_back(n_cpd, link_ptr);
         c_roulette_.push_back(c_cpd, link_ptr);
     }
+
+    //
+    // Compute checksum for terminal, which will be used in computing
+    // candidate checksum
+    //
+    checksum_ = checksum_new((void*) mod_name.data(), mod_name.length());
+    checksum_cascade(&checksum_, (void*) chain_name.data(), chain_name.length());
+    checksum_cascade(&checksum_, &term, sizeof(term));
 }
 
 }  /* elfin */
