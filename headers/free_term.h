@@ -24,7 +24,7 @@ struct FreeTerm : public Printable {
     typedef std::vector<Bridge> BridgeList;
 
     /* data */
-    NodeKey node;
+    NodeKey node;  // Can be nullptr when not belonging to a node.
     size_t chain_id;
     TermType term;
     bool should_restore = true;
