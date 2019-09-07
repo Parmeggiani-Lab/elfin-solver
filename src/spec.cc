@@ -64,6 +64,20 @@ struct Spec::PImpl : public PImplBase<Spec> {
 
         JUtil.info("Parsed %zu fixed areas and %zu work packages\n",
                    fixed_areas_.size(), work_packages_.size());
+        for (auto &nak : work_packages_.at(0)->work_area_keys()) {
+            auto ojs = nak->occupied_joints;
+            std::stringstream ss;
+            ss << "Network " + nak->name + "'s occupied joints: ";
+            auto oj_itr = begin(ojs);
+            while (oj_itr != end(ojs)) {
+                if (oj_itr != begin(ojs)) ss << ", ";
+                auto& [oj_name, oj_key] = *oj_itr;
+                ss << oj_name;
+                ++oj_itr;
+            }
+            ss << "\n";
+            JUtil.info(ss.str().c_str());
+        }
     }
 };
 
