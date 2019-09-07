@@ -27,7 +27,7 @@ TestStat DoubleHingeTeam::test() {
         TRACE_NOMSG(wv.size() != 1);
         auto& wa = wv.at(0);
 
-        // Initialize DoubleHingeTeam, copy hinge transform, build from recipe than
+        // Initialize DoubleHingeTeam, copy hinge transform, build from recipe then
         // apply transform.
         DoubleHingeTeam team(wa, OPTIONS.seed);
 

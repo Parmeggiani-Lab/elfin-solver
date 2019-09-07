@@ -28,17 +28,23 @@ struct DoubleHingeTeam::PImpl : public PImplBase<DoubleHingeTeam> {
         _.hinge_ui_joint2_ = itr->second;
     }
 
-    void complete_by_dijkstra() {
+    bool complete_by_dijkstra() {
         DEBUG_NOMSG(not _.hinge_ui_joint2_);
 
         std::string const& hinge2_mod_name =
             _.hinge_ui_joint2_->occupant.ui_module->module_name;
-
-        auto const mutable_tip = _.get_tip(/*mutable_hint=*/true);
+        NodeKey mutable_tip;
+        try {
+            mutable_tip = _.get_tip(/*mutable_hint=*/true);
+        }
+        catch (ExitException e) {
+            // If get_tip() fails then score = INFINITY
+            return false;
+        }
         std::string const& mutable_tip_mod_name =
             mutable_tip->prototype_->name;
 
-        if (mutable_tip_mod_name == hinge2_mod_name) return;
+        if (mutable_tip_mod_name == hinge2_mod_name) return true;
 
         auto const src_mod = XDB.get_mod(mutable_tip_mod_name);
         auto const dst_mod = XDB.get_mod(hinge2_mod_name);
@@ -96,28 +102,15 @@ struct DoubleHingeTeam::PImpl : public PImplBase<DoubleHingeTeam> {
                     free_term = _.get_mutable_term();
                 }
 
-                return;
+                return true;
             }
 
             frontier = tmp_frontier;
             dist++;
         }
 
-        {
-            std::ostringstream oss;
-            oss << "Second hinge not reached!\n";
-            oss << "Frontier: \n";
-            for (auto const mod : frontier) {
-                oss << "  " << mod->name << "\n";
-            }
-            oss << "Links: \n";
-            for (auto const& [mod, link] : links) {
-                oss << "  " << mod->name << ":" << link << "\n";
-            }
-
-            throw ShouldNotReach(oss.str());
-        }
-
+        // Coud not reach dest hinge. It happens.
+        return false;
     }
 };
 
@@ -156,9 +149,10 @@ void DoubleHingeTeam::virtual_copy(NodeTeam const& other) {
 void DoubleHingeTeam::evaluate() {
     // Run djistrak to complete the mutable end if team does not end in second
     // hinge.
-    pimpl_->complete_by_dijkstra();
-
+    bool ok = pimpl_->complete_by_dijkstra();
     HingeTeam::evaluate();
+    if (!ok)
+        score_ = INFINITY;
 }
 
 void DoubleHingeTeam::virtual_implement_recipe(
