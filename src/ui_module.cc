@@ -1,4 +1,5 @@
 #include "ui_module.h"
+#include "input_manager.h"
 
 namespace elfin {
 
@@ -42,16 +43,50 @@ UIModule::Linkage parse_linkage(JSON const& json) {
     return res;
 }
 
+PtModKey parse_prototype(std::string const& module_name) {
+    return XDB.get_mod(module_name);
+}
+
+FreeTerms parse_free_terms(PtModKey const mod, UIModule::Linkage const& linkage) {
+    std::vector<FreeTerm> busy_fterms;
+    for (const auto& link : linkage) {
+        busy_fterms.push_back(FreeTerm(nullptr, mod->get_chain_id(link.src_chain_name), link.term));
+    }
+
+    FreeTerms res;
+    for (auto const& ft : mod->free_terms()) {
+        auto const is_ft = [&](FreeTerm const & bft) { return ft.nodeless_compare(bft); };
+        if (std::find_if(begin(busy_fterms), end(busy_fterms), is_ft) == end(busy_fterms)) {
+            res.push_back(ft);
+        }
+    }
+    return res;
+}
+
+std::vector<PtTermKey> parse_busy_ptterms(PtModKey const mod, FreeTerms const& free_terms) {
+    std::vector<PtTermKey> res;
+    for (const auto& ft : free_terms) {
+        res.push_back(&(mod->get_term(ft)));
+    }
+    return res;
+}
+
 /* ctors */
 UIModule::UIModule(std::string const& name,
                    JSON const& json) :
     UIObject(name, json),
     module_name(parse_module_name(json)),
-    linkage(parse_linkage(json)) {}
+    prototype(parse_prototype(module_name)),
+    linkage(parse_linkage(json)),
+    free_terms(parse_free_terms(prototype, linkage)),
+    free_ptterms(parse_busy_ptterms(prototype, free_terms)) {}
 
 UIModule::UIModule(std::string const& _name,
                    Vector3f const& _pos) :
-    UIObject(_name, _pos) {}
+    UIObject(_name, _pos),
+    prototype(nullptr),
+    linkage(),
+    free_ptterms() {}
 
 /* printers */
 void UIModule::print_to(std::ostream& os) const {

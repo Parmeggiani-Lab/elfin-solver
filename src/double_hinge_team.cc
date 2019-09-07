@@ -6,6 +6,7 @@
 #include "input_manager.h"
 #include "path_generator.h"
 #include "priv_impl.h"
+#include "proto_link.h"
 
 namespace elfin {
 
@@ -28,85 +29,40 @@ struct DoubleHingeTeam::PImpl : public PImplBase<DoubleHingeTeam> {
         _.hinge_ui_joint2_ = itr->second;
     }
 
-    bool complete_by_dijkstra() {
+    bool complete_path() {
         DEBUG_NOMSG(not _.hinge_ui_joint2_);
 
-        std::string const& hinge2_mod_name =
-            _.hinge_ui_joint2_->occupant.ui_module->module_name;
-        NodeKey mutable_tip;
-        try {
-            mutable_tip = _.get_tip(/*mutable_hint=*/true);
-        }
-        catch (ExitException e) {
-            // If get_tip() fails then score = INFINITY
-            return false;
-        }
-        std::string const& mutable_tip_mod_name =
-            mutable_tip->prototype_->name;
+        // Gather src info
+        auto const src_fterm = _.get_mutable_term();
+        auto const src_mod = src_fterm.node->prototype_;
+        PtTermKey const src_ptterm = &src_mod->get_term(src_fterm);
 
-        if (mutable_tip_mod_name == hinge2_mod_name) return true;
+        // Gather dst info
+        auto const dst_uimod = _.hinge_ui_joint2_->occupant.ui_module;
+        auto const dst_mod = XDB.get_mod(dst_uimod->module_name);
+        auto const dst_ptterms = dst_uimod->free_ptterms;
 
-        auto const src_mod = XDB.get_mod(mutable_tip_mod_name);
-        auto const dst_mod = XDB.get_mod(hinge2_mod_name);
-
-        std::unordered_set<PtModKey> frontier = { src_mod };
-        std::unordered_map<PtModKey, PtLinkKey> links = { {src_mod, nullptr} };
-
-        size_t dist = 1;
-        while (not frontier.empty())
-        {
-            std::unordered_set<PtModKey> tmp_frontier;
-            for (auto const mod : frontier) {
-                for (auto const& ft : mod->free_terms()) {
-                    for (auto const& link : mod->get_term(ft).links()) {
-                        auto const nb = link->module;
-
-                        // Set dist and link if nb has not been explored, or
-                        // dist is smaller.
-                        bool const is_new = links.find(nb) == end(links);
-
-                        if (is_new) {
-                            links[nb] = link.get();
-                            tmp_frontier.insert(nb);
-                        }
-                    }
-                }
-            }
-
-            // Stop when we reached the dst mod.
-            if (tmp_frontier.find(dst_mod) != end(tmp_frontier)) {
-                // Build the shortest path to dst mod.
-
-                // Collect links (it's backwards!).
-                std::vector<PtLinkKey> rev_shortest_path;
-
-                auto curr_mod = dst_mod;
-                while (curr_mod != src_mod) {
-                    auto const link = links.at(curr_mod);
-                    rev_shortest_path.push_back(link);
-                    curr_mod = link->reverse->module;
-                }
-
-                // Check path sanity. Note the path is reversed.
-                DEBUG_NOMSG(rev_shortest_path.back()->reverse->module != src_mod);
-                DEBUG_NOMSG(rev_shortest_path.front()->module != dst_mod);
-
-                // Grow the links.
-                DEBUG_NOMSG(_.free_terms_.size() != 1);
-                auto free_term = _.get_mutable_term();
-
-                for (auto itr = rev_shortest_path.rbegin();
-                        itr != rev_shortest_path.rend(); ++itr) {
-                    _.grow_tip(free_term, *itr);
-                    DEBUG_NOMSG(_.free_terms_.size() != 1);
-                    free_term = _.get_mutable_term();
-                }
-
+        // Termination condition is when the frontier contains at least one
+        // ProtoTerm that is accepted by the dst.
+        for (auto const& acceptable : dst_ptterms)
+            if (src_ptterm->find_link_to(acceptable))
                 return true;
+
+        // Invoke dijkstra
+        PtLinkKeys nearest_path;
+        if (src_ptterm->get_nearest_path_to(dst_ptterms, nearest_path)) {
+            // Check path sanity. Note the path is reversed.
+            DEBUG_NOMSG(nearest_path.back()->reverse->module != src_mod);
+            DEBUG_NOMSG(nearest_path.front()->module != dst_mod);
+
+            // Grow the links.
+            for (auto itr = nearest_path.rbegin();
+                    itr != nearest_path.rend(); ++itr) {
+                _.grow_tip(_.get_mutable_term(), *itr);
+                DEBUG_NOMSG(_.free_terms_.size() != 1);
             }
 
-            frontier = tmp_frontier;
-            dist++;
+            return true;
         }
 
         // Coud not reach dest hinge. It happens.
@@ -149,7 +105,7 @@ void DoubleHingeTeam::virtual_copy(NodeTeam const& other) {
 void DoubleHingeTeam::evaluate() {
     // Run djistrak to complete the mutable end if team does not end in second
     // hinge.
-    bool ok = pimpl_->complete_by_dijkstra();
+    bool ok = pimpl_->complete_path();
     HingeTeam::evaluate();
     if (!ok)
         score_ = INFINITY;

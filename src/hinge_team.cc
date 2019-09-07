@@ -29,6 +29,7 @@ struct HingeTeam::PImpl : public PImplBase<HingeTeam> {
         FreeTerm const* exclude_ft_ptr = nullptr;
         // A hinge may not necessarily have other connected modules.
         if (not ui_mod->linkage.empty()) {
+            // TODO: Make add_node() take a list instead of just one FreeTerm exclusion pointer
             auto const occupying_link = *begin(ui_mod->linkage);
             auto const occuping_chain_id = mod_key->get_chain_id(occupying_link.src_chain_name);
             exclude_ft_ptr = new FreeTerm(nullptr, occuping_chain_id, occupying_link.term);

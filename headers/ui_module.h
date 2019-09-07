@@ -4,12 +4,15 @@
 #include "ui_object.h"
 #include "map_utils.h"
 #include "term_type.h"
+#include "free_term.h"
 
 namespace elfin {
 
 /* Fwd Decl */
 class ProtoModule;
 typedef ProtoModule const* PtModKey;
+class ProtoTerm;
+typedef ProtoTerm const* PtTermKey;
 
 struct UIModule : public UIObject {
     /* type */
@@ -22,9 +25,11 @@ struct UIModule : public UIObject {
     typedef std::vector<UILink> Linkage;
 
     /* data */
-    std::string module_name;
-    std::string module_type;
+    std::string const module_name;
+    PtModKey const prototype;
     Linkage const linkage;
+    FreeTerms const free_terms;
+    std::vector<PtTermKey> const free_ptterms;
     std::vector<PtModKey> provis_hubs;
 
     /* ctors */

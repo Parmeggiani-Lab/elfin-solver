@@ -42,9 +42,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
         while (rem) {
             auto ft = random::pop(prot_free_terms, _.seed_);
 
-            if (not (exclude_ft and
-                     exclude_ft->chain_id == ft.chain_id and
-                     exclude_ft->term == ft.term))
+            if (not exclude_ft or not exclude_ft->nodeless_compare(ft))
             {
                 _.free_terms_.emplace_back(node_key,
                                            ft.chain_id,

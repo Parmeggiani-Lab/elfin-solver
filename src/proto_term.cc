@@ -1,6 +1,8 @@
 #include "proto_term.h"
 
 #include <algorithm>
+#include <deque>
+#include <tuple>
 
 #include "proto_module.h"
 #include "debug_utils.h"
@@ -49,6 +51,64 @@ PtLinkKey ProtoTerm::find_link_to(PtModKey const dst_module,
     }
 
     return *link_itr;
+}
+
+PtLinkKey ProtoTerm::find_link_to(PtTermKey const ptterm) const {
+    for (auto const& link : links_) {
+        if (&link->get_term() == ptterm)
+            return link.get();
+    }
+    return nullptr;
+}
+
+bool ProtoTerm::get_nearest_path_to(PtTermKeys const& acceptables, PtLinkKeys& result) const {
+    // Returns a nearest path to specified acceptable ProtoTerms. The order is in reverse!
+    PtTermKeySet acceptable_set(begin(acceptables), end(acceptables));
+    PtTermKeySet visited_set;
+    // Key: inward key, value: tuple of link and previous inward key.
+    std::unordered_map<PtTermKey, std::tuple<PtLinkKey, PtTermKey>> waypoints;
+
+    // Frontier consists of outward ProtoTerm and the inward ProtoTerm that led to it.
+    std::deque<std::tuple<PtTermKey, PtTermKey>> frontier = { std::make_tuple(this, nullptr) };
+    auto const add_to_frontier = [&](PtTermKey const out_key, PtTermKey const in_key) {
+        if (out_key != in_key and visited_set.find(out_key) == end(visited_set)) {
+            frontier.push_back(std::make_tuple(out_key, in_key));
+            visited_set.insert(out_key);
+        }
+    };
+
+    while (not frontier.empty()) {
+        // Consume front of queue.
+        auto const [curr_out_key, curr_in_key] = frontier.front();
+        frontier.pop_front();
+
+        // Put all unvisited outward ProtoTerm on the next wave into frontier.
+        for (auto const& link : curr_out_key->links()) {
+            auto const new_in_key = &link->get_term();
+            if (waypoints.find(new_in_key) == end(waypoints))
+                waypoints[new_in_key] = std::make_tuple(link.get(), curr_in_key);
+
+            // Stop if we arrived at an acceptable ProtoTerm.
+            if (acceptable_set.find(new_in_key) != end(acceptable_set)) {
+                result.clear();
+
+                auto curr_key = new_in_key;
+                while (curr_key != nullptr) {
+                    auto const waypoint = waypoints[curr_key];
+                    result.push_back(std::get<0>(waypoint));
+                    curr_key = std::get<1>(waypoint);
+                }
+                return true;
+            }
+
+            for (auto const& chain : link->module->chains()) {
+                add_to_frontier(&chain.n_term(), new_in_key);
+                add_to_frontier(&chain.c_term(), new_in_key);
+            }
+        }
+    }
+
+    return false;
 }
 
 /* modifiers */

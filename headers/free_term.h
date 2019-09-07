@@ -45,6 +45,7 @@ struct FreeTerm : public Printable {
     BridgeList find_bridges(FreeTerm const& dst) const;
     ProtoLink const* find_link_to(FreeTerm const& dst) const;
     ProtoTerm const& get_ptterm() const;
+    bool nodeless_compare(FreeTerm const& other) const;
 
     /* printers */
     virtual void print_to(std::ostream& os) const;

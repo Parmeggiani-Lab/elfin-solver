@@ -15,6 +15,7 @@ class ProtoModule;
 typedef ProtoModule const* PtModKey;
 struct ProtoLink;
 typedef ProtoLink const* PtLinkKey;
+typedef std::vector<PtLinkKey> PtLinkKeys;
 typedef std::unique_ptr<ProtoLink> PtLinkSP;
 class ProtoTerm;
 

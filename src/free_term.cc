@@ -84,6 +84,11 @@ ProtoTerm const& FreeTerm::get_ptterm() const {
     return node->prototype_->get_term(*this);
 }
 
+bool FreeTerm::nodeless_compare(FreeTerm const& other) const {
+    return term == other.term and
+           chain_id == other.chain_id;
+}
+
 /* printers */
 void FreeTerm::print_to(std::ostream& os) const {
     os << "FreeTerm[node: ";

@@ -58,8 +58,10 @@ public:
     PtLinkKey find_link_to(PtModKey const dst_module,
                            size_t const dst_chain_id,
                            TermType const term) const;
+    PtLinkKey find_link_to(PtTermKey const ptterm) const;
     bool is_active() const { return active_; }
     Crc32 checksum() const { return checksum_; }
+    bool get_nearest_path_to(PtTermKeys const& acceptables, PtLinkKeys& result) const;
 
     /* modifiers */
     void configure(
