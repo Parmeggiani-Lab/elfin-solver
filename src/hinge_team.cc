@@ -26,15 +26,15 @@ struct HingeTeam::PImpl : public PImplBase<HingeTeam> {
         auto const& ui_mod = _.hinge_ui_joint_->occupant.ui_module;
         auto mod_key = XDB.get_mod(ui_mod->module_name);
 
-        // Here, if elfin-ui provides info about which specific chain of the
-        // hinge module interfaces with the next unknown module (joint), then
-        // we could remove free terms that are outside of this work area.
-        // However, right now that functionality is not implemented by
-        // elfin-ui so we'll leave the selection to GA.
-
-        // Do not add any free term. Let get_mutable_term() handle the case
-        // where the team consists of only hinge_.
-        _.hinge_ = _.add_node(mod_key, ui_mod->tx, /*innert=*/true);
+        FreeTerm const* exclude_ft_ptr = nullptr;
+        // A hinge may not necessarily have other connected modules.
+        if (not ui_mod->linkage.empty()) {
+            auto const occupying_link = *begin(ui_mod->linkage);
+            auto const occuping_chain_id = mod_key->get_chain_id(occupying_link.src_chain_name);
+            exclude_ft_ptr = new FreeTerm(nullptr, occuping_chain_id, occupying_link.term);
+        }
+        _.hinge_ = _.add_node(mod_key, ui_mod->tx, /*innert=*/false, 1, exclude_ft_ptr);
+        delete exclude_ft_ptr;
     }
 
     UIJointKey find_ui_joint(tests::RecipeStep const& first_step) {
@@ -55,52 +55,9 @@ HingeTeam* HingeTeam::virtual_clone() const {
     return new HingeTeam(*this);
 }
 
-FreeTerm HingeTeam::get_mutable_term() const
-{
-    // If the only node is the hinge, then return random free term from hinge.
-    auto seed_copy = seed_;
-    if (size() == 1) {
-        // It's guranteed that there are active free terminus from src hinge,
-        // because WorkArea throws exception when there isn't.
-        FreeTerms active_fts;
-        for (auto ft : hinge_->prototype_->free_terms()) {
-            if (hinge_->prototype_->get_term(ft).is_active()) {
-                active_fts.push_back(ft);
-            }
-        }
-        auto const& rand_hinge_ft = random::pick(active_fts, seed_copy);
-
-        FreeTerm ft(hinge_, rand_hinge_ft.chain_id, rand_hinge_ft.term);
-        ft.should_restore = false;
-        return ft;
-    }
-    else {
-        // Return a random free term from mutable tip.
-        return PathTeam::get_mutable_term();
-    }
-}
-
 NodeKey HingeTeam::get_tip(bool const mutable_hint) const
 {
     if (mutable_hint) {
-        DEBUG(size() == 1, "Cannot request mutable tip when team has only hinge.\n");
-
-        size_t const n_free_terms = free_terms_.size();
-        if (n_free_terms != 1) {
-            for (auto& ft : free_terms_) {
-                JUtil.error("ft %s\n", ft.to_string().c_str());
-            }
-
-            std::string me = "Me: " + this->to_string() + "\n";
-            JUtil.error(me.c_str());
-
-            DEBUG(n_free_terms != 1,
-                  "n_free_terms=%zu\n",
-                  n_free_terms);
-        }
-
-        // Return the only other node, which all (only one) free terms
-        // currently belong to.
         return begin(free_terms_)->node;
     }
     else {
@@ -113,18 +70,11 @@ void HingeTeam::mutation_invariance_check() const {
     DEBUG_NOMSG(size() == 0);
 
     size_t const n_free_terms = free_terms_.size();
-    if (size() == 1) {
-        // There are no "free terms" when only hinge exists.
-        if (n_free_terms != 0) {
-            for (auto& ft : free_terms_) {
-                JUtil.error("ft %s\n", ft.to_string().c_str());
-            }
-
-            DEBUG(n_free_terms != 0, "n_free_terms=%zu", n_free_terms);
+    if (n_free_terms != 1) {
+        JUtil.error("Should only exactly one FreeTerm for HingeTeam.\n");
+        for (auto& ft : free_terms_) {
+            JUtil.error("%s\n", ft.to_string().c_str());
         }
-    }
-    else {
-        // There are always exactly one free term for size() > 1.
         DEBUG(n_free_terms != 1, "n_free_terms=%zu", n_free_terms);
     }
 }

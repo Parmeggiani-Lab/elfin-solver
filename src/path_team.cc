@@ -19,24 +19,27 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
                         FreeTerm const* const exclude_ft) {
         auto const prot = node_key->prototype_;
         auto prot_free_terms = prot->free_terms();
+        size_t const n_prot_free_terms = prot_free_terms.size();
+        size_t const n_requested = n_ft_to_add + (exclude_ft != nullptr);
+        if (n_requested > n_prot_free_terms) {
+            JUtil.error("Too many free terms requested from %s! "
+                        "Tried to add %zu, prot had %zu free terms. exclude_ft: %p\n",
+                        prot->name.c_str(),
+                        n_ft_to_add,
+                        prot->free_terms().size(),
+                        exclude_ft);
+            DEBUG_NOMSG(n_requested > n_prot_free_terms);
+        }
 
         {
-            size_t const n_prot_free_terms = prot_free_terms.size();
+            // Current all modules are expected to have 2 or more free terms.
             DEBUG(n_prot_free_terms < 2,
-                  "Dead end (%zu free terms) ProtoModule detected: %s\n",
+                  "Unexpected dead end (%zu free terms) ProtoModule detected: %s.\n",
                   n_prot_free_terms, prot->name.c_str());
         }
 
-        size_t count_down = n_ft_to_add;
-        while (count_down) {
-            DEBUG(prot_free_terms.empty(),
-                  "%s has insufficient active ProtoTerms! "
-                  "Tried to add %zu, prot had %zu free terms. exclude_ft: %p\n",
-                  prot->name.c_str(),
-                  n_ft_to_add,
-                  prot->free_terms().size(),
-                  exclude_ft);
-
+        size_t rem = n_ft_to_add;
+        while (rem) {
             auto ft = random::pop(prot_free_terms, _.seed_);
 
             if (not (exclude_ft and
@@ -46,7 +49,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
                 _.free_terms_.emplace_back(node_key,
                                            ft.chain_id,
                                            ft.term);
-                count_down--;
+                rem--;
             }
         }
     }
@@ -669,11 +672,11 @@ NodeKey PathTeam::get_tip(bool const mutable_hint) const
 void PathTeam::mutation_invariance_check() const {
     if (free_terms_.size() != 2) {
         for (auto& ft : free_terms_) {
-            JUtil.warn("ft: %s\n", ft.to_string().c_str());
+            JUtil.error("ft: %s\n", ft.to_string().c_str());
         }
+        DEBUG(free_terms_.size() != 2,
+              "free_terms_.size()=%zu\n", free_terms_.size());
     }
-    DEBUG(free_terms_.size() != 2,
-          "free_terms_.size()=%zu\n", free_terms_.size());
     DEBUG_NOMSG(size() == 0);
 }
 
