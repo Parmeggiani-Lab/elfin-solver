@@ -44,9 +44,9 @@ struct DoubleHingeTeam::PImpl : public PImplBase<DoubleHingeTeam> {
 
         // Termination condition is when the frontier contains at least one
         // ProtoTerm that is accepted by the dst.
-        for (auto const& acceptable : dst_ptterms)
-            if (src_ptterm->find_link_to(acceptable))
-                return true;
+        if (src_mod == dst_mod) {
+            return true;
+        }
 
         // Invoke dijkstra
         PtLinkKeys nearest_path;
@@ -58,10 +58,14 @@ struct DoubleHingeTeam::PImpl : public PImplBase<DoubleHingeTeam> {
             // Grow the links.
             for (auto itr = nearest_path.rbegin();
                     itr != nearest_path.rend(); ++itr) {
+                // TODO: Instead of using get_mutable_term(), get it outward
+                // ptterm info from get_nearest_path_to()
                 _.grow_tip(_.get_mutable_term(), *itr);
                 DEBUG_NOMSG(_.free_terms_.size() != 1);
             }
 
+            TRACE(_.hinge_ui_joint_ == _.hinge_ui_joint2_,
+                  "Two hinges are the same - impossible!? %s(%p)", _.hinge_ui_joint_->name.c_str(), _.hinge_ui_joint_);
             return true;
         }
 
@@ -95,7 +99,7 @@ void DoubleHingeTeam::reset() {
 
 void DoubleHingeTeam::virtual_copy(NodeTeam const& other) {
     try {  // Catch bad cast
-        HingeTeam::operator=(
+        DoubleHingeTeam::operator=(
             static_cast<DoubleHingeTeam const&>(other));
     }
     catch (std::bad_cast const& e) {
@@ -103,12 +107,14 @@ void DoubleHingeTeam::virtual_copy(NodeTeam const& other) {
     }
 }
 void DoubleHingeTeam::evaluate() {
-    // Run djistrak to complete the mutable end if team does not end in second
+    // Run dijkstra to complete the mutable end if team does not end in second
     // hinge.
-    bool ok = pimpl_->complete_path();
-    HingeTeam::evaluate();
-    if (!ok)
+    if (pimpl_->complete_path()) {
+        HingeTeam::evaluate();
+    }
+    else {
         score_ = INFINITY;
+    }
 }
 
 void DoubleHingeTeam::virtual_implement_recipe(
@@ -144,12 +150,12 @@ DoubleHingeTeam::DoubleHingeTeam(WorkArea const* const wa,
 
 DoubleHingeTeam::DoubleHingeTeam(DoubleHingeTeam const& other) :
     DoubleHingeTeam(other.work_area_, other.seed_) {
-    HingeTeam::operator=(other);
+    DoubleHingeTeam::operator=(other);
 
 }
 DoubleHingeTeam::DoubleHingeTeam(DoubleHingeTeam&& other) :
     DoubleHingeTeam(other.work_area_, other.seed_) {
-    HingeTeam::operator=(std::move(other));
+    DoubleHingeTeam::operator=(std::move(other));
 }
 
 /* dtors */

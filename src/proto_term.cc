@@ -79,20 +79,20 @@ bool ProtoTerm::get_nearest_path_to(PtTermKeys const& acceptables, PtLinkKeys& r
 
     while (not frontier.empty()) {
         // Consume front of queue.
-        auto const [curr_out_key, curr_in_key] = frontier.front();
+        auto const [out_key, prev_in_key] = frontier.front();
         frontier.pop_front();
 
         // Put all unvisited outward ProtoTerm on the next wave into frontier.
-        for (auto const& link : curr_out_key->links()) {
-            auto const new_in_key = &link->get_term();
-            if (waypoints.find(new_in_key) == end(waypoints))
-                waypoints[new_in_key] = std::make_tuple(link.get(), curr_in_key);
+        for (auto const& link : out_key->links()) {
+            auto const next_in_key = &link->get_term();
+            if (waypoints.find(next_in_key) == end(waypoints))
+                waypoints[next_in_key] = std::make_tuple(link.get(), prev_in_key);
 
             // Stop if we arrived at an acceptable ProtoTerm.
-            if (acceptable_set.find(new_in_key) != end(acceptable_set)) {
+            if (acceptable_set.find(next_in_key) != end(acceptable_set)) {
                 result.clear();
 
-                auto curr_key = new_in_key;
+                auto curr_key = next_in_key;
                 while (curr_key != nullptr) {
                     auto const waypoint = waypoints[curr_key];
                     result.push_back(std::get<0>(waypoint));
@@ -102,8 +102,8 @@ bool ProtoTerm::get_nearest_path_to(PtTermKeys const& acceptables, PtLinkKeys& r
             }
 
             for (auto const& chain : link->module->chains()) {
-                add_to_frontier(&chain.n_term(), new_in_key);
-                add_to_frontier(&chain.c_term(), new_in_key);
+                add_to_frontier(&chain.n_term(), next_in_key);
+                add_to_frontier(&chain.c_term(), next_in_key);
             }
         }
     }

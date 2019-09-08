@@ -1,5 +1,6 @@
 log*
 debug.txt
+test_input
 
 bin/*
 output/*

@@ -162,7 +162,6 @@ float _score(V3fList const& mobile,
              float (*scoring_func)(V3fList const&, V3fList const&))
 {
     if (mobile.size() == 1 and ref.size() == 1) {
-        // Single points be trivially superimposed.
         return 0;
     }
 

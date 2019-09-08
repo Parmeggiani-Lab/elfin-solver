@@ -1,7 +1,6 @@
 #include "hinge_team.h"
 
 #include "input_manager.h"
-#include "path_generator.h"
 #include "ui_joint.h"
 #include "priv_impl.h"
 
@@ -16,9 +15,6 @@ struct HingeTeam::PImpl : public PImplBase<HingeTeam> {
         _.hinge_ = nullptr;
 
         auto const& omap = _.work_area_->occupied_joints;
-
-        // There can be 1 or 2 occupied joints. Allow size of 2 for
-        // DoubleHingeTeam.
         auto const& [oname, ojoint] = random::pick(omap, _.seed_);
         _.hinge_ui_joint_ = ojoint;
 
@@ -111,14 +107,13 @@ void HingeTeam::virtual_copy(NodeTeam const& other) {
 
 void HingeTeam::calc_checksum() {
     // Unlike PathTeam, here we can compute one-way checksum from hinge.
-    checksum_ = PathGenerator(hinge_).checksum();
+    checksum_ = gen_path().checksum();
 }
 
 void HingeTeam::calc_score() {
     score_ = INFINITY;
 
-    // Collect points without hinge itself.
-    auto const& my_points = PathGenerator(hinge_).collect_points();
+    auto const& my_points = gen_path().collect_points();
     auto const& ref_path = work_area_->path_map.at(hinge_ui_joint_);
 
     score_ = score_func_(my_points, ref_path);
@@ -161,8 +156,8 @@ HingeTeam::HingeTeam(WorkArea const* const wa,
     PathTeam(wa, seed),
     pimpl_(new_pimpl<PImpl>(*this)),
     score_func_(loose ?
-                scoring::score_aligned :
-                scoring::score_unaligned)
+                scoring::score_unaligned /*this means don't align first (hinge fixed)*/ :
+                scoring::score_aligned /*this means align first, then score*/)
 {
     // Call place_hinge() after initializer list because hinge_ needs to be
     // initialiezd as nullptr.

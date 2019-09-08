@@ -664,7 +664,7 @@ FreeTerm PathTeam::get_mutable_term() const
 
 NodeKey PathTeam::get_tip(bool const mutable_hint) const
 {
-    return get_mutable_term().node;
+    return begin(free_terms_)->node;
 }
 
 void PathTeam::mutation_invariance_check() const {
