@@ -94,28 +94,33 @@ struct EvolutionSolver::PImpl {
 
         // Update best solutions.
         size_t const max_keep = std::min(OPTIONS.keep_n, OPTIONS.ga_pop_size);
-        for (size_t j = 0; j < max_keep; j++) {
-            auto team = pop.front_buffer()->at(j)->clone();
-            if (output.size() >= max_keep) {
-                // The output heap is full. Need to keep output size at
-                // max_keep, so determine whether to pop.
-
-                if (team->score() >= output.top()->score()) {
-                    // Current team score is worse than the worst solution in
-                    // the output heap (sorted with max score on top). 
-                    //
-                    // Since the teams in the buffer are sorted in ascending
-                    // score order, teams down the index only have greater
-                    // score and thus can be ignored.
-                    break;
+        for (auto const& team : *pop.front_buffer()) {
+            if (output.empty() or team->score() < output.top()->score()) {
+                // Make sure checksum doesn't equal any existing solution.
+                bool checksum_repeat = false;
+                TeamSPMaxHeap output_tmp;
+                while (!output.empty()) {
+                    auto const& existing_team = output.top();
+                    checksum_repeat |= existing_team->checksum() == team->checksum();
+                    output_tmp.push(std::move(output.top_and_pop()));
                 }
 
-                // Current team is good enough to replace the worst solution
-                // in output heap.
-                output.pop();
+                while (!output_tmp.empty()) {
+                    output.push(std::move(output_tmp.top_and_pop()));
+                }
+
+                if (checksum_repeat)
+                    continue;
+
+                auto team_clone = team->clone();
+                output.push(std::move(team_clone));
+            }
+            else {
+                break;
             }
 
-            output.push(std::move(team));
+            while (output.size() > max_keep)
+                output.pop();
         }
 
         // Check stop conditions.
@@ -234,7 +239,7 @@ struct EvolutionSolver::PImpl {
         InputManager::mutable_xdb().activate_ptterm_profile(work_area.ptterm_profile);
 
         auto seed = OPTIONS.seed;  // Reentrant seed.
-        
+
         while (OPTIONS.ga_max_restarts == 0 or
                 restart_id < OPTIONS.ga_max_restarts) {
             should_restart_ga_ = false;

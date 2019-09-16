@@ -56,6 +56,9 @@ struct OutputManager::PImpl : public PImplBase<OutputManager> {
     /* modifiers */
     void collect_output(Spec const & spec) {
         try {
+            output_json = JSON(); // Reset output data.
+            output_json["exporter"] = "elfin-solver";
+            JSON pg_networks = JSON();
             for (auto const& wp : spec.work_packages()) {
                 auto const& wp_name = wp->name;
                 auto const wp_name_c = wp_name.c_str();
@@ -79,6 +82,7 @@ struct OutputManager::PImpl : public PImplBase<OutputManager> {
                             JSON sol_json;
                             sol_json["nodes"] = team->to_json();
                             sol_json["score"] = team->score();
+                            sol_json["checksum"] = team->checksum();
                             dec_wa_json[i++] = sol_json;
                         }
                         else {
@@ -87,9 +91,10 @@ struct OutputManager::PImpl : public PImplBase<OutputManager> {
                         }
                     }
 
-                    output_json[wp_name][wp_dec_name] = dec_wa_json;
+                    pg_networks[wp_name][wp_dec_name] = dec_wa_json;
                 }
             }
+            output_json["pg_networks"] = pg_networks;
         } catch (JSON::exception const& je) {
             JSON_LOG_EXIT(je);
         }
