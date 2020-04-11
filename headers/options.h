@@ -10,6 +10,7 @@ struct Options {
 
     std::string xdb_file = "xdb.json";
     std::string spec_file = "";
+    std::string output_suffix = "_sol.json";
     std::string config_file = "";
     std::string output_dir = "output";
     std::string radius_type = "max_ca_dist";

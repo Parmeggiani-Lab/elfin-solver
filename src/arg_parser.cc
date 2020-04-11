@@ -179,6 +179,7 @@ ARG_PARSER_CALLBACK_DEF(parse_config) {
     JSON const json = parse_json(options_.config_file);
 
     for (auto& [opt_key, opt_json] : json.items()) {
+        // Ignore config file setting to prevent recursive parsing
         if (opt_key == config_file_long_from) {
             JUtil.warn("Ignoring %s in config JSON.\n", config_file_long_from);
             continue;
@@ -200,6 +201,11 @@ ARG_PARSER_CALLBACK_DEF(parse_config) {
 
 ARG_PARSER_CALLBACK_DEF(set_output_dir) {
     options_.output_dir = arg_in;
+    return true;
+}
+
+ARG_PARSER_CALLBACK_DEF(set_output_suffix) {
+    options_.output_suffix = arg_in;
     return true;
 }
 

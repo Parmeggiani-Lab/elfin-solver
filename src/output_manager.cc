@@ -45,7 +45,7 @@ struct OutputManager::PImpl : public PImplBase<OutputManager> {
 
         // Build JSON output path.
         std::string const& output_path =
-            options.output_dir + "/" + get_filename(options.spec_file) + ".json";
+            options.output_dir + "/" + get_filename(options.spec_file) + options.output_suffix;
 
         std::string const& dump = output_json.dump(indent_size);
         JUtil.write_binary(output_path.c_str(),

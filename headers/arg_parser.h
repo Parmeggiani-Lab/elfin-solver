@@ -77,6 +77,13 @@ private:
             true,
             &ArgParser::set_output_dir
         },
+        {   "os",
+            "output_suffix",
+            string_format("Set output file suffix (default=%s).",
+            options_.output_suffix.c_str()),
+            true,
+            &ArgParser::set_output_suffix
+        },
         {   "l",
             "len_dev",
             string_format("Set length deviation allowance (default=%zu).",
@@ -234,6 +241,7 @@ private:
     ARG_CALLBACK_DECL(set_xdb);
     ARG_CALLBACK_DECL(parse_config);
     ARG_CALLBACK_DECL(set_output_dir);
+    ARG_CALLBACK_DECL(set_output_suffix);
     ARG_CALLBACK_DECL(set_len_dev);
     ARG_CALLBACK_DECL(set_avg_pair_dist);
     ARG_CALLBACK_DECL(set_seed);
