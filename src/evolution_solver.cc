@@ -159,6 +159,7 @@ struct EvolutionSolver::PImpl {
     /* printers */
     void print_start_msg(WorkArea const& wa) const
     {
+        JUtil.info("Solving for work are \"%s\"\n", wa.name.c_str());
         JUtil.info("Length guess=%zu; Spec has %d points\n",
                    wa.target_size, wa.path_len);
         JUtil.info("Using deviation allowance: %d nodes\n", OPTIONS.len_dev);

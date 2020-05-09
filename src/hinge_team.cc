@@ -153,11 +153,11 @@ void HingeTeam::virtual_implement_recipe(
 HingeTeam::HingeTeam(WorkArea const* const wa,
                      uint32_t const seed,
                      bool const loose) :
-    PathTeam(wa, seed),
+    PathTeam(wa, seed, false),
     pimpl_(new_pimpl<PImpl>(*this)),
     score_func_(loose ?
-                scoring::score_unaligned /*this means don't align first (hinge fixed)*/ :
-                scoring::score_aligned /*this means align first, then score*/)
+                scoring::score_aligned /* align before scoring (for loose hinge) */ :
+                scoring::score_unaligned /* don't align before scoring (for fixed hinge) */)
 {
     // Call place_hinge() after initializer list because hinge_ needs to be
     // initialiezd as nullptr.

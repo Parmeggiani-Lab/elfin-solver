@@ -34,6 +34,7 @@ protected:
     std::list<FreeTerm> free_terms_;
     V3fList const* scored_path_ = nullptr;
     NodeKeyMap nk_map_;
+    bool align_before_export_ = true;
 
     /* accessors */
     virtual PathTeam* virtual_clone() const;
@@ -65,7 +66,9 @@ protected:
                                           Transform const& shift_tx);
 public:
     /* ctors */
-    PathTeam(WorkArea const* const wa, uint32_t const seed);
+    PathTeam(WorkArea const* const wa,
+             uint32_t const seed,
+             bool const align_before_export = true);
     PathTeam(PathTeam const& other);
     PathTeam(PathTeam&& other);
 

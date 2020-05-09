@@ -924,9 +924,10 @@ void PathTeam::virtual_implement_recipe(
 
 /* public */
 /* ctors */
-PathTeam::PathTeam(WorkArea const* const wa, uint32_t const seed_) :
+PathTeam::PathTeam(WorkArea const* const wa, uint32_t const seed_, bool const align_before_export) :
     NodeTeam(wa, seed_),
-    pimpl_(new_pimpl<PImpl>(*this)) {}
+    pimpl_(new_pimpl<PImpl>(*this)),
+    align_before_export_(align_before_export) {}
 
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_, other.seed_)
@@ -1122,7 +1123,9 @@ JSON PathTeam::to_json() const {
                     node_output["dst_chain_name"] = "NONE";
                 }
 
-                Transform const tx = kabsch_alignment * node_key->tx_;
+                Transform const tx = align_before_export_ ? 
+                    (kabsch_alignment * node_key->tx_) :
+                    node_key->tx_;
 
                 node_output["rot"] = tx.rot_json();
                 node_output["tran"] = tx.tran_json();
