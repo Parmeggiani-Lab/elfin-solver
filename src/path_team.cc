@@ -81,18 +81,6 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
         _.nodes_.erase(tip_node);
     }
 
-    void fix_limb_transforms(Link const& arrow)
-    {
-        PathGenerator limb_gen(&arrow);
-        while (not limb_gen.is_done()) {
-            Link const* curr_link = limb_gen.curr_link();
-            auto curr_node = limb_gen.curr_node();
-            auto next_node = limb_gen.next();
-
-            get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx;
-        }
-    }
-
     void build_bridge(mutation::InsertPoint const& insert_point,
                       FreeTerm::Bridge const* bridge = nullptr)
     {
@@ -141,7 +129,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
         new_node->add_link(new_link2);
         node2->add_link(new_link2.reversed());
 
-        fix_limb_transforms(new_link2);
+        _.fix_limb_transforms(new_link2);
     }
 
     void sever_limb(Link const& arrow) {
@@ -383,7 +371,7 @@ struct PathTeam::PImpl : public PImplBase<PathTeam> {
 
                     // delete_node is guranteed to not be a tip so no need to clean up
                     // _.free_terms_.
-                    fix_limb_transforms(arrow1);
+                    _.fix_limb_transforms(arrow1);
                 }
                 else {
                     // This is a tip node.
@@ -762,6 +750,18 @@ NodeKey PathTeam::grow_tip(FreeTerm const& free_term_a,
     }
 
     return node_b;
+}
+
+void PathTeam::fix_limb_transforms(Link const& arrow)
+{
+    PathGenerator limb_gen(&arrow);
+    while (not limb_gen.is_done()) {
+        Link const* curr_link = limb_gen.curr_link();
+        auto curr_node = limb_gen.curr_node();
+        auto next_node = limb_gen.next();
+
+        pimpl_->get_node(next_node)->tx_ = curr_node->tx_ * curr_link->prototype()->tx;
+    }
 }
 
 void PathTeam::remove_free_terms(NodeKey const node) {

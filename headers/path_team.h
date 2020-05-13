@@ -56,6 +56,7 @@ protected:
     NodeKey grow_tip(FreeTerm const& free_term_a,
                      ProtoLink const* pt_link = nullptr,
                      bool const innert = false);
+    virtual void fix_limb_transforms(Link const& arrow);
     virtual void evaluate();
     virtual void calc_checksum();
     virtual void calc_score();

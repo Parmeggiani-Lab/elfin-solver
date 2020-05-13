@@ -105,6 +105,14 @@ void HingeTeam::virtual_copy(NodeTeam const& other) {
     }
 }
 
+void HingeTeam::fix_limb_transforms(Link const& arrow) {
+    // Reverse arrow if its generator ends in hinge
+    PathGenerator limb_gen(&arrow);
+    while (not limb_gen.is_done()) limb_gen.next();
+    auto last_node = limb_gen.curr_node();
+    PathTeam::fix_limb_transforms(last_node == hinge_ ? arrow.reversed() : arrow);
+}
+
 void HingeTeam::calc_checksum() {
     // Unlike PathTeam, here we can compute one-way checksum from hinge.
     checksum_ = gen_path().checksum();
@@ -159,7 +167,7 @@ HingeTeam::HingeTeam(WorkArea const* const wa,
                 scoring::score_aligned /* align before scoring (for loose hinge) */ :
                 scoring::score_unaligned /* don't align before scoring (for fixed hinge) */)
 {
-    align_before_export_ = true;
+    align_before_export_ = false;
     // Call place_hinge() after initializer list because hinge_ needs to be
     // initialiezd as nullptr.
     pimpl_->place_hinge();

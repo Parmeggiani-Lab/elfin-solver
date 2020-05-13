@@ -35,6 +35,7 @@ protected:
     /* modifiers */
     virtual void reset();
     virtual void virtual_copy(NodeTeam const& other);
+    virtual void fix_limb_transforms(Link const& arrow);
     virtual void calc_checksum();
     virtual void calc_score();
     virtual void virtual_implement_recipe(tests::Recipe const& recipe,
