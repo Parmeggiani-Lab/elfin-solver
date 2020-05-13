@@ -1,3 +1,5 @@
+.DS_Store
+
 log*
 debug.txt
 test_input
