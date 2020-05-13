@@ -924,10 +924,9 @@ void PathTeam::virtual_implement_recipe(
 
 /* public */
 /* ctors */
-PathTeam::PathTeam(WorkArea const* const wa, uint32_t const seed_, bool const align_before_export) :
+PathTeam::PathTeam(WorkArea const* const wa, uint32_t const seed_) :
     NodeTeam(wa, seed_),
-    pimpl_(new_pimpl<PImpl>(*this)),
-    align_before_export_(align_before_export) {}
+    pimpl_(new_pimpl<PImpl>(*this)) {}
 
 PathTeam::PathTeam(PathTeam const& other) :
     PathTeam(other.work_area_, other.seed_)

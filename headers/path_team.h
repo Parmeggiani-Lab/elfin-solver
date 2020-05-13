@@ -67,8 +67,7 @@ protected:
 public:
     /* ctors */
     PathTeam(WorkArea const* const wa,
-             uint32_t const seed,
-             bool const align_before_export = true);
+             uint32_t const seed);
     PathTeam(PathTeam const& other);
     PathTeam(PathTeam&& other);
 

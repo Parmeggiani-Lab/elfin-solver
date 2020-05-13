@@ -96,7 +96,7 @@ TestStat test_basics() {
     return ts;
 }
 
-TestStat test_resample() {
+TestStat test_upsample() {
     TestStat ts;
 
     // Test upsampling a_fewer to B.size()
@@ -108,7 +108,7 @@ TestStat test_resample() {
                       begin(a_fewer) + (a_fewer.size() / 2) + 1);
         assert(a_fewer.size() != points10a.size());
 
-        a_fewer = _resample(points10a, a_fewer);
+        a_fewer = _upsample(a_fewer, points10a.size());
 
         ts.tests++;
         if (a_fewer.size() != points10a.size()) {
@@ -331,7 +331,7 @@ TestStat test() {
     TestStat ts;
 
     ts += test_basics();
-    ts += test_resample();
+    ts += test_upsample();
     ts += test_score();
 
     return ts;

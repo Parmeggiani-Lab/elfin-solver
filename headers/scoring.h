@@ -46,7 +46,7 @@ TestStat test();
 // The following functions a prefixed by underscore because they're not meant
 // to be called from modules other than tests.cc.
 
-V3fList _resample(V3fList const& ref, V3fList const& pts);
+V3fList _upsample(V3fList const& points, size_t const target);
 
 // Implemetation of Kabsch algoritm for finding the best rotation matrix.
 // ---------------------------------------------------------------------------

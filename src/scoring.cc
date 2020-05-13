@@ -150,30 +150,48 @@ void calc_alignment(V3fList const& mobile,
                     elfin::Mat3f& rot,
                     Vector3f& tran)
 {
-    V3fList const& mobile_resampled =
-        mobile.size() == ref.size() ?
-        mobile : _resample(ref, mobile);
-
-    _rosetta_kabsch_align(mobile_resampled, ref, rot, tran);
+    // Upsample if needed. Also do a bit of checking to avoid unnecessary copying
+    size_t const ref_size = ref.size();
+    size_t const mobile_size = mobile.size();
+    if (ref_size < mobile_size)
+    {
+        return _rosetta_kabsch_align(mobile, _upsample(ref, mobile_size), rot, tran);
+    }
+    else if (mobile_size < ref_size)
+    {
+        return _rosetta_kabsch_align(_upsample(mobile, ref_size), ref, rot, tran);
+    }
+    else
+    {
+        return _rosetta_kabsch_align(mobile, ref, rot, tran);
+    }
 }
 
 float _score(V3fList const& mobile,
              V3fList const& ref,
              float (*scoring_func)(V3fList const&, V3fList const&))
 {
-    if (mobile.size() == 1 and ref.size() == 1) {
+    if (mobile.size() == 1 and ref.size() == 1)
         return 0;
-    }
 
-    if (mobile.size() <= 1 or ref.size() <= 1) {
+    if (mobile.size() <= 1 or ref.size() <= 1)
         return INFINITY;
+
+    // Upsample if needed. Also do a bit of checking to avoid unnecessary copying
+    size_t const ref_size = ref.size();
+    size_t const mobile_size = mobile.size();
+    if (ref_size < mobile_size)
+    {
+        return scoring_func(mobile, _upsample(ref, mobile_size));
     }
-
-    V3fList const& mobile_resampled =
-        mobile.size() == ref.size() ?
-        mobile : _resample(ref, mobile);
-
-    return scoring_func(mobile_resampled, ref);
+    else if (mobile_size < ref_size)
+    {
+        return scoring_func(_upsample(mobile, ref_size), ref);
+    }
+    else
+    {
+        return scoring_func(mobile, ref);
+    }
 }
 
 float score_aligned(V3fList const& mobile, V3fList const& ref) {
@@ -184,68 +202,68 @@ float score_unaligned(V3fList const& mobile, V3fList const& ref) {
     return _score(mobile, ref, unaligned_rms);
 }
 
-V3fList _resample(V3fList const& ref,
-                  V3fList const& pts)
+struct SampleSegment
 {
-    if (ref.size() == pts.size())
-        return pts;
+    size_t index;
+    float distance;
+    size_t edges;
+    Vector3f const * a;
+    Vector3f const * b;
+    SampleSegment(size_t const index_, Vector3f const& a_, Vector3f const& b_) : 
+        index(index_), distance(a_.sq_dist_to(b_)), edges(1), a(&a_), b(&b_) {}
+    bool operator<(SampleSegment const& other) const {
+        return (distance / edges) < (other.distance / other.edges);
+    }
+    static bool index_compare(SampleSegment const& a, SampleSegment const& b) {
+        // Should a go before b?
+        return a.index < b.index;
+    }
+};
 
-    size_t const N = ref.size();
+V3fList _upsample(V3fList const& points, size_t const target) {
+    // Upsamples points to <target> number of point.
+    DEBUG_NOMSG(points.size() > target);
+    DEBUG_NOMSG(points.size() < 1);
 
-    // Compute shape total lengths.
-    float ref_tot_len = 0.0f;
-    for (size_t i = 1; i < N; ++i)
-        ref_tot_len += ref.at(i).dist_to(ref.at(i - 1));
+    // Special case: single point upsampling = duplicating it <target> times.
+    if (points.size() == 1) {
+        V3fList result;
+        for (size_t i = 0; i < target; ++i)
+            result.push_back(points.at(0));
+        return result;
+    }
 
-    float pts_tot_len = 0.0f;
-    for (size_t i = 1; i < pts.size(); ++i)
-        pts_tot_len += pts.at(i).dist_to(pts.at(i - 1));
+    // Construct segment max heap for selection.
+    std::vector<SampleSegment> segments;
+    for (size_t i = 1; i < points.size(); ++i)
+        segments.emplace_back(i, points.at(i - 1), points.at(i));
+    std::make_heap(segments.begin(), segments.end());
 
-    // Upsample points.
-    V3fList resampled;
+    // Insert a point in the centre of the longest segment until target is met.
+    size_t remaining = target - points.size();
+    while (remaining--) {
+        // Remove longest segment (temporarily)
+        std::pop_heap(segments.begin(), segments.end());
 
-    // First and last points are the same.
-    resampled.push_back(pts.at(0));
+        // Split segment
+        segments.back().edges++;
 
-    float ref_prop = 0.0f, pts_prop = 0.0f;
-    int mpi = 1;
-    for (size_t i = 1; i < pts.size(); ++i) {
-        Vector3f const& base_fp_point = pts.at(i - 1);
-        Vector3f const& next_fp_point = pts.at(i);
-        float const base_fp_proportion = pts_prop;
-        float const fp_segment = next_fp_point.dist_to(base_fp_point)
-                                 / pts_tot_len;
-        Vector3f const vec = next_fp_point - base_fp_point;
+        // Put split segment back to heap
+        std::push_heap(segments.begin(), std::prev(segments.end()));
+    }
 
-        pts_prop += fp_segment;
-        while (ref_prop <= pts_prop && mpi < N) {
-            float const mpSegment =
-                ref.at(mpi).dist_to(ref.at(mpi - 1))
-                / ref_tot_len;
-
-            if (ref_prop + mpSegment > pts_prop)
-                break;
-            ref_prop += mpSegment;
-
-            float const s = (ref_prop - base_fp_proportion)
-                            / fp_segment;
-            resampled.push_back(base_fp_point + (vec * s));
-
-            mpi++;
+    // Pack result into vector
+    std::sort_heap(segments.begin(), segments.end(), SampleSegment::index_compare);
+    V3fList result = {points.at(0)};
+    for (auto const& segment : segments) {
+        // Insert <edges - 1> new points and point b
+        Vector3f direction = (*segment.b) - (*segment.a);
+        for (size_t i = 1; i < segment.edges; ++i) {
+            result.push_back(direction * (static_cast<float>(i) / segment.edges));
         }
+        result.push_back(*segment.b);
     }
-
-    // Sometimes the last node is automatically added
-    if (resampled.size() < N) {
-        resampled.push_back(pts.back());
-    }
-
-    // Is something wrong with the resampling algorithm?
-    DEBUG(resampled.size() != ref.size(),
-          "resampled.size()=%zu, ref.size()=%zu",
-          resampled.size(), ref.size());
-
-    return resampled;
+    return result;
 }
 
 // These kabsch(mostly just SVD) functions taken from the Hybridization
