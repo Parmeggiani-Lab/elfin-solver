@@ -116,7 +116,7 @@ dry: $(BINRAY)
 VALGRIND_FLAGS += --track-origins=yes --leak-check=full --show-leak-kinds=all --show-reachable=no 
 
 valgrind: $(BINRAY)
-	valgrind $(VALGRIND_FLAGS) $(BINRAY) -c config/default.json $(ELFIN_ARGS)
+	valgrind $(VALGRIND_FLAGS) $(BINRAY) -c config/default.json -p 1024 -I 10 -mr 1 $(ELFIN_ARGS)
 
 valgrind_dry: $(BINRAY)
 	valgrind $(VALGRIND_FLAGS) $(BINRAY) -c config/default.json -dry $(ELFIN_ARGS)

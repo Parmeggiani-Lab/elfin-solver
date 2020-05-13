@@ -242,14 +242,14 @@ V3fList _upsample(V3fList const& points, size_t const target) {
     // Insert a point in the centre of the longest segment until target is met.
     size_t remaining = target - points.size();
     while (remaining--) {
-        // Remove longest segment (temporarily)
+        // Remove longest segment from heap temporarily
         std::pop_heap(segments.begin(), segments.end());
 
         // Split segment
         segments.back().edges++;
 
         // Put split segment back to heap
-        std::push_heap(segments.begin(), std::prev(segments.end()));
+        std::push_heap(segments.begin(), segments.end());
     }
 
     // Pack result into vector
