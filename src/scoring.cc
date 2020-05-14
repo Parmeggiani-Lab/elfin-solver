@@ -259,7 +259,7 @@ V3fList _upsample(V3fList const& points, size_t const target) {
         // Insert <edges - 1> new points and point b
         Vector3f direction = (*segment.b) - (*segment.a);
         for (size_t i = 1; i < segment.edges; ++i) {
-            result.push_back(direction * (static_cast<float>(i) / segment.edges));
+            result.push_back((*segment.a) + direction * (static_cast<float>(i) / segment.edges));
         }
         result.push_back(*segment.b);
     }
