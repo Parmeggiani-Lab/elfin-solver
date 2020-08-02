@@ -12,7 +12,7 @@ Get gcc [somehow](https://gcc.gnu.org/). For Macs it's simplest to install throu
 ### To Download
 ```Bash
 
-git clone --depth 1 git@github.com:joy13975/elfin-solver.git
+git clone --depth 1 https://github.com/Parmeggiani-Lab/elfin-solver.git
 cd elfin-solver
 
 ```
