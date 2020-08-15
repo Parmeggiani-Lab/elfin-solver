@@ -31,6 +31,13 @@ make -j4  # Or use the number of your processors
 
 ### To Run
 
+run the help function to get an overview of all possibilities
 ```Bash
 ./bin/elfin -h
 ```
+
+run standart settings using JSON from elfin-ui output:
+```Bash
+./bin/elfin --spec_file <path to JSON.json>
+```
+
