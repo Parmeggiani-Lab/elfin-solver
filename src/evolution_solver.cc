@@ -253,32 +253,32 @@ struct EvolutionSolver::PImpl {
             tot_gen_time = 0.0f;
             stagnant_count = 0;
 
-            if (!OPTIONS.dry_run) {
-                gen_id = 0;
-                while (OPTIONS.ga_max_iters == 0 or itr_id < OPTIONS.ga_max_iters) {
-                    double const gen_start_time = JUtil.get_timestamp_us();
+            if (OPTIONS.dry_run) break;
 
-                    population.evolve();
-                    print_pop("After evolve", population);
+            gen_id = 0;
+            while (OPTIONS.ga_max_iters == 0 or itr_id < OPTIONS.ga_max_iters) {
+                double const gen_start_time = JUtil.get_timestamp_us();
 
-                    population.rank();
-                    print_pop("Post rank", population);
+                population.evolve();
+                print_pop("After evolve", population);
 
-                    population.select();
-                    print_pop("Post select", population);
+                population.rank();
+                print_pop("Post rank", population);
 
-                    summarize_generation(population,
-                                         gen_start_time,
-                                         output);
+                population.select();
+                print_pop("Post select", population);
 
-                    if (should_restart_ga_ or score_satisfied_) break;
+                summarize_generation(population,
+                                        gen_start_time,
+                                        output);
 
-                    population.swap_buffer();
+                if (should_restart_ga_ or score_satisfied_) break;
 
-                    gen_id++;
-                    itr_id++;
-                }  // generation
-            }  // dry run
+                population.swap_buffer();
+
+                gen_id++;
+                itr_id++;
+            }  // generation
 
             if (score_satisfied_) break;
             restart_id++;

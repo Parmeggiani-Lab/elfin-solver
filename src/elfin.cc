@@ -32,7 +32,13 @@ void Elfin::run() {
     else {
         Spec spec(OPTIONS);
         spec.solve_all();
-        OutputManager(spec).write_to_file(InputManager::options());
+        
+        if (OPTIONS.dry_run) {
+            JUtil.warn("Not writing output due to dry-run mode.");
+        }
+        else {
+            OutputManager(spec).write_to_file(InputManager::options());
+        }
     }
 }
 

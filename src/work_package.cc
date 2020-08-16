@@ -170,7 +170,7 @@ struct WorkPackage::PImpl : public PImplBase<WorkPackage> {
                 auto const& joint_json = pg_network.at(name);
                 auto const& occ_name =  gen_occ_name(name);
 
-                JUtil.error("Need occupant at %s\n", name.c_str());
+                JUtil.warn("Need occupant at %s\n", name.c_str());
 
                 auto const& pos = Transform(pg_network.at(name)).collapsed();
 
